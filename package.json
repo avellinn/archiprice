@@ -1,0 +1,12 @@
+{
+  "name": "archiprice",
+  "private": true,
+  "description": "ArchiPrice — monorepo API + frontend",
+  "scripts": {
+    "dev:api": "npm run dev --prefix backend",
+    "dev:web": "npm run dev --prefix frontend",
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "clean": "rm -rf frontend/dist frontend/node_modules/.vite backend/node_modules/.cache",
+    "env:migrate": "node scripts/migrate-env.js"
+  }
+}

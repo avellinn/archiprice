@@ -5,18 +5,20 @@ node_modules/
 .env
 .env.local
 .env.*.local
+backend/.env
 frontend/.env
 
-# Builds
+# Builds & cache
 dist/
 build/
 frontend/dist/
+.vite/
+*.tsbuildinfo
 
-# Logs & cache
+# Logs
 logs/
 *.log
 npm-debug.log*
-.vite/
 
 # OS & IDE
 .DS_Store
@@ -25,7 +27,7 @@ Thumbs.db
 .idea/
 *.sw?
 
-# Divers
-.backup/
+# Tests & divers
 coverage/
+.backup/
 .yarn/
