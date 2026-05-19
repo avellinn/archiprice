@@ -1,0 +1,31 @@
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.page h1 {
+  margin-bottom: 0.5rem;
+}
+
+.card {
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.card pre {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  overflow-x: auto;
+}
+
+.error {
+  color: #b91c1c;
+}
+
+a {
+  color: #2563eb;
+}
