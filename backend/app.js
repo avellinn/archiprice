@@ -17,6 +17,19 @@ app.use(
 );
 app.use(express.json());
 
+app.get('/', (_req, res) => {
+  res.json({
+    name: 'ArchiPrice API',
+    docs: 'Voir README — les routes sont sous /api',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth/register | /api/auth/login | /api/auth/me',
+      projects: '/api/projects',
+      products: '/api/projects/:projectId/products',
+    },
+  });
+});
+
 app.use('/api', apiRouter);
 
 app.use(notFound);

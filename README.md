@@ -122,6 +122,18 @@ Si `MONGODB_URI` est défini et la connexion échoue, l’API ne démarre pas. E
 | `PUT` | `/api/projects/:id` | Modifier un projet |
 | `DELETE` | `/api/projects/:id` | Supprimer un projet |
 
+## API — Produits (authentification requise, liés à un projet)
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| `GET` | `/api/projects/:projectId/products` | Catalogue du projet |
+| `POST` | `/api/projects/:projectId/products` | Ajouter un produit |
+| `PUT` | `/api/projects/:projectId/products/:id` | Modifier un produit |
+| `DELETE` | `/api/projects/:projectId/products/:id` | Supprimer un produit |
+
+Corps JSON exemple (création) : `{ "name": "Carrelage", "unit": "m2", "unitPrice": 45.5, "category": "Revêtements" }`  
+Unités : `u`, `m2`, `ml`, `m3`, `h`, `forfait`.
+
 ```bash
 curl -X POST http://localhost:5000/api/auth/register \
   -H "Content-Type: application/json" \

@@ -9,4 +9,8 @@ export const API_ROUTES = {
     list: '/api/projects',
     detail: (id) => `/api/projects/${id}`,
   },
+  products: {
+    list: (projectId) => `/api/projects/${projectId}/products`,
+    detail: (projectId, productId) => `/api/projects/${projectId}/products/${productId}`,
+  },
 };
