@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import Header from '../components/Header';
+import AuthLayout from '../components/AuthLayout';
+import PasswordInput from '../components/PasswordInput';
 import { useAuth } from '../context/AuthContext';
 import { getApiErrorMessage } from '../services/api';
 
@@ -30,44 +31,53 @@ export default function Login() {
   };
 
   return (
-    <>
-      <Header />
-      <main className="page page-narrow">
-        <h1>Connexion</h1>
-        <form className="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-          <label>
-            Email
-            <input
-              type="email"
-              autoComplete="email"
-              {...register('email', { required: 'Email requis' })}
-            />
-            {errors.email && <span className="field-error">{errors.email.message}</span>}
+    <AuthLayout
+      title="Se connecter"
+      subtitle="Veuillez vous identifier"
+      footer={
+        <>
+          Vous n&apos;avez pas de compte ?{' '}
+          <Link to="/register" className="auth-link">
+            Créer un compte
+          </Link>
+        </>
+      }
+    >
+      <form className="auth-form" onSubmit={handleSubmit(onSubmit)} noValidate>
+        <div className="auth-field">
+          <label className="auth-label" htmlFor="login-email">
+            Adresse email
           </label>
+          <input
+            id="login-email"
+            type="email"
+            className="auth-input"
+            placeholder="Entrez votre adress-email "
+            autoComplete="email"
+            {...register('email', { required: 'Email requis' })}
+          />
+          {errors.email && <span className="auth-field-error">{errors.email.message}</span>}
+        </div>
 
-          <label>
-            Mot de passe
-            <input
-              type="password"
-              autoComplete="current-password"
-              {...register('password', { required: 'Mot de passe requis' })}
-            />
-            {errors.password && (
-              <span className="field-error">{errors.password.message}</span>
-            )}
-          </label>
+        <PasswordInput
+          id="login-password"
+          placeholder="Entrez votre mot de passe"
+          autoComplete="current-password"
+          error={errors.password?.message}
+          forgotLink={
+            <Link to="/login" className="auth-link" onClick={(e) => e.preventDefault()}>
+              Mot de passe oublié ?
+            </Link>
+          }
+          {...register('password', { required: 'Mot de passe requis' })}
+        />
 
-          {apiError && <p className="error">{apiError}</p>}
+        {apiError && <p className="auth-error">{apiError}</p>}
 
-          <button type="submit" className="btn-primary" disabled={isSubmitting}>
-            {isSubmitting ? 'Connexion…' : 'Se connecter'}
-          </button>
-        </form>
-
-        <p>
-          Pas encore de compte ? <Link to="/register">S&apos;inscrire</Link>
-        </p>
-      </main>
-    </>
+        <button type="submit" className="auth-submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Connexion…' : 'Se connecter'}
+        </button>
+      </form>
+    </AuthLayout>
   );
 }

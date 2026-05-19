@@ -7,7 +7,8 @@
 | **2** | Un seul `.env` à la racine | ✅ |
 | **3** | UI Dashboard — projets (CRUD) | ✅ |
 | **4** | Modèle Product + API backend + service frontend | ✅ |
-| **5** | UI catalogue produits par projet | ⏳ Prochaine |
+| **5** | UX/UI Login & Register (maquette) | ✅ |
+| **6** | UI catalogue produits par projet | ⏳ Prochaine |
 
 ## Étape 4 — Product ✅
 

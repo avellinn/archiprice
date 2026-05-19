@@ -13,7 +13,7 @@ const STATUS_LABELS = {
   archived: 'Archivé',
 };
 
-export default function ProjectList() {
+export default function ProjectList({ onProjectsChange }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -29,7 +29,10 @@ export default function ProjectList() {
       setError('');
       try {
         const list = await fetchProjects();
-        if (!cancelled) setProjects(list);
+        if (!cancelled) {
+          setProjects(list);
+          onProjectsChange?.(list);
+        }
       } catch (err) {
         if (!cancelled) {
           setError(getApiErrorMessage(err, 'Impossible de charger les projets'));
@@ -42,7 +45,7 @@ export default function ProjectList() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [onProjectsChange]);
 
   async function handleCreate(e) {
     e.preventDefault();
@@ -52,7 +55,11 @@ export default function ProjectList() {
     setError('');
     try {
       const project = await createProject({ name: name.trim() });
-      setProjects((prev) => [project, ...prev]);
+      setProjects((prev) => {
+        const next = [project, ...prev];
+        onProjectsChange?.(next);
+        return next;
+      });
       setName('');
     } catch (err) {
       setError(getApiErrorMessage(err));
@@ -77,7 +84,11 @@ export default function ProjectList() {
     setError('');
     try {
       const updated = await updateProject(id, { name: editName.trim() });
-      setProjects((prev) => prev.map((p) => (p.id === id ? updated : p)));
+      setProjects((prev) => {
+        const next = prev.map((p) => (p.id === id ? updated : p));
+        onProjectsChange?.(next);
+        return next;
+      });
       cancelEdit();
     } catch (err) {
       setError(getApiErrorMessage(err));
@@ -90,7 +101,11 @@ export default function ProjectList() {
     setError('');
     try {
       await deleteProject(id);
-      setProjects((prev) => prev.filter((p) => p.id !== id));
+      setProjects((prev) => {
+        const next = prev.filter((p) => p.id !== id);
+        onProjectsChange?.(next);
+        return next;
+      });
     } catch (err) {
       setError(getApiErrorMessage(err));
     }
