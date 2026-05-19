@@ -3,7 +3,7 @@ require('./config/env');
 const app = require('./app');
 const { connectDB, disconnectDB } = require('./config/db');
 
-const PORT = process.env.PORT || 5055;
+const PORT = process.env.PORT || 5000;
 
 let server;
 
@@ -17,11 +17,18 @@ async function shutdown(signal) {
 }
 
 async function start() {
+  console.log('[server] Démarrage…');
+  console.log(`[server] NODE_ENV=${process.env.NODE_ENV || 'development'}`);
+  console.log(`[server] PORT=${PORT}`);
+
   await connectDB();
 
   server = app.listen(PORT, () => {
+    console.log('[server] ─────────────────────────────────────');
     console.log(`[server] API ArchiPrice → http://localhost:${PORT}`);
-    console.log(`[server] Health       → http://localhost:${PORT}/api/health`);
+    console.log(`[server] Health         → http://localhost:${PORT}/api/health`);
+    console.log('[server] Logs HTTP actifs (chaque requête s’affiche ici)');
+    console.log('[server] ─────────────────────────────────────');
   });
 }
 

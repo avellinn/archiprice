@@ -142,8 +142,10 @@ curl -X POST http://localhost:5000/api/auth/register \
 
 ## Scripts
 
+Les requêtes HTTP s’affichent dans le terminal backend, ex. `[http] GET /api/health → 200 (12ms)`.
+
 ```bash
-npm run dev:api              # API (nodemon)
+npm run dev:api              # API (nodemon) — regarder CE terminal pour les logs
 npm run dev:web              # Frontend Vite
 npm run clean                # Supprime dist/ et cache Vite
 

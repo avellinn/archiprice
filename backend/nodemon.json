@@ -1,0 +1,5 @@
+{
+  "watch": ["server.js", "app.js", "config", "controllers", "middleware", "models", "routes", "utils"],
+  "ext": "js,json",
+  "verbose": true
+}

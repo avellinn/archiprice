@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const apiRouter = require('./routes');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
+const requestLogger = require('./middleware/requestLogger');
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(
   }),
 );
 app.use(express.json());
+app.use(requestLogger);
 
 app.get('/', (_req, res) => {
   res.json({
