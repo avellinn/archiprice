@@ -4,82 +4,100 @@ Application de chiffrage et d'estimation pour projets d'architecture (SPA React 
 
 ## Prérequis
 
-- **Node.js** 20+ (recommandé)
+- **Node.js** 20+
 - **npm** 10+
-- **MongoDB** 7+ (optionnel en local — l'API démarre sans DB si MongoDB est indisponible)
+- **MongoDB** 7+ (requis pour l'authentification)
 
-## Structure
+## Structure du projet
 
 ```
 archi-price/
-├── backend/     # API Express (port 5000)
-├── frontend/    # SPA React + Vite (port 5173)
-├── .env         # Variables d'environnement (copier depuis .env.example)
-└── .env.example
+├── .env.example          # Variables (copier → .env)
+├── backend/
+│   ├── app.js            # Configuration Express
+│   ├── server.js         # Point d'entrée
+│   ├── config/           # env, db
+│   ├── controllers/      # Logique métier
+│   ├── middleware/       # auth, errors, requireDb
+│   ├── models/           # Schémas Mongoose
+│   ├── routes/           # Routeurs API (/api)
+│   └── utils/
+└── frontend/
+    ├── vite.config.js    # Proxy /api en dev
+    └── src/
+        ├── components/   # UI réutilisable
+        ├── constants/    # Routes API, clés storage
+        ├── config/       # env frontend
+        ├── context/      # AuthContext
+        ├── pages/        # Écrans (routes)
+        └── services/     # Client HTTP (axios)
 ```
 
 ## Installation
 
 ```bash
-# À la racine du dépôt archi-price
 cp .env.example .env
+# Éditer .env : MONGODB_URI, JWT_SECRET
 
 cd backend && npm install
 cd ../frontend && npm install
 ```
 
-Optionnel pour le frontend :
+## Lancement
 
 ```bash
-cp frontend/.env.example frontend/.env
+# Terminal 1 — API
+cd backend && npm run dev
+
+# Terminal 2 — Frontend (proxy /api → :5000)
+cd frontend && npm run dev
 ```
 
-## Lancement en développement
+| Service  | URL |
+|----------|-----|
+| Frontend | http://localhost:5173 |
+| API      | http://localhost:5000 |
+| Health   | http://localhost:5000/api/health |
 
-Terminal 1 — API :
+## Intégration API (frontend)
 
-```bash
-cd backend
-npm run dev
-```
-
-Terminal 2 — Frontend :
-
-```bash
-cd frontend
-npm run dev
-```
-
-| Service   | URL                                      |
-|-----------|------------------------------------------|
-| Frontend  | http://localhost:5173                    |
-| API       | http://localhost:5000                    |
-| Health    | http://localhost:5000/api/health         |
+- **Client unique** : `src/services/api.js` (axios + intercepteurs JWT / 401).
+- **Routes centralisées** : `src/constants/api.js` — ne pas disperser les URLs.
+- **Dev** : proxy Vite (`/api` → backend), `baseURL` vide.
+- **Prod** : définir `VITE_API_URL` vers l'API déployée.
+- **Erreurs** : `getApiErrorMessage(error)` pour afficher `error` renvoyé par l'API.
 
 ## Variables d'environnement
 
-| Variable       | Description                          | Défaut                          |
-|----------------|--------------------------------------|---------------------------------|
-| `PORT`         | Port de l'API                        | `5000`                          |
-| `MONGODB_URI`  | Connexion MongoDB                    | — (API sans DB si absent)       |
-| `JWT_SECRET`   | Secret JWT (auth à venir)            | —                               |
-| `FRONTEND_URL` | Origine autorisée par CORS           | `http://localhost:5173`         |
-| `VITE_API_URL` | URL de l'API pour le frontend        | `http://localhost:5000`         |
+| Variable | Description | Défaut |
+|----------|-------------|--------|
+| `PORT` | Port API | `5000` |
+| `MONGODB_URI` | MongoDB | — |
+| `JWT_SECRET` | Secret JWT | — |
+| `JWT_EXPIRES_IN` | Expiration token | `7d` |
+| `FRONTEND_URL` | CORS | `http://localhost:5173` |
+| `VITE_API_URL` | URL API (prod) | vide (proxy en dev) |
 
-## Scripts utiles
+## API — Authentification
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| `POST` | `/api/auth/register` | Inscription |
+| `POST` | `/api/auth/login` | Connexion → `{ token, user }` |
+| `GET` | `/api/auth/me` | Profil (Bearer token) |
 
 ```bash
-# Backend
-cd backend && npm start      # production
-cd backend && npm run dev    # nodemon
+curl -X POST http://localhost:5000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"demo@archi.price","password":"secret12","name":"Demo"}'
+```
 
-# Frontend
+## Scripts
+
+```bash
+cd backend && npm run dev    # nodemon
+cd backend && npm start      # production
+cd frontend && npm run dev
 cd frontend && npm run build
 cd frontend && npm run lint
 ```
-
-## Sprint 1 — livré
-
-- API : CORS, `GET /api/health`, connexion Mongoose avec repli si DB absente
-- Frontend : routes `/` et `/login`, client `axios` (`src/services/api.js`)
-- Configuration : `.env.example`, ce README

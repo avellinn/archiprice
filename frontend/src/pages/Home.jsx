@@ -1,33 +1,30 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { checkHealth } from '../services/api';
+import { Link, Navigate } from 'react-router-dom';
+import Header from '../components/Header';
+import { useAuth } from '../context/AuthContext';
 
 export default function Home() {
-  const [health, setHealth] = useState(null);
-  const [error, setError] = useState(null);
+  const { isAuthenticated, loading } = useAuth();
 
-  useEffect(() => {
-    checkHealth()
-      .then(setHealth)
-      .catch((err) => setError(err.message));
-  }, []);
+  if (!loading && isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
-    <main className="page">
-      <h1>ArchiPrice</h1>
-      <p>Estimation et chiffrage pour projets d&apos;architecture.</p>
-
-      <section className="card">
-        <h2>API</h2>
-        {health && (
-          <pre>{JSON.stringify(health, null, 2)}</pre>
-        )}
-        {error && <p className="error">Backend inaccessible : {error}</p>}
-      </section>
-
-      <p>
-        <Link to="/login">Connexion</Link>
-      </p>
-    </main>
+    <>
+      <Header />
+      <main className="page">
+        <h1>ArchiPrice</h1>
+        <p>Estimation et chiffrage pour projets d&apos;architecture.</p>
+        <p className="muted">
+          Créez un compte pour accéder à votre espace de travail et simuler vos devis.
+        </p>
+        <p className="actions">
+          <Link to="/register" className="btn-primary btn-inline">
+            Créer un compte
+          </Link>
+          <Link to="/login">Connexion</Link>
+        </p>
+      </main>
+    </>
   );
 }

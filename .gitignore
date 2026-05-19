@@ -1,10 +1,31 @@
+# Dépendances
 node_modules/
+
+# Secrets & env local
 .env
+.env.local
+.env.*.local
 frontend/.env
+
+# Builds
 dist/
 build/
+frontend/dist/
+
+# Logs & cache
+logs/
+*.log
+npm-debug.log*
+.vite/
+
+# OS & IDE
 .DS_Store
-yarn.lock
-.backup/
+Thumbs.db
 .vscode/
 .idea/
+*.sw?
+
+# Divers
+.backup/
+coverage/
+.yarn/
