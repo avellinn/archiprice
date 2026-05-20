@@ -1,6 +1,7 @@
 import { Link, Navigate } from 'react-router-dom';
 import Header from '../components/Header';
-import { useAuth } from '../context/AuthContext';
+import Text from '../components/Text';
+import useAuth from '../context/useAuth';
 
 export default function Home() {
   const { isAuthenticated, loading } = useAuth();
@@ -14,16 +15,16 @@ export default function Home() {
       <Header />
       <main className="page">
         <h1>ArchiPrice</h1>
-        <p>Estimation et chiffrage pour projets d&apos;architecture.</p>
-        <p className="muted">
+        <Text size="lg">Estimation et chiffrage pour projets d&apos;architecture.</Text>
+        <Text className="muted">
           Créez un compte pour accéder à votre espace de travail et simuler vos devis.
-        </p>
-        <p className="actions">
-          <Link to="/register" className="btn-primary btn-inline">
+        </Text>
+        <Text as="div" className="actions">
+          <Link to="/register" className="btn btn--primary btn--md">
             Créer un compte
           </Link>
           <Link to="/login">Connexion</Link>
-        </p>
+        </Text>
       </main>
     </>
   );

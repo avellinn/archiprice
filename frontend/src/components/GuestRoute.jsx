@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import useAuth from '../context/useAuth';
+import Text from './Text';
 
 export default function GuestRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -7,7 +8,7 @@ export default function GuestRoute({ children }) {
   if (loading) {
     return (
       <main className="page">
-        <p>Chargement…</p>
+        <Text>Chargement…</Text>
       </main>
     );
   }

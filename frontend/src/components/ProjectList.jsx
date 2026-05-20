@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react';
+import './ProjectList.css';
+import Button from './Button';
+import Text from './Text';
 import { getApiErrorMessage } from '../services/api';
 import {
   createProject,
@@ -13,7 +16,7 @@ const STATUS_LABELS = {
   archived: 'Archivé',
 };
 
-export default function ProjectList({ onProjectsChange }) {
+export default function ProjectList({ onProjectsChange, showCreateForm = true }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -112,34 +115,40 @@ export default function ProjectList({ onProjectsChange }) {
   }
 
   if (loading) {
-    return <p className="muted">Chargement des projets…</p>;
+    return <Text className="muted">Chargement des projets…</Text>;
   }
 
   return (
     <section className="projects-section">
       <h2>Mes projets</h2>
 
-      {error && <p className="error">{error}</p>}
+      {error && (
+        <Text className="error">
+          {error}
+        </Text>
+      )}
 
-      <form className="form" onSubmit={handleCreate}>
-        <label>
-          Nouveau projet
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Nom du projet"
-            maxLength={200}
-            disabled={submitting}
-          />
-        </label>
-        <button type="submit" className="btn-primary" disabled={submitting || !name.trim()}>
-          {submitting ? 'Création…' : 'Créer le projet'}
-        </button>
-      </form>
+      {showCreateForm && (
+        <form className="form" onSubmit={handleCreate}>
+          <label>
+            Nouveau projet
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Nom du projet"
+              maxLength={200}
+              disabled={submitting}
+            />
+          </label>
+          <Button type="submit" variant="primary" isLoading={submitting} disabled={!name.trim()}>
+            Créer le projet
+          </Button>
+        </form>
+      )}
 
       {projects.length === 0 ? (
-        <p className="muted">Aucun projet pour le moment.</p>
+        <Text className="muted">Aucun projet pour le moment.</Text>
       ) : (
         <ul className="project-list">
           {projects.map((project) => (
@@ -153,38 +162,42 @@ export default function ProjectList({ onProjectsChange }) {
                     maxLength={200}
                   />
                   <div className="project-edit-actions">
-                    <button
+                    <Button
                       type="button"
-                      className="btn-primary btn-sm"
+                      variant="success"
+                      size="sm"
                       onClick={() => handleUpdate(project.id)}
                     >
                       Enregistrer
-                    </button>
-                    <button type="button" className="btn-link" onClick={cancelEdit}>
+                    </Button>
+                    <Button type="button" variant="danger" size="sm" onClick={cancelEdit}>
                       Annuler
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ) : (
                 <>
                   <div className="project-info">
-                    <strong>{project.name}</strong>
-                    <span className="muted project-meta">
+                    <Text as="strong" variant="bold" size="md">
+                      {project.name}
+                    </Text>
+                    <Text as="span" size="sm" className="muted project-meta">
                       {STATUS_LABELS[project.status] ?? project.status}
                       {project.clientName ? ` · ${project.clientName}` : ''}
-                    </span>
+                    </Text>
                   </div>
                   <div className="project-actions">
-                    <button type="button" className="btn-link" onClick={() => startEdit(project)}>
+                    <Button type="button" variant="secondary" size="sm" onClick={() => startEdit(project)}>
                       Modifier
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
-                      className="btn-link btn-danger"
+                      variant="danger"
+                      size="sm"
                       onClick={() => handleDelete(project.id)}
                     >
                       Supprimer
-                    </button>
+                    </Button>
                   </div>
                 </>
               )}

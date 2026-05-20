@@ -1,0 +1,148 @@
+.logout-page {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  background: linear-gradient(180deg, #e5f5ff 0%, #f8fbff 100%);
+}
+
+.logout-card {
+  width: min(480px, 100%);
+  padding: 3rem 3rem 2.4rem;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #102945;
+  text-align: center;
+  box-shadow: 0 18px 34px rgb(15 23 42 / 0.16);
+}
+
+.logout-card__icon {
+  width: 120px;
+  height: 120px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 1.75rem;
+  border: 3px solid #102945;
+  border-radius: 50%;
+  color: #102945;
+}
+
+.logout-card__icon .icon {
+  width: 58px;
+  height: 58px;
+  stroke-width: 1.8;
+}
+
+.logout-card h1 {
+  margin: 0 0 1rem;
+  color: #062b56;
+  font-size: 2.1rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.logout-card__question {
+  margin: 0;
+  color: #182b45;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.logout-card__hint {
+  margin: 1.05rem 0 0;
+  color: #667ca0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.logout-card__divider {
+  height: 1px;
+  margin: 2rem 0;
+  background: #d9e1ec;
+}
+
+.logout-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2.4rem;
+}
+
+.logout-card__cancel {
+  min-width: 120px;
+  color: #102945;
+}
+
+.logout-card__cancel:not(:disabled):hover {
+  box-shadow: none;
+}
+
+.logout-card__confirm {
+  min-width: 154px;
+  background: #0a3764;
+  font-weight: 800;
+}
+
+.logout-card__confirm:hover:not(:disabled) {
+  background: #082a4d;
+}
+
+.dashboard-shell.is-theme-dark .logout-page {
+  background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
+}
+
+.dashboard-shell.is-theme-dark .logout-card {
+  background: #111827;
+  color: #e5e7eb;
+  box-shadow: 0 18px 34px rgb(0 0 0 / 0.34);
+}
+
+.dashboard-shell.is-theme-dark .logout-card__icon {
+  border-color: #93c5fd;
+  color: #93c5fd;
+}
+
+.dashboard-shell.is-theme-dark .logout-card h1,
+.dashboard-shell.is-theme-dark .logout-card__question {
+  color: #f8fafc;
+}
+
+.dashboard-shell.is-theme-dark .logout-card__hint {
+  color: #94a3b8;
+}
+
+.dashboard-shell.is-theme-dark .logout-card__divider {
+  background: #334155;
+}
+
+.dashboard-shell.is-theme-dark .logout-card__cancel {
+  color: #e5e7eb;
+}
+
+@media (max-width: 560px) {
+  .logout-page {
+    padding: 1rem;
+  }
+
+  .logout-card {
+    padding: 2rem 1.25rem 1.5rem;
+  }
+
+  .logout-card__icon {
+    width: 96px;
+    height: 96px;
+  }
+
+  .logout-card h1 {
+    font-size: 1.7rem;
+  }
+
+  .logout-card__actions {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}

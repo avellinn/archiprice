@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import AuthContext from './authContext';
 import { setUnauthorizedHandler } from '../services/api';
 import {
   fetchMe,
@@ -8,11 +9,9 @@ import {
   setStoredToken,
 } from '../services/auth';
 
-const AuthContext = createContext(null);
-
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(getStoredToken()));
 
   const clearSession = useCallback(() => {
     setStoredToken(null);
@@ -24,32 +23,31 @@ export function AuthProvider({ children }) {
     setUser(userData);
   }, []);
 
-  const loadUser = useCallback(async () => {
-    const token = getStoredToken();
-    if (!token) {
-      setUser(null);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const userData = await fetchMe();
-      setUser(userData);
-    } catch {
-      clearSession();
-    } finally {
-      setLoading(false);
-    }
-  }, [clearSession]);
-
   useEffect(() => {
     setUnauthorizedHandler(clearSession);
     return () => setUnauthorizedHandler(null);
   }, [clearSession]);
 
   useEffect(() => {
-    loadUser();
-  }, [loadUser]);
+    if (!loading) return undefined;
+
+    let isActive = true;
+
+    fetchMe()
+      .then((userData) => {
+        if (isActive) setUser(userData);
+      })
+      .catch(() => {
+        if (isActive) clearSession();
+      })
+      .finally(() => {
+        if (isActive) setLoading(false);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [clearSession, loading]);
 
   const login = useCallback(
     async (credentials) => {
@@ -86,12 +84,4 @@ export function AuthProvider({ children }) {
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth doit être utilisé dans un AuthProvider');
-  }
-  return context;
 }

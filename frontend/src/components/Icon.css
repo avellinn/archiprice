@@ -1,0 +1,23 @@
+.icon {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 1em;
+  height: 1em;
+  color: currentColor;
+  overflow: visible;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: -0.125em;
+}
+
+.icon--sm {
+  font-size: 1rem;
+}
+
+.icon--md {
+  font-size: 1.25rem;
+}
+
+.icon--lg {
+  font-size: 1.5rem;
+}

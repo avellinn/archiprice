@@ -1,0 +1,118 @@
+.chart {
+  min-width: 0;
+}
+
+.chart-card {
+  min-width: 0;
+}
+
+.chart-card__header {
+  margin-bottom: 0.75rem;
+}
+
+.chart-card__title {
+  margin: 0;
+  color: #222633;
+  font-size: 1.2rem;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.chart-card__content--donut {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px;
+  gap: 1.4rem;
+  align-items: center;
+}
+
+.chart-card__figure {
+  min-width: 0;
+}
+
+.chart--donut .chart-legend {
+  position: static;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  color: #7d8897;
+}
+
+.chart--donut .chart-legend__item {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  color: #7d8897;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.chart--donut .chart-legend__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.chart--donut .chart-legend__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chart--donut .chart-legend__value {
+  color: #0f172a;
+}
+
+.chart-tooltip {
+  min-width: 96px;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgb(15 23 42 / 0.12);
+}
+
+.chart-tooltip__label {
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.chart-tooltip__value {
+  margin-top: 0.15rem;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.chart-tooltip__meta {
+  margin-top: 0.1rem;
+  color: #94a3b8;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.dashboard-shell.is-theme-dark .chart-card__title,
+.dashboard-shell.is-theme-dark .chart--donut .chart-legend__value {
+  color: #f8fafc;
+}
+
+.dashboard-shell.is-theme-dark .chart--donut .chart-legend,
+.dashboard-shell.is-theme-dark .chart--donut .chart-legend__item {
+  color: #94a3b8;
+}
+
+.dashboard-shell.is-theme-dark .chart-tooltip {
+  border-color: #334155;
+  background: #111827;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 0.28);
+}
+
+.dashboard-shell.is-theme-dark .chart-tooltip__label {
+  color: #94a3b8;
+}
+
+@media (max-width: 620px) {
+  .chart-card__content--donut {
+    grid-template-columns: 1fr;
+  }
+}

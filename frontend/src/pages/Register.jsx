@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import '../styles/authForm.css';
 import AuthLayout from '../components/AuthLayout';
 import PasswordInput from '../components/PasswordInput';
-import { useAuth } from '../context/AuthContext';
+import Text from '../components/Text';
+import useAuth from '../context/useAuth';
 import { getApiErrorMessage } from '../services/api';
 
 export default function Register() {
@@ -54,7 +56,11 @@ export default function Register() {
             autoComplete="email"
             {...register('email', { required: 'Email requis' })}
           />
-          {errors.email && <span className="auth-field-error">{errors.email.message}</span>}
+          {errors.email && (
+            <Text as="span" size="sm" className="auth-field-error">
+              {errors.email.message}
+            </Text>
+          )}
         </div>
 
         <PasswordInput
@@ -68,7 +74,11 @@ export default function Register() {
           })}
         />
 
-        {apiError && <p className="auth-error">{apiError}</p>}
+        {apiError && (
+          <Text size="sm" className="auth-error">
+            {apiError}
+          </Text>
+        )}
 
         <button type="submit" className="auth-submit" disabled={isSubmitting}>
           {isSubmitting ? 'Inscription…' : 'Créer un compte'}

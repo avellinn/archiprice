@@ -1,43 +1,11 @@
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-
-function SearchIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="11" cy="11" r="7" />
-      <path d="m16 16 4 4" />
-    </svg>
-  );
-}
-
-function SunIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
-    </svg>
-  );
-}
-
-
-
-
-function BellIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
-      <path d="M10 21h4" />
-    </svg>
-  );
-}
-
-function ChevronIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="m6 9 6 6 6-6" />
-    </svg>
-  );
-}
+import Avatar from './Avatar';
+import './Header.css';
+import Icon from './Icon';
+import Text from './Text';
+import useAuth from '../context/useAuth';
+import { getAvatarColor, getDisplayName, getUserInitials } from '../utils/userDisplay';
+import siteLogo from '../assets/images/log.png';
 
 export default function Header({
   currentPage = 'Tableau de bord',
@@ -55,6 +23,9 @@ export default function Header({
   onLogout,
 }) {
   const { user, isAuthenticated } = useAuth();
+  const accountName = getDisplayName(user);
+  const accountInitials = getUserInitials(user);
+  const avatarColor = getAvatarColor(user);
 
   function handleSearchSubmit(event) {
     event.preventDefault();
@@ -63,11 +34,11 @@ export default function Header({
 
   if (isAuthenticated) {
     return (
-      <header className="header app-navbar">
-        <div className="navbar-left">
+      <header className="header">
+        <div className="header__left">
           <button
             type="button"
-            className="navbar-menu"
+            className="header__menu-toggle"
             aria-label={isSidebarCollapsed ? 'Afficher le menu' : 'Masquer le menu'}
             aria-pressed={isSidebarCollapsed}
             onClick={onMenuClick}
@@ -76,62 +47,85 @@ export default function Header({
             <span />
             <span />
           </button>
-          <nav className="navbar-breadcrumb" aria-label="Fil d'Ariane">
-            <Link to="/">Home</Link>
-            <span aria-hidden="true">/</span>
-            <strong>{currentPage}</strong>
+          <nav className="header__breadcrumbs" aria-label="Fil d'Ariane">
+            <Link to="/" className="header__breadcrumb-link">Home</Link>
+            <span className="header__breadcrumb-separator" aria-hidden="true">/</span>
+            <Text as="strong" variant="medium" size="md" className="header__breadcrumb-current">
+              {currentPage}
+            </Text>
           </nav>
         </div>
 
-        <div className="navbar-right">
-          <form className="navbar-search" onSubmit={handleSearchSubmit}>
-            <SearchIcon />
+        <div className="header__right">
+          <form className="header__search" onSubmit={handleSearchSubmit}>
+            <span className="header__search-icon">
+              <Icon name="Search" />
+            </span>
             <input
               type="search"
+              className="header__search-input"
               value={searchValue}
               onChange={(event) => onSearchChange?.(event.target.value)}
               placeholder="Rechercher"
               aria-label="Rechercher"
             />
-            <kbd>⌘/</kbd>
+            <kbd className="header__search-shortcut">⌘/</kbd>
           </form>
 
-          <button
-            type="button"
-            className="navbar-icon-button"
-            aria-label={isThemeDark ? 'Activer le thème clair' : 'Activer le thème sombre'}
-            aria-pressed={isThemeDark}
-            onClick={onThemeToggle}
-          >
-            <SunIcon />
-          </button>
-          <button
-            type="button"
-            className="navbar-icon-button"
-            aria-label="Notifications"
-            aria-expanded={isNotificationsOpen}
-            onClick={onNotificationsClick}
-          >
-            <BellIcon />
-          </button>
-
-          <div className="navbar-account-wrap">
+          <div className="header__actions">
             <button
               type="button"
-              className="navbar-account"
-              aria-label={`Compte ${user?.name || 'CIF'}`}
+              className="header__icon-btn"
+              aria-label={isThemeDark ? 'Activer le thème clair' : 'Activer le thème sombre'}
+              aria-pressed={isThemeDark}
+              onClick={onThemeToggle}
+            >
+              <Icon name={isThemeDark ? 'LightMode' : 'DarkMode'} />
+            </button>
+            <button
+              type="button"
+              className="header__icon-btn header__icon-btn--notifications"
+              aria-label="Notifications"
+              aria-expanded={isNotificationsOpen}
+              onClick={onNotificationsClick}
+            >
+              <Icon name="Notifications" />
+              <span className="header__notification-badge">0</span>
+            </button>
+          </div>
+
+          <div className="header__user-wrapper">
+            <button
+              type="button"
+              className="header__user"
+              aria-label={`Compte ${accountName}`}
               aria-expanded={isAccountOpen}
               onClick={onAccountClick}
             >
-              <span className="navbar-avatar">C</span>
-              <strong>CIF</strong>
-              <ChevronIcon />
+              <Avatar
+                name={accountName}
+                initials={accountInitials}
+                size="sm"
+                color={avatarColor}
+                className="header__user-avatar header__user-avatar--initials"
+              />
+              <Text as="strong" variant="medium" size="md" className="header__user-name">
+                {accountName}
+              </Text>
+              <span className="header__user-chevron">
+                <Icon name="ChevronDown" />
+              </span>
             </button>
 
             {isAccountOpen && (
-              <div className="navbar-account-menu">
-                <Link to="/dashboard">Mon espace</Link>
-                <button type="button" onClick={onLogout}>
+              <div className="header__user-menu">
+                <Link to="/workspace" className="header__user-menu-item">Mon espace</Link>
+                <hr className="header__user-menu-separator" />
+                <button
+                  type="button"
+                  className="header__user-menu-item header__user-menu-item--danger"
+                  onClick={onLogout}
+                >
                   Déconnexion
                 </button>
               </div>
@@ -143,9 +137,10 @@ export default function Header({
   }
 
   return (
-    <header className="header">
+    <header className="header header--public">
       <Link to={isAuthenticated ? '/dashboard' : '/'} className="logo">
-        ArchiPrice
+        <img src={siteLogo} alt="" />
+        <span>ArchiPrice</span>
       </Link>
       <nav>
         <Link to="/login">Connexion</Link>
