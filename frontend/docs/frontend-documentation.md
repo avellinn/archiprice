@@ -1,35 +1,35 @@
 # Documentation Frontend ArchiPrice
 
-Ce document décrit la partie frontend du workspace ArchiPrice : son organisation, ses routes, ses composants principaux, le comportement des styles CSS et la meilleure façon de se repérer pour personnaliser l'interface.
+Cette documentation décrit l'état actuel du frontend ArchiPrice, son organisation, ses pages, ses composants, ses styles et les repères utiles pour personnaliser l'interface.
 
 ## Vue D'ensemble
 
-Le frontend est une application React construite avec Vite.
+Le frontend est une SPA React construite avec Vite.
 
-- Point d'entrée React : `src/main.jsx`
-- Composant racine : `src/App.jsx`
-- Styles globaux : `src/index.css`
-- Styles de pages et du shell applicatif : `src/App.css`
-- Pages : `src/pages/`
+- Entrée React : `src/main.jsx`
+- Racine applicative : `src/App.jsx`
+- Styles globaux et variables : `src/index.css`
+- Layouts et styles de pages : `src/App.css`
+- Pages routées : `src/pages/`
 - Composants réutilisables : `src/components/`
 - Services API : `src/services/`
 - Authentification : `src/context/`
 
-Les scripts utiles sont définis dans `package.json` :
+Scripts courants depuis `frontend/` :
 
 ```bash
 npm run dev
-npm run build
 npm run lint
+npm run build
 ```
 
-## Routage
+## Routes
 
-Le routage est centralisé dans `src/App.jsx`.
+Les routes sont déclarées dans `src/App.jsx`.
 
 Routes publiques :
 
-- `/` : page d'accueil
+- `/` : accueil
 - `/login` : connexion
 - `/register` : inscription
 
@@ -38,307 +38,202 @@ Routes protégées :
 - `/dashboard` : tableau de bord
 - `/catalogue` : explorer catalogue
 - `/workspace` : mon espace de travail
-- `/factures` : factures
-- `/deconnexion` : déconnexion
+- `/factures` : estimations/documents exportés
+- `/deconnexion` : confirmation de déconnexion
 
-Les routes protégées passent par `ProtectedRoute`, puis sont rendues dans `AppShell`. `AppShell` affiche la structure commune de l'application connectée : sidebar, header, panneaux flottants, puis la page courante via `<Outlet />`.
+Les routes protégées passent par `ProtectedRoute`, puis sont rendues dans `AppShell`.
 
-## Structure Des Pages
+## Pages
 
-`Home.jsx`  
-Page publique simple. Si l'utilisateur est déjà authentifié, elle redirige vers `/dashboard`.
+### Dashboard
 
-`Login.jsx` et `Register.jsx`  
-Pages d'authentification. Elles utilisent `AuthLayout`, `react-hook-form`, `PasswordInput`, le contexte d'authentification et les styles de `src/styles/authForm.css`.
+Fichier : `src/pages/Dashboard.jsx`
 
-`Dashboard.jsx`  
-Page de tableau de bord. Elle récupère les projets via `fetchProjects()` puis calcule les statistiques affichées dans les cartes, l'historique et la répartition. La page est conçue comme une vue "one page" sans scroll interne.
+Le dashboard affiche :
 
-`Catalogue.jsx`  
-Page de catalogue avec des cartes statiques.
+- statistiques projets : en cours, terminés, traités, total ;
+- graphique d'activité ;
+- liste des projets récents ;
+- donut chart dynamique de répartition ;
+- CTA `Nouveau projet` qui redirige vers `/workspace?newProject=1`.
 
-`Workspace.jsx`  
-Page de gestion des projets. Elle affiche `ProjectList` et une modale de création de projet.
+La page est pensée comme une vue one-page sans scroll global.
 
-`Invoices.jsx`  
-Page dédiée aux factures.
+### Catalogue
 
-`Logout.jsx`  
-Déclenche la déconnexion via le contexte d'authentification.
+Fichier : `src/pages/Catalogue.jsx`
+
+La page catalogue est structurée en trois zones :
+
+- gauche : filtres dynamiques par catégorie, pièce et gamme ;
+- centre : cartes produits avec photo visuelle, nom, prix min/max, boutique et bouton `Ajouter` ;
+- droite : simulation budget sticky.
+
+Le budget live calcule dynamiquement :
+
+- budget cible ;
+- estimation min ;
+- estimation max ;
+- dépassement éventuel.
+
+Les données produits sont aujourd'hui locales dans `PRODUCTS`. Si elles deviennent API, conserver la même forme de données côté service.
+
+### Workspace
+
+Fichier : `src/pages/Workspace.jsx`
+
+La page workspace contient deux modes :
+
+- vue initiale : 4 cards cliquables ;
+- vue miniature : cards compactes en haut et espace projet détaillé via `EspacePro`.
+
+Fonctions principales :
+
+- création de projet via `ModalCreateProject` ;
+- liste dynamique des projets récents ;
+- accès aux articles choisis par projet ;
+- informations projet en bas de la zone centrale ;
+- bouton flottant `Où acheter` avec choix dynamique de boutiques recommandées ;
+- bouton retour vers les 4 cards.
+
+### Authentification
+
+Fichiers :
+
+- `src/pages/Login.jsx`
+- `src/pages/Register.jsx`
+- `src/pages/Logout.jsx`
+
+Les pages login/register utilisent `AuthLayout`, `PasswordInput`, `react-hook-form` et `AuthContext`.
 
 ## Composants Principaux
 
-`AppShell.jsx`  
-Structure principale des pages connectées. Il contrôle :
+- `AppShell.jsx` : structure des pages connectées, sidebar, header, thème, menus.
+- `Sidebar.jsx` : navigation latérale. Styles isolés dans `Sidebar.css`.
+- `Header.jsx` : barre supérieure, recherche, thème, utilisateur.
+- `Avatar.jsx` : avatar utilisateur dynamique.
+- `Button.jsx` : bouton générique avec variantes `primary`, `secondary`, `success`, `danger`, `outline`, `ghost`.
+- `Icon.jsx` : registre central des icônes SVG.
+- `DonutChart.jsx` : chart donut basé sur Recharts.
+- `WorkspaceMiniGrid.jsx` : cards miniatures du workspace.
+- `espacepro.jsx` : layout détaillé des projets dans le workspace.
+- `ModalCreateProject.jsx` : modale de création de projet.
+- `Text.jsx` : composant typographique.
 
-- l'ouverture et la fermeture du sidebar ;
-- le thème clair/sombre ;
-- la recherche du header ;
-- le panneau de notifications ;
-- le menu utilisateur ;
-- les entrées de navigation du sidebar.
+## Services API
 
-`Sidebar.jsx`  
-Composant de navigation latérale. Les menus sont fournis par `AppShell`. Le style du sidebar est volontairement isolé dans `Sidebar.css`.
+Tous les appels API passent par `src/services/api.js`.
 
-`Header.jsx`  
-Barre supérieure. Elle affiche le bouton de menu, le fil d'Ariane, la recherche, les actions rapides, les notifications et le menu utilisateur.
+- `auth.js` : login, register, profil courant.
+- `projects.js` : CRUD projets.
+- `products.js` : CRUD produits liés à un projet.
 
-`Icon.jsx`  
-Composant central pour afficher les icônes utilisées dans l'interface.
+Les routes API sont centralisées dans `src/constants/api.js`.
 
-`Text.jsx`  
-Petit composant typographique pour standardiser les variantes de texte.
+## Organisation CSS
 
-`ProjectList.jsx`  
-Composant CRUD de projets : chargement, création optionnelle, modification et suppression.
+### `src/index.css`
 
-`AuthLayout.jsx`  
-Layout visuel commun aux pages d'authentification.
+Contient les variables globales :
 
-## Services Et Données
+- couleurs ;
+- typographies ;
+- espacements ;
+- rayons ;
+- ombres ;
+- reset de base.
 
-`src/services/api.js` crée l'instance Axios principale.
+Modifier ici les choix partagés par toute l'application.
 
-Son comportement :
+### `src/App.css`
 
-- utilise l'URL API fournie par `getApiBaseUrl()` ;
-- ajoute automatiquement le token JWT dans `Authorization` si un token est stocké ;
-- intercepte les erreurs `401` pour supprimer la session locale ;
-- expose `getApiErrorMessage()` pour afficher des erreurs lisibles.
+Contient les styles transversaux et de pages :
 
-`src/services/auth.js` gère les appels de connexion, inscription et récupération de l'utilisateur courant.
+- shell connecté ;
+- dashboard ;
+- workspace ;
+- catalogue ;
+- modales ;
+- responsive global.
 
-`src/services/projects.js` gère les appels API liés aux projets :
-
-- `fetchProjects()`
-- `createProject(payload)`
-- `updateProject(id, payload)`
-- `deleteProject(id)`
-
-`src/services/products.js` est prévu pour les produits ou éléments catalogue.
-
-## Authentification
-
-L'état d'authentification est porté par `AuthProvider` dans `src/context/AuthContext.jsx`.
-
-Il garde :
-
-- `user` : utilisateur courant ;
-- `loading` : état de chargement initial ;
-- `isAuthenticated` : booléen calculé ;
-- `login()` : connexion ;
-- `register()` : inscription ;
-- `logout()` : suppression de la session.
-
-Au chargement, si un token existe, le frontend appelle `fetchMe()` pour restaurer la session.
-
-## Organisation Des Styles CSS
-
-Le CSS est séparé en plusieurs niveaux.
-
-### 1. Fondations Globales : `src/index.css`
-
-Ce fichier contient les variables globales et les resets de base.
-
-On y trouve notamment :
-
-- polices : `--font-primary`, `--font-heading` ;
-- couleurs : `--color-primary`, `--color-secondary`, `--color-danger`, etc. ;
-- espacements : `--spacing-xs` à `--spacing-xl` ;
-- rayons : `--radius-md`, `--radius-full` ;
-- ombres : `--shadow-lg` ;
-- règles globales `box-sizing`, `body`, `button`, `input`, `#root`.
-
-C'est le bon endroit pour modifier l'identité visuelle globale de l'application, par exemple la couleur principale ou la police.
-
-Exemple :
+Pour changer le fond des pages connectées, regarder les variables de `.dashboard-shell`, notamment :
 
 ```css
-:root {
-  --color-primary: #0a3764;
-  --color-secondary: #ff8a3d;
-}
+--app-shell-background
+--app-content-background
+--dashboard-page-background
+--app-panel-background
+--app-card-background
 ```
 
-### 2. Styles De Layout Et Pages : `src/App.css`
+### CSS de composants
 
-Ce fichier porte une grande partie des styles de structure :
-
-- `.dashboard-shell` : conteneur général des pages connectées ;
-- `.dashboard-content` : zone à droite du sidebar ;
-- `.dashboard-page` et `.dashboard-grid` : layout du dashboard ;
-- `.workspace-page`, `.workspace-heading`, `.workspace-card` : pages internes ;
-- `.catalogue-grid`, `.catalogue-item` : catalogue ;
-- `.modal-backdrop`, `.project-modal` : modale de projet ;
-- classes utilitaires comme `.page`, `.card`, `.btn-primary`, `.muted`, `.actions`.
-
-Le dashboard y est configuré comme une page sans scroll :
-
-```css
-.dashboard-content:has(.dashboard-page) {
-  height: 100vh;
-  overflow: hidden;
-}
-
-.dashboard-page {
-  height: calc(100vh - 64px);
-  overflow: hidden;
-}
-```
-
-La hauteur `64px` correspond au header fixe.
-
-### 3. Styles Isolés De Composants
-
-Certains composants ont leur propre fichier CSS :
+Chaque composant important possède son CSS propre quand son style est suffisamment autonome :
 
 - `Sidebar.css`
 - `Header.css`
-- `AuthLayout.css`
-- `ProjectList.css`
-- `Text.css`
-- `Icon.css`
+- `Button.css`
 - `Avatar.css`
+- `Icon.css`
+- `DonutChart.css`
+- `WorkspaceMiniGrid.css`
+- `espacepro.css`
+- `ModalCreateProject.css`
+- `AuthLayout.css`
 - `PasswordInput.css`
-- `styles/authForm.css`
+- `Text.css`
 
-La logique est simple : si un élément appartient clairement à un composant, il faut d'abord chercher son style dans le fichier CSS du composant.
+## Repères De Personnalisation
 
-Exemples :
+Modifier la navigation :
 
-- modifier le menu latéral : `src/components/Sidebar.css`
-- modifier la barre haute : `src/components/Header.css`
-- modifier les formulaires login/register : `src/styles/authForm.css`
-- modifier la carte de connexion : `src/components/AuthLayout.css`
-- modifier la liste de projets : `src/components/ProjectList.css`
+1. `src/components/AppShell.jsx`
+2. vérifier la route dans `src/App.jsx`
+3. ajuster les icônes dans `Icon.jsx` si nécessaire
 
-## Indépendance Du Sidebar
+Modifier le catalogue :
 
-Le sidebar a un style indépendant dans `src/components/Sidebar.css`.
+1. données produits et filtres : `src/pages/Catalogue.jsx`
+2. layout et style : blocs `.catalogue-*` dans `src/App.css`
 
-Cela signifie que ses couleurs, espacements, typographies et rayons ne dépendent pas des variables globales CSS. Par exemple, il utilise directement :
+Modifier le workspace :
 
-```css
-background: #0a3764;
-color: #ffffff;
-border-radius: 8px;
+1. orchestration : `src/pages/Workspace.jsx`
+2. cards miniatures : `WorkspaceMiniGrid.jsx` et `WorkspaceMiniGrid.css`
+3. espace projet : `espacepro.jsx` et `espacepro.css`
+
+Modifier le dashboard :
+
+1. logique : `src/pages/Dashboard.jsx`
+2. styles : `.dashboard-*`, `.stat-*`, `.history-*` dans `src/App.css`
+
+## Nettoyage Et Build
+
+Depuis la racine :
+
+```bash
+npm run clean
 ```
 
-Cette séparation permet de modifier `index.css` sans risquer de changer involontairement le rendu du sidebar.
+Le script supprime :
 
-Pour personnaliser le sidebar :
+- `frontend/dist`
+- caches Vite : `.vite`, `.vite-temp`, `.tmp`
+- cache backend éventuel : `backend/node_modules/.cache`
 
-- menus et labels : `src/components/AppShell.jsx`
-- rendu HTML : `src/components/Sidebar.jsx`
-- style visuel : `src/components/Sidebar.css`
-- icônes : `src/components/Icon.jsx`
+Ne pas commiter :
 
-## Comportement Responsive
+- `node_modules/`
+- `frontend/dist/`
+- `.env`
+- caches locaux
 
-Les styles responsives sont principalement placés en bas des fichiers CSS avec des media queries.
+## Checklist Avant Livraison
 
-Dans `App.css` :
-
-- à moins de `980px`, le contenu n'a plus de marge gauche fixe ;
-- les grilles passent en une colonne ;
-- les espacements diminuent.
-
-Dans `Sidebar.css` :
-
-- à moins de `1023px`, le sidebar est masqué par défaut avec `transform: translateX(-100%)` ;
-- quand il reçoit `.sidebar--open`, il revient à l'écran ;
-- à partir de `1024px`, le bouton de fermeture interne est masqué.
-
-Dans `Header.css` :
-
-- à moins de `980px`, le header commence à gauche de l'écran ;
-- à moins de `620px`, la recherche et le nom utilisateur sont masqués pour garder une barre compacte.
-
-## Comment Se Repérer Pour Personnaliser
-
-Pour modifier une page :
-
-1. Aller dans `src/pages/`.
-2. Ouvrir le fichier de la page concernée.
-3. Identifier les classes CSS utilisées dans le JSX.
-4. Chercher ces classes dans `src/App.css` ou dans le CSS du composant utilisé.
-
-Pour modifier un composant réutilisable :
-
-1. Aller dans `src/components/`.
-2. Ouvrir le composant `.jsx`.
-3. Ouvrir son fichier `.css` associé s'il existe.
-4. Modifier les classes locales du composant.
-
-Pour modifier les couleurs globales :
-
-1. Ouvrir `src/index.css`.
-2. Modifier les variables dans `:root`.
-3. Vérifier les composants qui n'utilisent pas ces variables, notamment le sidebar.
-
-Pour modifier la navigation :
-
-1. Ouvrir `src/components/AppShell.jsx`.
-2. Modifier le tableau `sidebarSections`.
-3. Vérifier que la route existe dans `src/App.jsx`.
-
-Pour modifier une route :
-
-1. Ajouter ou modifier la page dans `src/pages/`.
-2. Déclarer la route dans `src/App.jsx`.
-3. Ajouter l'entrée de menu dans `AppShell.jsx` si nécessaire.
-
-Pour modifier les appels API :
-
-1. Vérifier les routes dans `src/constants/api.js`.
-2. Modifier ou ajouter la fonction dans `src/services/`.
-3. Appeler le service depuis la page ou le composant concerné.
-
-## Convention De Nommage CSS
-
-Le projet utilise souvent une convention proche de BEM pour les composants :
-
-```css
-.sidebar
-.sidebar__header
-.sidebar__nav-link
-.sidebar__nav-link--active
+```bash
+cd frontend
+npm run lint
+npm run build
 ```
 
-Lecture rapide :
-
-- `bloc` : composant principal ;
-- `bloc__element` : élément interne ;
-- `bloc__element--modifier` : variante ou état.
-
-Cette convention aide à éviter les conflits entre composants.
-
-## Points D'Attention
-
-Le header et le sidebar sont fixes. Quand on modifie leur largeur ou leur hauteur, il faut aussi vérifier :
-
-- `left: 280px` dans `Header.css` ;
-- `margin-left: 280px` dans `App.css` ;
-- `height: 64px` dans `Header.css` ;
-- `height: calc(100vh - 64px)` dans `App.css`.
-
-Le dashboard est volontairement sans scroll. Si de nouveaux blocs sont ajoutés à `Dashboard.jsx`, il faut ajuster :
-
-- `.dashboard-grid`
-- les `grid-template-columns`
-- les `grid-template-rows`
-- les `gap`
-- les `padding`
-- les hauteurs des graphiques.
-
-Les styles du sidebar sont indépendants. Modifier une variable dans `index.css` ne changera pas automatiquement le sidebar.
-
-## Checklist Avant Modification Visuelle
-
-- Identifier le composant ou la page concernée.
-- Vérifier si le style est dans un CSS local ou dans `App.css`.
-- Modifier les variables globales uniquement pour les choix partagés par toute l'application.
-- Tester les tailles desktop, tablette et mobile.
-- Lancer `npm run lint`.
-- Lancer `npm run build`.
+Le warning Vite sur les chunks > 500 kB est connu. Il n'est pas bloquant, mais une future optimisation peut passer par du code splitting.

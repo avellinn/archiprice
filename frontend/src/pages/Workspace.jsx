@@ -232,6 +232,11 @@ export default function Workspace() {
     handleCardAction(card);
   }
 
+  function handleBackToCards() {
+    setActiveCardId('');
+    setIsShopSelectorOpen(false);
+  }
+
   function handleCardKeyDown(event, card) {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
@@ -341,6 +346,15 @@ export default function Workspace() {
       <section className="workspace-hub" aria-label="Mon espace de travail">
         {activeCard ? (
           <>
+            <button
+              type="button"
+              className="workspace-back-button"
+              aria-label="Retour aux cartes"
+              onClick={handleBackToCards}
+            >
+              <Icon name="ArrowLeft" size="sm" />
+            </button>
+
             <WorkspaceMiniGrid
               cards={workspaceCards}
               activeCardId={activeCard.id}

@@ -13,6 +13,12 @@ const ICONS = {
       <path key="arrow-head" d="m13 5 7 7-7 7" />,
     ],
   },
+  ArrowLeft: {
+    paths: [
+      <path key="arrow-line" d="M19 12H5" />,
+      <path key="arrow-head" d="m11 5-7 7 7 7" />,
+    ],
+  },
   Bell: {
     paths: [
       <path key="bell-body" d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />,
@@ -24,8 +30,17 @@ const ICONS = {
       <path key="chat" d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />,
     ],
   },
+  Check: {
+    paths: [<path key="check" d="m5 12 4 4 10-10" />],
+  },
   ChevronDown: {
     paths: [<path key="chevron" d="m6 9 6 6 6-6" />],
+  },
+  ChevronLeft: {
+    paths: [<path key="chevron-left" d="m15 18-6-6 6-6" />],
+  },
+  ChevronRight: {
+    paths: [<path key="chevron-right" d="m9 18 6-6-6-6" />],
   },
   Close: {
     paths: [
@@ -118,10 +133,14 @@ const NAME_ALIASES = {
   add: 'Add',
   plus: 'Add',
   arrowRight: 'ArrowRight',
+  arrowLeft: 'ArrowLeft',
   bell: 'Bell',
   chat: 'Chat',
+  check: 'Check',
   chevron: 'ChevronDown',
   chevronDown: 'ChevronDown',
+  chevronLeft: 'ChevronLeft',
+  chevronRight: 'ChevronRight',
   ChevronDownRounded: 'ChevronDown',
   close: 'Close',
   dashboard: 'Dashboard',

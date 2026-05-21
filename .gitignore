@@ -13,6 +13,9 @@ dist/
 build/
 frontend/dist/
 .vite/
+.vite-temp/
+.tmp/
+.cache/
 *.tsbuildinfo
 
 # Logs

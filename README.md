@@ -51,6 +51,8 @@ npm run env:migrate
 ```
 
 Voir la progression détaillée : [`docs/ROADMAP.md`](docs/ROADMAP.md).
+Documentation frontend : [`frontend/docs/frontend-documentation.md`](frontend/docs/frontend-documentation.md).
+Audit et nettoyage du workspace : [`docs/WORKSPACE_AUDIT.md`](docs/WORKSPACE_AUDIT.md).
 
 ## Lancement
 
@@ -147,7 +149,7 @@ Les requêtes HTTP s’affichent dans le terminal backend, ex. `[http] GET /api/
 ```bash
 npm run dev:api              # API (nodemon) — regarder CE terminal pour les logs
 npm run dev:web              # Frontend Vite
-npm run clean                # Supprime dist/ et cache Vite
+npm run clean                # Supprime dist/ et caches locaux générés
 
 cd backend && npm start      # production API
 cd frontend && npm run build
