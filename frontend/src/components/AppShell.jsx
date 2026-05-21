@@ -4,14 +4,14 @@ import Header from './Header';
 import Icon from './Icon';
 import Sidebar from './Sidebar';
 import useAuth from '../context/useAuth';
-import { getDisplayName, getUserInitials } from '../utils/userDisplay';
+import { getAvatarColor, getDisplayName, getUserInitials } from '../utils/userDisplay';
 import siteLogo from '../assets/images/log.png';
 
 const PAGE_TITLES = {
   '/dashboard': 'Tableau de bord',
   '/catalogue': 'Explorer catalogue',
   '/workspace': 'Mon espace de travail',
-  '/factures': 'Factures',
+  '/factures': 'Estimations exportées',
   '/deconnexion': 'Déconnexion',
 };
 
@@ -51,7 +51,7 @@ export default function AppShell() {
           },
           {
             id: 'invoices',
-            label: 'Factures',
+            label: 'Estimations exportées',
             path: '/factures',
             icon: <Icon name="ReceiptLong" />,
           },
@@ -99,6 +99,7 @@ export default function AppShell() {
           initials: getUserInitials(user),
           name: getDisplayName(user),
           email: user?.email || '',
+          avatarColor: getAvatarColor(user),
         }}
       />
 

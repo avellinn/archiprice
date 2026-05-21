@@ -8,6 +8,21 @@ import {
   register as registerRequest,
   setStoredToken,
 } from '../services/auth';
+import { getRandomAvatarColor } from '../utils/userDisplay';
+
+const AVATAR_COLOR_KEY = 'archiprice_avatar_color';
+
+function withSessionAvatarColor(userData, shouldRefresh = false) {
+  if (!userData) return userData;
+
+  const previousColor = sessionStorage.getItem(AVATAR_COLOR_KEY);
+  const avatarColor = shouldRefresh || !previousColor
+    ? getRandomAvatarColor(previousColor)
+    : previousColor;
+
+  sessionStorage.setItem(AVATAR_COLOR_KEY, avatarColor);
+  return { ...userData, avatarColor };
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -15,12 +30,13 @@ export function AuthProvider({ children }) {
 
   const clearSession = useCallback(() => {
     setStoredToken(null);
+    sessionStorage.removeItem(AVATAR_COLOR_KEY);
     setUser(null);
   }, []);
 
-  const applySession = useCallback((token, userData) => {
+  const applySession = useCallback((token, userData, shouldRefreshAvatar = false) => {
     setStoredToken(token);
-    setUser(userData);
+    setUser(withSessionAvatarColor(userData, shouldRefreshAvatar));
   }, []);
 
   useEffect(() => {
@@ -35,7 +51,7 @@ export function AuthProvider({ children }) {
 
     fetchMe()
       .then((userData) => {
-        if (isActive) setUser(userData);
+        if (isActive) setUser(withSessionAvatarColor(userData));
       })
       .catch(() => {
         if (isActive) clearSession();
@@ -52,7 +68,7 @@ export function AuthProvider({ children }) {
   const login = useCallback(
     async (credentials) => {
       const { token, user: userData } = await loginRequest(credentials);
-      applySession(token, userData);
+      applySession(token, userData, true);
       return userData;
     },
     [applySession],
@@ -61,7 +77,7 @@ export function AuthProvider({ children }) {
   const register = useCallback(
     async (payload) => {
       const { token, user: userData } = await registerRequest(payload);
-      applySession(token, userData);
+      applySession(token, userData, true);
       return userData;
     },
     [applySession],

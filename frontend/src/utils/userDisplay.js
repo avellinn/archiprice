@@ -21,7 +21,16 @@ export function getUserInitials(user) {
 }
 
 export function getAvatarColor(user) {
+  if (user?.avatarColor) return user.avatarColor;
+
   const source = user?.email || user?.name || 'archiprice';
   const sum = [...source].reduce((total, char) => total + char.charCodeAt(0), 0);
   return AVATAR_COLORS[sum % AVATAR_COLORS.length];
+}
+
+export function getRandomAvatarColor(previousColor) {
+  const availableColors = previousColor
+    ? AVATAR_COLORS.filter((color) => color !== previousColor)
+    : AVATAR_COLORS;
+  return availableColors[Math.floor(Math.random() * availableColors.length)];
 }

@@ -7,6 +7,12 @@ const ICONS = {
       <path key="add-vertical" d="M12 5v14" />,
     ],
   },
+  ArrowRight: {
+    paths: [
+      <path key="arrow-line" d="M5 12h14" />,
+      <path key="arrow-head" d="m13 5 7 7-7 7" />,
+    ],
+  },
   Bell: {
     paths: [
       <path key="bell-body" d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />,
@@ -111,6 +117,7 @@ const ICONS = {
 const NAME_ALIASES = {
   add: 'Add',
   plus: 'Add',
+  arrowRight: 'ArrowRight',
   bell: 'Bell',
   chat: 'Chat',
   chevron: 'ChevronDown',

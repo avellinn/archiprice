@@ -114,7 +114,6 @@ export default function Sidebar({
       <nav className="sidebar__nav" aria-label="Navigation principale">
         {visibleSections.map((section, sectionIndex) => (
           <div key={section.id || section.title || `section-${sectionIndex}`} className="sidebar__section">
-            {section.title && <h3 className="sidebar__section-title">{section.title}</h3>}
             <ul className="sidebar__nav-list">
               {section.items.map((item) => {
                 if (!item?.id) return null;
@@ -165,7 +164,12 @@ export default function Sidebar({
             {user.avatar ? (
               <img src={user.avatar} alt={user.name || 'Profil utilisateur'} className="sidebar__user-avatar" />
             ) : (
-              <div className="sidebar__user-avatar sidebar__user-avatar--initials">{getInitials(user)}</div>
+              <div
+                className="sidebar__user-avatar sidebar__user-avatar--initials"
+                style={{ backgroundColor: user.avatarColor }}
+              >
+                {getInitials(user)}
+              </div>
             )}
             <div className="sidebar__user-info">
               <div className="sidebar__user-name">{user.name || 'Utilisateur'}</div>

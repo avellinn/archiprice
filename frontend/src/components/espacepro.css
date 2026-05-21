@@ -1,0 +1,332 @@
+.espacepro {
+  --espacepro-left-width: minmax(220px, 0.7fr);
+  --espacepro-center-width: minmax(620px, 1fr);
+  --espacepro-info-height: 178px;
+  --espacepro-projects-bg: #f0f0f0;
+  --espacepro-projects-border: var(--app-border-color);
+  --espacepro-projects-radius: 12px 0 0 12px;
+  --espacepro-projects-padding: 0.55rem;
+  --espacepro-projects-shadow: 0 12px 28px rgb(15 23 42 / 0.04);
+  --espacepro-articles-bg: #f0f0f0;
+  --espacepro-articles-border: var(--app-border-color);
+  --espacepro-articles-radius: 0 12px 0 0;
+  --espacepro-articles-padding: 0 0 1rem;
+  --espacepro-articles-shadow: 0 12px 28px rgb(15 23 42 / 0.04);
+  --espacepro-info-bg: #f0f0f0;
+  --espacepro-info-border: var(--app-border-color);
+  --espacepro-info-radius: 0 0 12px 0;
+  --espacepro-info-padding: 0.8rem;
+  --espacepro-info-shadow: 0 12px 28px rgb(15 23 42 / 0.04);
+  --espacepro-scrollbar-size: 3px;
+  --espacepro-scrollbar-thumb: #CBD5E1;
+  --espacepro-scrollbar-thumb-hover: rgba(15, 23, 42, 0.898);
+  --espacepro-scrollbar-track: transparent;
+  display: grid;
+  grid-template-columns:
+    var(--espacepro-left-width)
+    var(--espacepro-center-width);
+  grid-template-rows: minmax(0, 1fr) var(--espacepro-info-height);
+  grid-template-areas:
+    "projects articles"
+    "projects info";
+  column-gap: 0;
+  row-gap: 0;
+  height: calc(100% - 132px);
+  min-height: 0;
+  margin-top: 2.75rem;
+  overflow: hidden;
+}
+
+.espacepro__projects,
+.espacepro__articles,
+.espacepro__info {
+  min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+  border: 10px solid var(--espacepro-column-border);
+  border-radius: var(--espacepro-column-radius);
+  background-color: var(--espacepro-column-bg);
+  box-shadow: var(--espacepro-column-shadow);
+  scrollbar-color: var(--espacepro-scrollbar-thumb) var(--espacepro-scrollbar-track);
+  scrollbar-width: thin;
+}
+
+.espacepro__projects::-webkit-scrollbar,
+.espacepro__articles::-webkit-scrollbar,
+.espacepro__info::-webkit-scrollbar {
+  width: var(--espacepro-scrollbar-size);
+  height: var(--espacepro-scrollbar-size);
+}
+
+.espacepro__projects::-webkit-scrollbar-track,
+.espacepro__articles::-webkit-scrollbar-track,
+.espacepro__info::-webkit-scrollbar-track {
+  background: var(--espacepro-scrollbar-track);
+}
+
+.espacepro__projects::-webkit-scrollbar-thumb,
+.espacepro__articles::-webkit-scrollbar-thumb,
+.espacepro__info::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--espacepro-scrollbar-thumb);
+}
+
+.espacepro__projects::-webkit-scrollbar-thumb:hover,
+.espacepro__articles::-webkit-scrollbar-thumb:hover,
+.espacepro__info::-webkit-scrollbar-thumb:hover {
+  background: var(--espacepro-scrollbar-thumb-hover);
+}
+
+.espacepro__projects {
+  --espacepro-column-bg: var(--espacepro-projects-bg);
+  --espacepro-column-border: var(--espacepro-projects-border);
+  --espacepro-column-radius: var(--espacepro-projects-radius);
+  --espacepro-column-shadow: var(--espacepro-projects-shadow);
+  grid-area: projects;
+  border-right-width: 5px;
+  padding: var(--espacepro-projects-padding);
+}
+
+.espacepro__articles {
+  --espacepro-column-bg: var(--espacepro-articles-bg);
+  --espacepro-column-border: var(--espacepro-articles-border);
+  --espacepro-column-radius: var(--espacepro-articles-radius);
+  --espacepro-column-shadow: var(--espacepro-articles-shadow);
+  grid-area: articles;
+  border-right-width: 10px;
+  border-left: 0;
+  border-bottom-width: 5px;
+  padding: var(--espacepro-articles-padding);
+}
+
+.espacepro__info {
+  --espacepro-column-bg: var(--espacepro-info-bg);
+  --espacepro-column-border: var(--espacepro-info-border);
+  --espacepro-column-radius: var(--espacepro-info-radius);
+  --espacepro-column-shadow: var(--espacepro-info-shadow);
+  grid-area: info;
+  height: auto;
+  border-left: 0;
+  border-top: 0;
+  overflow-y: hidden;
+  padding: var(--espacepro-info-padding);
+}
+
+.espacepro__project-item {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.8rem 0.65rem;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--app-text-color);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.espacepro__project-item--active {
+  background: #433f8fcf;
+  color: #ffffff;
+}
+
+.espacepro__project-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 50%;
+  background: #f1edff;
+  color: #514cc4;
+}
+
+.espacepro__project-item--active .espacepro__project-icon {
+  background: #ffffff;
+}
+
+.espacepro__project-item strong,
+.espacepro__project-item small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.espacepro__project-item strong {
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.espacepro__project-item small {
+  margin-top: 0.2rem;
+  color: currentColor;
+  font-size: 0.76rem;
+  opacity: 0.72;
+}
+
+.espacepro__articles-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 0.75rem;
+  border-radius: 12px;
+  background: #433f8fcf;
+  text-align: center;
+}
+
+.espacepro__articles-header span {
+  padding: 0.65rem;
+  border-radius: 10px;
+  background: #fcfcfc;
+  color: var(--app-heading-color);
+  font-weight: 700;
+  box-shadow: 0 1px 6px rgb(15 23 42 / 0.08);
+}
+
+.espacepro__article-list {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0.75rem;
+}
+
+.espacepro__article-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--app-border-color);
+  border-radius: 12px;
+  background: var(--app-card-background);
+}
+
+.espacepro__article-image {
+  position: relative;
+  display: grid;
+  min-height: 235px;
+  place-items: center;
+  overflow: hidden;
+  background: #e9e8f7;
+  color: #7d79d0;
+}
+
+.espacepro__article-image span {
+  position: relative;
+  z-index: 1;
+  font-size: 3rem;
+  font-weight: 900;
+}
+
+.espacepro__article-image i {
+  position: absolute;
+  inset: 0;
+  opacity: 0.9;
+  background:
+    radial-gradient(circle at 14% 20%, #817dd2 0 18px, transparent 19px),
+    radial-gradient(circle at 38% 82%, #817dd2 0 22px, transparent 23px),
+    linear-gradient(135deg, transparent 0 42%, #817dd2 43% 48%, transparent 49% 100%);
+  transform: translateX(var(--article-pattern-offset, 0));
+}
+
+.espacepro__article-body {
+  padding: 1rem;
+}
+
+.espacepro__article-body h3 {
+  margin: 0 0 0.4rem;
+  color: var(--app-heading-color);
+  font-size: 1.1rem;
+}
+
+.espacepro__article-body p {
+  margin: 0 0 0.75rem;
+  color: var(--app-muted-color);
+}
+
+.espacepro__article-body strong {
+  color: var(--app-heading-color);
+}
+
+.espacepro__empty {
+  margin: 1rem;
+  color: var(--app-muted-color);
+}
+
+.espacepro__info {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr);
+  align-content: start;
+  gap: 0.7rem;
+}
+
+.espacepro__info-section {
+  padding: 1rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 100px;
+}
+
+.espacepro__info-section:only-child {
+  grid-column: 1 / -1;
+}
+
+.espacepro__info-section h2 {
+  margin: 0 0 0.85rem;
+  color: var(--app-heading-color);
+  font-size: 1.05rem;
+}
+
+.espacepro__info-section dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin: 0;
+}
+
+.espacepro__info-section dl div {
+  min-width: 0;
+  padding: 0.85rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 8px;
+}
+
+.espacepro__info-section dt {
+  color: black;
+  font-size: 0.86rem;
+  font-weight: 500;
+}
+
+.espacepro__info-section dd {
+  margin: 0.3rem 0 0;
+  color: var(--app-heading-color);
+  font-weight: 400;
+  font-size: 0.76rem;
+}
+
+@media (max-width: 980px) {
+  .espacepro {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(150px, 0.35fr) minmax(0, 1fr) minmax(180px, 0.35fr);
+    grid-template-areas:
+      "projects"
+      "articles"
+      "info";
+    height: calc(100% - 132px);
+    overflow: hidden;
+    row-gap: 0.5rem;
+  }
+
+  .espacepro__projects,
+  .espacepro__articles,
+  .espacepro__info {
+    max-height: none;
+    border: 1px solid var(--app-border-color);
+    border-radius: 12px;
+  }
+
+  .espacepro__info {
+    grid-template-columns: 1fr;
+  }
+
+  .espacepro__info-section dl {
+    grid-template-columns: 1fr;
+  }
+}

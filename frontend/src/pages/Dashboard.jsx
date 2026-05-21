@@ -50,6 +50,25 @@ function getDonutDisplayValue(value, total) {
   return value > 0 ? value : Math.max(total * 0.04, 0.08);
 }
 
+function getProjectExportedEstimateCount(project) {
+  const numericFields = [
+    'exportedEstimatesCount',
+    'exportedEstimationsCount',
+    'estimationExportsCount',
+    'exportedDocumentsCount',
+    'exportsCount',
+  ];
+
+  const countFromNumber = numericFields.find((field) => Number.isFinite(Number(project[field])));
+  if (countFromNumber) return Number(project[countFromNumber]);
+
+  const arrayFields = ['exportedEstimates', 'exportedEstimations', 'estimationExports', 'exportedDocuments', 'exports'];
+  const countFromArray = arrayFields.find((field) => Array.isArray(project[field]));
+  if (countFromArray) return project[countFromArray].length;
+
+  return project.isEstimateExported || project.hasExportedEstimate ? 1 : 0;
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
@@ -74,12 +93,17 @@ export default function Dashboard() {
     const completed = projects.filter(isFinished).length;
     const active = Math.max(projects.length - completed, 0);
     const processed = projects.filter((project) => project.status !== 'draft').length;
+    const exportedEstimates = projects.reduce(
+      (total, project) => total + getProjectExportedEstimateCount(project),
+      0,
+    );
 
     return {
       total: projects.length,
       active,
       completed,
       processed,
+      exportedEstimates,
     };
   }, [projects]);
 
@@ -112,6 +136,14 @@ export default function Dashboard() {
       chartValue: getDonutDisplayValue(stats.total, stats.total),
       percent: stats.total ? 100 : 0,
       color: '#1d0870',
+    },
+    {
+      name: 'Estimations exportées',
+      value: stats.exportedEstimates,
+      chartValue: stats.exportedEstimates,
+      percent: getPercent(stats.exportedEstimates, Math.max(stats.total, stats.exportedEstimates)),
+      color: '#c0893f',
+      unit: 'estimation',
     },
   ];
 
@@ -210,7 +242,7 @@ export default function Dashboard() {
 
         <section id="project-history" className="dashboard-panel history-panel">
           <div className="panel-heading row-heading">
-            <h2>Historique</h2>
+            <h2>Projets récents</h2>
             <Text as="span" variant="bold" size="sm">
               Filtrer par date : Tout
             </Text>
