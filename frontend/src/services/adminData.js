@@ -1,8 +1,13 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const ADMIN_DATA_KEY = 'archiprice_admin_data';
+const ADMIN_DATA_EVENT = 'archiprice-admin-data';
+const ADMIN_DATA_CHANNEL = 'archiprice-admin-data-channel';
+const ADMIN_DATA_POLL_INTERVAL = 500;
 
 export const DEFAULT_ADMIN_DATA = {
+  __version: 1,
+  __updatedAt: 0,
   users: [
     {
       id: 'user-jean-dupont',
@@ -225,10 +230,36 @@ export const DEFAULT_ADMIN_DATA = {
   ],
 };
 
+function canUseBrowserStorage() {
+  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+}
+
+function getAdminDataSnapshot() {
+  if (!canUseBrowserStorage()) return '';
+
+  try {
+    return window.localStorage.getItem(ADMIN_DATA_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+function parseAdminDataSnapshot(snapshot) {
+  if (!snapshot) return null;
+
+  try {
+    return JSON.parse(snapshot);
+  } catch {
+    return null;
+  }
+}
+
 function mergeAdminData(savedData) {
   return {
     ...DEFAULT_ADMIN_DATA,
     ...(savedData || {}),
+    __version: savedData?.__version || DEFAULT_ADMIN_DATA.__version,
+    __updatedAt: savedData?.__updatedAt || DEFAULT_ADMIN_DATA.__updatedAt,
     taxonomies: {
       ...DEFAULT_ADMIN_DATA.taxonomies,
       ...(savedData?.taxonomies || {}),
@@ -241,17 +272,34 @@ function mergeAdminData(savedData) {
 }
 
 export function getAdminData() {
-  try {
-    const savedData = JSON.parse(localStorage.getItem(ADMIN_DATA_KEY) || 'null');
-    return mergeAdminData(savedData);
-  } catch {
-    return DEFAULT_ADMIN_DATA;
+  return mergeAdminData(parseAdminDataSnapshot(getAdminDataSnapshot()));
+}
+
+function notifyAdminDataChange(data) {
+  if (typeof window === 'undefined') return;
+
+  window.dispatchEvent(new CustomEvent(ADMIN_DATA_EVENT, { detail: data }));
+
+  if ('BroadcastChannel' in window) {
+    const channel = new BroadcastChannel(ADMIN_DATA_CHANNEL);
+    channel.postMessage({ type: ADMIN_DATA_EVENT, data });
+    channel.close();
   }
 }
 
 export function saveAdminData(data) {
-  localStorage.setItem(ADMIN_DATA_KEY, JSON.stringify(data));
-  window.dispatchEvent(new Event('archiprice-admin-data'));
+  const nextData = {
+    ...mergeAdminData(data),
+    __version: Number(data?.__version || 0) + 1,
+    __updatedAt: Date.now(),
+  };
+
+  if (canUseBrowserStorage()) {
+    window.localStorage.setItem(ADMIN_DATA_KEY, JSON.stringify(nextData));
+  }
+  notifyAdminDataChange(nextData);
+
+  return nextData;
 }
 
 export function createAdminId(prefix) {
@@ -260,26 +308,66 @@ export function createAdminId(prefix) {
 
 export function useAdminData() {
   const [data, setData] = useState(getAdminData);
+  const snapshotRef = useRef(getAdminDataSnapshot());
 
-  useEffect(() => {
-    function handleDataChange() {
-      setData(getAdminData());
+  const syncAdminData = useCallback((incomingData) => {
+    const nextSnapshot = getAdminDataSnapshot();
+
+    if (nextSnapshot !== snapshotRef.current) {
+      snapshotRef.current = nextSnapshot;
+      setData(mergeAdminData(parseAdminDataSnapshot(nextSnapshot)));
+      return;
     }
 
-    window.addEventListener('storage', handleDataChange);
-    window.addEventListener('archiprice-admin-data', handleDataChange);
+    if (incomingData && typeof incomingData === 'object') {
+      const incomingSnapshot = JSON.stringify(incomingData);
 
-    return () => {
-      window.removeEventListener('storage', handleDataChange);
-      window.removeEventListener('archiprice-admin-data', handleDataChange);
-    };
+      if (incomingSnapshot !== snapshotRef.current) {
+        snapshotRef.current = incomingSnapshot;
+        setData(mergeAdminData(incomingData));
+      }
+    }
   }, []);
 
+  useEffect(() => {
+    function handleAdminDataEvent(event) {
+      syncAdminData(event?.detail || event?.data?.data);
+    }
+
+    let channel;
+    const intervalId = window.setInterval(syncAdminData, ADMIN_DATA_POLL_INTERVAL);
+
+    window.addEventListener('storage', handleAdminDataEvent);
+    window.addEventListener(ADMIN_DATA_EVENT, handleAdminDataEvent);
+    window.addEventListener('focus', handleAdminDataEvent);
+    window.addEventListener('pageshow', handleAdminDataEvent);
+    document.addEventListener('visibilitychange', handleAdminDataEvent);
+
+    if ('BroadcastChannel' in window) {
+      channel = new BroadcastChannel(ADMIN_DATA_CHANNEL);
+      channel.addEventListener('message', handleAdminDataEvent);
+    }
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('storage', handleAdminDataEvent);
+      window.removeEventListener(ADMIN_DATA_EVENT, handleAdminDataEvent);
+      window.removeEventListener('focus', handleAdminDataEvent);
+      window.removeEventListener('pageshow', handleAdminDataEvent);
+      document.removeEventListener('visibilitychange', handleAdminDataEvent);
+      channel?.removeEventListener('message', handleAdminDataEvent);
+      channel?.close();
+    };
+  }, [syncAdminData]);
+
   const updateData = useCallback((updater) => {
-    setData((currentData) => {
-      const nextData = typeof updater === 'function' ? updater(currentData) : updater;
-      saveAdminData(nextData);
-      return nextData;
+    setData(() => {
+      const latestData = getAdminData();
+      const nextData = typeof updater === 'function' ? updater(latestData) : updater;
+      const savedData = saveAdminData(nextData);
+      snapshotRef.current = getAdminDataSnapshot();
+
+      return savedData;
     });
   }, []);
 

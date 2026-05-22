@@ -3,112 +3,68 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Button from '../../components/Button';
 import Icon from '../../components/Icon';
 import { getApiErrorMessage } from '../../services/api';
+import { useAdminData } from '../../services/adminData';
 import { createProduct } from '../../services/products';
 import { createProject, fetchProjects, updateProject } from '../../services/projects';
 
-const FILTERS = {
-  categories: ['Tout', 'Mobilier', 'Luminaire', 'Revêtement', 'Sanitaire', 'Décoration'],
-  rooms: ['Toutes', 'Salon', 'Chambre', 'Bureau', 'Douche', 'Appartement', 'Espace externe'],
-  ranges: ['Toutes', 'Essentiel', 'Confort', 'Premium'],
+const VISUAL_TONES = {
+  sofa: 'linen',
+  table: 'wood',
+  lamp: 'amber',
+  tile: 'stone',
+  paint: 'sage',
+  chair: 'night',
+  shelf: 'wood',
+  'wall-light': 'amber',
 };
 
-const PRODUCTS = [
-  {
-    id: 'canape-lima',
-    name: 'Canapé Lima',
-    category: 'Mobilier',
-    room: 'Salon',
-    range: 'Confort',
-    minPrice: 185000,
-    maxPrice: 320000,
-    shop: 'Maison Pro',
-    tone: 'linen',
-  },
-  {
-    id: 'suspension-nova',
-    name: 'Suspension Nova',
-    category: 'Luminaire',
-    room: 'Salon',
-    range: 'Premium',
-    minPrice: 42000,
-    maxPrice: 88000,
-    shop: 'BatiPlus Déco',
-    tone: 'amber',
-  },
-  {
-    id: 'carrelage-matera',
-    name: 'Carrelage Matera',
-    category: 'Revêtement',
-    room: 'Appartement',
-    range: 'Confort',
-    minPrice: 9500,
-    maxPrice: 18000,
-    shop: 'Archi Matériaux',
-    tone: 'stone',
-  },
-  {
-    id: 'vasque-elio',
-    name: 'Vasque Elio',
-    category: 'Sanitaire',
-    room: 'Douche',
-    range: 'Premium',
-    minPrice: 76000,
-    maxPrice: 145000,
-    shop: 'Maison Pro',
-    tone: 'ceramic',
-  },
-  {
-    id: 'bureau-oslo',
-    name: 'Bureau Oslo',
-    category: 'Mobilier',
-    room: 'Bureau',
-    range: 'Essentiel',
-    minPrice: 68000,
-    maxPrice: 125000,
-    shop: 'Maison Pro',
-    tone: 'wood',
-  },
-  {
-    id: 'fauteuil-kora',
-    name: 'Fauteuil Kora',
-    category: 'Mobilier',
-    room: 'Chambre',
-    range: 'Confort',
-    minPrice: 54000,
-    maxPrice: 98000,
-    shop: 'BatiPlus Déco',
-    tone: 'sage',
-  },
-  {
-    id: 'applique-mina',
-    name: 'Applique Mina',
-    category: 'Luminaire',
-    room: 'Chambre',
-    range: 'Essentiel',
-    minPrice: 18000,
-    maxPrice: 39000,
-    shop: 'Archi Matériaux',
-    tone: 'night',
-  },
-  {
-    id: 'table-terrasse',
-    name: 'Table terrasse',
-    category: 'Décoration',
-    room: 'Espace externe',
-    range: 'Premium',
-    minPrice: 115000,
-    maxPrice: 210000,
-    shop: 'Jardin & Terrasse',
-    tone: 'garden',
-  },
-];
+function parsePrice(value) {
+  const normalized = String(value || '')
+    .replace(/\s/g, '')
+    .replace(',', '.')
+    .replace(/[^\d.-]/g, '');
+  const parsedValue = Number(normalized);
 
-function formatCurrency(value) {
+  return Number.isFinite(parsedValue) ? parsedValue : 0;
+}
+
+function getCurrencyCode(currency) {
+  return currency === 'FCFA' ? 'XOF' : currency || 'EUR';
+}
+
+function formatCurrency(value, currency = 'EUR') {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
-    currency: 'XOF',
+    currency: getCurrencyCode(currency),
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function getCoefficient(city, regionalCoefficients) {
+  const item = regionalCoefficients.find((coefficient) => coefficient.city === city);
+  const value = Number(String(item?.coefficient || '1').replace(',', '.'));
+
+  return Number.isFinite(value) && value > 0 ? value : 1;
+}
+
+function buildCatalogueProduct(product, adminData) {
+  const settings = adminData.settings;
+  const basePrice = parsePrice(product.price);
+  const margin = Number(settings.margin || 0) / 100;
+  const vat = Number(settings.vat || 0) / 100;
+  const regionalCoefficient = getCoefficient(product.city, adminData.regionalCoefficients);
+  const minPrice = Math.round(basePrice * regionalCoefficient);
+  const maxPrice = Math.round(basePrice * (1 + margin) * (1 + vat) * regionalCoefficient);
+  const supplier = adminData.suppliers.find((item) => item.name === product.supplier);
+
+  return {
+    ...product,
+    minPrice,
+    maxPrice,
+    shop: supplier?.name || product.supplier,
+    shopZone: supplier?.region || product.city,
+    tone: VISUAL_TONES[product.visual] || 'linen',
+  };
 }
 
 function buildProjectDescription({ selectedProducts, budgetTarget, budgetSummary }) {
@@ -146,6 +102,7 @@ export default function Catalogue() {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [adminData] = useAdminData();
   const [selectedCategory, setSelectedCategory] = useState('Tout');
   const [selectedRoom, setSelectedRoom] = useState('Toutes');
   const [selectedRange, setSelectedRange] = useState('Toutes');
@@ -180,18 +137,32 @@ export default function Catalogue() {
     };
   }, [searchParams]);
 
+  const filters = useMemo(() => ({
+    categories: ['Tout', ...adminData.taxonomies.categories.map((category) => category.name)],
+    rooms: ['Toutes', ...adminData.taxonomies.rooms.map((room) => room.name)],
+    ranges: ['Toutes', ...adminData.taxonomies.ranges.map((range) => range.name)],
+  }), [adminData.taxonomies.categories, adminData.taxonomies.ranges, adminData.taxonomies.rooms]);
+
+  const products = useMemo(() => (
+    adminData.products.map((product) => buildCatalogueProduct(product, adminData))
+  ), [adminData]);
+
+  const activeCategory = filters.categories.includes(selectedCategory) ? selectedCategory : 'Tout';
+  const activeRoom = filters.rooms.includes(selectedRoom) ? selectedRoom : 'Toutes';
+  const activeRange = filters.ranges.includes(selectedRange) ? selectedRange : 'Toutes';
+
   const filteredProducts = useMemo(
-    () => PRODUCTS.filter((product) => (
-      (selectedCategory === 'Tout' || product.category === selectedCategory)
-      && (selectedRoom === 'Toutes' || product.room === selectedRoom)
-      && (selectedRange === 'Toutes' || product.range === selectedRange)
+    () => products.filter((product) => (
+      (activeCategory === 'Tout' || product.category === activeCategory)
+      && (activeRoom === 'Toutes' || product.room === activeRoom)
+      && (activeRange === 'Toutes' || product.range === activeRange)
     )),
-    [selectedCategory, selectedRange, selectedRoom],
+    [activeCategory, activeRange, activeRoom, products],
   );
 
   const selectedProducts = useMemo(
-    () => PRODUCTS.filter((product) => selectedProductIds.includes(product.id)),
-    [selectedProductIds],
+    () => products.filter((product) => selectedProductIds.includes(product.id)),
+    [products, selectedProductIds],
   );
 
   const budgetSummary = useMemo(() => {
@@ -212,7 +183,7 @@ export default function Catalogue() {
     }).format(new Date()),
     [],
   );
-  const fullscreenProduct = PRODUCTS.find((product) => product.id === fullscreenProductId);
+  const fullscreenProduct = products.find((product) => product.id === fullscreenProductId);
 
   function toggleProduct(productId) {
     setIsSummaryDismissed(false);
@@ -314,10 +285,10 @@ export default function Catalogue() {
         <section className="catalogue-filter-group">
           <h2>Catégorie</h2>
           <div>
-            {FILTERS.categories.map((category) => (
+            {filters.categories.map((category) => (
               <button
                 type="button"
-                className={selectedCategory === category ? 'is-active' : ''}
+                className={activeCategory === category ? 'is-active' : ''}
                 key={category}
                 onClick={() => setSelectedCategory(category)}
               >
@@ -330,10 +301,10 @@ export default function Catalogue() {
         <section className="catalogue-filter-group">
           <h2>Pièce</h2>
           <div>
-            {FILTERS.rooms.map((room) => (
+            {filters.rooms.map((room) => (
               <button
                 type="button"
-                className={selectedRoom === room ? 'is-active' : ''}
+                className={activeRoom === room ? 'is-active' : ''}
                 key={room}
                 onClick={() => setSelectedRoom(room)}
               >
@@ -346,10 +317,10 @@ export default function Catalogue() {
         <section className="catalogue-filter-group">
           <h2>Gamme</h2>
           <div>
-            {FILTERS.ranges.map((range) => (
+            {filters.ranges.map((range) => (
               <button
                 type="button"
-                className={selectedRange === range ? 'is-active' : ''}
+                className={activeRange === range ? 'is-active' : ''}
                 key={range}
                 onClick={() => setSelectedRange(range)}
               >
@@ -388,10 +359,10 @@ export default function Catalogue() {
                 <div className="catalogue-product-card__body">
                   <div>
                     <h3>{product.name}</h3>
-                    <p>{product.shop}</p>
+                    <p>{product.shop} · {product.shopZone}</p>
                   </div>
                   <strong>
-                    {formatCurrency(product.minPrice)} - {formatCurrency(product.maxPrice)}
+                    {formatCurrency(product.minPrice, adminData.settings.currency)} - {formatCurrency(product.maxPrice, adminData.settings.currency)}
                   </strong>
                   <Button
                     type="button"
@@ -431,15 +402,15 @@ export default function Catalogue() {
           <dl className="catalogue-budget-list">
             <div>
               <dt>Estimation min</dt>
-              <dd>{formatCurrency(budgetSummary.min)}</dd>
+              <dd>{formatCurrency(budgetSummary.min, adminData.settings.currency)}</dd>
             </div>
             <div>
               <dt>Estimation max</dt>
-              <dd>{formatCurrency(budgetSummary.max)}</dd>
+              <dd>{formatCurrency(budgetSummary.max, adminData.settings.currency)}</dd>
             </div>
             <div className={budgetSummary.overage > 0 ? 'is-over' : 'is-ok'}>
               <dt>Dépassement éventuel</dt>
-              <dd>{budgetSummary.overage > 0 ? formatCurrency(budgetSummary.overage) : 'Aucun'}</dd>
+              <dd>{budgetSummary.overage > 0 ? formatCurrency(budgetSummary.overage, adminData.settings.currency) : 'Aucun'}</dd>
             </div>
           </dl>
 
@@ -477,7 +448,7 @@ export default function Catalogue() {
               <div className="catalogue-summary-info-grid">
                 <div>
                   <span>Budget cible</span>
-                  <strong>{formatCurrency(budgetTarget)}</strong>
+                  <strong>{formatCurrency(budgetTarget, adminData.settings.currency)}</strong>
                 </div>
                 <div>
                   <span>Articles choisis</span>
@@ -507,17 +478,17 @@ export default function Catalogue() {
               <div className="catalogue-summary-volume">
                 <div>
                   <span>Constaté min</span>
-                  <strong>{formatCurrency(budgetSummary.min)}</strong>
+                  <strong>{formatCurrency(budgetSummary.min, adminData.settings.currency)}</strong>
                 </div>
                 <div>
                   <span>Ecart</span>
                   <strong className={budgetSummary.overage > 0 ? 'is-danger' : ''}>
-                    {formatCurrency(budgetSummary.overage)}
+                    {formatCurrency(budgetSummary.overage, adminData.settings.currency)}
                   </strong>
                 </div>
                 <div>
                   <span>Accordé max</span>
-                  <strong>{formatCurrency(budgetSummary.max)}</strong>
+                  <strong>{formatCurrency(budgetSummary.max, adminData.settings.currency)}</strong>
                 </div>
               </div>
 
@@ -542,7 +513,7 @@ export default function Catalogue() {
 
               <div className="catalogue-summary-total">
                 <span>Montant total à payer</span>
-                <strong>{budgetSummary.overage > 0 ? formatCurrency(budgetSummary.max) : 'EXONÉRÉ'}</strong>
+                <strong>{budgetSummary.overage > 0 ? formatCurrency(budgetSummary.max, adminData.settings.currency) : 'EXONÉRÉ'}</strong>
                 <small>{budgetSummary.overage > 0 ? 'Dépassement potentiel inclus' : 'Exonération légale'}</small>
               </div>
             </div>
@@ -593,9 +564,9 @@ export default function Catalogue() {
             <div className="catalogue-fullscreen__content">
               <span className="catalogue-eyebrow">{fullscreenProduct.room} · {fullscreenProduct.range}</span>
               <h2>{fullscreenProduct.name}</h2>
-              <p>{fullscreenProduct.shop}</p>
+              <p>{fullscreenProduct.shop} · {fullscreenProduct.shopZone}</p>
               <strong>
-                {formatCurrency(fullscreenProduct.minPrice)} - {formatCurrency(fullscreenProduct.maxPrice)}
+                {formatCurrency(fullscreenProduct.minPrice, adminData.settings.currency)} - {formatCurrency(fullscreenProduct.maxPrice, adminData.settings.currency)}
               </strong>
               <Button
                 type="button"
