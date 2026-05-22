@@ -2,7 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import useAuth from '../context/useAuth';
 import Text from './Text';
 
-export default function ProtectedRoute({ children }) {
+export default function AdminRoute({ children }) {
   const { isAuthenticated, loading, user } = useAuth();
   const location = useLocation();
 
@@ -18,8 +18,8 @@ export default function ProtectedRoute({ children }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (user?.role === 'admin') {
-    return <Navigate to="/admin/dashboard" replace />;
+  if (user?.role !== 'admin') {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children;

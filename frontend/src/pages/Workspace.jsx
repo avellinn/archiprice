@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Button from '../components/Button';
 import EspacePro from '../components/espacepro';
 import Icon from '../components/Icon';
 import ModalCreateProject from '../components/ModalCreateProject';
 import WorkspaceMiniGrid from '../components/WorkspaceMiniGrid';
-import { fetchProjects } from '../services/projects';
+import { getApiErrorMessage } from '../services/api';
+import { deleteProject, fetchProjects, updateProject } from '../services/projects';
 
 const RECOMMENDED_SHOPS = [
   {
@@ -68,6 +69,15 @@ const WORKSPACE_CARDS = [
   },
 ];
 
+const EDIT_ROOM_TYPES = [
+  { value: 'salon', label: 'Salon' },
+  { value: 'chambre', label: 'Chambre' },
+  { value: 'bureau', label: 'Bureau' },
+  { value: 'douche', label: 'Douche' },
+  { value: 'appartement', label: 'Appartement' },
+  { value: 'espace externe', label: 'Espace externe' },
+];
+
 function isFinished(project) {
   return ['archived', 'completed', 'done'].includes(project.status);
 }
@@ -101,6 +111,14 @@ function formatTrend(value) {
   return `${value > 0 ? '+' : ''}${value.toFixed(2)}%`;
 }
 
+function formatCurrency(value) {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'XOF',
+    maximumFractionDigits: 0,
+  }).format(Number(value || 0));
+}
+
 function getProjectShopSeed(project) {
   return String(project?.id || project?.name || '')
     .split('')
@@ -114,7 +132,66 @@ function getProjectRecommendedShops(project, shops) {
   return [...shops.slice(startIndex), ...shops.slice(0, startIndex)].slice(0, Math.min(3, shops.length));
 }
 
+function getProductShopName(product) {
+  const description = product?.description || '';
+  const shopMatch = description.match(/Boutique\s*:\s*(.+)/i);
+  return shopMatch?.[1]?.trim() || '';
+}
+
+function getDynamicProjectShops(project, products, shops) {
+  const productShopNames = [...new Set(products.map(getProductShopName).filter(Boolean))];
+  const matchedShops = productShopNames.map((shopName) => {
+    const knownShop = shops.find((shop) => shop.name.toLowerCase() === shopName.toLowerCase());
+
+    return knownShop || {
+      name: shopName,
+      zone: 'Zone à confirmer',
+      categories: 'Articles sélectionnés pour ce projet',
+    };
+  });
+
+  if (matchedShops.length > 0) return matchedShops;
+
+  return getProjectRecommendedShops(project, shops);
+}
+
+function extractEditableProjectData(project) {
+  const description = project?.description || '';
+  const roomMatch = description.match(/Type de pièce\s*:\s*(.+)/i);
+  const budgetMatch = description.match(/Estimation budget\s*:\s*(.+)/i);
+  const roomType = roomMatch?.[1]?.trim().toLowerCase() || EDIT_ROOM_TYPES[0].value;
+  const knownRoomType = EDIT_ROOM_TYPES.some((type) => type.value === roomType)
+    ? roomType
+    : EDIT_ROOM_TYPES[0].value;
+
+  return {
+    name: project?.name || '',
+    roomType: knownRoomType,
+    budget: budgetMatch?.[1]?.trim() || '',
+    status: project?.status || 'draft',
+  };
+}
+
+function buildEditedProjectDescription(project, roomType, budget) {
+  const preservedLines = (project?.description || '')
+    .split('\n')
+    .filter((line) => (
+      !/^Type de pièce\s*:/i.test(line)
+      && !/^Estimation budget\s*:/i.test(line)
+    ));
+
+  return [
+    `Type de pièce : ${roomType}`,
+    budget ? `Estimation budget : ${budget}` : '',
+    ...preservedLines,
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
 export default function Workspace() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isModalOpen, setIsModalOpen] = useState(() => searchParams.get('newProject') === '1');
   const [projects, setProjects] = useState([]);
@@ -125,6 +202,15 @@ export default function Workspace() {
   const [isShopSelectorOpen, setIsShopSelectorOpen] = useState(false);
   const [selectedShopName, setSelectedShopName] = useState('');
   const [activeCardId, setActiveCardId] = useState('');
+  const [editingProject, setEditingProject] = useState(null);
+  const [editProjectName, setEditProjectName] = useState('');
+  const [editRoomType, setEditRoomType] = useState(EDIT_ROOM_TYPES[0].value);
+  const [editBudget, setEditBudget] = useState('');
+  const [editStatus, setEditStatus] = useState('draft');
+  const [editProjectError, setEditProjectError] = useState('');
+  const [isUpdatingProject, setIsUpdatingProject] = useState(false);
+  const [deletingProjectId, setDeletingProjectId] = useState('');
+  const [selectedProjectProducts, setSelectedProjectProducts] = useState([]);
   const workspaceStats = useMemo(() => {
     const completed = projects.filter(isFinished).length;
     const active = Math.max(projects.length - completed, 0);
@@ -149,6 +235,13 @@ export default function Workspace() {
         if (!cancelled) {
           setProjects(list);
           setProjectsError('');
+          const projectIdFromUrl = searchParams.get('projectId');
+          if (projectIdFromUrl) {
+            setSelectedProjectId(projectIdFromUrl);
+          }
+          if (searchParams.get('mode') === 'projects' || projectIdFromUrl) {
+            setActiveCardId('catalogue-projects');
+          }
         }
       })
       .catch(() => {
@@ -166,34 +259,53 @@ export default function Workspace() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [searchParams]);
 
+  const selectedProject = projects.find((project) => project.id === selectedProjectId) || projects[0];
   const workspaceCards = useMemo(
     () => WORKSPACE_CARDS.map((card) => {
       if (card.id !== 'purchase-travel') return card;
+
+      const simulationTotal = selectedProjectProducts.reduce(
+        (total, product) => total + Number(product.unitPrice || 0),
+        0,
+      );
 
       return {
         ...card,
         details: isShopRevealed
           ? [
-            ['Nom boutique', RECOMMENDED_SHOPS[0].name],
-            ['Zone', RECOMMENDED_SHOPS[0].zone],
-            ['Catégories disponibles', RECOMMENDED_SHOPS[0].categories],
+            ['Projet', selectedProject?.name || 'Aucun projet'],
+            ['Articles sélectionnés', selectedProjectProducts.length],
+            ['Simulation achat', formatCurrency(simulationTotal)],
           ]
           : null,
       };
     }),
-    [isShopRevealed],
+    [isShopRevealed, selectedProject?.name, selectedProjectProducts],
   );
   const activeCard = activeCardId
     ? workspaceCards.find((card) => card.id === activeCardId)
     : null;
-  const selectedProject = projects.find((project) => project.id === selectedProjectId) || projects[0];
   const projectShops = useMemo(
-    () => getProjectRecommendedShops(selectedProject, RECOMMENDED_SHOPS),
-    [selectedProject],
+    () => getDynamicProjectShops(selectedProject, selectedProjectProducts, RECOMMENDED_SHOPS),
+    [selectedProject, selectedProjectProducts],
   );
   const selectedShop = projectShops.find((shop) => shop.name === selectedShopName) || projectShops[0];
+  const selectedProjectPurchaseSimulation = useMemo(() => {
+    const activeProjectProducts = selectedProject ? selectedProjectProducts : [];
+    const total = activeProjectProducts.reduce((sum, product) => sum + Number(product.unitPrice || 0), 0);
+    const categories = [...new Set(activeProjectProducts.map((product) => product.category).filter(Boolean))];
+
+    return {
+      total,
+      count: activeProjectProducts.length,
+      categories,
+    };
+  }, [selectedProject, selectedProjectProducts]);
+  const handleProductsChange = useCallback((products) => {
+    setSelectedProjectProducts(products);
+  }, []);
 
   function closeModal() {
     setIsModalOpen(false);
@@ -205,8 +317,90 @@ export default function Workspace() {
       setProjects((currentProjects) => [project, ...currentProjects]);
       setSelectedProjectId(project.id);
       setProjectsError('');
+      setIsModalOpen(false);
+      navigate(`/catalogue?projectId=${project.id}`, { state: { from: location } });
+      return;
     }
     closeModal();
+  }
+
+  function openEditProject(project) {
+    const editableProject = extractEditableProjectData(project);
+    setEditingProject(project);
+    setEditProjectName(editableProject.name);
+    setEditRoomType(editableProject.roomType);
+    setEditBudget(editableProject.budget);
+    setEditStatus(editableProject.status);
+    setEditProjectError('');
+  }
+
+  function closeEditProject() {
+    setEditingProject(null);
+    setEditProjectError('');
+    setIsUpdatingProject(false);
+  }
+
+  async function handleProjectUpdate(event) {
+    event.preventDefault();
+
+    if (!editingProject) return;
+
+    const name = editProjectName.trim();
+    if (!name) {
+      setEditProjectError('Nom du projet requis');
+      return;
+    }
+
+    setIsUpdatingProject(true);
+    setEditProjectError('');
+
+    try {
+      const updatedProject = await updateProject(editingProject.id, {
+        name,
+        description: buildEditedProjectDescription(editingProject, editRoomType, editBudget.trim()),
+        status: editStatus,
+      });
+
+      setProjects((currentProjects) => currentProjects.map((project) => (
+        project.id === updatedProject.id ? updatedProject : project
+      )));
+      setSelectedProjectId(updatedProject.id);
+      setProjectsError('');
+      closeEditProject();
+    } catch (error) {
+      setEditProjectError(getApiErrorMessage(error, 'Impossible de modifier le projet'));
+    } finally {
+      setIsUpdatingProject(false);
+    }
+  }
+
+  async function handleProjectDelete(project) {
+    const shouldDelete = window.confirm(`Supprimer définitivement le projet "${project.name}" ?`);
+    if (!shouldDelete) return;
+
+    setDeletingProjectId(project.id);
+    setProjectsError('');
+
+    try {
+      await deleteProject(project.id);
+      setProjects((currentProjects) => {
+        const nextProjects = currentProjects.filter((currentProject) => currentProject.id !== project.id);
+
+        if (selectedProjectId === project.id) {
+          setSelectedProjectId(nextProjects[0]?.id || '');
+        }
+
+        if (nextProjects.length === 0) {
+          setActiveCardId('');
+        }
+
+        return nextProjects;
+      });
+    } catch (error) {
+      setProjectsError(getApiErrorMessage(error, 'Impossible de supprimer le projet'));
+    } finally {
+      setDeletingProjectId('');
+    }
   }
 
   function handleCardAction(card) {
@@ -296,7 +490,7 @@ export default function Workspace() {
       return (
         <ul className="workspace-feature-card__list workspace-feature-card__list--scroll workspace-feature-card__project-list">
           {projects.map((project) => (
-            <li key={project.id}>
+            <li className="workspace-feature-card__project-row" key={project.id}>
               <button
                 type="button"
                 className="workspace-feature-card__project-button"
@@ -310,6 +504,29 @@ export default function Workspace() {
                 </span>
                 <span>{project.name}</span>
               </button>
+              <div className="workspace-feature-card__project-actions" aria-label={`Actions pour ${project.name}`}>
+                <button
+                  type="button"
+                  aria-label={`Modifier ${project.name}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    openEditProject(project);
+                  }}
+                >
+                  <Icon name="Edit" size="sm" />
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Supprimer ${project.name}`}
+                  disabled={deletingProjectId === project.id}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleProjectDelete(project);
+                  }}
+                >
+                  <Icon name="Delete" size="sm" />
+                </button>
+              </div>
             </li>
           ))}
         </ul>
@@ -368,6 +585,10 @@ export default function Workspace() {
               projectsError={projectsError}
               selectedProjectId={selectedProjectId}
               onProjectSelect={setSelectedProjectId}
+              onProjectEdit={openEditProject}
+              onProjectDelete={handleProjectDelete}
+              deletingProjectId={deletingProjectId}
+              onProductsChange={handleProductsChange}
             />
 
             <div className="workspace-shop-cta">
@@ -387,31 +608,43 @@ export default function Workspace() {
                   {projectShops.length === 0 ? (
                     <p>Aucune boutique recommandée pour ce projet.</p>
                   ) : (
-                    <div className="workspace-shop-options" role="listbox" aria-label="Boutiques recommandées">
-                      {projectShops.map((shop) => {
-                        const isSelected = selectedShop?.name === shop.name;
+                    <>
+                      <div className="workspace-shop-simulation">
+                        <strong>{formatCurrency(selectedProjectPurchaseSimulation.total)}</strong>
+                        <span>
+                          {selectedProjectPurchaseSimulation.count} article(s)
+                          {selectedProjectPurchaseSimulation.categories.length > 0
+                            ? ` · ${selectedProjectPurchaseSimulation.categories.join(', ')}`
+                            : ''}
+                        </span>
+                      </div>
 
-                        return (
-                          <button
-                            type="button"
-                            className={[
-                              'workspace-shop-option',
-                              isSelected ? 'workspace-shop-option--selected' : '',
-                            ]
-                              .filter(Boolean)
-                              .join(' ')}
-                            key={`${selectedProject?.id || 'project'}-${shop.name}`}
-                            role="option"
-                            aria-selected={isSelected}
-                            onClick={() => setSelectedShopName(shop.name)}
-                          >
-                            <strong>{shop.name}</strong>
-                            <span>{shop.zone}</span>
-                            <small>{shop.categories}</small>
-                          </button>
-                        );
-                      })}
-                    </div>
+                      <div className="workspace-shop-options" role="listbox" aria-label="Boutiques recommandées">
+                        {projectShops.map((shop) => {
+                          const isSelected = selectedShop?.name === shop.name;
+
+                          return (
+                            <button
+                              type="button"
+                              className={[
+                                'workspace-shop-option',
+                                isSelected ? 'workspace-shop-option--selected' : '',
+                              ]
+                                .filter(Boolean)
+                                .join(' ')}
+                              key={`${selectedProject?.id || 'project'}-${shop.name}`}
+                              role="option"
+                              aria-selected={isSelected}
+                              onClick={() => setSelectedShopName(shop.name)}
+                            >
+                              <strong>{shop.name}</strong>
+                              <span>{shop.zone}</span>
+                              <small>{shop.categories}</small>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
                   )}
                 </div>
               )}
@@ -479,6 +712,90 @@ export default function Workspace() {
         onCancel={closeModal}
         onCreated={handleProjectCreated}
       />
+
+      {editingProject && (
+        <div className="modal-create-project__backdrop" role="presentation">
+          <form
+            className="modal-create-project"
+            onSubmit={handleProjectUpdate}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-edit-project-title"
+          >
+            <div className="modal-create-project__header">
+              <div>
+                <span className="modal-create-project__eyebrow">Gestion projet</span>
+                <h2 id="modal-edit-project-title">Modifier le projet</h2>
+              </div>
+              <button
+                type="button"
+                className="modal-create-project__close"
+                onClick={closeEditProject}
+                aria-label="Fermer"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="modal-create-project__fields">
+              <label className="modal-create-project__field">
+                Nom du projet
+                <input
+                  type="text"
+                  value={editProjectName}
+                  onChange={(event) => setEditProjectName(event.target.value)}
+                  maxLength={200}
+                  autoFocus
+                />
+              </label>
+
+              <label className="modal-create-project__field">
+                Type de pièce
+                <select value={editRoomType} onChange={(event) => setEditRoomType(event.target.value)}>
+                  {EDIT_ROOM_TYPES.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="modal-create-project__field">
+                Estimation budget (FCFA)
+                <input
+                  type="number"
+                  value={editBudget}
+                  onChange={(event) => setEditBudget(event.target.value)}
+                  min="0"
+                  inputMode="numeric"
+                />
+              </label>
+
+              <label className="modal-create-project__field">
+                Statut
+                <select value={editStatus} onChange={(event) => setEditStatus(event.target.value)}>
+                  <option value="draft">Brouillon</option>
+                  <option value="active">En cours</option>
+                  <option value="archived">Terminé</option>
+                </select>
+              </label>
+            </div>
+
+            {editProjectError && (
+              <p className="modal-create-project__error">{editProjectError}</p>
+            )}
+
+            <div className="modal-create-project__actions">
+              <Button type="button" variant="danger" onClick={closeEditProject} disabled={isUpdatingProject}>
+                Annuler
+              </Button>
+              <Button type="submit" variant="success" isLoading={isUpdatingProject} disabled={!editProjectName.trim()}>
+                Modifier
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

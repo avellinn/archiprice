@@ -29,5 +29,12 @@ async function protect(req, res, next) {
     return res.status(401).json({ error: 'Token invalide ou expiré' });
   }
 }
+function requireAdmin(req, res, next) {
+  if (req.user && req.user.role === 'admin') {
+    next(); // utilisateur admin → on continue
+  } else {
+    res.status(403).json({ error: 'Accès réservé aux BackOffice' });
+  }
+}
 
-module.exports = { protect };
+module.exports = { protect,requireAdmin  };

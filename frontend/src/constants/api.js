@@ -13,4 +13,8 @@ export const API_ROUTES = {
     list: (projectId) => `/api/projects/${projectId}/products`,
     detail: (projectId, productId) => `/api/projects/${projectId}/products/${productId}`,
   },
+  admin: {
+    users: '/api/admin/users',
+    userRole: (id) => `/api/admin/users/${id}/role`,
+  },
 };

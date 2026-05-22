@@ -19,6 +19,12 @@ const ICONS = {
       <path key="arrow-head" d="m11 5-7 7 7 7" />,
     ],
   },
+  ArrowUp: {
+    paths: [
+      <path key="arrow-line" d="M12 19V5" />,
+      <path key="arrow-head" d="m5 11 7-7 7 7" />,
+    ],
+  },
   Bell: {
     paths: [
       <path key="bell-body" d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />,
@@ -32,6 +38,12 @@ const ICONS = {
   },
   Check: {
     paths: [<path key="check" d="m5 12 4 4 10-10" />],
+  },
+  CheckCircle: {
+    paths: [
+      <circle key="check-circle" cx="12" cy="12" r="9" />,
+      <path key="check-path" d="m8 12 3 3 5-6" />,
+    ],
   },
   ChevronDown: {
     paths: [<path key="chevron" d="m6 9 6 6 6-6" />],
@@ -59,6 +71,21 @@ const ICONS = {
       <rect key="tile-4" x="14" y="14" width="7" height="7" rx="1.5" />,
     ],
   },
+  Delete: {
+    paths: [
+      <path key="delete-top" d="M3 6h18" />,
+      <path key="delete-handle" d="M8 6V4h8v2" />,
+      <path key="delete-box" d="M6 6l1 15h10l1-15" />,
+      <path key="delete-line-1" d="M10 11v6" />,
+      <path key="delete-line-2" d="M14 11v6" />,
+    ],
+  },
+  Edit: {
+    paths: [
+      <path key="edit-box" d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16z" />,
+      <path key="edit-line" d="m13 7 4 4" />,
+    ],
+  },
   Explore: {
     paths: [
       <circle key="explore-circle" cx="12" cy="12" r="9" />,
@@ -75,6 +102,13 @@ const ICONS = {
       <path key="history-arrow" d="M3 12a9 9 0 1 0 3-6.71" />,
       <path key="history-turn" d="M3 4v5h5" />,
       <path key="history-hand" d="M12 7v5l3 2" />,
+    ],
+  },
+  Info: {
+    paths: [
+      <circle key="info-circle" cx="12" cy="12" r="9" />,
+      <path key="info-line" d="M12 10v6" />,
+      <path key="info-dot" d="M12 7h.01" />,
     ],
   },
   LightMode: {
@@ -134,9 +168,11 @@ const NAME_ALIASES = {
   plus: 'Add',
   arrowRight: 'ArrowRight',
   arrowLeft: 'ArrowLeft',
+  arrowUp: 'ArrowUp',
   bell: 'Bell',
   chat: 'Chat',
   check: 'Check',
+  checkCircle: 'CheckCircle',
   chevron: 'ChevronDown',
   chevronDown: 'ChevronDown',
   chevronLeft: 'ChevronLeft',
@@ -145,9 +181,12 @@ const NAME_ALIASES = {
   close: 'Close',
   dashboard: 'Dashboard',
   darkMode: 'DarkMode',
+  delete: 'Delete',
+  edit: 'Edit',
   explore: 'Explore',
   folder: 'Folder',
   history: 'History',
+  info: 'Info',
   lightMode: 'LightMode',
   logout: 'Logout',
   notifications: 'Notifications',

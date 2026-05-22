@@ -14,7 +14,7 @@ export default function Login() {
   const { login } = useAuth();
   const [apiError, setApiError] = useState(null);
 
-  const from = location.state?.from?.pathname || '/dashboard';
+  const from = location.state?.from?.pathname;
 
   const {
     register,
@@ -25,8 +25,13 @@ export default function Login() {
   const onSubmit = async (data) => {
     setApiError(null);
     try {
-      await login(data);
-      navigate(from, { replace: true });
+      const loggedUser = await login(data);
+      const isAdmin = loggedUser?.role === 'admin';
+      const fallbackPath = isAdmin ? '/admin/dashboard' : '/dashboard';
+      const requestedPath = from || fallbackPath;
+      const destination = isAdmin === requestedPath.startsWith('/admin') ? requestedPath : fallbackPath;
+
+      navigate(destination, { replace: true });
     } catch (err) {
       setApiError(getApiErrorMessage(err, 'Connexion impossible'));
     }

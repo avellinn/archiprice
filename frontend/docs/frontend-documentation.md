@@ -8,12 +8,33 @@ Le frontend est une SPA React construite avec Vite.
 
 - Entrée React : `src/main.jsx`
 - Racine applicative : `src/App.jsx`
-- Styles globaux et variables : `src/index.css`
+- Entrée des styles globaux : `src/index.css`
+- Polices CDN : `src/styles/fonts.css`
+- Variables et reset globaux : `src/styles/globals.css`
 - Layouts et styles de pages : `src/App.css`
 - Pages routées : `src/pages/`
 - Composants réutilisables : `src/components/`
 - Services API : `src/services/`
 - Authentification : `src/context/`
+
+## Règle D'Interface
+
+Le frontend suit une règle stable :
+
+**70 à 80% mutualisé, 20 à 30% spécifique au rôle.**
+
+Les composants UI génériques sont partagés entre toutes les interfaces. Les layouts, routes et menus restent spécifiques au rôle.
+
+Documentation dédiée : `docs/design-system.md`.
+
+À retenir :
+
+- `src/components/` contient les composants partagés : boutons, inputs, tables, modals, cards, badges, loader, empty states, header, sidebar, icônes, typographie.
+- `AppShell.jsx` contient le layout utilisateur.
+- `AdminShell.jsx` contient le layout administrateur.
+- `ProtectedRoute.jsx` protège l'interface utilisateur.
+- `AdminRoute.jsx` protège l'interface administrateur.
+- Les variantes de rôle doivent rester minimales, par exemple `.sidebar--admin`, sans créer une identité CSS séparée.
 
 Scripts courants depuis `frontend/` :
 
@@ -43,7 +64,40 @@ Routes protégées :
 
 Les routes protégées passent par `ProtectedRoute`, puis sont rendues dans `AppShell`.
 
+Routes admin :
+
+- `/admin/dashboard` : tableau de bord admin
+- `/admin/catalogue/products` : produits
+- `/admin/catalogue/filters` : catégories & filtres
+- `/admin/suppliers` : fournisseurs
+- `/admin/users` : utilisateurs
+- `/admin/simulations` : simulations
+- `/admin/support/tickets` : tickets
+- `/admin/support/feedback` : feedback
+- `/admin/support/price-reports` : signalements prix
+- `/admin/settings/simulations` : configuration simulations
+- `/admin/settings/regional-coefficients` : coefficients régionaux
+
+Les routes admin passent par `AdminRoute`, puis sont rendues dans `AdminShell`.
+
 ## Pages
+
+### Admin
+
+Fichiers :
+
+- `src/pages/AdminUsers.jsx`
+- `src/pages/AdminPlaceholder.jsx`
+
+`AdminUsers.jsx` est la première page admin métier. Elle permet :
+
+- de charger la liste des comptes via `fetchAdminUsers()` ;
+- d'afficher les statistiques utilisateurs ;
+- de modifier dynamiquement le rôle d'un compte `user` / `admin`.
+
+`AdminPlaceholder.jsx` sert de page temporaire pour les entrées admin dont le métier n'est pas encore implémenté.
+
+Les pages admin sont rendues dans `AdminShell.jsx` et protégées par `AdminRoute.jsx`.
 
 ### Dashboard
 
@@ -109,6 +163,8 @@ Les pages login/register utilisent `AuthLayout`, `PasswordInput`, `react-hook-fo
 ## Composants Principaux
 
 - `AppShell.jsx` : structure des pages connectées, sidebar, header, thème, menus.
+- `AdminShell.jsx` : structure des pages administrateur, avec les mêmes composants UI et un layout spécifique admin.
+- `AdminRoute.jsx` : protection des routes admin selon le rôle `admin`.
 - `Sidebar.jsx` : navigation latérale. Styles isolés dans `Sidebar.css`.
 - `Header.jsx` : barre supérieure, recherche, thème, utilisateur.
 - `Avatar.jsx` : avatar utilisateur dynamique.
@@ -120,11 +176,28 @@ Les pages login/register utilisent `AuthLayout`, `PasswordInput`, `react-hook-fo
 - `ModalCreateProject.jsx` : modale de création de projet.
 - `Text.jsx` : composant typographique.
 
+### Sidebar Partagée
+
+`Sidebar.jsx` est utilisée par l'interface user et admin.
+
+Elle supporte :
+
+- liens directs ;
+- actions, par exemple déconnexion ;
+- sous-menus ;
+- ouverture des sous-menus au survol ;
+- ouverture/fermeture des sous-menus au clic ;
+- état actif basé sur la route courante ;
+- variante minimale de rôle via `variant`.
+
+Le style de base reste uniforme entre admin et user.
+
 ## Services API
 
 Tous les appels API passent par `src/services/api.js`.
 
 - `auth.js` : login, register, profil courant.
+- `admin.js` : utilisateurs admin et changement de rôle.
 - `projects.js` : CRUD projets.
 - `products.js` : CRUD produits liés à un projet.
 
@@ -134,6 +207,22 @@ Les routes API sont centralisées dans `src/constants/api.js`.
 
 ### `src/index.css`
 
+Point d'entrée CSS global. Il importe :
+
+```css
+@import './styles/fonts.css';
+@import './styles/globals.css';
+```
+
+### `src/styles/fonts.css`
+
+Charge les polices depuis Google Fonts CDN :
+
+- `Montserrat` : titres ;
+- `Open Sans` : corps de texte.
+
+### `src/styles/globals.css`
+
 Contient les variables globales :
 
 - couleurs ;
@@ -142,6 +231,15 @@ Contient les variables globales :
 - rayons ;
 - ombres ;
 - reset de base.
+
+Les variables typographiques principales sont :
+
+```css
+--font-primary: "Open Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+--font-heading: "Montserrat", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+```
+
+`body` utilise `--font-primary`. Les titres `h1` à `h6` utilisent `--font-heading`.
 
 Modifier ici les choix partagés par toute l'application.
 
@@ -182,6 +280,44 @@ Chaque composant important possède son CSS propre quand son style est suffisamm
 - `AuthLayout.css`
 - `PasswordInput.css`
 - `Text.css`
+
+## Interfaces User Et Admin
+
+### User
+
+Le layout utilisateur est `AppShell.jsx`.
+
+Il contient :
+
+- sidebar user ;
+- header ;
+- recherche ;
+- notifications ;
+- avatar ;
+- dark mode ;
+- routes protégées user.
+
+### Admin
+
+Le layout admin est `AdminShell.jsx`.
+
+Il contient :
+
+- sidebar admin ;
+- header partagé ;
+- recherche admin ;
+- notifications admin ;
+- avatar ;
+- dark mode ;
+- routes protégées admin.
+
+La sidebar admin a des menus spécifiques, mais réutilise les mêmes styles que la sidebar user.
+
+### Guards
+
+- `GuestRoute.jsx` : empêche un utilisateur connecté de voir login/register.
+- `ProtectedRoute.jsx` : protège les routes user et renvoie un admin vers `/admin/dashboard`.
+- `AdminRoute.jsx` : protège les routes admin et renvoie un non-admin vers `/dashboard`.
 
 ## Repères De Personnalisation
 

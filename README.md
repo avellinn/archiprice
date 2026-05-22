@@ -51,7 +51,9 @@ npm run env:migrate
 ```
 
 Voir la progression détaillée : [`docs/ROADMAP.md`](docs/ROADMAP.md).
+Documentation API : [`docs/API.md`](docs/API.md).
 Documentation frontend : [`frontend/docs/frontend-documentation.md`](frontend/docs/frontend-documentation.md).
+Design system : [`frontend/docs/design-system.md`](frontend/docs/design-system.md).
 Audit et nettoyage du workspace : [`docs/WORKSPACE_AUDIT.md`](docs/WORKSPACE_AUDIT.md).
 
 ## Lancement
@@ -115,6 +117,16 @@ Si `MONGODB_URI` est défini et la connexion échoue, l’API ne démarre pas. E
 | `POST` | `/api/auth/login` | Connexion → `{ token, user }` |
 | `GET` | `/api/auth/me` | Profil (Bearer token) |
 
+Les utilisateurs possèdent un rôle :
+
+- `user` : accès à l'interface utilisateur ;
+- `admin` : accès à l'interface backoffice.
+
+Le frontend redirige automatiquement :
+
+- un `user` vers `/dashboard` ;
+- un `admin` vers `/admin/dashboard`.
+
 ## API — Projets (authentification requise)
 
 | Méthode | Route | Description |
@@ -135,6 +147,80 @@ Si `MONGODB_URI` est défini et la connexion échoue, l’API ne démarre pas. E
 
 Corps JSON exemple (création) : `{ "name": "Carrelage", "unit": "m2", "unitPrice": 45.5, "category": "Revêtements" }`  
 Unités : `u`, `m2`, `ml`, `m3`, `h`, `forfait`.
+
+## API — Admin
+
+Les routes admin sont protégées par JWT et par le middleware `requireAdmin`.
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| `GET` | `/api/admin/users` | Liste tous les utilisateurs |
+| `GET` | `/api/admin/users/:id` | Détail d'un utilisateur |
+| `PUT` | `/api/admin/users/:id/role` | Change le rôle `user` / `admin` |
+| `GET` | `/api/admin/test` | Test backoffice |
+
+Exemple changement de rôle :
+
+```bash
+curl -X PUT http://localhost:5000/api/admin/users/<userId>/role \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"role":"admin"}'
+```
+
+## Routes Frontend
+
+Routes publiques :
+
+- `/`
+- `/login`
+- `/register`
+
+Routes utilisateur :
+
+- `/dashboard`
+- `/catalogue`
+- `/workspace`
+- `/factures`
+- `/deconnexion`
+
+Routes admin :
+
+- `/admin/dashboard`
+- `/admin/catalogue/products`
+- `/admin/catalogue/filters`
+- `/admin/suppliers`
+- `/admin/users`
+- `/admin/simulations`
+- `/admin/support/tickets`
+- `/admin/support/feedback`
+- `/admin/support/price-reports`
+- `/admin/settings/simulations`
+- `/admin/settings/regional-coefficients`
+
+## Design System
+
+Règle d'interface :
+
+**70 à 80% mutualisé, 20 à 30% spécifique au rôle.**
+
+Les composants UI sont partagés :
+
+- boutons ;
+- inputs ;
+- tables ;
+- modals ;
+- cards ;
+- badges ;
+- header ;
+- sidebar ;
+- icônes ;
+- typographie.
+
+Les layouts restent spécifiques :
+
+- `AppShell.jsx` pour les utilisateurs ;
+- `AdminShell.jsx` pour les administrateurs.
 
 ```bash
 curl -X POST http://localhost:5000/api/auth/register \

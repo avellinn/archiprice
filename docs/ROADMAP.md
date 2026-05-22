@@ -1,47 +1,170 @@
-# Roadmap ArchiPrice — progression structurée
+# Roadmap ArchiPrice
+
+Dernière mise à jour : 2026-05-22
+
+## État Global
+
+ArchiPrice dispose maintenant :
+
+- d'une API Express/Mongoose ;
+- d'une authentification JWT ;
+- d'un rôle utilisateur/admin ;
+- d'une interface utilisateur protégée ;
+- d'une interface admin protégée ;
+- d'un catalogue produits côté frontend ;
+- d'un workspace projet dynamique ;
+- d'un design system partagé ;
+- d'une documentation frontend et workspace mise à jour.
+
+## Progression
 
 | Étape | Objectif | Statut |
 |-------|----------|--------|
-| **0** | Fondations (MongoDB, auth, API Project) | ✅ |
-| **1** | Nettoyage workspace | ✅ |
-| **2** | Un seul `.env` à la racine | ✅ |
-| **3** | UI Dashboard — projets (CRUD) | ✅ |
-| **4** | Modèle Product + API backend + service frontend | ✅ |
-| **5** | UX/UI Login & Register (maquette) | ✅ |
-| **6** | UI catalogue produits par projet | ⏳ Prochaine |
+| 0 | Fondations backend, Express, MongoDB, env | Terminé |
+| 1 | Authentification JWT | Terminé |
+| 2 | CRUD projets | Terminé |
+| 3 | CRUD produits liés aux projets | Terminé |
+| 4 | Interface utilisateur principale | Terminé |
+| 5 | Dashboard one-page et stats projets | Terminé |
+| 6 | Catalogue produits avec simulation budget | En cours |
+| 7 | Workspace projet détaillé | En cours |
+| 8 | Rôle admin + routes admin | En cours |
+| 9 | Design system partagé user/admin | En cours |
+| 10 | Pages admin métier complètes | À faire |
 
-## Étape 4 — Product ✅
+## Interface Utilisateur
 
-- [x] `models/Product.js` — lié à un `Project`
-- [x] `controllers/productController.js` — CRUD + vérification propriétaire du projet
-- [x] `routes/products.js` — `/api/projects/:projectId/products`
-- [x] `frontend/src/services/products.js` + `constants/api.js`
+Pages en place :
 
-### Validation manuelle
+- Accueil
+- Connexion
+- Inscription
+- Tableau de bord
+- Explorer catalogue
+- Mon espace de travail
+- Estimations exportées
+- Déconnexion
+
+Points clés :
+
+- sidebar et header partagés ;
+- dark mode au niveau shell ;
+- avatar dynamique ;
+- CTA nouveau projet ;
+- modale de création projet ;
+- workspace avec mode cards et mode projet ;
+- catalogue avec filtres, cartes produits, simulation budget et récapitulatif.
+
+## Interface Admin
+
+Routes en place :
+
+- `/admin/dashboard`
+- `/admin/catalogue/products`
+- `/admin/catalogue/filters`
+- `/admin/suppliers`
+- `/admin/users`
+- `/admin/simulations`
+- `/admin/support/tickets`
+- `/admin/support/feedback`
+- `/admin/support/price-reports`
+- `/admin/settings/simulations`
+- `/admin/settings/regional-coefficients`
+
+Menus admin :
+
+- Tableau de bord
+- Catalogue
+  - Produits
+  - Catégories & filtres
+- Fournisseurs
+- Utilisateurs
+- Simulations
+- Support
+  - Tickets
+  - Feedback
+  - Signalements prix
+- Paramètres
+  - Configuration simulations
+  - Coefficients régionaux
+- Déconnexion
+
+À faire :
+
+- remplacer les placeholders par des pages métier ;
+- ajouter CRUD produits admin ;
+- ajouter CRUD fournisseurs ;
+- ajouter suivi simulations ;
+- ajouter gestion support ;
+- ajouter configuration simulation et coefficients régionaux.
+
+## Backend
+
+API en place :
+
+- healthcheck ;
+- auth ;
+- projets ;
+- produits ;
+- admin users.
+
+Routes admin en place :
+
+- `GET /api/admin/users`
+- `GET /api/admin/users/:id`
+- `PUT /api/admin/users/:id/role`
+
+À faire :
+
+- endpoints admin produits ;
+- endpoints admin catégories/filtres ;
+- endpoints fournisseurs ;
+- endpoints simulations ;
+- endpoints support ;
+- endpoints paramètres.
+
+## Design System
+
+Règle validée :
+
+**70 à 80% mutualisé, 20 à 30% spécifique au rôle.**
+
+Partagé :
+
+- boutons ;
+- inputs ;
+- selects ;
+- tables ;
+- modals ;
+- cards ;
+- dropdowns ;
+- badges ;
+- loaders ;
+- empty states ;
+- header ;
+- sidebar ;
+- icônes ;
+- typographie.
+
+Spécifique :
+
+- `AppShell.jsx` pour l'utilisateur ;
+- `AdminShell.jsx` pour l'admin ;
+- routes et menus par rôle ;
+- contenus métier par rôle.
+
+## Qualité Et Nettoyage
+
+Scripts à utiliser :
 
 ```bash
-# 1. Token après login
-TOKEN="..."
-
-# 2. Créer ou récupérer un projectId
-curl -s http://localhost:5000/api/projects -H "Authorization: Bearer $TOKEN"
-
-# 3. Ajouter un produit
-curl -s -X POST "http://localhost:5000/api/projects/<projectId>/products" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Peinture murale","unit":"m2","unitPrice":12.5,"category":"Finitions"}'
-
-# 4. Lister le catalogue
-curl -s "http://localhost:5000/api/projects/<projectId>/products" \
-  -H "Authorization: Bearer $TOKEN"
+npm run clean
+cd frontend && npm run lint
+cd frontend && npm run build
 ```
 
-## Étape 5 — UI catalogue (prochaine)
+Dette technique suivie :
 
-- [ ] Composant catalogue dans le Dashboard ou page dédiée
-- [ ] Sélection d’un projet → liste / CRUD produits
-
----
-
-*Dernière mise à jour : étape 4 terminée.*
+- `App.css` reste large et devra être progressivement découpé ;
+- le bundle Vite dépasse `500 kB`, optimisation future par code splitting ;
+- les pages admin hors utilisateurs sont encore des placeholders.

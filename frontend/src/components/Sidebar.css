@@ -72,8 +72,8 @@
   font-size: 0.9rem;
   font-weight: 700;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.95);
-  text-align: center;
+  color: #64748b;
+  text-align: left;
 }
 
 .sidebar__close-btn {
@@ -166,6 +166,10 @@
   color: #0f172a;
 }
 
+.sidebar__nav-link--parent {
+  padding-right: 0.6rem;
+}
+
 .sidebar__nav-icon {
   display: flex;
   align-items: center;
@@ -184,6 +188,18 @@
   flex: 1;
 }
 
+.sidebar__nav-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+  transition: transform 0.2s ease;
+}
+
+.sidebar__nav-link--open .sidebar__nav-chevron {
+  transform: rotate(180deg);
+}
+
 .sidebar__nav-badge {
   display: inline-flex;
   align-items: center;
@@ -195,6 +211,41 @@
   font-weight: 600;
   background-color: rgba(255, 255, 255, 0.2);
   border-radius: 999px;
+}
+
+.sidebar__submenu {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0.25rem 0 0.45rem 2.15rem;
+  padding: 0;
+  list-style: none;
+}
+
+.sidebar__submenu-link {
+  display: flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 7px;
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.sidebar__submenu-link:hover,
+.sidebar__submenu-link:focus-visible {
+  background: #e7ebef;
+  color: #0f172a;
+  outline: 0;
+}
+
+.sidebar__submenu-link--active {
+  background: #e2e7ec;
+  color: #0f172a;
+  font-weight: 800;
 }
 
 .sidebar__footer {
@@ -316,6 +367,15 @@
 
 .dashboard-shell.is-theme-dark .sidebar__user-email {
   color: #94a3b8;
+}
+
+.sidebar--admin .sidebar__title {
+  margin-top: 0.35rem;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 @media (max-width: 1023px) {

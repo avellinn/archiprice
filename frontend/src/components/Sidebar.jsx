@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import './Sidebar.css';
 import Icon from './Icon';
@@ -19,16 +19,31 @@ function getInitials(user) {
 export default function Sidebar({
   logo,
   title,
+  variant = 'user',
   sections = [],
   activeItemId,
   onItemClick,
   user,
+  userLink = '/workspace',
+  userLinkLabel = 'Accéder à mon espace de travail',
   isOpen = true,
   onClose,
   isMobile = false,
 }) {
   const location = useLocation();
   const visibleSections = sections.filter((section) => section?.items?.length);
+  const [openSubmenus, setOpenSubmenus] = useState(() => {
+    const initialState = {};
+    sections.forEach((section) => {
+      section?.items?.forEach((item) => {
+        if (item?.children?.length) {
+          initialState[item.id] = item.defaultOpen ?? false;
+        }
+      });
+    });
+    return initialState;
+  });
+  const [hoveredSubmenuId, setHoveredSubmenuId] = useState(null);
 
   const pathMap = useMemo(
     () => ({
@@ -53,7 +68,7 @@ export default function Sidebar({
     [pathMap],
   );
 
-  const isItemActive = useCallback(
+  const isLeafItemActive = useCallback(
     (item) => {
       if (item.action) return false;
 
@@ -66,6 +81,40 @@ export default function Sidebar({
     },
     [activeItemId, getItemPath, location.pathname],
   );
+
+  const isItemActive = useCallback(
+    (item) => {
+      if (item.children?.length) {
+        return item.children.some((child) => isLeafItemActive(child));
+      }
+
+      return isLeafItemActive(item);
+    },
+    [isLeafItemActive],
+  );
+
+  const toggleSubmenu = useCallback(
+    (item) => {
+      onItemClick?.(item.id);
+      setOpenSubmenus((currentState) => ({
+        ...currentState,
+        [item.id]: !(currentState[item.id] ?? item.defaultOpen ?? false),
+      }));
+    },
+    [onItemClick],
+  );
+
+  const handleSubmenuMouseEnter = useCallback((item) => {
+    if (item.children?.length) {
+      setHoveredSubmenuId(item.id);
+    }
+  }, []);
+
+  const handleSubmenuMouseLeave = useCallback((item) => {
+    if (item.children?.length) {
+      setHoveredSubmenuId((currentId) => (currentId === item.id ? null : currentId));
+    }
+  }, []);
 
   const handleActionClick = useCallback(
     (event, item) => {
@@ -98,7 +147,7 @@ export default function Sidebar({
   );
 
   return (
-    <aside className={`sidebar ${isOpen ? 'sidebar--open' : 'sidebar--closed'}`}>
+    <aside className={`sidebar sidebar--${variant} ${isOpen ? 'sidebar--open' : 'sidebar--closed'}`}>
       <div className="sidebar__header">
         <div className="sidebar__header-content">
           {logo && <div className="sidebar__logo">{logo}</div>}
@@ -119,8 +168,17 @@ export default function Sidebar({
                 if (!item?.id) return null;
 
                 const isActive = isItemActive(item);
+                const hasChildren = Boolean(item.children?.length);
+                const isSubmenuOpen = hasChildren
+                  ? Boolean(openSubmenus[item.id] ?? item.defaultOpen ?? false) || hoveredSubmenuId === item.id
+                  : false;
                 const itemPath = getItemPath(item);
-                const linkClassName = ['sidebar__nav-link', isActive ? 'sidebar__nav-link--active' : '']
+                const linkClassName = [
+                  'sidebar__nav-link',
+                  hasChildren ? 'sidebar__nav-link--parent' : '',
+                  isActive ? 'sidebar__nav-link--active' : '',
+                  isSubmenuOpen ? 'sidebar__nav-link--open' : '',
+                ]
                   .filter(Boolean)
                   .join(' ');
                 const itemContent = (
@@ -128,12 +186,61 @@ export default function Sidebar({
                     {item.icon && <span className="sidebar__nav-icon">{item.icon}</span>}
                     <span className="sidebar__nav-label">{item.label}</span>
                     {item.badge !== undefined && <span className="sidebar__nav-badge">{item.badge}</span>}
+                    {hasChildren && (
+                      <span className="sidebar__nav-chevron">
+                        <Icon name="ChevronDown" size="sm" />
+                      </span>
+                    )}
                   </>
                 );
 
                 return (
-                  <li key={item.id} className="sidebar__nav-item">
-                    {item.action ? (
+                  <li
+                    key={item.id}
+                    className="sidebar__nav-item"
+                    onMouseEnter={() => handleSubmenuMouseEnter(item)}
+                    onMouseLeave={() => handleSubmenuMouseLeave(item)}
+                  >
+                    {hasChildren ? (
+                      <>
+                        <button
+                          type="button"
+                          className={linkClassName}
+                          aria-expanded={isSubmenuOpen}
+                          onClick={() => toggleSubmenu(item)}
+                        >
+                          {itemContent}
+                        </button>
+                        {isSubmenuOpen && (
+                          <ul className="sidebar__submenu">
+                            {item.children.map((child) => {
+                              const childPath = getItemPath(child);
+                              const childActive = isItemActive(child);
+
+                              return (
+                                <li key={child.id} className="sidebar__submenu-item">
+                                  <Link
+                                    to={childPath}
+                                    className={[
+                                      'sidebar__submenu-link',
+                                      childActive ? 'sidebar__submenu-link--active' : '',
+                                    ]
+                                      .filter(Boolean)
+                                      .join(' ')}
+                                    onClick={(event) => handleItemClick(event, child)}
+                                  >
+                                    <span>{child.label}</span>
+                                    {child.badge !== undefined && (
+                                      <span className="sidebar__nav-badge">{child.badge}</span>
+                                    )}
+                                  </Link>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                      </>
+                    ) : item.action ? (
                       <button
                         type="button"
                         className={linkClassName}
@@ -144,6 +251,7 @@ export default function Sidebar({
                     ) : (
                       <Link
                         to={itemPath}
+                        state={itemPath === '/catalogue' ? { from: location } : undefined}
                         className={linkClassName}
                         onClick={(event) => handleItemClick(event, item)}
                       >
@@ -160,7 +268,7 @@ export default function Sidebar({
 
       {user && (
         <div className="sidebar__footer">
-          <Link to="/workspace" className="sidebar__user" aria-label="Accéder à mon espace de travail">
+          <Link to={userLink} className="sidebar__user" aria-label={userLinkLabel}>
             {user.avatar ? (
               <img src={user.avatar} alt={user.name || 'Profil utilisateur'} className="sidebar__user-avatar" />
             ) : (

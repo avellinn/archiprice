@@ -1,91 +1,208 @@
 # Audit Et Nettoyage Du Workspace
 
-Date : 2026-05-21
+Date : 2026-05-22
 
 ## Synthèse
 
-Le workspace contient une application fullstack :
+Le workspace `archi-price` contient une application fullstack :
 
-- backend Express/Mongoose ;
-- frontend React/Vite ;
+- backend Express 5 + Mongoose ;
+- frontend React 19 + Vite 8 ;
 - documentation projet ;
-- scripts utilitaires.
+- scripts utilitaires racine.
 
-Le plus gros volume disque vient des dépendances installées localement :
+Le projet est organisé en monorepo léger avec deux applications indépendantes :
 
-- `frontend/node_modules` : environ 171 Mo ;
-- `backend/node_modules` : environ 20 Mo.
+- `backend/` pour l'API ;
+- `frontend/` pour la SPA.
 
-Ces dossiers sont ignorés par Git et nécessaires pour travailler localement. Ils n'ont pas été supprimés.
+## Volumétrie Observée
+
+Les volumes principaux constatés avant nettoyage :
+
+- workspace complet : environ `194 Mo` ;
+- `frontend/node_modules` : environ `171 Mo` ;
+- `backend/node_modules` : environ `20 Mo` ;
+- `frontend/src` : environ `448 Ko` ;
+- `frontend/dist` : environ `788 Ko` avant suppression ;
+- `.git` : environ `2.3 Mo`.
+
+Conclusion : le poids réel vient presque entièrement des dépendances locales. Elles ne sont pas supprimées car elles sont nécessaires au développement et déjà ignorées par Git.
 
 ## Nettoyage Effectué
 
-Fichiers et dossiers générés supprimés :
+Commande utilisée depuis la racine :
+
+```bash
+npm run clean
+```
+
+Le script supprime uniquement des fichiers générés ou caches locaux :
 
 - `frontend/dist`
 - `frontend/node_modules/.vite`
 - `frontend/node_modules/.vite-temp`
 - `frontend/node_modules/.tmp`
-- `backend/node_modules/.cache` si présent
+- `backend/node_modules/.cache`
 
-Code mort supprimé :
+Après nettoyage, aucun dossier `frontend/dist`, `.vite`, `.vite-temp`, `.tmp` ou `.cache` n'est présent dans les zones ciblées.
 
-- `frontend/src/components/ProjectList.jsx`
-- `frontend/src/components/ProjectList.css`
+## Ce Qui N'a Pas Été Supprimé
 
-Raison : le composant `ProjectList` n'était plus importé par l'application. Les parcours projets actuels passent par `Dashboard.jsx`, `Workspace.jsx`, `EspacePro` et les services `projects.js`.
+Non supprimé volontairement :
 
-CSS nettoyé :
+- `frontend/node_modules`
+- `backend/node_modules`
+- `.env`
+- fichiers source modifiés ;
+- fichiers non suivis liés aux sprints en cours ;
+- dossiers `.agents` et `.codex`.
 
-- retrait des anciens styles du catalogue type vidéo/Vimeo ;
-- conservation uniquement des styles nécessaires au catalogue produits actuel.
+Raisons :
 
-Configuration mise à jour :
+- `node_modules` est utile au dev local ;
+- `.env` est local, sensible et ignoré par Git ;
+- les changements non commités font partie du travail en cours ;
+- les dossiers de contexte outillage sont minuscules et ne changent pas le poids du workspace.
 
-- `package.json` : script `clean` enrichi avec les caches Vite temporaires ;
-- `.gitignore` : ajout de `.vite-temp/`, `.tmp/`, `.cache/`.
+## État Git Au Moment De L'Audit
 
-## État Actuel Des Zones Front
+Le workspace contient des changements en cours sur :
 
-Pages principales :
+- backend auth/admin ;
+- routes admin ;
+- frontend routes admin/user ;
+- composants partagés ;
+- pages catalogue/workspace/admin ;
+- documentation ;
+- styles globaux et fonts.
 
-- `Dashboard.jsx` : statistiques, activité, projets récents, donut chart, CTA nouveau projet.
-- `Catalogue.jsx` : filtres produits, cartes produits, simulation budget sticky.
-- `Workspace.jsx` : cards d'accès, mode miniature, espace projet, bouton `Où acheter`.
-- `Invoices.jsx` : documents exportés.
-- `Logout.jsx` : page de confirmation de déconnexion.
+Important : aucun changement utilisateur n'a été revert.
 
-Composants structurants :
+## Frontend Actuel
 
-- `AppShell.jsx`
-- `Sidebar.jsx`
-- `Header.jsx`
+### Layouts
+
+- `AppShell.jsx` : layout utilisateur.
+- `AdminShell.jsx` : layout administrateur.
+
+Les deux layouts utilisent les mêmes composants UI :
+
+- `Header`
+- `Sidebar`
+- `Button`
+- `Icon`
+- `Text`
+- `Avatar`
+
+La différence se situe dans les menus, routes et contenus métier.
+
+### Pages Utilisateur
+
+- `Home.jsx`
+- `Login.jsx`
+- `Register.jsx`
+- `Dashboard.jsx`
+- `Catalogue.jsx`
+- `Workspace.jsx`
+- `Invoices.jsx`
+- `Logout.jsx`
+
+### Pages Admin
+
+- `AdminUsers.jsx`
+- `AdminPlaceholder.jsx`
+
+`AdminPlaceholder.jsx` sert de page temporaire pour les sections admin non encore implémentées.
+
+### Composants Partagés
+
 - `Button.jsx`
+- `Text.jsx`
 - `Icon.jsx`
+- `Header.jsx`
+- `Sidebar.jsx`
+- `Avatar.jsx`
 - `DonutChart.jsx`
+- `ModalCreateProject.jsx`
+- `PasswordInput.jsx`
 - `WorkspaceMiniGrid.jsx`
 - `espacepro.jsx`
-- `ModalCreateProject.jsx`
 
-## Points D'Attention
+## Backend Actuel
 
-`frontend/src/App.css` reste le fichier CSS le plus lourd car il porte plusieurs pages. À moyen terme, l'optimisation la plus propre serait de déplacer les styles de pages dans :
+### Routes Principales
 
-- `src/pages/Dashboard.css`
-- `src/pages/Catalogue.css`
-- `src/pages/Workspace.css`
+- `/api/health`
+- `/api/auth`
+- `/api/projects`
+- `/api/projects/:projectId/products`
+- `/api/admin`
 
-Cela réduirait la charge cognitive et faciliterait les personnalisations.
+### Admin API
 
-Le build Vite signale un chunk JS supérieur à 500 kB. Ce n'est pas bloquant. Une future optimisation pourrait utiliser `React.lazy()` et le code splitting par route.
+Routes admin protégées par `protect` + `requireAdmin` :
 
-## Commandes De Contrôle
+- `GET /api/admin/users`
+- `GET /api/admin/users/:id`
+- `PUT /api/admin/users/:id/role`
+- `GET /api/admin/test`
 
-Depuis la racine :
+Les réponses utilisateur admin excluent le mot de passe.
+
+## Politique De Nettoyage
+
+Nettoyage standard :
 
 ```bash
 npm run clean
 ```
+
+Nettoyage agressif facultatif :
+
+```bash
+rm -rf frontend/node_modules backend/node_modules
+npm run install:all
+```
+
+Ce nettoyage agressif n'est pas fait automatiquement car il oblige à réinstaller toutes les dépendances.
+
+## Fichiers À Ne Pas Commiter
+
+Déjà couverts par `.gitignore` :
+
+- `node_modules/`
+- `frontend/dist/`
+- `.env`
+- `.env.local`
+- `.env.*.local`
+- `.vite/`
+- `.vite-temp/`
+- `.tmp/`
+- `.cache/`
+- `coverage/`
+- logs locaux.
+
+## Optimisations Recommandées
+
+Priorité 1 :
+
+- garder `src/components/` comme design system partagé ;
+- éviter les doublons de composants entre admin et user ;
+- déplacer progressivement les grands blocs CSS de page hors de `App.css`.
+
+Priorité 2 :
+
+- créer `Dashboard.css`, `Catalogue.css`, `Workspace.css`, `Admin.css` si les pages continuent de grossir ;
+- ajouter du code splitting par route avec `React.lazy()` pour réduire le warning Vite sur le bundle ;
+- stabiliser les pages admin encore en placeholder.
+
+Priorité 3 :
+
+- ajouter des tests frontend sur les guards `ProtectedRoute` et `AdminRoute` ;
+- ajouter des tests API sur `requireAdmin` et les routes admin.
+
+## Commandes De Contrôle
 
 Depuis `frontend/` :
 
@@ -94,22 +211,10 @@ npm run lint
 npm run build
 ```
 
-## Ce Qui N'a Pas Été Supprimé
-
-Non supprimé volontairement :
-
-- `node_modules/` : utile au dev local, déjà ignoré par Git ;
-- `.env` : fichier local sensible, ignoré par Git ;
-- `frontend/dist` après vérification build : peut être régénéré par `npm run build`.
-
-Pour un nettoyage disque plus agressif, supprimer manuellement les dépendances :
+Depuis la racine :
 
 ```bash
-rm -rf frontend/node_modules backend/node_modules
+npm run clean
 ```
 
-Puis réinstaller :
-
-```bash
-npm run install:all
-```
+Le warning Vite sur les chunks supérieurs à `500 kB` est connu et non bloquant.

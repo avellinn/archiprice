@@ -6,12 +6,13 @@ function formatUser(user) {
     id: user._id,
     name: user.name,
     email: user.email,
+    role: user.role,
     createdAt: user.createdAt,
   };
 }
 
 function sendAuthResponse(res, user, statusCode = 200) {
-  const token = generateToken(user._id);
+  const token = generateToken(user._id, user.role);
   res.status(statusCode).json({
     token,
     user: formatUser(user),
