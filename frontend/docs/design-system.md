@@ -39,11 +39,20 @@ Exemples actuels :
 - `Button.jsx` et `Button.css`
 - `Text.jsx` et `Text.css`
 - `Icon.jsx` et `Icon.css`
+- `components/ui/Badge.jsx`
+- `components/ui/Card.jsx`
+- `components/ui/DataTable.jsx`
+- `components/ui/EmptyState.jsx`
+- `components/ui/Pagination.jsx`
 - `Header.jsx` et `Header.css`
 - `Sidebar.jsx` et `Sidebar.css`
 - `Avatar.jsx` et `Avatar.css`
 - `ModalCreateProject.jsx` et `ModalCreateProject.css`
 - `DonutChart.jsx` et `DonutChart.css`
+
+Les nouveaux composants génériques doivent être créés dans `src/components/ui/` lorsqu'ils ne dépendent pas d'un domaine métier.
+
+`src/pages/admin/PageShell.jsx` peut réexporter certains composants partagés pour préserver les imports admin existants, mais la source de vérité doit rester dans `src/components/ui/`.
 
 ## Ce Qui Est Spécifique Au Rôle
 
@@ -78,6 +87,15 @@ Avant de créer un nouveau composant, vérifier s'il s'agit :
 3. d'un layout propre à un rôle.
 
 Si c'est générique, il doit aller dans `src/components/` et être pensé pour user + admin.
+
+Pour les composants UI purs, préférer :
+
+```txt
+src/components/ui/NomDuComposant.jsx
+src/components/ui/ui.css
+```
+
+Pour les composants historiques déjà partagés (`Button`, `Icon`, `Text`, `Sidebar`, `Header`), conserver leur emplacement actuel dans `src/components/`.
 
 Si c'est métier, il peut rester dans la page concernée ou dans un composant dédié au domaine.
 

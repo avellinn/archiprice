@@ -14,11 +14,8 @@ const ADMIN_PAGE_TITLES = {
   '/admin/suppliers': 'Fournisseurs',
   '/admin/users': 'Administration utilisateurs',
   '/admin/simulations': 'Simulations',
-  '/admin/support/tickets': 'Tickets',
-  '/admin/support/feedback': 'Feedback',
-  '/admin/support/price-reports': 'Signalements prix',
-  '/admin/settings/simulations': 'Configuration simulations',
-  '/admin/settings/regional-coefficients': 'Coefficients régionaux',
+  '/admin/support': 'Support',
+  '/admin/settings': 'Paramètres',
 };
 
 export default function AdminShell() {
@@ -82,43 +79,14 @@ export default function AdminShell() {
           {
             id: 'admin-support',
             label: 'Support',
+            path: '/admin/support',
             icon: <Icon name="Chat" />,
-            defaultOpen: true,
-            children: [
-              {
-                id: 'admin-support-tickets',
-                label: 'Tickets',
-                path: '/admin/support/tickets',
-              },
-              {
-                id: 'admin-support-feedback',
-                label: 'Feedback',
-                path: '/admin/support/feedback',
-              },
-              {
-                id: 'admin-support-price-reports',
-                label: 'Signalements prix',
-                path: '/admin/support/price-reports',
-              },
-            ],
           },
           {
             id: 'admin-settings',
             label: 'Paramètres',
+            path: '/admin/settings',
             icon: <Icon name="Dashboard" />,
-            defaultOpen: true,
-            children: [
-              {
-                id: 'admin-settings-simulations',
-                label: 'Configuration simulations',
-                path: '/admin/settings/simulations',
-              },
-              {
-                id: 'admin-settings-regional-coefficients',
-                label: 'Coefficients régionaux',
-                path: '/admin/settings/regional-coefficients',
-              },
-            ],
           },
           {
             id: 'logout',

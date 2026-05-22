@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import Button from '../components/Button';
-import Icon from '../components/Icon';
-import useAuth from '../context/useAuth';
+import Button from '../../components/Button';
+import Icon from '../../components/Icon';
+import useAuth from '../../context/useAuth';
 import './Logout.css';
 
 export default function Logout() {

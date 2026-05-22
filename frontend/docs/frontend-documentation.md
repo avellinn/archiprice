@@ -12,7 +12,7 @@ Le frontend est une SPA React construite avec Vite.
 - Polices CDN : `src/styles/fonts.css`
 - Variables et reset globaux : `src/styles/globals.css`
 - Layouts et styles de pages : `src/App.css`
-- Pages routées : `src/pages/`
+- Pages routées : `src/pages/admin/` et `src/pages/user/`
 - Composants réutilisables : `src/components/`
 - Services API : `src/services/`
 - Authentification : `src/context/`
@@ -30,6 +30,8 @@ Documentation dédiée : `docs/design-system.md`.
 À retenir :
 
 - `src/components/` contient les composants partagés : boutons, inputs, tables, modals, cards, badges, loader, empty states, header, sidebar, icônes, typographie.
+- `src/pages/admin/` contient uniquement les pages backoffice.
+- `src/pages/user/` contient uniquement les pages utilisateur.
 - `AppShell.jsx` contient le layout utilisateur.
 - `AdminShell.jsx` contient le layout administrateur.
 - `ProtectedRoute.jsx` protège l'interface utilisateur.
@@ -72,11 +74,10 @@ Routes admin :
 - `/admin/suppliers` : fournisseurs
 - `/admin/users` : utilisateurs
 - `/admin/simulations` : simulations
-- `/admin/support/tickets` : tickets
-- `/admin/support/feedback` : feedback
-- `/admin/support/price-reports` : signalements prix
-- `/admin/settings/simulations` : configuration simulations
-- `/admin/settings/regional-coefficients` : coefficients régionaux
+- `/admin/support` : support regroupant tickets, feedback et signalements prix
+- `/admin/settings` : paramètres regroupant configuration simulations et coefficients régionaux
+
+Les anciennes URLs `/admin/support/tickets`, `/admin/support/feedback`, `/admin/support/price-reports`, `/admin/settings/simulations` et `/admin/settings/regional-coefficients` redirigent vers les pages regroupées.
 
 Les routes admin passent par `AdminRoute`, puis sont rendues dans `AdminShell`.
 
@@ -86,22 +87,34 @@ Les routes admin passent par `AdminRoute`, puis sont rendues dans `AdminShell`.
 
 Fichiers :
 
-- `src/pages/AdminUsers.jsx`
-- `src/pages/AdminPlaceholder.jsx`
+- `src/pages/admin/Dashboard.jsx`
+- `src/pages/admin/Produits.jsx`
+- `src/pages/admin/CategoriesFiltres.jsx`
+- `src/pages/admin/Fournisseurs.jsx`
+- `src/pages/admin/Utilisateurs.jsx`
+- `src/pages/admin/Simulations.jsx`
+- `src/pages/admin/Support.jsx`
+- `src/pages/admin/Paramètres.jsx`
+- `src/pages/admin/PageShell.jsx`
 
-`AdminUsers.jsx` est la première page admin métier. Elle permet :
+Les données de démonstration et les mutations admin locales sont centralisées dans `src/services/adminData.js`.
 
-- de charger la liste des comptes via `fetchAdminUsers()` ;
-- d'afficher les statistiques utilisateurs ;
-- de modifier dynamiquement le rôle d'un compte `user` / `admin`.
+`Utilisateurs.jsx` utilise ce store pour :
 
-`AdminPlaceholder.jsx` sert de page temporaire pour les entrées admin dont le métier n'est pas encore implémenté.
+- rechercher et filtrer les comptes ;
+- ajouter un utilisateur ;
+- changer le type utilisateur/admin ;
+- changer l'abonnement ;
+- activer/désactiver un compte ;
+- supprimer un compte.
+
+`PageShell.jsx` centralise la structure commune des pages admin : en-tête, statistiques, toolbar, filtres, tables et badges.
 
 Les pages admin sont rendues dans `AdminShell.jsx` et protégées par `AdminRoute.jsx`.
 
 ### Dashboard
 
-Fichier : `src/pages/Dashboard.jsx`
+Fichier : `src/pages/user/Dashboard.jsx`
 
 Le dashboard affiche :
 
@@ -115,7 +128,7 @@ La page est pensée comme une vue one-page sans scroll global.
 
 ### Catalogue
 
-Fichier : `src/pages/Catalogue.jsx`
+Fichier : `src/pages/user/Catalogue.jsx`
 
 La page catalogue est structurée en trois zones :
 
@@ -134,7 +147,7 @@ Les données produits sont aujourd'hui locales dans `PRODUCTS`. Si elles devienn
 
 ### Workspace
 
-Fichier : `src/pages/Workspace.jsx`
+Fichier : `src/pages/user/Workspace.jsx`
 
 La page workspace contient deux modes :
 
@@ -154,9 +167,9 @@ Fonctions principales :
 
 Fichiers :
 
-- `src/pages/Login.jsx`
-- `src/pages/Register.jsx`
-- `src/pages/Logout.jsx`
+- `src/pages/user/Login.jsx`
+- `src/pages/user/Register.jsx`
+- `src/pages/user/Logout.jsx`
 
 Les pages login/register utilisent `AuthLayout`, `PasswordInput`, `react-hook-form` et `AuthContext`.
 
@@ -197,7 +210,7 @@ Le style de base reste uniforme entre admin et user.
 Tous les appels API passent par `src/services/api.js`.
 
 - `auth.js` : login, register, profil courant.
-- `admin.js` : utilisateurs admin et changement de rôle.
+- `adminData.js` : store local dynamique des données backoffice.
 - `projects.js` : CRUD projets.
 - `products.js` : CRUD produits liés à un projet.
 
@@ -329,18 +342,18 @@ Modifier la navigation :
 
 Modifier le catalogue :
 
-1. données produits et filtres : `src/pages/Catalogue.jsx`
+1. données produits et filtres : `src/pages/user/Catalogue.jsx`
 2. layout et style : blocs `.catalogue-*` dans `src/App.css`
 
 Modifier le workspace :
 
-1. orchestration : `src/pages/Workspace.jsx`
+1. orchestration : `src/pages/user/Workspace.jsx`
 2. cards miniatures : `WorkspaceMiniGrid.jsx` et `WorkspaceMiniGrid.css`
 3. espace projet : `espacepro.jsx` et `espacepro.css`
 
 Modifier le dashboard :
 
-1. logique : `src/pages/Dashboard.jsx`
+1. logique : `src/pages/user/Dashboard.jsx`
 2. styles : `.dashboard-*`, `.stat-*`, `.history-*` dans `src/App.css`
 
 ## Nettoyage Et Build

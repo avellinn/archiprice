@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import Button from '../components/Button';
-import Icon from '../components/Icon';
-import { getApiErrorMessage } from '../services/api';
-import { createProduct } from '../services/products';
-import { createProject, fetchProjects, updateProject } from '../services/projects';
+import Button from '../../components/Button';
+import Icon from '../../components/Icon';
+import { getApiErrorMessage } from '../../services/api';
+import { createProduct } from '../../services/products';
+import { createProject, fetchProjects, updateProject } from '../../services/projects';
 
 const FILTERS = {
   categories: ['Tout', 'Mobilier', 'Luminaire', 'Revêtement', 'Sanitaire', 'Décoration'],

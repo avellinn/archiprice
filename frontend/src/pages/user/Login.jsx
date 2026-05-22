@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import '../styles/authForm.css';
-import AuthLayout from '../components/AuthLayout';
-import PasswordInput from '../components/PasswordInput';
-import Text from '../components/Text';
-import useAuth from '../context/useAuth';
-import { getApiErrorMessage } from '../services/api';
+import '../../styles/authForm.css';
+import AuthLayout from '../../components/AuthLayout';
+import PasswordInput from '../../components/PasswordInput';
+import Text from '../../components/Text';
+import useAuth from '../../context/useAuth';
+import { getApiErrorMessage } from '../../services/api';
 
 export default function Login() {
   const navigate = useNavigate();

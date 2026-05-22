@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import Button from '../components/Button';
-import DonutChartCard from '../components/DonutChart';
-import Icon from '../components/Icon';
-import Text from '../components/Text';
-import { fetchProjects } from '../services/projects';
+import Button from '../../components/Button';
+import DonutChartCard from '../../components/DonutChart';
+import Icon from '../../components/Icon';
+import Text from '../../components/Text';
+import { fetchProjects } from '../../services/projects';
 
 const MONTH_ACTIVITY = [
   { label: 'Jan', value: 18 },

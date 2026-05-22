@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import Button from '../components/Button';
-import EspacePro from '../components/espacepro';
-import Icon from '../components/Icon';
-import ModalCreateProject from '../components/ModalCreateProject';
-import WorkspaceMiniGrid from '../components/WorkspaceMiniGrid';
-import { getApiErrorMessage } from '../services/api';
-import { deleteProject, fetchProjects, updateProject } from '../services/projects';
+import Button from '../../components/Button';
+import EspacePro from '../../components/espacepro';
+import Icon from '../../components/Icon';
+import ModalCreateProject from '../../components/ModalCreateProject';
+import WorkspaceMiniGrid from '../../components/WorkspaceMiniGrid';
+import { getApiErrorMessage } from '../../services/api';
+import { deleteProject, fetchProjects, updateProject } from '../../services/projects';
 
 const RECOMMENDED_SHOPS = [
   {

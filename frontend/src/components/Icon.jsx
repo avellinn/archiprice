@@ -60,6 +60,12 @@ const ICONS = {
       <path key="close-2" d="m6 6 12 12" />,
     ],
   },
+  Copy: {
+    paths: [
+      <rect key="copy-back" x="8" y="8" width="11" height="11" rx="2" />,
+      <path key="copy-front" d="M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1" />,
+    ],
+  },
   DarkMode: {
     paths: [<path key="moon" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />],
   },
@@ -78,6 +84,13 @@ const ICONS = {
       <path key="delete-box" d="M6 6l1 15h10l1-15" />,
       <path key="delete-line-1" d="M10 11v6" />,
       <path key="delete-line-2" d="M14 11v6" />,
+    ],
+  },
+  Download: {
+    paths: [
+      <path key="download-line" d="M12 3v11" />,
+      <path key="download-arrow" d="m7 9 5 5 5-5" />,
+      <path key="download-tray" d="M5 19h14" />,
     ],
   },
   Edit: {
@@ -117,6 +130,12 @@ const ICONS = {
       <path key="sun-rays" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />,
     ],
   },
+  Link: {
+    paths: [
+      <path key="link-left" d="M10 13a5 5 0 0 0 7.07 0l2-2a5 5 0 0 0-7.07-7.07l-1.15 1.15" />,
+      <path key="link-right" d="M14 11a5 5 0 0 0-7.07 0l-2 2A5 5 0 0 0 12 20.07l1.15-1.15" />,
+    ],
+  },
   Logout: {
     paths: [
       <path key="logout-door" d="M10 17 15 12 10 7" />,
@@ -139,6 +158,13 @@ const ICONS = {
     paths: [
       <circle key="search-circle" cx="11" cy="11" r="7" />,
       <path key="search-line" d="m16 16 4 4" />,
+    ],
+  },
+  Upload: {
+    paths: [
+      <path key="upload-line" d="M12 21V10" />,
+      <path key="upload-arrow" d="m7 15 5-5 5 5" />,
+      <path key="upload-tray" d="M5 5h14" />,
     ],
   },
   Visibility: {
@@ -181,17 +207,21 @@ const NAME_ALIASES = {
   close: 'Close',
   dashboard: 'Dashboard',
   darkMode: 'DarkMode',
+  copy: 'Copy',
   delete: 'Delete',
+  download: 'Download',
   edit: 'Edit',
   explore: 'Explore',
   folder: 'Folder',
   history: 'History',
   info: 'Info',
   lightMode: 'LightMode',
+  link: 'Link',
   logout: 'Logout',
   notifications: 'Notifications',
   receiptLong: 'ReceiptLong',
   search: 'Search',
+  upload: 'Upload',
   visibility: 'Visibility',
   visibilityOff: 'VisibilityOff',
   workspaces: 'Workspaces',

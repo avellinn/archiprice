@@ -30,7 +30,9 @@ archi-price/
         ├── constants/    # Routes API, clés storage
         ├── config/       # env frontend
         ├── context/      # AuthContext
-        ├── pages/        # Écrans (routes)
+        ├── pages/
+        │   ├── admin/    # Pages backoffice
+        │   └── user/     # Pages utilisateur
         └── services/     # api.js, auth.js, projects.js
 ```
 

@@ -99,6 +99,8 @@ La différence se situe dans les menus, routes et contenus métier.
 
 ### Pages Utilisateur
 
+Toutes les pages utilisateur sont regroupées dans `frontend/src/pages/user/` :
+
 - `Home.jsx`
 - `Login.jsx`
 - `Register.jsx`
@@ -110,10 +112,25 @@ La différence se situe dans les menus, routes et contenus métier.
 
 ### Pages Admin
 
-- `AdminUsers.jsx`
-- `AdminPlaceholder.jsx`
+Toutes les pages admin sont regroupées dans `frontend/src/pages/admin/` :
 
-`AdminPlaceholder.jsx` sert de page temporaire pour les sections admin non encore implémentées.
+- `Dashboard.jsx`
+- `Produits.jsx`
+- `CategoriesFiltres.jsx`
+- `Fournisseurs.jsx`
+- `Utilisateurs.jsx`
+- `Simulations.jsx`
+- `Support.jsx`
+- `Paramètres.jsx`
+- `PageShell.jsx`
+
+`Support.jsx` regroupe tickets, feedback et signalements prix.
+
+`Paramètres.jsx` regroupe configuration simulations et coefficients régionaux.
+
+`PageShell.jsx` centralise les blocs UI communs aux pages admin et réexporte certains composants du design system partagé.
+
+Les données backoffice locales et dynamiques sont centralisées dans `frontend/src/services/adminData.js`.
 
 ### Composants Partagés
 

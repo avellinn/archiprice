@@ -1,7 +1,7 @@
 import { Link, Navigate } from 'react-router-dom';
-import Header from '../components/Header';
-import Text from '../components/Text';
-import useAuth from '../context/useAuth';
+import Header from '../../components/Header';
+import Text from '../../components/Text';
+import useAuth from '../../context/useAuth';
 
 export default function Home() {
   const { isAuthenticated, loading } = useAuth();
