@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Button from '../../components/Button';
+import CardArticle, { ArticleFullscreen } from '../../components/cardarticle';
 import Icon from '../../components/Icon';
+import Recap from '../../components/recap';
 import { getApiErrorMessage } from '../../services/api';
 import { useAdminData } from '../../services/adminData';
 import { createProduct } from '../../services/products';
@@ -28,16 +30,25 @@ function parsePrice(value) {
   return Number.isFinite(parsedValue) ? parsedValue : 0;
 }
 
-function getCurrencyCode(currency) {
-  return currency === 'FCFA' ? 'XOF' : currency || 'EUR';
+function formatFCFA(amount) {
+  return `${new Intl.NumberFormat('fr-FR').format(amount)} FCFA`;
 }
 
-function formatCurrency(value, currency = 'EUR') {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: getCurrencyCode(currency),
-    maximumFractionDigits: 0,
-  }).format(value);
+function formatCurrency(value) {
+  return formatFCFA(value);
+}
+
+function formatOptionalCurrency(value) {
+  return value > 0 ? formatFCFA(value) : 'À définir';
+}
+
+function normalizeBudgetInput(value) {
+  return String(value || '').replace(/[^\d]/g, '');
+}
+
+function formatBudgetInputValue(value) {
+  const amount = parsePrice(value);
+  return amount > 0 ? formatFCFA(amount) : '';
 }
 
 function getCoefficient(city, regionalCoefficients) {
@@ -45,6 +56,13 @@ function getCoefficient(city, regionalCoefficients) {
   const value = Number(String(item?.coefficient || '1').replace(',', '.'));
 
   return Number.isFinite(value) && value > 0 ? value : 1;
+}
+
+function getImageUrl(image) {
+  if (!image) return '';
+  if (typeof image === 'string') return image;
+
+  return image.secure_url || image.url || '';
 }
 
 function buildCatalogueProduct(product, adminData) {
@@ -56,14 +74,25 @@ function buildCatalogueProduct(product, adminData) {
   const minPrice = Math.round(basePrice * regionalCoefficient);
   const maxPrice = Math.round(basePrice * (1 + margin) * (1 + vat) * regionalCoefficient);
   const supplier = adminData.suppliers.find((item) => item.name === product.supplier);
+  const locationLabel = [product.city, product.neighborhood].filter(Boolean).join(' · ');
+  const imageDocuments = Array.isArray(product.images) && product.images.length > 0
+    ? product.images.filter(Boolean).slice(0, 10)
+    : [];
+  const images = imageDocuments.length > 0
+    ? imageDocuments.map(getImageUrl).filter(Boolean).slice(0, 10)
+    : [product.image].filter(Boolean);
+  const primaryImage = images[0] || '';
 
   return {
     ...product,
     minPrice,
     maxPrice,
     shop: supplier?.name || product.supplier,
-    shopZone: supplier?.region || product.city,
+    shopZone: locationLabel || supplier?.region || product.city,
     tone: VISUAL_TONES[product.visual] || 'linen',
+    image: primaryImage,
+    images,
+    imageDocuments,
   };
 }
 
@@ -74,9 +103,9 @@ function buildProjectDescription({ selectedProducts, budgetTarget, budgetSummary
 
   return [
     `Type de pièce : ${rooms || 'Non renseigné'}`,
-    `Estimation budget : ${budgetTarget}`,
-    `Estimation min : ${budgetSummary.min}`,
-    `Estimation max : ${budgetSummary.max}`,
+    `Estimation budget : ${budgetTarget ? formatFCFA(budgetTarget) : 'Non renseigné'}`,
+    `Estimation min : ${formatFCFA(budgetSummary.min)}`,
+    `Estimation max : ${formatFCFA(budgetSummary.max)}`,
     `Boutiques : ${shops || 'Non renseigné'}`,
     'Articles sélectionnés :',
     productList,
@@ -106,10 +135,13 @@ export default function Catalogue() {
   const [selectedCategory, setSelectedCategory] = useState('Tout');
   const [selectedRoom, setSelectedRoom] = useState('Toutes');
   const [selectedRange, setSelectedRange] = useState('Toutes');
-  const [budgetTarget, setBudgetTarget] = useState(650000);
+  const [selectedNeighborhood, setSelectedNeighborhood] = useState('Tous');
+  const [budgetTarget, setBudgetTarget] = useState('');
   const [selectedProductIds, setSelectedProductIds] = useState([]);
   const [fullscreenProductId, setFullscreenProductId] = useState('');
-  const [isSummaryDismissed, setIsSummaryDismissed] = useState(false);
+  const [fullscreenImageIndex, setFullscreenImageIndex] = useState(0);
+  const [isBudgetVisible, setIsBudgetVisible] = useState(false);
+  const [isRecapVisible, setIsRecapVisible] = useState(false);
   const [validationError, setValidationError] = useState('');
   const [isValidating, setIsValidating] = useState(false);
 
@@ -127,7 +159,7 @@ export default function Catalogue() {
         const projectBudget = extractProjectBudget(currentProject);
 
         if (projectBudget) {
-          setBudgetTarget(projectBudget);
+          setBudgetTarget(String(projectBudget));
         }
       })
       .catch(() => {});
@@ -137,27 +169,47 @@ export default function Catalogue() {
     };
   }, [searchParams]);
 
+  const products = useMemo(() => (
+    (Array.isArray(adminData.products) ? adminData.products : [])
+      .map((product) => buildCatalogueProduct(product, adminData))
+  ), [adminData]);
+
   const filters = useMemo(() => ({
     categories: ['Tout', ...adminData.taxonomies.categories.map((category) => category.name)],
     rooms: ['Toutes', ...adminData.taxonomies.rooms.map((room) => room.name)],
     ranges: ['Toutes', ...adminData.taxonomies.ranges.map((range) => range.name)],
-  }), [adminData.taxonomies.categories, adminData.taxonomies.ranges, adminData.taxonomies.rooms]);
-
-  const products = useMemo(() => (
-    adminData.products.map((product) => buildCatalogueProduct(product, adminData))
-  ), [adminData]);
+    neighborhoods: [
+      'Tous',
+      ...new Set((Array.isArray(adminData.products) ? adminData.products : []).map((product) => product.neighborhood).filter(Boolean)),
+    ],
+  }), [
+    adminData.products,
+    adminData.taxonomies.categories,
+    adminData.taxonomies.ranges,
+    adminData.taxonomies.rooms,
+  ]);
 
   const activeCategory = filters.categories.includes(selectedCategory) ? selectedCategory : 'Tout';
   const activeRoom = filters.rooms.includes(selectedRoom) ? selectedRoom : 'Toutes';
   const activeRange = filters.ranges.includes(selectedRange) ? selectedRange : 'Toutes';
+  const activeNeighborhood = filters.neighborhoods.includes(selectedNeighborhood) ? selectedNeighborhood : 'Tous';
 
+  const catalogueSearchTerm = searchParams.get('q')?.trim().toLowerCase() || '';
   const filteredProducts = useMemo(
-    () => products.filter((product) => (
-      (activeCategory === 'Tout' || product.category === activeCategory)
-      && (activeRoom === 'Toutes' || product.room === activeRoom)
-      && (activeRange === 'Toutes' || product.range === activeRange)
-    )),
-    [activeCategory, activeRange, activeRoom, products],
+    () => products.filter((product) => {
+      const matchesFilters = (
+        (activeCategory === 'Tout' || product.category === activeCategory)
+        && (activeRoom === 'Toutes' || product.room === activeRoom)
+        && (activeRange === 'Toutes' || product.range === activeRange)
+        && (activeNeighborhood === 'Tous' || product.neighborhood === activeNeighborhood)
+      );
+      const matchesSearch = !catalogueSearchTerm
+        || [product.name, product.category, product.room, product.range, product.shop, product.shopZone, product.neighborhood]
+          .some((value) => String(value || '').toLowerCase().includes(catalogueSearchTerm));
+
+      return matchesFilters && matchesSearch;
+    }),
+    [activeCategory, activeNeighborhood, activeRange, activeRoom, catalogueSearchTerm, products],
   );
 
   const selectedProducts = useMemo(
@@ -168,9 +220,11 @@ export default function Catalogue() {
   const budgetSummary = useMemo(() => {
     const min = selectedProducts.reduce((total, product) => total + product.minPrice, 0);
     const max = selectedProducts.reduce((total, product) => total + product.maxPrice, 0);
-    const overage = Math.max(max - budgetTarget, 0);
+    const target = parsePrice(budgetTarget);
+    const hasTarget = target > 0;
+    const overage = hasTarget ? Math.max(max - target, 0) : 0;
 
-    return { min, max, overage };
+    return { min, max, overage, target, hasTarget };
   }, [budgetTarget, selectedProducts]);
   const generatedAt = useMemo(
     () => new Intl.DateTimeFormat('fr-FR', {
@@ -184,28 +238,41 @@ export default function Catalogue() {
     [],
   );
   const fullscreenProduct = products.find((product) => product.id === fullscreenProductId);
+  const fullscreenImage = fullscreenProduct?.images?.[fullscreenImageIndex] || fullscreenProduct?.image || '';
 
   function toggleProduct(productId) {
-    setIsSummaryDismissed(false);
-    setSelectedProductIds((currentIds) => (
-      currentIds.includes(productId)
-        ? currentIds.filter((id) => id !== productId)
-        : [...currentIds, productId]
-    ));
+    setValidationError('');
+    setIsRecapVisible(false);
+    const nextIds = selectedProductIds.includes(productId)
+      ? selectedProductIds.filter((id) => id !== productId)
+      : [...selectedProductIds, productId];
+
+    setSelectedProductIds(nextIds);
+    setIsBudgetVisible(nextIds.length > 0);
   }
 
-  function handleProductKeyDown(event, productId) {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      setFullscreenProductId(productId);
-    }
+  function openFullscreenProduct(productId) {
+    setFullscreenProductId(productId);
+    setFullscreenImageIndex(0);
   }
 
   function handleModifyPurchase() {
-    setIsSummaryDismissed(true);
+    setIsRecapVisible(false);
+    setIsBudgetVisible(true);
     setValidationError('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     navigate(`/catalogue${searchParams.toString() ? `?${searchParams.toString()}` : ''}`, { replace: true });
+  }
+
+  function handleBudgetValidation() {
+    if (selectedProducts.length === 0) return;
+    if (!budgetSummary.hasTarget) {
+      setValidationError('Renseignez un budget cible avant de valider la simulation.');
+      return;
+    }
+
+    setValidationError('');
+    setIsRecapVisible(true);
   }
 
   function handleWorkspaceReturn() {
@@ -227,13 +294,21 @@ export default function Catalogue() {
 
   async function handleConfirmValidation() {
     if (selectedProducts.length === 0) return;
+    if (!budgetSummary.hasTarget) {
+      setValidationError('Renseignez un budget cible avant de confirmer la validation.');
+      return;
+    }
 
     setIsValidating(true);
     setValidationError('');
 
     try {
       const projectIdFromUrl = searchParams.get('projectId');
-      const description = buildProjectDescription({ selectedProducts, budgetTarget, budgetSummary });
+      const description = buildProjectDescription({
+        selectedProducts,
+        budgetTarget: budgetSummary.target,
+        budgetSummary,
+      });
       const project = projectIdFromUrl
         ? await updateProject(projectIdFromUrl, {
           description,
@@ -256,6 +331,7 @@ export default function Catalogue() {
         category: product.category,
         unit: 'u',
         unitPrice: product.maxPrice,
+        images: product.imageDocuments || [],
       })));
 
       navigate(`/workspace?mode=projects&projectId=${project.id}`, { replace: true });
@@ -285,11 +361,11 @@ export default function Catalogue() {
         <section className="catalogue-filter-group">
           <h2>Catégorie</h2>
           <div>
-            {filters.categories.map((category) => (
+            {filters.categories.map((category, index) => (
               <button
                 type="button"
                 className={activeCategory === category ? 'is-active' : ''}
-                key={category}
+                key={`${category}-${index}`}
                 onClick={() => setSelectedCategory(category)}
               >
                 {category}
@@ -301,11 +377,11 @@ export default function Catalogue() {
         <section className="catalogue-filter-group">
           <h2>Pièce</h2>
           <div>
-            {filters.rooms.map((room) => (
+            {filters.rooms.map((room, index) => (
               <button
                 type="button"
                 className={activeRoom === room ? 'is-active' : ''}
-                key={room}
+                key={`${room}-${index}`}
                 onClick={() => setSelectedRoom(room)}
               >
                 {room}
@@ -317,14 +393,30 @@ export default function Catalogue() {
         <section className="catalogue-filter-group">
           <h2>Gamme</h2>
           <div>
-            {filters.ranges.map((range) => (
+            {filters.ranges.map((range, index) => (
               <button
                 type="button"
                 className={activeRange === range ? 'is-active' : ''}
-                key={range}
+                key={`${range}-${index}`}
                 onClick={() => setSelectedRange(range)}
               >
                 {range}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="catalogue-filter-group">
+          <h2>Quartier</h2>
+          <div>
+            {filters.neighborhoods.map((neighborhood, index) => (
+              <button
+                type="button"
+                className={activeNeighborhood === neighborhood ? 'is-active' : ''}
+                key={`${neighborhood}-${index}`}
+                onClick={() => setSelectedNeighborhood(neighborhood)}
+              >
+                {neighborhood}
               </button>
             ))}
           </div>
@@ -334,55 +426,38 @@ export default function Catalogue() {
       <main className="catalogue-product-main">
         <div className="catalogue-product-heading">
           <div>
-            <span className="catalogue-eyebrow">Cartes produits</span>
-            <h2>{filteredProducts.length} produits disponibles</h2>
+            <span className="catalogue-eyebrow">Cartes articles</span>
+            <h2>{filteredProducts.length} articles disponibles</h2>
           </div>
 
         </div>
 
-        <section className="catalogue-product-grid" aria-label="Produits du catalogue">
-          {filteredProducts.map((product) => {
+        <section className="catalogue-product-grid" aria-label="Articles du catalogue">
+          {filteredProducts.length === 0 && (
+            <p className="catalogue-empty-state">
+              Aucun article ne correspond aux filtres actuels.
+            </p>
+          )}
+
+          {filteredProducts.map((product, index) => {
             const isSelected = selectedProductIds.includes(product.id);
+            const priceRange = `${formatCurrency(product.minPrice)} - ${formatCurrency(product.maxPrice)}`;
 
             return (
-              <article
-                className="catalogue-product-card"
-                key={product.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => setFullscreenProductId(product.id)}
-                onKeyDown={(event) => handleProductKeyDown(event, product.id)}
-              >
-                <div className={`catalogue-product-photo catalogue-product-photo--${product.tone}`}>
-                  <span>{product.category}</span>
-                </div>
-                <div className="catalogue-product-card__body">
-                  <div>
-                    <h3>{product.name}</h3>
-                    <p>{product.shop} · {product.shopZone}</p>
-                  </div>
-                  <strong>
-                    {formatCurrency(product.minPrice, adminData.settings.currency)} - {formatCurrency(product.maxPrice, adminData.settings.currency)}
-                  </strong>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={isSelected ? 'outline' : 'primary'}
-                    icon={<Icon name={isSelected ? 'Check' : 'Add'} size="sm" />}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      toggleProduct(product.id);
-                    }}
-                  >
-                    {isSelected ? 'Ajouté' : 'Ajouter'}
-                  </Button>
-                </div>
-              </article>
+              <CardArticle
+                key={`${product.id || product.name}-${index}`}
+                product={product}
+                isSelected={isSelected}
+                priceRange={priceRange}
+                onOpen={openFullscreenProduct}
+                onToggle={toggleProduct}
+              />
             );
           })}
         </section>
       </main>
 
+      {isBudgetVisible && selectedProducts.length > 0 && (
       <aside className="catalogue-budget-panel" aria-label="Simulation budget live">
         <div className="catalogue-budget-card">
           <span className="catalogue-eyebrow">Simulation budget live</span>
@@ -391,193 +466,87 @@ export default function Catalogue() {
           <label className="catalogue-budget-field">
             Budget cible
             <input
-              type="number"
-              min="0"
-              step="10000"
-              value={budgetTarget}
-              onChange={(event) => setBudgetTarget(Number(event.target.value))}
+              type="text"
+              inputMode="numeric"
+              value={formatBudgetInputValue(budgetTarget)}
+              placeholder="Définir le budget"
+              onChange={(event) => setBudgetTarget(normalizeBudgetInput(event.target.value))}
             />
           </label>
 
           <dl className="catalogue-budget-list">
             <div>
+              <dt>Budget cible</dt>
+              <dd>{formatOptionalCurrency(budgetSummary.target)}</dd>
+            </div>
+            <div>
               <dt>Estimation min</dt>
-              <dd>{formatCurrency(budgetSummary.min, adminData.settings.currency)}</dd>
+              <dd>{formatCurrency(budgetSummary.min)}</dd>
             </div>
             <div>
               <dt>Estimation max</dt>
-              <dd>{formatCurrency(budgetSummary.max, adminData.settings.currency)}</dd>
+              <dd>{formatCurrency(budgetSummary.max)}</dd>
             </div>
             <div className={budgetSummary.overage > 0 ? 'is-over' : 'is-ok'}>
               <dt>Dépassement éventuel</dt>
-              <dd>{budgetSummary.overage > 0 ? formatCurrency(budgetSummary.overage, adminData.settings.currency) : 'Aucun'}</dd>
+              <dd>
+                {!budgetSummary.hasTarget
+                  ? 'Budget à définir'
+                  : budgetSummary.overage > 0
+                    ? formatCurrency(budgetSummary.overage)
+                    : 'Aucun'}
+              </dd>
             </div>
           </dl>
 
           <p>
             {selectedProducts.length === 0
-              ? 'Ajoutez des produits pour lancer la simulation.'
-              : `${selectedProducts.length} produit(s) ajouté(s) au panier budget.`}
+              ? 'Ajoutez des articles pour lancer la simulation.'
+              : `${selectedProducts.length} article(s) ajouté(s) au panier budget.`}
           </p>
+          {validationError && !isRecapVisible && (
+            <p className="catalogue-summary-error">{validationError}</p>
+          )}
+          <Button
+            type="button"
+            variant="success"
+            fullWidth
+            icon={<Icon name="Check" size="sm" />}
+            onClick={handleBudgetValidation}
+          >
+            Valider
+          </Button>
         </div>
       </aside>
+      )}
 
-      {selectedProducts.length > 0 && !isSummaryDismissed && (
-        <section className="catalogue-summary-panel" aria-label="Récapitulatif des articles">
-          <div className="catalogue-summary-card">
-            <header className="catalogue-summary-header">
-              <span className="catalogue-summary-folder" aria-hidden="true">
-                <Icon name="Folder" size="sm" />
-              </span>
-              <h2>Récapitulatif de Liquidation</h2>
-              <button
-                type="button"
-                aria-label="Fermer le récapitulatif"
-                onClick={() => setIsSummaryDismissed(true)}
-              >
-                <Icon name="Close" size="sm" />
-              </button>
-            </header>
-
-            <div className="catalogue-summary-body">
-              <h3>
-                <Icon name="ArrowUp" size="sm" />
-                Informations Générales
-              </h3>
-
-              <div className="catalogue-summary-info-grid">
-                <div>
-                  <span>Budget cible</span>
-                  <strong>{formatCurrency(budgetTarget, adminData.settings.currency)}</strong>
-                </div>
-                <div>
-                  <span>Articles choisis</span>
-                  <strong>{selectedProducts.length}</strong>
-                </div>
-                <div>
-                  <span>Boutiques</span>
-                  <strong>{new Set(selectedProducts.map((product) => product.shop)).size}</strong>
-                </div>
-                <div>
-                  <span>Statut</span>
-                  <strong>{budgetSummary.overage > 0 ? 'Dépassement' : 'Contrôlé'}</strong>
-                </div>
-              </div>
-
-              <div className="catalogue-summary-tags">
-                {selectedProducts.slice(0, 4).map((product) => (
-                  <span key={product.id}>{product.name}</span>
-                ))}
-              </div>
-
-              <h3>
-                <Icon name="Info" size="sm" />
-                Volumes budget (FCFA)
-              </h3>
-
-              <div className="catalogue-summary-volume">
-                <div>
-                  <span>Constaté min</span>
-                  <strong>{formatCurrency(budgetSummary.min, adminData.settings.currency)}</strong>
-                </div>
-                <div>
-                  <span>Ecart</span>
-                  <strong className={budgetSummary.overage > 0 ? 'is-danger' : ''}>
-                    {formatCurrency(budgetSummary.overage, adminData.settings.currency)}
-                  </strong>
-                </div>
-                <div>
-                  <span>Accordé max</span>
-                  <strong>{formatCurrency(budgetSummary.max, adminData.settings.currency)}</strong>
-                </div>
-              </div>
-
-              <p className="catalogue-summary-valid">
-                <Icon name="CheckCircle" size="sm" />
-                Volume accordé : estimation calculée sur les articles sélectionnés
-              </p>
-
-              <h3>
-                <Icon name="ReceiptLong" size="sm" />
-                Calcul Fiscal
-              </h3>
-
-              <div className={budgetSummary.overage > 0 ? 'catalogue-summary-alert' : 'catalogue-summary-alert is-exempt'}>
-                <strong>{budgetSummary.overage > 0 ? 'A DOSSIER À AJUSTER' : 'DOSSIER CONTRÔLÉ'}</strong>
-                <span>
-                  {budgetSummary.overage > 0
-                    ? 'Le montant maximal dépasse le budget cible. Révisez les articles ou ajustez le budget.'
-                    : 'Ce panier reste conforme au budget cible défini pour le projet.'}
-                </span>
-              </div>
-
-              <div className="catalogue-summary-total">
-                <span>Montant total à payer</span>
-                <strong>{budgetSummary.overage > 0 ? formatCurrency(budgetSummary.max, adminData.settings.currency) : 'EXONÉRÉ'}</strong>
-                <small>{budgetSummary.overage > 0 ? 'Dépassement potentiel inclus' : 'Exonération légale'}</small>
-              </div>
-            </div>
-
-            <footer className="catalogue-summary-footer">
-              <span>Généré le {generatedAt}</span>
-              <span>Réf. Dossier : #{searchParams.get('projectId') || 'ARCHI-CATALOGUE'}</span>
-              <div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  icon={<Icon name="ArrowLeft" size="sm" />}
-                  onClick={handleModifyPurchase}
-                  disabled={isValidating}
-                >
-                  Modifier
-                </Button>
-                <Button
-                  type="button"
-                  variant="success"
-                  icon={<Icon name="Check" size="sm" />}
-                  onClick={handleConfirmValidation}
-                  isLoading={isValidating}
-                >
-                  Confirmer la Validation
-                </Button>
-              </div>
-              {validationError && <p className="catalogue-summary-error">{validationError}</p>}
-            </footer>
-          </div>
-        </section>
+      {selectedProducts.length > 0 && isRecapVisible && (
+        <Recap
+          selectedProducts={selectedProducts}
+          budgetSummary={budgetSummary}
+          generatedAt={generatedAt}
+          reference={searchParams.get('projectId') || 'ARCHI-CATALOGUE'}
+          validationError={validationError}
+          isValidating={isValidating}
+          formatCurrency={formatCurrency}
+          formatOptionalCurrency={formatOptionalCurrency}
+          onClose={() => setIsRecapVisible(false)}
+          onModify={handleModifyPurchase}
+          onConfirm={handleConfirmValidation}
+        />
       )}
 
       {fullscreenProduct && (
-        <div className="catalogue-fullscreen" role="dialog" aria-modal="true" aria-label={fullscreenProduct.name}>
-          <button
-            type="button"
-            className="catalogue-fullscreen__close"
-            aria-label="Fermer le mode plein écran"
-            onClick={() => setFullscreenProductId('')}
-          >
-            <Icon name="Close" />
-          </button>
-          <article className="catalogue-fullscreen__card">
-            <div className={`catalogue-fullscreen__visual catalogue-product-photo--${fullscreenProduct.tone}`}>
-              <span>{fullscreenProduct.category}</span>
-            </div>
-            <div className="catalogue-fullscreen__content">
-              <span className="catalogue-eyebrow">{fullscreenProduct.room} · {fullscreenProduct.range}</span>
-              <h2>{fullscreenProduct.name}</h2>
-              <p>{fullscreenProduct.shop} · {fullscreenProduct.shopZone}</p>
-              <strong>
-                {formatCurrency(fullscreenProduct.minPrice, adminData.settings.currency)} - {formatCurrency(fullscreenProduct.maxPrice, adminData.settings.currency)}
-              </strong>
-              <Button
-                type="button"
-                icon={<Icon name={selectedProductIds.includes(fullscreenProduct.id) ? 'Check' : 'Add'} size="sm" />}
-                onClick={() => toggleProduct(fullscreenProduct.id)}
-              >
-                {selectedProductIds.includes(fullscreenProduct.id) ? 'Retirer du choix' : 'Ajouter au budget'}
-              </Button>
-            </div>
-          </article>
-        </div>
+        <ArticleFullscreen
+          product={fullscreenProduct}
+          image={fullscreenImage}
+          imageIndex={fullscreenImageIndex}
+          isSelected={selectedProductIds.includes(fullscreenProduct.id)}
+          priceRange={`${formatCurrency(fullscreenProduct.minPrice)} - ${formatCurrency(fullscreenProduct.maxPrice)}`}
+          onClose={() => setFullscreenProductId('')}
+          onImageSelect={setFullscreenImageIndex}
+          onToggle={toggleProduct}
+        />
       )}
     </div>
   );

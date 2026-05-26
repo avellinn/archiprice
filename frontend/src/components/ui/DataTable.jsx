@@ -23,8 +23,8 @@ export default function DataTable({
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
-                <tr key={row.id}>
+              {rows.map((row, rowIndex) => (
+                <tr key={`${row.id || rowIndex}-${rowIndex}`}>
                   {columns.map((column) => (
                     <td key={column.key}>{column.render ? column.render(row) : row[column.key]}</td>
                   ))}

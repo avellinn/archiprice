@@ -1,7 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Button from '../../components/Button';
 import Icon from '../../components/Icon';
-import { createAdminId, useAdminData } from '../../services/adminData';
+import { getApiErrorMessage } from '../../services/api';
+import {
+  createAdminSupplier,
+  deleteAdminSupplier,
+  fetchAdminSuppliers,
+  updateAdminSupplier,
+} from '../../services/adminMongo';
 import { Badge } from './PageShell';
 
 const EMPTY_SUPPLIER = {
@@ -14,36 +20,59 @@ const EMPTY_SUPPLIER = {
 };
 
 export default function Fournisseurs() {
-  const [adminData, setAdminData] = useAdminData();
+  const [suppliers, setSuppliers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const suppliers = adminData.suppliers;
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchAdminSuppliers()
+      .then((list) => {
+        if (!cancelled) {
+          setSuppliers(list);
+          setError('');
+        }
+      })
+      .catch((apiError) => {
+        if (!cancelled) setError(getApiErrorMessage(apiError, 'Impossible de charger les fournisseurs Mongo.'));
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const filteredSuppliers = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
     if (!query) return suppliers;
 
     return suppliers.filter((supplier) => (
-      supplier.name.toLowerCase().includes(query)
-      || supplier.contact.toLowerCase().includes(query)
-      || supplier.region.toLowerCase().includes(query)
+      String(supplier.name || '').toLowerCase().includes(query)
+      || String(supplier.contact || '').toLowerCase().includes(query)
+      || String(supplier.region || '').toLowerCase().includes(query)
     ));
   }, [searchTerm, suppliers]);
 
-  function upsertSupplier(supplier) {
-    setAdminData((currentData) => {
-      const nextSupplier = {
-        ...supplier,
-        id: supplier.id || createAdminId('sup'),
-      };
-      const exists = currentData.suppliers.some((item) => item.id === nextSupplier.id);
-
-      return {
-        ...currentData,
-        suppliers: exists
-          ? currentData.suppliers.map((item) => (item.id === nextSupplier.id ? nextSupplier : item))
-          : [nextSupplier, ...currentData.suppliers],
-      };
-    });
+  async function upsertSupplier(supplier) {
+    try {
+      if (supplier.id) {
+        const updatedSupplier = await updateAdminSupplier(supplier.id, supplier);
+        setSuppliers((currentSuppliers) => currentSuppliers.map((item) => (
+          item.id === updatedSupplier.id ? updatedSupplier : item
+        )));
+      } else {
+        const createdSupplier = await createAdminSupplier(supplier);
+        setSuppliers((currentSuppliers) => [createdSupplier, ...currentSuppliers]);
+      }
+      setError('');
+    } catch (apiError) {
+      setError(getApiErrorMessage(apiError, "L'enregistrement du fournisseur a échoué."));
+    }
   }
 
   function toggleSupplierStatus(supplier) {
@@ -53,11 +82,16 @@ export default function Fournisseurs() {
     });
   }
 
-  function deleteSupplier(supplierId) {
-    setAdminData((currentData) => ({
-      ...currentData,
-      suppliers: currentData.suppliers.filter((supplier) => supplier.id !== supplierId),
-    }));
+  async function deleteSupplier(supplierId) {
+    const previousSuppliers = suppliers;
+    setSuppliers((currentSuppliers) => currentSuppliers.filter((supplier) => supplier.id !== supplierId));
+
+    try {
+      await deleteAdminSupplier(supplierId);
+    } catch (apiError) {
+      setSuppliers(previousSuppliers);
+      setError(getApiErrorMessage(apiError, 'La suppression du fournisseur a échoué.'));
+    }
   }
 
   return (
@@ -82,6 +116,7 @@ export default function Fournisseurs() {
       </header>
 
       <section className="admin-suppliers-card" aria-label="Liste des fournisseurs">
+        {error && <p className="admin-products-empty">{error}</p>}
         <div className="admin-suppliers-table-wrap">
           <table className="admin-suppliers-table">
             <thead>
@@ -90,41 +125,51 @@ export default function Fournisseurs() {
                 <th>Contact</th>
                 <th>Région</th>
                 <th>Statut</th>
-                <th>Produits liés</th>
+                <th>Articles liés</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredSuppliers.map((supplier) => (
-                <tr key={supplier.id}>
-                  <td>{supplier.name}</td>
-                  <td>{supplier.contact}</td>
-                  <td>{supplier.region}</td>
-                  <td>
-                    <Badge tone={supplier.status === 'Actif' ? 'success' : 'danger'}>
-                      {supplier.status}
-                    </Badge>
-                  </td>
-                  <td>{supplier.products}</td>
-                  <td>
-                    <span className="admin-suppliers-actions">
-                      <button type="button" aria-label={`Modifier ${supplier.name}`} onClick={() => upsertSupplier({
-                        ...supplier,
-                        name: `${supplier.name} modifié`,
-                      })}
-                      >
-                        <Icon name="Edit" size="sm" />
-                      </button>
-                      <button type="button" aria-label={`Activer ou désactiver ${supplier.name}`} className="is-link" onClick={() => toggleSupplierStatus(supplier)}>
-                        <Icon name="Link" size="sm" />
-                      </button>
-                      <button type="button" aria-label={`Supprimer ${supplier.name}`} className="is-danger" onClick={() => deleteSupplier(supplier.id)}>
-                        <Icon name="Delete" size="sm" />
-                      </button>
-                    </span>
-                  </td>
+              {isLoading ? (
+                <tr>
+                  <td colSpan="6" className="admin-products-empty">Chargement des fournisseurs Mongo...</td>
                 </tr>
-              ))}
+              ) : filteredSuppliers.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="admin-products-empty">Aucun fournisseur trouvé.</td>
+                </tr>
+              ) : (
+                filteredSuppliers.map((supplier, index) => (
+                  <tr key={`${supplier.id || supplier.name}-${index}`}>
+                    <td>{supplier.name}</td>
+                    <td>{supplier.contact}</td>
+                    <td>{supplier.region}</td>
+                    <td>
+                      <Badge tone={supplier.status === 'Actif' ? 'success' : 'danger'}>
+                        {supplier.status}
+                      </Badge>
+                    </td>
+                    <td>{supplier.products}</td>
+                    <td>
+                      <span className="admin-suppliers-actions">
+                        <button type="button" aria-label={`Modifier ${supplier.name}`} onClick={() => upsertSupplier({
+                          ...supplier,
+                          name: `${supplier.name} modifié`,
+                        })}
+                        >
+                          <Icon name="Edit" size="sm" />
+                        </button>
+                        <button type="button" aria-label={`Activer ou désactiver ${supplier.name}`} className="is-link" onClick={() => toggleSupplierStatus(supplier)}>
+                          <Icon name="Link" size="sm" />
+                        </button>
+                        <button type="button" aria-label={`Supprimer ${supplier.name}`} className="is-danger" onClick={() => deleteSupplier(supplier.id)}>
+                          <Icon name="Delete" size="sm" />
+                        </button>
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

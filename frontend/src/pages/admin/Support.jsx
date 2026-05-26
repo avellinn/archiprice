@@ -1,104 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Button from '../../components/Button';
 import Icon from '../../components/Icon';
-import { useAdminData } from '../../services/adminData';
+import { getApiErrorMessage } from '../../services/api';
+import { fetchAdminSupportItems, updateAdminSupportItem } from '../../services/adminMongo';
 import { Badge } from './PageShell';
 
 const SUPPORT_TABS = [
   { id: 'tickets', label: 'Tickets' },
   { id: 'feedback', label: 'Feedback' },
   { id: 'priceReports', label: 'Signalements prix' },
-];
-
-const SUPPORT_ITEMS = [
-  {
-    id: 'ticket-export',
-    tab: 'tickets',
-    subject: "Impossible d'exporter une simulation",
-    user: 'Jean Dupont',
-    email: 'jean.dupont@mail.com',
-    status: 'Ouvert',
-    type: 'Bug',
-    date: '12/05/2024',
-    description: "Lorsque j'essaie d'exporter la simulation, le fichier ne se télécharge pas.",
-  },
-  {
-    id: 'ticket-cartilage',
-    tab: 'tickets',
-    subject: 'Prix incorrect sur carrelage',
-    user: 'Sophia Martin',
-    email: 'sophia.martin@mail.com',
-    status: 'En cours',
-    type: 'Prix',
-    date: '11/05/2024',
-    description: 'Le prix affiché dans la simulation ne correspond pas au prix fournisseur.',
-  },
-  {
-    id: 'ticket-csv',
-    tab: 'tickets',
-    subject: "Erreur lors de l'import CSV",
-    user: 'Agence Créa',
-    email: 'contact@agencecrea.bj',
-    status: 'Ouvert',
-    type: 'Bug',
-    date: '10/05/2024',
-    description: "Le fichier CSV s'arrête à la troisième ligne pendant l'import.",
-  },
-  {
-    id: 'ticket-coefficients',
-    tab: 'tickets',
-    subject: 'Question sur les coefficients',
-    user: 'Marc Koffi',
-    email: 'marc.koffi@mail.com',
-    status: 'Résolu',
-    type: 'Question',
-    date: '09/05/2024',
-    description: 'Je souhaite comprendre comment le coefficient régional modifie le budget final.',
-  },
-  {
-    id: 'feedback-navigation',
-    tab: 'feedback',
-    subject: 'Navigation plus fluide',
-    user: 'Jean Dupont',
-    email: 'jean.dupont@mail.com',
-    status: 'Ouvert',
-    type: 'Suggestion',
-    date: '08/05/2024',
-    description: 'Ajouter un raccourci vers le catalogue depuis la page workspace rendrait le parcours plus rapide.',
-  },
-  {
-    id: 'feedback-dashboard',
-    tab: 'feedback',
-    subject: 'Dashboard clair',
-    user: 'Sophia Martin',
-    email: 'sophia.martin@mail.com',
-    status: 'Résolu',
-    type: 'Avis',
-    date: '07/05/2024',
-    description: 'La répartition des projets est lisible et aide à suivre les estimations.',
-  },
-  {
-    id: 'price-report-oslo',
-    tab: 'priceReports',
-    subject: 'Canapé Oslo trop élevé',
-    user: 'Agence Créa',
-    email: 'contact@agencecrea.bj',
-    status: 'En cours',
-    type: 'Signalement prix',
-    date: '06/05/2024',
-    description: 'Le prix du Canapé 3 places Oslo semble supérieur à celui observé chez le fournisseur.',
-  },
-  {
-    id: 'price-report-led',
-    tab: 'priceReports',
-    subject: 'Applique LED à vérifier',
-    user: 'Marc Koffi',
-    email: 'marc.koffi@mail.com',
-    status: 'Ouvert',
-    type: 'Signalement prix',
-    date: '05/05/2024',
-    description: 'Le prix unitaire de l’applique murale LED doit être synchronisé avec Lumière & Co.',
-  },
 ];
 
 const STATUS_OPTIONS = ['Tous', 'Ouvert', 'En cours', 'Résolu'];
@@ -111,13 +21,37 @@ function getStatusTone(status) {
 }
 
 export default function Support() {
-  const [adminData, setAdminData] = useAdminData();
-  const supportItems = adminData.supportItems.length ? adminData.supportItems : SUPPORT_ITEMS;
+  const [supportItems, setSupportItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('tickets');
-  const [selectedItemId, setSelectedItemId] = useState('ticket-export');
+  const [selectedItemId, setSelectedItemId] = useState('');
+  const [replyDrafts, setReplyDrafts] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Tous');
   const [typeFilter, setTypeFilter] = useState('Tous');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchAdminSupportItems()
+      .then((list) => {
+        if (!cancelled) {
+          setSupportItems(list);
+          setError('');
+        }
+      })
+      .catch((apiError) => {
+        if (!cancelled) setError(getApiErrorMessage(apiError, 'Impossible de charger les demandes support Mongo.'));
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const activeItems = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -125,8 +59,8 @@ export default function Support() {
     return supportItems.filter((item) => {
       const matchesTab = item.tab === activeTab;
       const matchesSearch = !normalizedSearch
-        || item.subject.toLowerCase().includes(normalizedSearch)
-        || item.user.toLowerCase().includes(normalizedSearch);
+        || String(item.subject || '').toLowerCase().includes(normalizedSearch)
+        || String(item.user || '').toLowerCase().includes(normalizedSearch);
       const matchesStatus = statusFilter === 'Tous' || item.status === statusFilter;
       const matchesType = typeFilter === 'Tous' || item.type === typeFilter;
 
@@ -141,19 +75,39 @@ export default function Support() {
     || supportItems[0]
   ), [activeItems, activeTab, selectedItemId, supportItems]);
 
+  const replyDraft = selectedItem?.id
+    ? replyDrafts[selectedItem.id] ?? selectedItem.reply ?? ''
+    : '';
+
   function handleTabChange(tabId) {
     setActiveTab(tabId);
     const firstItem = supportItems.find((item) => item.tab === tabId);
     if (firstItem) setSelectedItemId(firstItem.id);
   }
 
-  function updateSelectedItem(patch) {
-    setAdminData((currentData) => ({
-      ...currentData,
-      supportItems: currentData.supportItems.map((item) => (
-        item.id === selectedItem.id ? { ...item, ...patch } : item
-      )),
-    }));
+  async function updateSelectedItem(patch) {
+    if (!selectedItem?.id) return;
+
+    const previousItems = supportItems;
+    setSupportItems((currentItems) => currentItems.map((item) => (
+      item.id === selectedItem.id ? { ...item, ...patch } : item
+    )));
+
+    try {
+      const updatedItem = await updateAdminSupportItem(selectedItem.id, patch);
+      setSupportItems((currentItems) => currentItems.map((item) => (
+        item.id === updatedItem.id ? updatedItem : item
+      )));
+      setReplyDrafts((currentDrafts) => {
+        const nextDrafts = { ...currentDrafts };
+        delete nextDrafts[updatedItem.id];
+        return nextDrafts;
+      });
+      setError('');
+    } catch (apiError) {
+      setSupportItems(previousItems);
+      setError(getApiErrorMessage(apiError, "La mise à jour de la demande support a échoué."));
+    }
   }
 
   return (
@@ -161,6 +115,7 @@ export default function Support() {
       <section className="admin-support-main">
         <header className="admin-support-header">
           <h1>Support</h1>
+          {error && <p className="admin-products-empty">{error}</p>}
 
           <nav className="admin-support-tabs" aria-label="Sections support">
             {SUPPORT_TABS.map((tab) => (
@@ -191,8 +146,8 @@ export default function Support() {
           <label className="admin-support-select">
             <span>Statut :</span>
             <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-              {STATUS_OPTIONS.map((status) => (
-                <option key={status} value={status}>{status}</option>
+              {STATUS_OPTIONS.map((status, index) => (
+                <option key={`${status}-${index}`} value={status}>{status}</option>
               ))}
             </select>
           </label>
@@ -200,8 +155,8 @@ export default function Support() {
           <label className="admin-support-select">
             <span>Type :</span>
             <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
-              {TYPE_OPTIONS.map((type) => (
-                <option key={type} value={type}>{type}</option>
+              {TYPE_OPTIONS.map((type, index) => (
+                <option key={`${type}-${index}`} value={type}>{type}</option>
               ))}
             </select>
           </label>
@@ -219,13 +174,17 @@ export default function Support() {
               </tr>
             </thead>
             <tbody>
-              {activeItems.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan="5" className="admin-support-empty">Chargement des demandes support Mongo...</td>
+                </tr>
+              ) : activeItems.length === 0 ? (
                 <tr>
                   <td colSpan="5" className="admin-support-empty">Aucune demande trouvée.</td>
                 </tr>
               ) : (
-                activeItems.map((item) => (
-                  <tr key={item.id} className={item.id === selectedItem.id ? 'is-selected' : ''}>
+                activeItems.map((item, index) => (
+                  <tr key={`${item.id || item.subject}-${index}`} className={item.id === selectedItem?.id ? 'is-selected' : ''}>
                     <td>{item.subject}</td>
                     <td>{item.user}</td>
                     <td>
@@ -260,28 +219,28 @@ export default function Support() {
         <dl className="admin-support-detail__meta">
           <div>
             <dt>Type</dt>
-            <dd>{selectedItem.type}</dd>
+            <dd>{selectedItem?.type || '-'}</dd>
           </div>
           <div>
             <dt>Statut</dt>
             <dd>
-              <Badge tone={getStatusTone(selectedItem.status)}>{selectedItem.status}</Badge>
+              <Badge tone={getStatusTone(selectedItem?.status)}>{selectedItem?.status || '-'}</Badge>
             </dd>
           </div>
           <div>
             <dt>Utilisateur</dt>
             <dd>
-              <strong>{selectedItem.user}</strong>
-              <span>{selectedItem.email}</span>
+              <strong>{selectedItem?.user || '-'}</strong>
+              <span>{selectedItem?.email || '-'}</span>
             </dd>
           </div>
           <div>
             <dt>Sujet</dt>
-            <dd>{selectedItem.subject}</dd>
+            <dd>{selectedItem?.subject || '-'}</dd>
           </div>
           <div>
             <dt>Description</dt>
-            <dd>{selectedItem.description}</dd>
+            <dd>{selectedItem?.description || '-'}</dd>
           </div>
         </dl>
 
@@ -289,16 +248,22 @@ export default function Support() {
           <span>Réponse</span>
           <textarea
             placeholder="Votre réponse..."
-            value={selectedItem.reply || ''}
-            onChange={(event) => updateSelectedItem({ reply: event.target.value })}
+            value={replyDraft}
+            onChange={(event) => {
+              if (!selectedItem?.id) return;
+              setReplyDrafts((currentDrafts) => ({
+                ...currentDrafts,
+                [selectedItem.id]: event.target.value,
+              }));
+            }}
           />
         </label>
 
         <div className="admin-support-actions">
-          <Button type="button" variant="success" size="sm" onClick={() => updateSelectedItem({ status: 'Résolu' })}>
+          <Button type="button" variant="success" size="sm" disabled={!selectedItem?.id} onClick={() => updateSelectedItem({ reply: replyDraft, status: 'Résolu' })}>
             Fermer le ticket
           </Button>
-          <Button type="button" size="md" onClick={() => updateSelectedItem({ status: 'En cours' })}>
+          <Button type="button" size="md" disabled={!selectedItem?.id} onClick={() => updateSelectedItem({ reply: replyDraft, status: 'En cours' })}>
             Envoyer
           </Button>
         </div>

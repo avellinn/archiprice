@@ -1,10 +1,10 @@
-require('./config/env');
+import './config/env.js';
 
-const express = require('express');
-const cors = require('cors');
-const apiRouter = require('./routes');
-const { notFound, errorHandler } = require('./middleware/errorHandler');
-const requestLogger = require('./middleware/requestLogger');
+import express from 'express';
+import cors from 'cors';
+import apiRouter from './routes/index.js';
+import { notFound, errorHandler } from './middleware/errorHandler.js';
+import requestLogger from './middleware/requestLogger.js';
 
 const app = express();
 
@@ -16,7 +16,7 @@ app.use(
     credentials: true,
   }),
 );
-app.use(express.json());
+app.use(express.json({ limit: '30mb' }));
 app.use(requestLogger);
 
 app.get('/', (_req, res) => {
@@ -37,4 +37,4 @@ app.use('/api', apiRouter);
 app.use(notFound);
 app.use(errorHandler);
 
-module.exports = app;
+export default app;

@@ -12,6 +12,7 @@ frontend/.env
 dist/
 build/
 frontend/dist/
+backend/uploads/
 .vite/
 .vite-temp/
 .tmp/

@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const CONNECT_OPTIONS = {
   serverSelectionTimeoutMS: 10000,
@@ -44,7 +44,10 @@ async function connectDB() {
   } catch (err) {
     dbStatus = 'unavailable';
     console.error(`[db] Échec de connexion MongoDB : ${err.message}`);
-    throw err;
+    if (isProduction()) {
+      throw err;
+    }
+    console.warn('[db] MongoDB indisponible — API démarrée en mode dégradé');
   }
 }
 
@@ -86,4 +89,4 @@ async function disconnectDB() {
   console.log('[db] MongoDB déconnecté');
 }
 
-module.exports = { connectDB, disconnectDB, getDbStatus };
+export { connectDB, disconnectDB, getDbStatus };

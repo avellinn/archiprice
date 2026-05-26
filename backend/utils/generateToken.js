@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
 function generateToken(userId, role = 'user') {
   if (!process.env.JWT_SECRET) {
@@ -10,4 +10,4 @@ function generateToken(userId, role = 'user') {
   });
 }
 
-module.exports = generateToken;
+export default generateToken;

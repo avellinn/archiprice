@@ -47,6 +47,7 @@ body {
   margin: 0;
   background: #6f4747;
   font-family: var(--font-primary);
+  overflow-x: hidden;
 }
 
 h1,
@@ -71,6 +72,13 @@ button {
 
 a {
   color: inherit;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
 }
 
 #root {

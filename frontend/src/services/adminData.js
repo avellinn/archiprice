@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import api from './api';
 
 const ADMIN_DATA_KEY = 'archiprice_admin_data';
 const ADMIN_DATA_EVENT = 'archiprice-admin-data';
 const ADMIN_DATA_CHANNEL = 'archiprice-admin-data-channel';
 const ADMIN_DATA_POLL_INTERVAL = 500;
+const ADMIN_DATA_REMOTE_POLL_INTERVAL = 2500;
+const ADMIN_DATA_REMOTE_ROUTE = '/api/catalogue-config';
 
 export const DEFAULT_ADMIN_DATA = {
   __version: 1,
@@ -60,120 +63,7 @@ export const DEFAULT_ADMIN_DATA = {
       subscription: '-',
     },
   ],
-  products: [
-    {
-      id: 'prod-1',
-      visual: 'sofa',
-      name: 'Canapé 3 places Oslo',
-      description: 'Canapé moderne 3 places, tissu gris clair, pieds en bois.',
-      price: '890,00 €',
-      vat: '20%',
-      category: 'Mobilier',
-      room: 'Salon',
-      range: 'Confort',
-      availability: 'Disponible',
-      supplier: 'Meubles Plus',
-      city: 'Cotonou',
-    },
-    {
-      id: 'prod-2',
-      visual: 'table',
-      name: 'Table basse ronde Léon',
-      description: 'Table basse ronde finition bois clair.',
-      price: '210,00 €',
-      vat: '20%',
-      category: 'Mobilier',
-      room: 'Salon',
-      range: 'Confort',
-      availability: 'Disponible',
-      supplier: 'Design House',
-      city: 'Cotonou',
-    },
-    {
-      id: 'prod-3',
-      visual: 'lamp',
-      name: 'Suspension en verre Mia',
-      description: 'Suspension décorative en verre fumé.',
-      price: '120,00 €',
-      vat: '20%',
-      category: 'Luminaire',
-      room: 'Salon',
-      range: 'Premium',
-      availability: 'Sur commande',
-      supplier: 'Lumière & Co',
-      city: 'Abidjan',
-    },
-    {
-      id: 'prod-4',
-      visual: 'tile',
-      name: 'Carrelage grès cérame 60x60',
-      description: 'Carrelage gris résistant pour sol intérieur.',
-      price: '25,00 €',
-      vat: '10%',
-      category: 'Revêtement',
-      room: 'Douche',
-      range: 'Essentiel',
-      availability: 'Disponible',
-      supplier: 'Carrelages Bénin',
-      city: 'Cotonou',
-    },
-    {
-      id: 'prod-5',
-      visual: 'paint',
-      name: 'Peinture intérieure mat blanc',
-      description: 'Peinture murale intérieure finition mate.',
-      price: '32,50 €',
-      vat: '10%',
-      category: 'Revêtement',
-      room: 'Appartement',
-      range: 'Essentiel',
-      availability: 'Rupture',
-      supplier: 'BatiPro',
-      city: 'Parakou',
-    },
-    {
-      id: 'prod-6',
-      visual: 'chair',
-      name: 'Chaise de bureau Ergo',
-      description: 'Chaise ergonomique pour espace de travail.',
-      price: '150,00 €',
-      vat: '20%',
-      category: 'Mobilier',
-      room: 'Bureau',
-      range: 'Confort',
-      availability: 'Disponible',
-      supplier: 'BureauPro',
-      city: 'Cotonou',
-    },
-    {
-      id: 'prod-7',
-      visual: 'shelf',
-      name: 'Bibliothèque en bois Clara',
-      description: 'Bibliothèque en bois avec plusieurs niches.',
-      price: '330,00 €',
-      vat: '20%',
-      category: 'Mobilier',
-      room: 'Bureau',
-      range: 'Premium',
-      availability: 'Disponible',
-      supplier: 'Meubles Plus',
-      city: 'Cotonou',
-    },
-    {
-      id: 'prod-8',
-      visual: 'wall-light',
-      name: 'Applique murale LED',
-      description: 'Applique LED économique pour éclairage mural.',
-      price: '75,00 €',
-      vat: '20%',
-      category: 'Luminaire',
-      room: 'Chambre',
-      range: 'Essentiel',
-      availability: 'Disponible',
-      supplier: 'Lumière & Co',
-      city: 'Abidjan',
-    },
-  ],
+  products: [],
   suppliers: [
     { id: 'sup-1', name: 'Meubles Plus', contact: 'contact@meublesplus.bj', region: 'Cotonou', status: 'Actif', products: 56 },
     { id: 'sup-2', name: 'Design House', contact: 'info@designhouse.bj', region: 'Cotonou', status: 'Actif', products: 28 },
@@ -189,17 +79,32 @@ export const DEFAULT_ADMIN_DATA = {
       { id: 'cat-3', name: 'Revêtement', count: 22 },
       { id: 'cat-4', name: 'Sanitaire', count: 9 },
       { id: 'cat-5', name: 'Décoration', count: 7 },
+      { id: 'cat-6', name: 'Éclairage', count: 0 },
+      { id: 'cat-7', name: 'Textiles', count: 0 },
+      { id: 'cat-8', name: 'Objets décoratifs', count: 0 },
+      { id: 'cat-9', name: 'Miroirs', count: 0 },
+      { id: 'cat-10', name: 'Rangements', count: 0 },
+      { id: 'cat-11', name: 'Plantes & Pots', count: 0 },
     ],
     rooms: [
       { id: 'room-1', name: 'Salon', count: 41 },
       { id: 'room-2', name: 'Chambre', count: 24 },
       { id: 'room-3', name: 'Bureau', count: 18 },
       { id: 'room-4', name: 'Douche', count: 12 },
+      { id: 'room-5', name: 'Cuisine', count: 0 },
+      { id: 'room-6', name: 'Appartement', count: 0 },
+      { id: 'room-7', name: 'Espace externe', count: 0 },
     ],
     ranges: [
       { id: 'range-1', name: 'Essentiel', count: 39 },
       { id: 'range-2', name: 'Confort', count: 52 },
       { id: 'range-3', name: 'Premium', count: 37 },
+    ],
+    availability: [
+      { id: 'availability-1', name: 'Disponible', count: 0 },
+      { id: 'availability-2', name: 'Sur commande', count: 0 },
+      { id: 'availability-3', name: 'Rupture', count: 0 },
+      { id: 'availability-4', name: 'Non disponible', count: 0 },
     ],
   },
   simulations: [
@@ -219,14 +124,12 @@ export const DEFAULT_ADMIN_DATA = {
     margin: '10',
     vat: '20',
     rounding: 'Au centime près',
-    currency: 'EUR',
+    currency: 'FCFA',
   },
   regionalCoefficients: [
     { id: 'city-1', city: 'Cotonou', coefficient: '1,00' },
-    { id: 'city-2', city: 'Abidjan', coefficient: '1,05' },
-    { id: 'city-3', city: 'Dakar', coefficient: '1,08' },
-    { id: 'city-4', city: 'Paris', coefficient: '1,25' },
-    { id: 'city-5', city: 'Lomé', coefficient: '1,02' },
+    { id: 'city-2', city: 'Abomey - calavi', coefficient: '1,00' },
+    { id: 'city-3', city: 'Porto-novo', coefficient: '1,00' },
   ],
 };
 
@@ -254,16 +157,89 @@ function parseAdminDataSnapshot(snapshot) {
   }
 }
 
+function mergeTaxonomyList(defaultItems = [], savedItems = []) {
+  const savedByName = new Map(savedItems.map((item) => [item.name, item]));
+  const mergedItems = defaultItems.map((item) => ({
+    ...item,
+    ...(savedByName.get(item.name) || {}),
+  }));
+  const defaultNames = new Set(defaultItems.map((item) => item.name));
+  const customItems = savedItems.filter((item) => !defaultNames.has(item.name));
+
+  return [...mergedItems, ...customItems];
+}
+
+function mergeTaxonomies(savedTaxonomies = {}) {
+  return Object.keys(DEFAULT_ADMIN_DATA.taxonomies).reduce((taxonomies, key) => ({
+    ...taxonomies,
+    [key]: mergeTaxonomyList(
+      DEFAULT_ADMIN_DATA.taxonomies[key],
+      savedTaxonomies[key] || [],
+    ),
+  }), {});
+}
+
+function isLegacyLocalUploadUrl(value) {
+  return typeof value === 'string'
+    && (
+      value.includes('/uploads/catalogue/')
+      || value.includes('localhost:5000/uploads/')
+    );
+}
+
+function normalizeProductImage(image) {
+  if (!image || isLegacyLocalUploadUrl(image)) return null;
+  if (typeof image === 'string') return image;
+  if (typeof image !== 'object') return null;
+
+  const secureUrl = image.secure_url || image.url || '';
+  if (!secureUrl || isLegacyLocalUploadUrl(secureUrl)) return null;
+
+  return {
+    secure_url: secureUrl,
+    public_id: image.public_id || '',
+    metadata: image.metadata || {},
+  };
+}
+
+function normalizeProducts(products = []) {
+  if (!Array.isArray(products)) return [];
+
+  return products
+    .filter((product) => product && typeof product === 'object')
+    .map((product) => {
+      const images = (Array.isArray(product.images) ? product.images : [])
+        .map(normalizeProductImage)
+        .filter(Boolean)
+        .slice(0, 10);
+      const image = normalizeProductImage(product.image);
+      const primaryImage = images[0]?.secure_url || (typeof image === 'string' ? image : image?.secure_url) || '';
+
+      return {
+        ...product,
+        image: primaryImage,
+        images,
+      };
+    });
+}
+
+function hasLegacyProductImages(data) {
+  return (Array.isArray(data?.products) ? data.products : []).some((product) => (
+    isLegacyLocalUploadUrl(product?.image)
+    || (Array.isArray(product?.images) && product.images.some((image) => (
+      isLegacyLocalUploadUrl(image) || isLegacyLocalUploadUrl(image?.secure_url || image?.url)
+    )))
+  ));
+}
+
 function mergeAdminData(savedData) {
   return {
     ...DEFAULT_ADMIN_DATA,
     ...(savedData || {}),
     __version: savedData?.__version || DEFAULT_ADMIN_DATA.__version,
     __updatedAt: savedData?.__updatedAt || DEFAULT_ADMIN_DATA.__updatedAt,
-    taxonomies: {
-      ...DEFAULT_ADMIN_DATA.taxonomies,
-      ...(savedData?.taxonomies || {}),
-    },
+    taxonomies: mergeTaxonomies(savedData?.taxonomies),
+    products: normalizeProducts(savedData?.products || DEFAULT_ADMIN_DATA.products),
     settings: {
       ...DEFAULT_ADMIN_DATA.settings,
       ...(savedData?.settings || {}),
@@ -271,8 +247,56 @@ function mergeAdminData(savedData) {
   };
 }
 
+function getDataTimestamp(data) {
+  const timestamp = Number(data?.__updatedAt || 0);
+
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+function getDataVersion(data) {
+  const version = Number(data?.__version || 0);
+
+  return Number.isFinite(version) ? version : 0;
+}
+
+function isIncomingDataNewer(incomingData, currentData) {
+  const incomingTimestamp = getDataTimestamp(incomingData);
+  const currentTimestamp = getDataTimestamp(currentData);
+
+  if (incomingTimestamp !== currentTimestamp) {
+    return incomingTimestamp > currentTimestamp;
+  }
+
+  return getDataVersion(incomingData) > getDataVersion(currentData);
+}
+
 export function getAdminData() {
   return mergeAdminData(parseAdminDataSnapshot(getAdminDataSnapshot()));
+}
+
+function persistSyncedAdminData(data) {
+  const nextData = mergeAdminData(data);
+
+  if (canUseBrowserStorage()) {
+    try {
+      window.localStorage.setItem(ADMIN_DATA_KEY, JSON.stringify(nextData));
+    } catch {
+      window.localStorage.removeItem(ADMIN_DATA_KEY);
+    }
+  }
+
+  notifyAdminDataChange(nextData);
+  return nextData;
+}
+
+export async function fetchRemoteAdminData() {
+  const { data } = await api.get(ADMIN_DATA_REMOTE_ROUTE);
+  return data.config ? mergeAdminData(data.config) : null;
+}
+
+export async function saveRemoteAdminData(data) {
+  const response = await api.put(ADMIN_DATA_REMOTE_ROUTE, { config: mergeAdminData(data) });
+  return mergeAdminData(response.data.config);
 }
 
 function notifyAdminDataChange(data) {
@@ -295,7 +319,11 @@ export function saveAdminData(data) {
   };
 
   if (canUseBrowserStorage()) {
-    window.localStorage.setItem(ADMIN_DATA_KEY, JSON.stringify(nextData));
+    try {
+      window.localStorage.setItem(ADMIN_DATA_KEY, JSON.stringify(nextData));
+    } catch {
+      window.localStorage.removeItem(ADMIN_DATA_KEY);
+    }
   }
   notifyAdminDataChange(nextData);
 
@@ -309,6 +337,7 @@ export function createAdminId(prefix) {
 export function useAdminData() {
   const [data, setData] = useState(getAdminData);
   const snapshotRef = useRef(getAdminDataSnapshot());
+  const isSavingRemoteRef = useRef(false);
 
   const syncAdminData = useCallback((incomingData) => {
     const nextSnapshot = getAdminDataSnapshot();
@@ -320,13 +349,30 @@ export function useAdminData() {
     }
 
     if (incomingData && typeof incomingData === 'object') {
-      const incomingSnapshot = JSON.stringify(incomingData);
+      const normalizedIncomingData = mergeAdminData(incomingData);
+      const currentData = mergeAdminData(parseAdminDataSnapshot(snapshotRef.current));
+      const incomingSnapshot = JSON.stringify(normalizedIncomingData);
 
-      if (incomingSnapshot !== snapshotRef.current) {
+      if (incomingSnapshot !== snapshotRef.current && isIncomingDataNewer(normalizedIncomingData, currentData)) {
         snapshotRef.current = incomingSnapshot;
-        setData(mergeAdminData(incomingData));
+        setData(normalizedIncomingData);
       }
     }
+  }, []);
+
+  const applyRemoteAdminData = useCallback((remoteData) => {
+    if (!remoteData) return;
+
+    const normalizedRemoteData = mergeAdminData(remoteData);
+    const currentData = getAdminData();
+    if (!isIncomingDataNewer(normalizedRemoteData, currentData) && !hasLegacyProductImages(currentData)) return;
+
+    const remoteSnapshot = JSON.stringify(normalizedRemoteData);
+    if (remoteSnapshot === snapshotRef.current) return;
+
+    const syncedData = persistSyncedAdminData(normalizedRemoteData);
+    snapshotRef.current = getAdminDataSnapshot();
+    setData(syncedData);
   }, []);
 
   useEffect(() => {
@@ -360,12 +406,49 @@ export function useAdminData() {
     };
   }, [syncAdminData]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function syncRemoteAdminData() {
+      if (isSavingRemoteRef.current) return;
+
+      try {
+        const remoteData = await fetchRemoteAdminData();
+        if (!cancelled) applyRemoteAdminData(remoteData);
+      } catch {
+        // API indisponible: le fallback local continue de fonctionner.
+      }
+    }
+
+    syncRemoteAdminData();
+    const intervalId = window.setInterval(syncRemoteAdminData, ADMIN_DATA_REMOTE_POLL_INTERVAL);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [applyRemoteAdminData]);
+
   const updateData = useCallback((updater) => {
-    setData(() => {
-      const latestData = getAdminData();
+    setData((currentData) => {
+      const latestData = mergeAdminData(currentData || getAdminData());
       const nextData = typeof updater === 'function' ? updater(latestData) : updater;
       const savedData = saveAdminData(nextData);
       snapshotRef.current = getAdminDataSnapshot();
+
+      isSavingRemoteRef.current = true;
+      saveRemoteAdminData(savedData)
+        .then((remoteData) => {
+          const syncedData = persistSyncedAdminData(remoteData);
+          snapshotRef.current = getAdminDataSnapshot();
+          setData(syncedData);
+        })
+        .catch(() => {
+          // Les données locales restent disponibles si l'API est hors ligne.
+        })
+        .finally(() => {
+          isSavingRemoteRef.current = false;
+        });
 
       return savedData;
     });

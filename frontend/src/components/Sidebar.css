@@ -4,6 +4,7 @@
   top: 0;
   bottom: 0;
   width: 280px;
+  max-width: min(280px, 88vw);
   background-color: #eeeeef;
   color: #0f172a;
   display: flex;
@@ -380,6 +381,7 @@
 
 @media (max-width: 1023px) {
   .sidebar {
+    box-shadow: 18px 0 48px rgb(15 23 42 / 0.18);
     transform: translateX(-100%);
   }
 
@@ -389,6 +391,25 @@
 
   .sidebar--closed {
     transform: translateX(-100%);
+  }
+}
+
+@media (max-width: 620px) {
+  .sidebar__header {
+    padding: 0.85rem 1rem 0.95rem;
+  }
+
+  .sidebar__nav {
+    padding: 0.25rem 0.75rem 1rem;
+  }
+
+  .sidebar__nav-link {
+    min-height: 38px;
+    padding: 0.58rem 0.7rem;
+  }
+
+  .sidebar__footer {
+    padding: 1rem;
   }
 }
 

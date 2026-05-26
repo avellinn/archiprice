@@ -1,5 +1,5 @@
-const express = require('express');
-const { getDbStatus } = require('../config/db');
+import express from 'express';
+import { getDbStatus } from '../config/db.js';
 
 const router = express.Router();
 
@@ -13,4 +13,4 @@ router.get('/health', (_req, res) => {
   });
 });
 
-module.exports = router;
+export default router;

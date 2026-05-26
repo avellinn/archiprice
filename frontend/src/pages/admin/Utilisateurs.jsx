@@ -1,9 +1,19 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Icon from '../../components/Icon';
-import { createAdminId, useAdminData } from '../../services/adminData';
+import { getApiErrorMessage } from '../../services/api';
+import {
+  createAdminUser,
+  deleteAdminUser,
+  fetchAdminUsers,
+  updateAdminUser,
+} from '../../services/adminMongo';
 import { Badge } from './PageShell';
 
 const SUBSCRIPTION_FLOW = ['Essai', 'Basique', 'Premium'];
+const ROLE_LABELS = {
+  admin: 'Admin',
+  user: 'User',
+};
 
 function getNextSubscription(currentSubscription) {
   if (currentSubscription === '-') return '-';
@@ -11,72 +21,112 @@ function getNextSubscription(currentSubscription) {
   return SUBSCRIPTION_FLOW[(currentIndex + 1) % SUBSCRIPTION_FLOW.length];
 }
 
-function getSimulationCount(user, simulations) {
-  if (user.type === 'Admin') return '-';
+function getUserRole(user) {
+  if (String(user.role || '').toLowerCase() === 'admin' || user.type === 'Admin') return 'admin';
+  return 'user';
+}
 
-  const count = simulations.filter((simulation) => simulation.email === user.email).length;
-  return count || user.simulations || 0;
+function getSimulationCount(user) {
+  if (getUserRole(user) === 'admin') return '-';
+  return user.simulations || 0;
 }
 
 export default function Utilisateurs() {
-  const [adminData, setAdminData] = useAdminData();
+  const [users, setUsers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('Tous');
+  const [roleFilter, setRoleFilter] = useState('Tous');
 
-  const users = useMemo(() => (
-    adminData.users || []
-  ), [adminData.users]);
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchAdminUsers()
+      .then((list) => {
+        if (!cancelled) {
+          setUsers(list);
+          setError('');
+        }
+      })
+      .catch((apiError) => {
+        if (!cancelled) setError(getApiErrorMessage(apiError, 'Impossible de charger les utilisateurs Mongo.'));
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const userTypes = useMemo(() => (
     ['Tous', ...new Set(users.map((user) => user.type).filter(Boolean))]
+  ), [users]);
+
+  const userRoles = useMemo(() => (
+    ['Tous', ...new Set(users.map((user) => getUserRole(user)))]
   ), [users]);
 
   const filteredUsers = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
     return users.filter((user) => {
+      const role = getUserRole(user);
       const matchesSearch = !normalizedSearch
-        || user.name.toLowerCase().includes(normalizedSearch)
-        || user.email.toLowerCase().includes(normalizedSearch);
+        || String(user.name || '').toLowerCase().includes(normalizedSearch)
+        || String(user.email || '').toLowerCase().includes(normalizedSearch)
+        || String(user.type || '').toLowerCase().includes(normalizedSearch)
+        || role.toLowerCase().includes(normalizedSearch);
       const matchesType = typeFilter === 'Tous' || user.type === typeFilter;
+      const matchesRole = roleFilter === 'Tous' || role === roleFilter;
 
-      return matchesSearch && matchesType;
+      return matchesSearch && matchesType && matchesRole;
     });
-  }, [searchTerm, typeFilter, users]);
+  }, [roleFilter, searchTerm, typeFilter, users]);
 
-  function updateUser(userId, patch) {
-    setAdminData((currentData) => ({
-      ...currentData,
-      users: (currentData.users || []).map((user) => (
-        user.id === userId ? { ...user, ...patch } : user
-      )),
-    }));
+  async function updateUser(userId, patch) {
+    const previousUsers = users;
+    setUsers((currentUsers) => currentUsers.map((user) => (
+      user.id === userId ? { ...user, ...patch } : user
+    )));
+
+    try {
+      const user = await updateAdminUser(userId, patch);
+      setUsers((currentUsers) => currentUsers.map((item) => (item.id === user.id ? user : item)));
+    } catch (apiError) {
+      setUsers(previousUsers);
+      setError(getApiErrorMessage(apiError, "La modification de l'utilisateur a échoué."));
+    }
   }
 
-  function addDemoUser() {
-    setAdminData((currentData) => ({
-      ...currentData,
-      users: [
-        {
-          id: createAdminId('user'),
-          name: 'Nouvel utilisateur',
-          email: `user${Date.now()}@archiprice.com`,
-          type: 'Architecte',
-          simulations: 0,
-          inscription: new Intl.DateTimeFormat('fr-FR').format(new Date()),
-          status: 'Actif',
-          subscription: 'Essai',
-        },
-        ...(currentData.users || []),
-      ],
-    }));
+  async function addDemoUser() {
+    try {
+      const user = await createAdminUser({
+        name: 'Nouvel utilisateur',
+        email: `user${Date.now()}@archiprice.com`,
+        type: 'Architecte',
+        status: 'Actif',
+        subscription: 'Essai',
+      });
+      setUsers((currentUsers) => [user, ...currentUsers]);
+      setError('');
+    } catch (apiError) {
+      setError(getApiErrorMessage(apiError, "La création de l'utilisateur a échoué."));
+    }
   }
 
-  function deleteUser(userId) {
-    setAdminData((currentData) => ({
-      ...currentData,
-      users: (currentData.users || []).filter((user) => user.id !== userId),
-    }));
+  async function deleteUser(userId) {
+    const previousUsers = users;
+    setUsers((currentUsers) => currentUsers.filter((user) => user.id !== userId));
+
+    try {
+      await deleteAdminUser(userId);
+    } catch (apiError) {
+      setUsers(previousUsers);
+      setError(getApiErrorMessage(apiError, "La suppression de l'utilisateur a échoué."));
+    }
   }
 
   return (
@@ -98,8 +148,19 @@ export default function Utilisateurs() {
         <label className="admin-users-management__filter">
           <span>Type :</span>
           <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
-            {userTypes.map((type) => (
-              <option key={type} value={type}>{type}</option>
+            {userTypes.map((type, index) => (
+              <option key={`${type}-${index}`} value={type}>{type}</option>
+            ))}
+          </select>
+        </label>
+
+        <label className="admin-users-management__filter">
+          <span>Rôle :</span>
+          <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)}>
+            {userRoles.map((role, index) => (
+              <option key={`${role}-${index}`} value={role}>
+                {role === 'Tous' ? 'Tous' : ROLE_LABELS[role] || role}
+              </option>
             ))}
           </select>
         </label>
@@ -111,6 +172,7 @@ export default function Utilisateurs() {
       </header>
 
       <section className="admin-users-management__card" aria-label="Liste des utilisateurs">
+        {error && <p className="admin-users-management__state">{error}</p>}
         <div className="admin-users-management__table-wrap">
           <table className="admin-users-management__table">
             <thead>
@@ -118,6 +180,7 @@ export default function Utilisateurs() {
                 <th>Nom</th>
                 <th>Email</th>
                 <th>Type</th>
+                <th>Rôle</th>
                 <th>Simulations</th>
                 <th>Inscription</th>
                 <th>Statut</th>
@@ -126,19 +189,30 @@ export default function Utilisateurs() {
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.length === 0 ? (
+              {isLoading ? (
                 <tr>
-                  <td colSpan="8" className="admin-users-management__state">
+                  <td colSpan="9" className="admin-users-management__state">
+                    Chargement des utilisateurs Mongo...
+                  </td>
+                </tr>
+              ) : filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan="9" className="admin-users-management__state">
                     Aucun utilisateur trouvé.
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map((user) => (
-                  <tr key={user.id}>
+                filteredUsers.map((user, index) => (
+                  <tr key={`${user.id || user.email}-${index}`}>
                     <td>{user.name}</td>
                     <td>{user.email}</td>
                     <td>{user.type}</td>
-                    <td>{getSimulationCount(user, adminData.simulations)}</td>
+                    <td>
+                      <Badge tone={getUserRole(user) === 'admin' ? 'warning' : 'neutral'}>
+                        {ROLE_LABELS[getUserRole(user)]}
+                      </Badge>
+                    </td>
+                    <td>{getSimulationCount(user)}</td>
                     <td>{user.inscription}</td>
                     <td>
                       <Badge tone={user.status === 'Actif' ? 'success' : 'danger'}>

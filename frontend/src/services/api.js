@@ -10,12 +10,28 @@ const api = axios.create({
 
 let onUnauthorized = null;
 
+function getStoredToken() {
+  try {
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function clearStoredToken() {
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    // Storage indisponible: l'état React sera nettoyé par le handler.
+  }
+}
+
 export function setUnauthorizedHandler(handler) {
   onUnauthorized = handler;
 }
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem(TOKEN_KEY);
+  const token = getStoredToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -26,7 +42,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem(TOKEN_KEY);
+      clearStoredToken();
       onUnauthorized?.();
     }
     return Promise.reject(error);

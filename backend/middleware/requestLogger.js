@@ -1,4 +1,4 @@
-function requestLogger(req, res, next) {
+export default function requestLogger(req, res, next) {
   const start = Date.now();
 
   res.on('finish', () => {
@@ -17,5 +17,3 @@ function requestLogger(req, res, next) {
 
   next();
 }
-
-module.exports = requestLogger;

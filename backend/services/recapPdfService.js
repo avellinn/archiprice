@@ -1,0 +1,214 @@
+function stripDiacritics(value) {
+  return String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function sanitizePdfText(value) {
+  return stripDiacritics(value)
+    .replace(/[^\x20-\x7E]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function escapePdfText(value) {
+  return sanitizePdfText(value)
+    .replace(/\\/g, '\\\\')
+    .replace(/\(/g, '\\(')
+    .replace(/\)/g, '\\)');
+}
+
+function parseAmount(value) {
+  const amount = Number(String(value || '').replace(/[^\d.-]/g, ''));
+  return Number.isFinite(amount) ? amount : 0;
+}
+
+function formatFCFA(amount) {
+  return `${new Intl.NumberFormat('fr-FR').format(parseAmount(amount))} FCFA`;
+}
+
+function extractProjectMetadata(project) {
+  const description = project?.description || '';
+  const roomMatch = description.match(/Type de pièce\s*:\s*(.+)/i);
+  const budgetMatch = description.match(/Estimation budget\s*:\s*(.+)/i);
+
+  return {
+    roomType: roomMatch?.[1]?.trim() || 'Non renseigne',
+    budget: budgetMatch?.[1]?.trim() || '',
+  };
+}
+
+function getProjectReference(project) {
+  return project?._id ? String(project._id).slice(-8).toUpperCase() : 'ARCHI';
+}
+
+function wrapText(value, maxLength = 54) {
+  const words = sanitizePdfText(value).split(' ').filter(Boolean);
+  const lines = [];
+  let line = '';
+
+  words.forEach((word) => {
+    const nextLine = line ? `${line} ${word}` : word;
+    if (nextLine.length > maxLength && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = nextLine;
+    }
+  });
+
+  if (line) lines.push(line);
+  return lines.length > 0 ? lines : ['-'];
+}
+
+function textCommand(text, x, y, size = 10, font = 'F1') {
+  return `BT /${font} ${size} Tf ${x} ${y} Td (${escapePdfText(text)}) Tj ET`;
+}
+
+function lineCommand(x1, y1, x2, y2) {
+  return `${x1} ${y1} m ${x2} ${y2} l S`;
+}
+
+function rectCommand(x, y, width, height) {
+  return `${x} ${y} ${width} ${height} re S`;
+}
+
+function fillRectCommand(x, y, width, height, color = '0.94 0.98 1') {
+  return `q ${color} rg ${x} ${y} ${width} ${height} re f Q`;
+}
+
+function buildPageContent({ project, user, products, pageProducts, pageIndex, pageCount, totals }) {
+  const metadata = extractProjectMetadata(project);
+  const generatedAt = new Intl.DateTimeFormat('fr-FR', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date());
+  const commands = [
+    '0.07 0.14 0.24 RG',
+    textCommand('ARCHIPRICE', 48, 792, 10, 'F2'),
+    textCommand('Recapitulatif', 48, 760, 24, 'F2'),
+    textCommand(`Projet #${getProjectReference(project)} - Genere le ${generatedAt}`, 48, 740, 9),
+    lineCommand(48, 724, 547, 724),
+    fillRectCommand(48, 650, 499, 56, '0.97 0.99 1'),
+    rectCommand(48, 650, 499, 56),
+    textCommand('Projet', 64, 686, 8, 'F2'),
+    textCommand(project?.name || '-', 64, 668, 12, 'F2'),
+    textCommand('Type de piece', 230, 686, 8, 'F2'),
+    textCommand(metadata.roomType, 230, 668, 11),
+    textCommand('Budget cible', 382, 686, 8, 'F2'),
+    textCommand(metadata.budget ? formatFCFA(metadata.budget) : 'Non renseigne', 382, 668, 11, 'F2'),
+    textCommand('Utilisateur', 48, 620, 9, 'F2'),
+    textCommand(user?.name || user?.email || 'Utilisateur', 48, 604, 10),
+    textCommand('Articles', 230, 620, 9, 'F2'),
+    textCommand(String(products.length), 230, 604, 10),
+    textCommand('Total estime', 382, 620, 9, 'F2'),
+    textCommand(formatFCFA(totals.total), 382, 604, 12, 'F2'),
+    textCommand('Articles selectionnes', 48, 560, 14, 'F2'),
+    fillRectCommand(48, 532, 499, 24, '0.93 0.95 0.98'),
+    textCommand('Article', 60, 540, 8, 'F2'),
+    textCommand('Categorie', 300, 540, 8, 'F2'),
+    textCommand('Prix unitaire', 430, 540, 8, 'F2'),
+  ];
+
+  let y = 510;
+  pageProducts.forEach((product) => {
+    const nameLines = wrapText(product.name || 'Article sans nom', 38).slice(0, 2);
+    const rowHeight = nameLines.length > 1 ? 34 : 24;
+    commands.push(lineCommand(48, y + 12, 547, y + 12));
+    nameLines.forEach((line, index) => {
+      commands.push(textCommand(line, 60, y - index * 11, 9));
+    });
+    commands.push(textCommand(product.category || 'Non renseigne', 300, y, 9));
+    commands.push(textCommand(formatFCFA(product.unitPrice), 430, y, 9, 'F2'));
+    y -= rowHeight;
+  });
+
+  if (pageIndex === pageCount - 1) {
+    const overage = Math.max(totals.total - totals.budget, 0);
+    commands.push(fillRectCommand(48, 88, 499, 62, overage > 0 ? '1 0.94 0.94' : '0.92 0.99 0.95'));
+    commands.push(rectCommand(48, 88, 499, 62));
+    commands.push(textCommand('Synthese budget', 64, 126, 10, 'F2'));
+    commands.push(textCommand(`Estimation totale : ${formatFCFA(totals.total)}`, 64, 108, 12, 'F2'));
+    commands.push(textCommand(`Depassement : ${overage > 0 ? formatFCFA(overage) : 'Aucun'}`, 320, 108, 11, 'F2'));
+  }
+
+  commands.push(textCommand(`Page ${pageIndex + 1}/${pageCount}`, 500, 38, 8));
+  return commands.join('\n');
+}
+
+function chunkProducts(products, size = 12) {
+  const chunks = [];
+  for (let index = 0; index < products.length; index += size) {
+    chunks.push(products.slice(index, index + size));
+  }
+  return chunks.length > 0 ? chunks : [[]];
+}
+
+function buildPdf(objects) {
+  const header = '%PDF-1.4\n';
+  const parts = [header];
+  const offsets = [0];
+
+  objects.forEach((object, index) => {
+    offsets[index + 1] = Buffer.byteLength(parts.join(''), 'binary');
+    parts.push(`${index + 1} 0 obj\n${object}\nendobj\n`);
+  });
+
+  const xrefOffset = Buffer.byteLength(parts.join(''), 'binary');
+  const xref = [
+    'xref',
+    `0 ${objects.length + 1}`,
+    '0000000000 65535 f ',
+    ...offsets.slice(1).map((offset) => `${String(offset).padStart(10, '0')} 00000 n `),
+    'trailer',
+    `<< /Size ${objects.length + 1} /Root 1 0 R >>`,
+    'startxref',
+    String(xrefOffset),
+    '%%EOF',
+  ].join('\n');
+
+  parts.push(xref);
+  return Buffer.from(parts.join(''), 'binary');
+}
+
+function generateProjectRecapPdf({ project, products, user }) {
+  const normalizedProducts = products.map((product) => ({
+    name: product.name,
+    category: product.category,
+    unitPrice: parseAmount(product.unitPrice),
+  }));
+  const metadata = extractProjectMetadata(project);
+  const totals = {
+    total: normalizedProducts.reduce((sum, product) => sum + product.unitPrice, 0),
+    budget: parseAmount(metadata.budget),
+  };
+  const chunks = chunkProducts(normalizedProducts);
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    `<< /Type /Pages /Kids [${chunks.map((_, index) => `${3 + index * 2} 0 R`).join(' ')}] /Count ${chunks.length} >>`,
+  ];
+
+  chunks.forEach((pageProducts, index) => {
+    const pageObjectNumber = 3 + index * 2;
+    const streamObjectNumber = pageObjectNumber + 1;
+    const content = buildPageContent({
+      project,
+      user,
+      products: normalizedProducts,
+      pageProducts,
+      pageIndex: index,
+      pageCount: chunks.length,
+      totals,
+    });
+    const contentLength = Buffer.byteLength(content, 'binary');
+
+    objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> /F2 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >> >> >> /Contents ${streamObjectNumber} 0 R >>`);
+    objects.push(`<< /Length ${contentLength} >>\nstream\n${content}\nendstream`);
+  });
+
+  return buildPdf(objects);
+}
+
+export {
+  generateProjectRecapPdf,
+};

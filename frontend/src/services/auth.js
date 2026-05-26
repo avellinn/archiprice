@@ -5,19 +5,27 @@ import api from './api';
 const LEGACY_TOKEN_KEY = 'token';
 
 export function getStoredToken() {
-  const legacy = localStorage.getItem(LEGACY_TOKEN_KEY);
-  if (legacy && !localStorage.getItem(TOKEN_KEY)) {
-    localStorage.setItem(TOKEN_KEY, legacy);
-    localStorage.removeItem(LEGACY_TOKEN_KEY);
+  try {
+    const legacy = localStorage.getItem(LEGACY_TOKEN_KEY);
+    if (legacy && !localStorage.getItem(TOKEN_KEY)) {
+      localStorage.setItem(TOKEN_KEY, legacy);
+      localStorage.removeItem(LEGACY_TOKEN_KEY);
+    }
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
   }
-  return localStorage.getItem(TOKEN_KEY);
 }
 
 export function setStoredToken(token) {
-  if (token) {
-    localStorage.setItem(TOKEN_KEY, token);
-  } else {
-    localStorage.removeItem(TOKEN_KEY);
+  try {
+    if (token) {
+      localStorage.setItem(TOKEN_KEY, token);
+    } else {
+      localStorage.removeItem(TOKEN_KEY);
+    }
+  } catch {
+    // Le mode privé peut bloquer le stockage; l'état React reste la source active.
   }
 }
 

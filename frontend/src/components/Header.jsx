@@ -14,6 +14,7 @@ export default function Header({
   isNotificationsOpen = false,
   isAccountOpen = false,
   searchValue = '',
+  searchPlaceholder = 'Rechercher',
   onAccountClick,
   onMenuClick,
   onNotificationsClick,
@@ -66,8 +67,8 @@ export default function Header({
               className="header__search-input"
               value={searchValue}
               onChange={(event) => onSearchChange?.(event.target.value)}
-              placeholder="Rechercher"
-              aria-label="Rechercher"
+              placeholder={searchPlaceholder}
+              aria-label={searchPlaceholder}
             />
             <kbd className="header__search-shortcut">⌘/</kbd>
           </form>

@@ -15,12 +15,24 @@ const AVATAR_COLOR_KEY = 'archiprice_avatar_color';
 function withSessionAvatarColor(userData, shouldRefresh = false) {
   if (!userData) return userData;
 
-  const previousColor = sessionStorage.getItem(AVATAR_COLOR_KEY);
+  const previousColor = (() => {
+    try {
+      return sessionStorage.getItem(AVATAR_COLOR_KEY);
+    } catch {
+      return '';
+    }
+  })();
+
   const avatarColor = shouldRefresh || !previousColor
     ? getRandomAvatarColor(previousColor)
     : previousColor;
 
-  sessionStorage.setItem(AVATAR_COLOR_KEY, avatarColor);
+  try {
+    sessionStorage.setItem(AVATAR_COLOR_KEY, avatarColor);
+  } catch {
+    // Le rendu peut continuer même si sessionStorage est indisponible.
+  }
+
   return { ...userData, avatarColor };
 }
 
@@ -30,7 +42,11 @@ export function AuthProvider({ children }) {
 
   const clearSession = useCallback(() => {
     setStoredToken(null);
-    sessionStorage.removeItem(AVATAR_COLOR_KEY);
+    try {
+      sessionStorage.removeItem(AVATAR_COLOR_KEY);
+    } catch {
+      // Ignore storage errors.
+    }
     setUser(null);
   }, []);
 

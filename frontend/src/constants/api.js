@@ -8,6 +8,7 @@ export const API_ROUTES = {
   projects: {
     list: '/api/projects',
     detail: (id) => `/api/projects/${id}`,
+    recapPdf: (id) => `/api/projects/${id}/recap.pdf`,
   },
   products: {
     list: (projectId) => `/api/projects/${projectId}/products`,
@@ -15,6 +16,13 @@ export const API_ROUTES = {
   },
   admin: {
     users: '/api/admin/users',
+    user: (id) => `/api/admin/users/${id}`,
     userRole: (id) => `/api/admin/users/${id}/role`,
+    suppliers: '/api/admin/suppliers',
+    supplier: (id) => `/api/admin/suppliers/${id}`,
+    simulations: '/api/admin/simulations',
+    simulation: (id) => `/api/admin/simulations/${id}`,
+    supportItems: '/api/admin/support-items',
+    supportItem: (id) => `/api/admin/support-items/${id}`,
   },
 };

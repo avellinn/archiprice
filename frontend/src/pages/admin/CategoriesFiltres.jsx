@@ -4,10 +4,15 @@ import Icon from '../../components/Icon';
 import { createAdminId, useAdminData } from '../../services/adminData';
 
 const tabs = [
-  { key: 'categories', label: 'Catégories', addLabel: 'Ajouter une catégorie', placeholder: 'Ex: Mobilier' },
-  { key: 'rooms', label: 'Pièces', addLabel: 'Ajouter une pièce', placeholder: 'Ex: Salon' },
-  { key: 'ranges', label: 'Gammes', addLabel: 'Ajouter une gamme', placeholder: 'Ex: Premium' },
+  { key: 'categories', productField: 'category', label: 'Catégories', addLabel: 'Ajouter une catégorie', placeholder: 'Ex: Mobilier' },
+  { key: 'rooms', productField: 'room', label: 'Pièces', addLabel: 'Ajouter une pièce', placeholder: 'Ex: Salon' },
+  { key: 'ranges', productField: 'range', label: 'Gammes', addLabel: 'Ajouter une gamme', placeholder: 'Ex: Premium' },
+  { key: 'availability', productField: 'availability', label: 'Disponibilités', addLabel: 'Ajouter une disponibilité', placeholder: 'Ex: Disponible' },
 ];
+
+function getUsageCount(products, field, value) {
+  return products.filter((product) => product[field] === value).length;
+}
 
 export default function CategoriesFiltres() {
   const [adminData, setAdminData] = useAdminData();
@@ -16,8 +21,11 @@ export default function CategoriesFiltres() {
   const [selectedItemId, setSelectedItemId] = useState('');
 
   const items = useMemo(() => (
-    adminData.taxonomies[activeTab.key] || []
-  ), [activeTab.key, adminData.taxonomies]);
+    (adminData.taxonomies[activeTab.key] || []).map((item) => ({
+      ...item,
+      count: getUsageCount(adminData.products, activeTab.productField, item.name),
+    }))
+  ), [activeTab.key, activeTab.productField, adminData.products, adminData.taxonomies]);
   const selectedItem = useMemo(() => (
     items.find((item) => item.id === selectedItemId) || items[0]
   ), [items, selectedItemId]);
@@ -44,13 +52,25 @@ export default function CategoriesFiltres() {
   }
 
   function deleteTaxonomyItem(itemId) {
-    setAdminData((currentData) => ({
-      ...currentData,
-      taxonomies: {
-        ...currentData.taxonomies,
-        [activeTab.key]: (currentData.taxonomies[activeTab.key] || []).filter((item) => item.id !== itemId),
-      },
-    }));
+    setAdminData((currentData) => {
+      const currentItems = currentData.taxonomies[activeTab.key] || [];
+      const deletedItem = currentItems.find((item) => item.id === itemId);
+      const nextItems = currentItems.filter((item) => item.id !== itemId);
+      const fallbackName = nextItems[0]?.name || '';
+
+      return {
+        ...currentData,
+        products: (currentData.products || []).map((product) => (
+          deletedItem && product[activeTab.productField] === deletedItem.name
+            ? { ...product, [activeTab.productField]: fallbackName }
+            : product
+        )),
+        taxonomies: {
+          ...currentData.taxonomies,
+          [activeTab.key]: nextItems,
+        },
+      };
+    });
   }
 
   function applyRename() {
@@ -59,15 +79,24 @@ export default function CategoriesFiltres() {
       return;
     }
 
-    setAdminData((currentData) => ({
-      ...currentData,
-      taxonomies: {
-        ...currentData.taxonomies,
-        [activeTab.key]: (currentData.taxonomies[activeTab.key] || []).map((item) => (
-          item.id === selectedItem.id ? { ...item, name: draftName.trim() } : item
+    setAdminData((currentData) => {
+      const nextName = draftName.trim();
+
+      return {
+        ...currentData,
+        products: (currentData.products || []).map((product) => (
+          product[activeTab.productField] === selectedItem.name
+            ? { ...product, [activeTab.productField]: nextName }
+            : product
         )),
-      },
-    }));
+        taxonomies: {
+          ...currentData.taxonomies,
+          [activeTab.key]: (currentData.taxonomies[activeTab.key] || []).map((item) => (
+            item.id === selectedItem.id ? { ...item, name: nextName } : item
+          )),
+        },
+      };
+    });
     setDraftName('');
   }
 
@@ -112,13 +141,13 @@ export default function CategoriesFiltres() {
               <thead>
                 <tr>
                   <th>Nom</th>
-                  <th>Nombre de produits</th>
+                  <th>Nombre d'articles</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((item) => (
-                  <tr key={item.id}>
+                {items.map((item, index) => (
+                  <tr key={`${item.id || item.name}-${index}`}>
                     <td>{item.name}</td>
                     <td>{item.count}</td>
                     <td>
@@ -178,7 +207,7 @@ export default function CategoriesFiltres() {
               </button>
             </div>
 
-            <p>Cette entrée est utilisée par <strong>{selectedItem?.count || 0} produit(s)</strong>.</p>
+            <p>Cette entrée est utilisée par <strong>{selectedItem?.count || 0} article(s)</strong>.</p>
             <p>Que souhaitez-vous faire ?</p>
 
             <div className="admin-taxonomy-danger-actions">

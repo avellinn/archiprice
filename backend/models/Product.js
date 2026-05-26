@@ -1,4 +1,31 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
+
+const imageSchema = new mongoose.Schema(
+  {
+    secure_url: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    public_id: {
+      type: String,
+      required: true,
+      trim: true,
+      index: true,
+    },
+    metadata: {
+      originalName: { type: String, trim: true },
+      mimeType: { type: String, trim: true },
+      bytes: { type: Number, min: 0 },
+      width: { type: Number, min: 0 },
+      height: { type: Number, min: 0 },
+      format: { type: String, trim: true },
+      provider: { type: String, default: 'cloudinary' },
+      folder: { type: String, default: 'archiprice/products' },
+    },
+  },
+  { _id: false },
+);
 
 const productSchema = new mongoose.Schema(
   {
@@ -34,8 +61,18 @@ const productSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    images: {
+      type: [imageSchema],
+      default: [],
+      validate: {
+        validator(images) {
+          return images.length <= 10;
+        },
+        message: 'Maximum 10 images par produit',
+      },
+    },
   },
   { timestamps: true },
 );
 
-module.exports = mongoose.model('Product', productSchema);
+export default mongoose.model('Product', productSchema);

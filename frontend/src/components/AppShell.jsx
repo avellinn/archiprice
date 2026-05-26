@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Header from './Header';
 import Icon from './Icon';
 import Sidebar from './Sidebar';
@@ -15,15 +15,22 @@ const PAGE_TITLES = {
   '/deconnexion': 'Déconnexion',
 };
 
+const SEARCH_PLACEHOLDERS = {
+  '/dashboard': 'Rechercher un projet récent',
+  '/catalogue': 'Rechercher un article, une boutique...',
+  '/workspace': 'Rechercher un projet',
+  '/factures': 'Rechercher une estimation',
+};
+
 export default function AppShell() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isThemeDark, setIsThemeDark] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState('');
   const [searchMessage, setSearchMessage] = useState('');
 
   const sidebarSections = useMemo(
@@ -72,6 +79,19 @@ export default function AppShell() {
     setSearchMessage(query ? `Recherche lancée : ${query}` : 'Saisissez un mot-clé pour rechercher.');
   }
 
+  function handleSearchChange(value) {
+    const nextParams = new URLSearchParams(searchParams);
+    const query = value.trim();
+
+    if (query) {
+      nextParams.set('q', value);
+    } else {
+      nextParams.delete('q');
+    }
+
+    setSearchParams(nextParams, { replace: true });
+  }
+
   function handleLogout() {
     setIsAccountOpen(false);
     logout();
@@ -79,6 +99,8 @@ export default function AppShell() {
   }
 
   const currentPage = PAGE_TITLES[location.pathname] || 'Tableau de bord';
+  const searchValue = searchParams.get('q') || '';
+  const searchPlaceholder = SEARCH_PLACEHOLDERS[location.pathname] || `Rechercher dans ${currentPage.toLowerCase()}`;
 
   return (
     <main
@@ -111,6 +133,7 @@ export default function AppShell() {
           isSidebarCollapsed={isSidebarCollapsed}
           isThemeDark={isThemeDark}
           searchValue={searchValue}
+          searchPlaceholder={searchPlaceholder}
           onAccountClick={() => {
             setIsAccountOpen((open) => !open);
             setIsNotificationsOpen(false);
@@ -121,7 +144,7 @@ export default function AppShell() {
             setIsNotificationsOpen((open) => !open);
             setIsAccountOpen(false);
           }}
-          onSearchChange={setSearchValue}
+          onSearchChange={handleSearchChange}
           onSearchSubmit={handleSearchSubmit}
           onThemeToggle={() => setIsThemeDark((dark) => !dark)}
         />

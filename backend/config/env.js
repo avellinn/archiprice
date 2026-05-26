@@ -1,6 +1,9 @@
-const path = require('path');
-const dotenv = require('dotenv');
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import dotenv from 'dotenv';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const rootEnv = path.resolve(__dirname, '../../.env');
 const backendEnv = path.resolve(__dirname, '../.env');
 
@@ -16,4 +19,4 @@ function requireEnv(name) {
   return value;
 }
 
-module.exports = { requireEnv };
+export { requireEnv };

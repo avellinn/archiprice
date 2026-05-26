@@ -1,5 +1,5 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
 async function protect(req, res, next) {
   let token;
@@ -30,11 +30,14 @@ async function protect(req, res, next) {
   }
 }
 function requireAdmin(req, res, next) {
-  if (req.user && req.user.role === 'admin') {
+  const role = String(req.user?.role || '').toLowerCase();
+  const type = String(req.user?.type || '').toLowerCase();
+
+  if (req.user && (role === 'admin' || type === 'admin')) {
     next(); // utilisateur admin → on continue
   } else {
     res.status(403).json({ error: 'Accès réservé aux BackOffice' });
   }
 }
 
-module.exports = { protect,requireAdmin  };
+export { protect, requireAdmin };

@@ -1,6 +1,7 @@
-const mongoose = require('mongoose');
-const Project = require('../models/Project');
-const Product = require('../models/Product');
+import mongoose from 'mongoose';
+import Project from '../models/Project.js';
+import Product from '../models/Product.js';
+import { deleteProductImage } from '../services/cloudinaryImageService.js';
 
 function isValidObjectId(id) {
   return mongoose.Types.ObjectId.isValid(id);
@@ -22,6 +23,7 @@ function formatProduct(product) {
     category: product.category,
     unit: product.unit,
     unitPrice: product.unitPrice,
+    images: product.images || [],
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
   };
@@ -41,7 +43,7 @@ async function getProducts(req, res) {
 
 async function createProduct(req, res) {
   const { projectId } = req.params;
-  const { name, description, category, unit, unitPrice } = req.body;
+  const { name, description, category, unit, unitPrice, images } = req.body;
 
   const project = await findOwnedProject(projectId, req.user._id);
   if (!project) {
@@ -67,6 +69,7 @@ async function createProduct(req, res) {
     category: category?.trim() || undefined,
     unit,
     unitPrice: price,
+    images: Array.isArray(images) ? images : [],
     project: projectId,
   });
 
@@ -90,7 +93,7 @@ async function updateProduct(req, res) {
     return res.status(404).json({ error: 'Produit introuvable' });
   }
 
-  const { name, description, category, unit, unitPrice } = req.body;
+  const { name, description, category, unit, unitPrice, images } = req.body;
 
   if (name !== undefined) {
     if (!name?.trim()) {
@@ -122,6 +125,10 @@ async function updateProduct(req, res) {
     product.unitPrice = price;
   }
 
+  if (images !== undefined) {
+    product.images = Array.isArray(images) ? images : [];
+  }
+
   await product.save();
 
   res.json({ product: formatProduct(product) });
@@ -145,12 +152,47 @@ async function deleteProduct(req, res) {
     return res.status(404).json({ error: 'Produit introuvable' });
   }
 
+  await Promise.allSettled((product.images || []).map((image) => (
+    image.public_id ? deleteProductImage(image.public_id) : Promise.resolve()
+  )));
+
   res.json({ message: 'Produit supprimé' });
 }
 
-module.exports = {
+async function deleteProductImageByPublicId(req, res) {
+  const { projectId, id } = req.params;
+  const { publicId } = req.body;
+
+  if (!isValidObjectId(id)) {
+    return res.status(400).json({ error: 'Identifiant de produit invalide' });
+  }
+
+  const project = await findOwnedProject(projectId, req.user._id);
+  if (!project) {
+    return res.status(404).json({ error: 'Projet introuvable' });
+  }
+
+  const product = await Product.findOne({ _id: id, project: projectId });
+  if (!product) {
+    return res.status(404).json({ error: 'Produit introuvable' });
+  }
+
+  const imageExists = (product.images || []).some((image) => image.public_id === publicId);
+  if (!imageExists) {
+    return res.status(404).json({ error: 'Image introuvable' });
+  }
+
+  await deleteProductImage(publicId);
+  product.images = product.images.filter((image) => image.public_id !== publicId);
+  await product.save();
+
+  return res.json({ product: formatProduct(product) });
+}
+
+export {
   getProducts,
   createProduct,
   updateProduct,
   deleteProduct,
+  deleteProductImageByPublicId,
 };

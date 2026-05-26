@@ -1,7 +1,7 @@
-require('./config/env');
+import './config/env.js';
 
-const app = require('./app');
-const { connectDB, disconnectDB } = require('./config/db');
+import app from './app.js';
+import { connectDB, disconnectDB } from './config/db.js';
 
 const PORT = process.env.PORT || 5000;
 

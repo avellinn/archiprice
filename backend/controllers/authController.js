@@ -1,12 +1,16 @@
-const User = require('../models/User');
-const generateToken = require('../utils/generateToken');
+import User from '../models/User.js';
+import generateToken from '../utils/generateToken.js';
 
 function formatUser(user) {
+  const type = user.type || (String(user.role).toLowerCase() === 'admin' ? 'Admin' : 'Architecte');
+  const role = String(user.role).toLowerCase() === 'admin' || type === 'Admin' ? 'admin' : 'user';
+
   return {
     id: user._id,
     name: user.name,
     email: user.email,
-    role: user.role,
+    role,
+    type,
     createdAt: user.createdAt,
   };
 }
@@ -60,4 +64,4 @@ async function getMe(req, res) {
   res.json({ user: formatUser(req.user) });
 }
 
-module.exports = { register, login, getMe };
+export { register, login, getMe };

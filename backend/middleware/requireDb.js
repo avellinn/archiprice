@@ -1,6 +1,6 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
-function requireDb(_req, res, next) {
+export default function requireDb(_req, res, next) {
   if (mongoose.connection.readyState !== 1) {
     return res.status(503).json({
       error: 'Base de données indisponible — configurez MONGODB_URI et démarrez MongoDB',
@@ -8,5 +8,3 @@ function requireDb(_req, res, next) {
   }
   next();
 }
-
-module.exports = requireDb;

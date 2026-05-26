@@ -89,8 +89,8 @@ export default function Paramètres() {
               value={simulationConfig.currency}
               onChange={(event) => handleConfigChange('currency', event.target.value)}
             >
-              <option>EUR</option>
               <option>FCFA</option>
+              <option>EUR</option>
               <option>USD</option>
             </select>
           </label>
@@ -116,8 +116,8 @@ export default function Paramètres() {
               </tr>
             </thead>
             <tbody>
-              {adminData.regionalCoefficients.map((item) => (
-                <tr key={item.city} className={activeCity.city === item.city ? 'is-selected' : ''}>
+              {adminData.regionalCoefficients.map((item, index) => (
+                <tr key={`${item.id || item.city}-${index}`} className={activeCity.city === item.city ? 'is-selected' : ''}>
                   <td>{item.city}</td>
                   <td>{item.coefficient}</td>
                   <td>

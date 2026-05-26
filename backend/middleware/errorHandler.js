@@ -11,4 +11,4 @@ function errorHandler(err, req, res, _next) {
   res.status(status).json({ error: message });
 }
 
-module.exports = { notFound, errorHandler };
+export { notFound, errorHandler };

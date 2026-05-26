@@ -1,110 +1,51 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Button from '../../components/Button';
 import Icon from '../../components/Icon';
-import { useAdminData } from '../../services/adminData';
+import { getApiErrorMessage } from '../../services/api';
+import { fetchAdminSimulations } from '../../services/adminMongo';
 import { Badge } from './PageShell';
-
-const SIMULATIONS = [
-  {
-    id: 'sim-jean-1205',
-    user: 'Jean Dupont',
-    email: 'jean.dupont@mail.com',
-    date: '12/05/2024 14:30',
-    total: '12 450,00 €',
-    products: 28,
-    status: 'Succès',
-    city: 'Cotonou',
-    coefficient: '1,00',
-    avatar: 'JD',
-    items: [
-      { name: 'Canapé 3 places Oslo', quantity: '1', price: '890,00 €', total: '890,00 €' },
-      { name: 'Table basse ronde Léon', quantity: '1', price: '210,00 €', total: '210,00 €' },
-      { name: 'Suspension en verre Mia', quantity: '2', price: '120,00 €', total: '240,00 €' },
-      { name: 'Carrelage gris cérame 60x60', quantity: '20 m²', price: '25,00 €', total: '500,00 €' },
-      { name: 'Peinture intérieure mat blanc', quantity: '10 L', price: '32,50 €', total: '325,00 €' },
-    ],
-  },
-  {
-    id: 'sim-sophia-1105',
-    user: 'Sophia Martin',
-    email: 'sophia.martin@mail.com',
-    date: '11/05/2024 10:12',
-    total: '8 920,00 €',
-    products: 16,
-    status: 'Succès',
-    city: 'Abidjan',
-    coefficient: '1,08',
-    avatar: 'SM',
-    items: [
-      { name: 'Chaise de bureau Ergo', quantity: '4', price: '150,00 €', total: '600,00 €' },
-      { name: 'Bibliothèque en bois Clara', quantity: '2', price: '330,00 €', total: '660,00 €' },
-      { name: 'Applique murale LED', quantity: '6', price: '75,00 €', total: '450,00 €' },
-    ],
-  },
-  {
-    id: 'sim-agence-1005',
-    user: 'Agence Créa',
-    email: 'contact@agencenova.bj',
-    date: '10/05/2024 16:45',
-    total: '21 350,00 €',
-    products: 42,
-    status: 'Succès',
-    city: 'Cotonou',
-    coefficient: '1,00',
-    avatar: 'AC',
-    items: [
-      { name: 'Canapé 3 places Oslo', quantity: '3', price: '890,00 €', total: '2 670,00 €' },
-      { name: 'Table basse ronde Léon', quantity: '3', price: '210,00 €', total: '630,00 €' },
-      { name: 'Carrelage gris cérame 60x60', quantity: '80 m²', price: '25,00 €', total: '2 000,00 €' },
-    ],
-  },
-  {
-    id: 'sim-jean-0905',
-    user: 'Jean Dupont',
-    email: 'jean.dupont@mail.com',
-    date: '09/05/2024 09:15',
-    total: '-',
-    products: '-',
-    status: 'Échec',
-    city: 'Cotonou',
-    coefficient: '1,00',
-    avatar: 'JD',
-    items: [],
-  },
-  {
-    id: 'sim-marc-0805',
-    user: 'Marc Koffi',
-    email: 'marc.koffi@mail.com',
-    date: '08/05/2024 11:00',
-    total: '6 230,00 €',
-    products: 12,
-    status: 'Succès',
-    city: 'Parakou',
-    coefficient: '0,96',
-    avatar: 'MK',
-    items: [
-      { name: 'Peinture intérieure mat blanc', quantity: '20 L', price: '32,50 €', total: '650,00 €' },
-      { name: 'Suspension en verre Mia', quantity: '3', price: '120,00 €', total: '360,00 €' },
-    ],
-  },
-];
 
 const STATUS_OPTIONS = ['Tous', 'Succès', 'Échec'];
 
 export default function Simulations() {
-  const [adminData] = useAdminData();
-  const simulations = adminData.simulations.length ? adminData.simulations : SIMULATIONS;
-  const [selectedSimulationId, setSelectedSimulationId] = useState(SIMULATIONS[0].id);
+  const [simulations, setSimulations] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [selectedSimulationId, setSelectedSimulationId] = useState('');
+  const [draftSearchTerm, setDraftSearchTerm] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [draftStatusFilter, setDraftStatusFilter] = useState('Tous');
   const [statusFilter, setStatusFilter] = useState('Tous');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchAdminSimulations()
+      .then((list) => {
+        if (!cancelled) {
+          setSimulations(list);
+          setError('');
+        }
+      })
+      .catch((apiError) => {
+        if (!cancelled) setError(getApiErrorMessage(apiError, 'Impossible de charger les simulations Mongo.'));
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filteredSimulations = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
     return simulations.filter((simulation) => {
       const matchesSearch = !normalizedSearch
-        || simulation.user.toLowerCase().includes(normalizedSearch)
-        || simulation.email.toLowerCase().includes(normalizedSearch);
+        || String(simulation.user || '').toLowerCase().includes(normalizedSearch)
+        || String(simulation.email || '').toLowerCase().includes(normalizedSearch);
       const matchesStatus = statusFilter === 'Tous' || simulation.status === statusFilter;
 
       return matchesSearch && matchesStatus;
@@ -115,17 +56,18 @@ export default function Simulations() {
     simulations.find((simulation) => simulation.id === selectedSimulationId) || filteredSimulations[0] || simulations[0]
   ), [filteredSimulations, selectedSimulationId, simulations]);
 
-  const selectedItems = selectedSimulation.items || adminData.products.slice(0, 5).map((product, index) => ({
-    name: product.name,
-    quantity: index === 0 ? '1' : `${index + 1}`,
-    price: product.price,
-    total: product.price,
-  }));
+  const selectedItems = selectedSimulation?.items || [];
+
+  function applySimulationFilters() {
+    setSearchTerm(draftSearchTerm);
+    setStatusFilter(draftStatusFilter);
+  }
 
   return (
     <div className="admin-simulations-page">
       <header className="admin-simulations-header">
         <h1>Simulations</h1>
+        {error && <p className="admin-products-empty">{error}</p>}
 
         <div className="admin-simulations-toolbar">
           <label className="admin-simulations-date">
@@ -141,19 +83,23 @@ export default function Simulations() {
             <input
               type="search"
               placeholder="Rechercher un utilisateur..."
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
+              value={draftSearchTerm}
+              onChange={(event) => setDraftSearchTerm(event.target.value)}
             />
           </label>
 
           <label className="admin-simulations-status">
             <span>Statut :</span>
-            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-              {STATUS_OPTIONS.map((status) => (
-                <option key={status} value={status}>{status}</option>
+            <select value={draftStatusFilter} onChange={(event) => setDraftStatusFilter(event.target.value)}>
+              {STATUS_OPTIONS.map((status, index) => (
+                <option key={`${status}-${index}`} value={status}>{status}</option>
               ))}
             </select>
           </label>
+
+          <Button type="button" onClick={applySimulationFilters}>
+            Appliquer
+          </Button>
 
           <Button type="button" variant="outline" icon={<Icon name="Download" size="sm" />}>
             Exporter CSV
@@ -170,15 +116,23 @@ export default function Simulations() {
                   <th>Utilisateur</th>
                   <th>Date</th>
                   <th>Budget total</th>
-                  <th>Produits</th>
+                  <th>Articles</th>
                   <th>Statut</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredSimulations.map((simulation) => (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan="5" className="admin-products-empty">Chargement des simulations Mongo...</td>
+                  </tr>
+                ) : filteredSimulations.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="admin-products-empty">Aucune simulation trouvée.</td>
+                  </tr>
+                ) : filteredSimulations.map((simulation, index) => (
                   <tr
-                    key={simulation.id}
-                    className={simulation.id === selectedSimulation.id ? 'is-selected' : ''}
+                    key={`${simulation.id || simulation.email}-${index}`}
+                    className={simulation.id === selectedSimulation?.id ? 'is-selected' : ''}
                     onClick={() => setSelectedSimulationId(simulation.id)}
                   >
                     <td>
@@ -242,30 +196,30 @@ export default function Simulations() {
             <div>
               <dt>Utilisateur</dt>
               <dd>
-                <span>Jean</span>
-                <strong>{selectedSimulation.user} ({selectedSimulation.email})</strong>
+                <span>{String(selectedSimulation?.user || '-').split(' ')[0]}</span>
+                <strong>{selectedSimulation?.user || '-'} ({selectedSimulation?.email || '-'})</strong>
               </dd>
             </div>
             <div>
               <dt>Date</dt>
-              <dd>{selectedSimulation.date}</dd>
+              <dd>{selectedSimulation?.date || '-'}</dd>
             </div>
             <div>
               <dt>Ville</dt>
-              <dd>{selectedSimulation.city}</dd>
+              <dd>{selectedSimulation?.city || '-'}</dd>
             </div>
             <div>
               <dt>Coefficient coût</dt>
-              <dd>{selectedSimulation.coefficient}</dd>
+              <dd>{selectedSimulation?.coefficient || '-'}</dd>
             </div>
           </dl>
 
           <div className="admin-simulation-products">
-            <h3>Produits ({selectedItems.length})</h3>
+            <h3>Articles ({selectedItems.length})</h3>
             <table>
               <thead>
                 <tr>
-                  <th>Produit</th>
+                  <th>Article</th>
                   <th>Qté</th>
                   <th>Prix unit. HT</th>
                   <th>Total HT</th>
@@ -274,11 +228,11 @@ export default function Simulations() {
               <tbody>
                 {selectedItems.length === 0 ? (
                   <tr>
-                    <td colSpan="4">Aucun produit disponible.</td>
+                    <td colSpan="4">Aucun article disponible.</td>
                   </tr>
                 ) : (
-                  selectedItems.map((item) => (
-                    <tr key={`${selectedSimulation.id}-${item.name}`}>
+                  selectedItems.map((item, index) => (
+                    <tr key={`${selectedSimulation?.id || 'simulation'}-${item.name}-${index}`}>
                       <td>{item.name}</td>
                       <td>{item.quantity}</td>
                       <td>{item.price}</td>
@@ -292,7 +246,7 @@ export default function Simulations() {
 
           <div className="admin-simulation-detail__total">
             <span>Total HT</span>
-            <strong>{selectedSimulation.total}</strong>
+            <strong>{selectedSimulation?.total || '-'}</strong>
           </div>
         </aside>
       </div>

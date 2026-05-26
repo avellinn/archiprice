@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import Icon from './Icon';
+import { getApiErrorMessage } from '../services/api';
 import { fetchProducts } from '../services/products';
+import { downloadProjectRecapPdf } from '../services/projects';
 import './espacepro.css';
 
 function formatDate(value) {
@@ -13,16 +15,23 @@ function formatDate(value) {
   }).format(new Date(value));
 }
 
-function formatCurrency(value) {
-  if (value === undefined || value === null || Number.isNaN(Number(value))) {
-    return 'Budget non renseigné';
-  }
+function parseAmount(value) {
+  const amount = Number(String(value || '').replace(/[^\d.-]/g, ''));
+  return Number.isFinite(amount) ? amount : 0;
+}
 
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'XOF',
-    maximumFractionDigits: 0,
-  }).format(Number(value));
+function formatFCFA(amount) {
+  return `${new Intl.NumberFormat('fr-FR').format(amount)} FCFA`;
+}
+
+function formatCurrency(value) {
+  const amount = parseAmount(value);
+  return formatFCFA(amount);
+}
+
+function formatOptionalCurrency(value) {
+  const amount = parseAmount(value);
+  return amount > 0 ? formatFCFA(amount) : 'Budget non renseigné';
 }
 
 function extractProjectMetadata(project) {
@@ -34,6 +43,36 @@ function extractProjectMetadata(project) {
     roomType: roomMatch?.[1]?.trim() || 'Non renseigné',
     budget: budgetMatch?.[1]?.trim() || '',
   };
+}
+
+function getImageUrl(image) {
+  if (!image) return '';
+  if (typeof image === 'string') return image;
+
+  return image.secure_url || image.url || '';
+}
+
+function getProductImages(product) {
+  const images = Array.isArray(product?.images)
+    ? product.images.map(getImageUrl).filter(Boolean)
+    : [];
+
+  if (images.length > 0) return images.slice(0, 10);
+
+  const singleImage = getImageUrl(product?.image);
+  return singleImage ? [singleImage] : [];
+}
+
+function getProjectReference(project) {
+  return project?.id ? String(project.id).slice(-8).toUpperCase() : 'ARCHI';
+}
+
+function getRecapRows(products) {
+  return products.map((product) => ({
+    name: product.name || 'Article sans nom',
+    category: product.category || 'Catégorie non renseignée',
+    price: parseAmount(product.unitPrice),
+  }));
 }
 
 export default function EspacePro({
@@ -54,6 +93,10 @@ export default function EspacePro({
   const [isProductsLoading, setIsProductsLoading] = useState(true);
   const [productsError, setProductsError] = useState('');
   const [activeArticleIndex, setActiveArticleIndex] = useState(0);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isRecapOpen, setIsRecapOpen] = useState(false);
+  const [isRecapDownloading, setIsRecapDownloading] = useState(false);
+  const [recapError, setRecapError] = useState('');
   const visibleProjectProducts = useMemo(
     () => (effectiveSelectedProjectId ? projectProducts : []),
     [effectiveSelectedProjectId, projectProducts],
@@ -64,10 +107,19 @@ export default function EspacePro({
   const activeArticlePosition = visibleProjectProducts.length > 0
     ? (activeArticleIndex % visibleProjectProducts.length) + 1
     : 0;
+  const activeArticleImages = getProductImages(activeArticle);
+  const activeArticleImage = activeArticleImages.length > 0
+    ? activeArticleImages[activeImageIndex % activeArticleImages.length]
+    : '';
+  const recapRows = useMemo(
+    () => getRecapRows(visibleProjectProducts),
+    [visibleProjectProducts],
+  );
+  const canShowRecapLink = Boolean(selectedProject && visibleProjectProducts.length > 0);
   const visibleIsProductsLoading = effectiveSelectedProjectId ? isProductsLoading : false;
   const articleSimulation = useMemo(() => {
     const total = visibleProjectProducts.reduce((sum, product) => sum + Number(product.unitPrice || 0), 0);
-    const budget = Number(projectMetadata.budget || 0);
+    const budget = parseAmount(projectMetadata.budget);
 
     return {
       count: visibleProjectProducts.length,
@@ -89,6 +141,8 @@ export default function EspacePro({
           setProjectProducts(products);
           onProductsChange?.(products);
           setProductsError('');
+          setActiveArticleIndex(0);
+          setActiveImageIndex(0);
         }
       })
       .catch(() => {
@@ -112,12 +166,57 @@ export default function EspacePro({
   function handleProjectSelect(projectId) {
     setIsProductsLoading(true);
     setProductsError('');
+    setActiveArticleIndex(0);
+    setActiveImageIndex(0);
+    setIsRecapOpen(false);
+    setRecapError('');
     onProjectSelect(projectId);
   }
 
   function handleArticleImageClick() {
+    if (activeArticleImages.length > 1) {
+      const nextImageIndex = activeImageIndex + 1;
+      if (nextImageIndex < activeArticleImages.length) {
+        setActiveImageIndex(nextImageIndex);
+        return;
+      }
+
+      setActiveImageIndex(0);
+      if (visibleProjectProducts.length > 1) {
+        setActiveArticleIndex((currentIndex) => (currentIndex + 1) % visibleProjectProducts.length);
+      }
+      return;
+    }
+
     if (visibleProjectProducts.length <= 1) return;
+    setActiveImageIndex(0);
     setActiveArticleIndex((currentIndex) => (currentIndex + 1) % visibleProjectProducts.length);
+  }
+
+  async function handleDownloadRecap() {
+    if (!selectedProject?.id || String(selectedProject.id).startsWith('local-project-')) {
+      setRecapError('Ce projet doit être synchronisé avec MongoDB avant de générer un PDF serveur.');
+      return;
+    }
+
+    setIsRecapDownloading(true);
+    setRecapError('');
+
+    try {
+      const { blob, fileName } = await downloadProjectRecapPdf(selectedProject.id);
+      const fileUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(fileUrl);
+    } catch (error) {
+      setRecapError(getApiErrorMessage(error, 'Impossible de générer le PDF'));
+    } finally {
+      setIsRecapDownloading(false);
+    }
   }
 
   return (
@@ -128,7 +227,7 @@ export default function EspacePro({
         {!isProjectsLoading && !projectsError && projects.length === 0 && (
           <p>Aucun projet créé pour le moment.</p>
         )}
-        {projects.map((project) => (
+        {projects.map((project, index) => (
           <div
             className={[
               'espacepro__project-row',
@@ -136,7 +235,7 @@ export default function EspacePro({
             ]
               .filter(Boolean)
               .join(' ')}
-            key={project.id}
+            key={`${project.id || project.name}-${index}`}
           >
             <button
               type="button"
@@ -190,19 +289,40 @@ export default function EspacePro({
               type="button"
               className={[
                 'espacepro__article-image',
+                activeArticleImage ? 'espacepro__article-image--has-photo' : '',
                 `espacepro__article-image--${activeArticleIndex % 3}`,
-              ].join(' ')}
+              ].filter(Boolean).join(' ')}
               aria-label={`Afficher l'article suivant après ${activeArticle.name}`}
               onClick={handleArticleImageClick}
             >
-              <span>{activeArticle.name.slice(0, 2).toUpperCase()}</span>
-              <small>{activeArticlePosition}/{visibleProjectProducts.length}</small>
-              <i aria-hidden="true" style={{ '--article-pattern-offset': `${activeArticleIndex * 18}px` }} />
+              {!activeArticleImage && <span>{activeArticle.name.slice(0, 2).toUpperCase()}</span>}
+              <small>
+                {activeArticleImages.length > 1
+                  ? `${(activeImageIndex % activeArticleImages.length) + 1}/${activeArticleImages.length}`
+                  : `${activeArticlePosition}/${visibleProjectProducts.length}`}
+              </small>
+              <i
+                aria-hidden="true"
+                style={{
+                  '--article-pattern-offset': `${activeArticleIndex * 18}px`,
+                  '--article-image-url': activeArticleImage ? `url("${activeArticleImage}")` : undefined,
+                }}
+              />
             </button>
             <div className="espacepro__article-body">
               <h3>{activeArticle.name}</h3>
               <p>{activeArticle.category || 'Catégorie non renseignée'}</p>
               <strong>{formatCurrency(activeArticle.unitPrice)}</strong>
+              {canShowRecapLink && (
+                <button
+                  type="button"
+                  className="espacepro__recap-link"
+                  onClick={() => setIsRecapOpen(true)}
+                >
+                  <Icon name="ReceiptLong" size="sm" />
+                  Récapitulatif PDF
+                </button>
+              )}
             </div>
           </article>
         )}
@@ -223,7 +343,7 @@ export default function EspacePro({
               </div>
               <div>
                 <dt>Budget</dt>
-                <dd>{projectMetadata.budget ? formatCurrency(projectMetadata.budget) : 'Budget non renseigné'}</dd>
+                <dd>{formatOptionalCurrency(projectMetadata.budget)}</dd>
               </div>
               <div>
                 <dt>Articles</dt>
@@ -244,6 +364,71 @@ export default function EspacePro({
         </section>
 
       </aside>
+
+      {isRecapOpen && (
+        <div className="espacepro__recap-modal" role="dialog" aria-modal="true" aria-label="Récapitulatif PDF">
+          <div className="espacepro__recap-card">
+            <header className="espacepro__recap-header">
+              <div>
+                <span>Format PDF</span>
+                <h2>Récapitulatif</h2>
+              </div>
+              <button type="button" aria-label="Fermer le récapitulatif" onClick={() => setIsRecapOpen(false)}>
+                <Icon name="Close" size="sm" />
+              </button>
+            </header>
+
+            <section className="espacepro__recap-content">
+              <div className="espacepro__recap-summary">
+                <div>
+                  <span>Projet</span>
+                  <strong>{selectedProject?.name || '-'}</strong>
+                </div>
+                <div>
+                  <span>Type de pièce</span>
+                  <strong>{projectMetadata.roomType}</strong>
+                </div>
+                <div>
+                  <span>Budget cible</span>
+                  <strong>{formatOptionalCurrency(projectMetadata.budget)}</strong>
+                </div>
+                <div>
+                  <span>Simulation achat</span>
+                  <strong>{formatCurrency(articleSimulation.total)}</strong>
+                </div>
+              </div>
+
+              <table className="espacepro__recap-table">
+                <thead>
+                  <tr>
+                    <th>Article</th>
+                    <th>Catégorie</th>
+                    <th>Prix</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recapRows.map((row, index) => (
+                    <tr key={`${row.name}-${index}`}>
+                      <td>{row.name}</td>
+                      <td>{row.category}</td>
+                      <td>{formatCurrency(row.price)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+
+            <footer className="espacepro__recap-footer">
+              <span>Réf. #{getProjectReference(selectedProject)}</span>
+              <button type="button" onClick={handleDownloadRecap} disabled={isRecapDownloading}>
+                <Icon name="Download" size="sm" />
+                {isRecapDownloading ? 'Génération...' : 'Télécharger PDF'}
+              </button>
+            </footer>
+            {recapError && <p className="espacepro__recap-error">{recapError}</p>}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -89,6 +89,7 @@
   align-items: center;
   gap: var(--spacing-sm);
   min-width: 0;
+  overflow: hidden;
   font-family: var(--font-heading);
   font-size: 0.875rem;
   white-space: nowrap;
@@ -111,6 +112,8 @@
 
 .header__breadcrumb-current {
   color: var(--color-grey-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .header__right {
@@ -423,10 +426,12 @@
 
 @media (max-width: 620px) {
   .header {
+    height: 58px;
     padding: 0.8rem 1rem;
   }
 
   .header__breadcrumbs {
+    max-width: 42vw;
     font-size: 0.75rem;
   }
 
@@ -441,5 +446,23 @@
   .header__icon-btn {
     width: 2rem;
     height: 2rem;
+  }
+
+  .header__actions {
+    gap: 0.25rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .header {
+    padding-inline: 0.65rem;
+  }
+
+  .header__menu-toggle {
+    margin-right: 0.45rem;
+  }
+
+  .header__breadcrumbs {
+    max-width: 34vw;
   }
 }

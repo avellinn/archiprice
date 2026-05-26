@@ -9,7 +9,7 @@ import siteLogo from '../assets/images/log.png';
 
 const ADMIN_PAGE_TITLES = {
   '/admin/dashboard': 'Tableau de bord admin',
-  '/admin/catalogue/products': 'Produits',
+  '/admin/catalogue/products': 'Articles',
   '/admin/catalogue/filters': 'Catégories & filtres',
   '/admin/suppliers': 'Fournisseurs',
   '/admin/users': 'Administration utilisateurs',
@@ -48,7 +48,7 @@ export default function AdminShell() {
             children: [
               {
                 id: 'admin-products',
-                label: 'Produits',
+                label: 'Articles',
                 path: '/admin/catalogue/products',
               },
               {

@@ -8,7 +8,7 @@ import CategoriesFiltres from './pages/admin/CategoriesFiltres';
 import BackofficeDashboard from './pages/admin/Dashboard';
 import Fournisseurs from './pages/admin/Fournisseurs';
 import Paramètres from './pages/admin/Paramètres';
-import Produits from './pages/admin/Produits';
+import Articles from './pages/admin/Articles';
 import Simulations from './pages/admin/Simulations';
 import Support from './pages/admin/Support';
 import Utilisateurs from './pages/admin/Utilisateurs';
@@ -52,7 +52,7 @@ function App() {
         >
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="/admin/dashboard" element={<BackofficeDashboard />} />
-          <Route path="/admin/catalogue/products" element={<Produits />} />
+          <Route path="/admin/catalogue/products" element={<Articles />} />
           <Route path="/admin/catalogue/filters" element={<CategoriesFiltres />} />
           <Route path="/admin/suppliers" element={<Fournisseurs />} />
           <Route path="/admin/users" element={<Utilisateurs />} />

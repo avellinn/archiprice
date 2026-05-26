@@ -1,0 +1,501 @@
+{
+  "__version": 25,
+  "__updatedAt": 1779815789506,
+  "users": [
+    {
+      "id": "user-jean-dupont",
+      "name": "Jean Dupont",
+      "email": "jean.dupont@mail.com",
+      "type": "Architecte",
+      "simulations": 24,
+      "inscription": "12/03/2024",
+      "status": "Actif",
+      "subscription": "Essai"
+    },
+    {
+      "id": "user-sophia-martin",
+      "name": "Sophia Martin",
+      "email": "sophia.martin@mail.com",
+      "type": "Décorateur",
+      "simulations": 18,
+      "inscription": "20/03/2024",
+      "status": "Actif",
+      "subscription": "Basique"
+    },
+    {
+      "id": "user-agence-crea",
+      "name": "Agence Créa",
+      "email": "contact@agencecrea.bj",
+      "type": "Agence",
+      "simulations": 56,
+      "inscription": "05/02/2024",
+      "status": "Actif",
+      "subscription": "Premium"
+    },
+    {
+      "id": "user-marc-koffi",
+      "name": "Marc Koffi",
+      "email": "marc.koffi@mail.com",
+      "type": "Architecte",
+      "simulations": 12,
+      "inscription": "01/04/2024",
+      "status": "Inactif",
+      "subscription": "Essai"
+    },
+    {
+      "id": "user-admin-principal",
+      "name": "Admin Principal",
+      "email": "admin@archiprice.com",
+      "type": "Admin",
+      "simulations": "-",
+      "inscription": "01/01/2024",
+      "status": "Actif",
+      "subscription": "-"
+    }
+  ],
+  "products": [
+    {
+      "id": "prod-1779814063385-ff4373",
+      "visual": "sofa",
+      "image": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/oe7tzkid7zqbivs2pglc?_a=BAMAPqhK0",
+      "images": [
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/oe7tzkid7zqbivs2pglc?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/oe7tzkid7zqbivs2pglc",
+          "metadata": {
+            "originalName": "pexels-pok-rie-1603821.jpg",
+            "mimeType": "image/jpeg",
+            "bytes": 2746439,
+            "width": 3616,
+            "height": 2598,
+            "format": "jpg",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        },
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/dzqiubep1r5a7vyd37cq?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/dzqiubep1r5a7vyd37cq",
+          "metadata": {
+            "originalName": "Capture dâÃ©cran du 2026-05-22 15-09-03.png",
+            "mimeType": "image/png",
+            "bytes": 336011,
+            "width": 1047,
+            "height": 430,
+            "format": "png",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        },
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/zrtv9fk4omcah13dvxtv?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/zrtv9fk4omcah13dvxtv",
+          "metadata": {
+            "originalName": "Capture dâÃ©cran du 2026-05-22 15-10-14.png",
+            "mimeType": "image/png",
+            "bytes": 232679,
+            "width": 770,
+            "height": 479,
+            "format": "png",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        },
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kkhlvbe1jd4inb1pvyk7?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/kkhlvbe1jd4inb1pvyk7",
+          "metadata": {
+            "originalName": "Capture dâÃ©cran du 2026-05-22 15-11-12.png",
+            "mimeType": "image/png",
+            "bytes": 269222,
+            "width": 1019,
+            "height": 474,
+            "format": "png",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        }
+      ],
+      "name": "",
+      "description": "",
+      "price": "5 000 000 FCFA",
+      "vat": "20%",
+      "category": "Mobilier",
+      "room": "Salon",
+      "range": "Confort",
+      "supplier": "Meubles Plus",
+      "availability": "Sur commande",
+      "city": "Abomey - calavi",
+      "neighborhood": "Godomey"
+    },
+    {
+      "id": "prod-1779810834530-aa6b33",
+      "visual": "sofa",
+      "image": "",
+      "images": [],
+      "name": "Canapé 3 places Oslo",
+      "description": "Canapé moderne 3 places, tissu gris clair, pieds en bois.",
+      "price": "890,00 €",
+      "vat": "20%",
+      "category": "Mobilier",
+      "room": "Salon",
+      "range": "Confort",
+      "supplier": "Meubles Plus",
+      "availability": "Disponible",
+      "city": "Cotonou",
+      "neighborhood": "Fidjrossè"
+    },
+    {
+      "id": "prod-1779810774015-5688b9",
+      "visual": "sofa",
+      "image": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/chdutm1o6b2w7kg1dvyp?_a=BAMAPqhK0",
+      "images": [
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/chdutm1o6b2w7kg1dvyp?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/chdutm1o6b2w7kg1dvyp",
+          "metadata": {
+            "originalName": "pexels-photo-1379640.jpeg",
+            "mimeType": "image/jpeg",
+            "bytes": 97336,
+            "width": 1125,
+            "height": 750,
+            "format": "jpg",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        }
+      ],
+      "name": "Canapé 3 places Oslo",
+      "description": "Canapé moderne 3 places, tissu gris clair, pieds en bois.",
+      "price": "890,00 €",
+      "vat": "20%",
+      "category": "Mobilier",
+      "room": "Salon",
+      "range": "Confort",
+      "supplier": "Meubles Plus",
+      "availability": "Disponible",
+      "city": "Cotonou",
+      "neighborhood": "Fidjrossè"
+    }
+  ],
+  "suppliers": [
+    {
+      "id": "sup-1",
+      "name": "Meubles Plus",
+      "contact": "contact@meublesplus.bj",
+      "region": "Cotonou",
+      "status": "Actif",
+      "products": 56
+    },
+    {
+      "id": "sup-2",
+      "name": "Design House",
+      "contact": "info@designhouse.bj",
+      "region": "Cotonou",
+      "status": "Actif",
+      "products": 28
+    },
+    {
+      "id": "sup-3",
+      "name": "Lumière & Co",
+      "contact": "contact@lumiereco.bj",
+      "region": "Abidjan",
+      "status": "Actif",
+      "products": 34
+    },
+    {
+      "id": "sup-4",
+      "name": "Carrelages Bénin",
+      "contact": "contact@carrelagesbj.bj",
+      "region": "Cotonou",
+      "status": "Actif",
+      "products": 22
+    },
+    {
+      "id": "sup-5",
+      "name": "BatiPro",
+      "contact": "contact@batipro.bj",
+      "region": "Parakou",
+      "status": "Inactif",
+      "products": 10
+    },
+    {
+      "id": "sup-6",
+      "name": "BureauPro",
+      "contact": "info@bureaupro.bj",
+      "region": "Cotonou",
+      "status": "Actif",
+      "products": 15
+    }
+  ],
+  "taxonomies": {
+    "categories": [
+      {
+        "id": "cat-1",
+        "name": "Mobilier",
+        "count": 56
+      },
+      {
+        "id": "cat-2",
+        "name": "Luminaire",
+        "count": 34
+      },
+      {
+        "id": "cat-3",
+        "name": "Revêtement",
+        "count": 22
+      },
+      {
+        "id": "cat-4",
+        "name": "Sanitaire",
+        "count": 9
+      },
+      {
+        "id": "cat-5",
+        "name": "Décoration",
+        "count": 7
+      },
+      {
+        "id": "cat-6",
+        "name": "Éclairage",
+        "count": 0
+      },
+      {
+        "id": "cat-7",
+        "name": "Textiles",
+        "count": 0
+      },
+      {
+        "id": "cat-8",
+        "name": "Objets décoratifs",
+        "count": 0
+      },
+      {
+        "id": "cat-9",
+        "name": "Miroirs",
+        "count": 0
+      },
+      {
+        "id": "cat-10",
+        "name": "Rangements",
+        "count": 0
+      },
+      {
+        "id": "cat-11",
+        "name": "Plantes & Pots",
+        "count": 0
+      }
+    ],
+    "rooms": [
+      {
+        "id": "room-1",
+        "name": "Salon",
+        "count": 41
+      },
+      {
+        "id": "room-2",
+        "name": "Chambre",
+        "count": 24
+      },
+      {
+        "id": "room-3",
+        "name": "Bureau",
+        "count": 18
+      },
+      {
+        "id": "room-4",
+        "name": "Douche",
+        "count": 12
+      },
+      {
+        "id": "room-5",
+        "name": "Cuisine",
+        "count": 0
+      },
+      {
+        "id": "room-6",
+        "name": "Appartement",
+        "count": 0
+      },
+      {
+        "id": "room-7",
+        "name": "Espace externe",
+        "count": 0
+      }
+    ],
+    "ranges": [
+      {
+        "id": "range-1",
+        "name": "Essentiel",
+        "count": 39
+      },
+      {
+        "id": "range-2",
+        "name": "Confort",
+        "count": 52
+      },
+      {
+        "id": "range-3",
+        "name": "Premium",
+        "count": 37
+      }
+    ],
+    "availability": [
+      {
+        "id": "availability-1",
+        "name": "Disponible",
+        "count": 0
+      },
+      {
+        "id": "availability-2",
+        "name": "Sur commande",
+        "count": 0
+      },
+      {
+        "id": "availability-3",
+        "name": "Rupture",
+        "count": 0
+      },
+      {
+        "id": "availability-4",
+        "name": "Non disponible",
+        "count": 0
+      }
+    ]
+  },
+  "simulations": [
+    {
+      "id": "sim-1",
+      "user": "Jean Dupont",
+      "email": "jean.dupont@mail.com",
+      "date": "12/05/2024 14:30",
+      "total": "12 450,00 €",
+      "products": 28,
+      "status": "Succès",
+      "city": "Cotonou",
+      "coefficient": "1,00",
+      "avatar": "JD"
+    },
+    {
+      "id": "sim-2",
+      "user": "Sophia Martin",
+      "email": "sophia.martin@mail.com",
+      "date": "11/05/2024 10:12",
+      "total": "8 920,00 €",
+      "products": 16,
+      "status": "Succès",
+      "city": "Abidjan",
+      "coefficient": "1,08",
+      "avatar": "SM"
+    },
+    {
+      "id": "sim-3",
+      "user": "Agence Créa",
+      "email": "contact@agencenova.bj",
+      "date": "10/05/2024 16:45",
+      "total": "21 350,00 €",
+      "products": 42,
+      "status": "Succès",
+      "city": "Cotonou",
+      "coefficient": "1,00",
+      "avatar": "AC"
+    },
+    {
+      "id": "sim-4",
+      "user": "Jean Dupont",
+      "email": "jean.dupont@mail.com",
+      "date": "09/05/2024 09:15",
+      "total": "-",
+      "products": "-",
+      "status": "Échec",
+      "city": "Cotonou",
+      "coefficient": "1,00",
+      "avatar": "JD"
+    },
+    {
+      "id": "sim-5",
+      "user": "Marc Koffi",
+      "email": "marc.koffi@mail.com",
+      "date": "08/05/2024 11:00",
+      "total": "6 230,00 €",
+      "products": 12,
+      "status": "Succès",
+      "city": "Parakou",
+      "coefficient": "0,96",
+      "avatar": "MK"
+    }
+  ],
+  "supportItems": [
+    {
+      "id": "ticket-export",
+      "tab": "tickets",
+      "subject": "Impossible d'exporter une simulation",
+      "user": "Jean Dupont",
+      "email": "jean.dupont@mail.com",
+      "status": "Ouvert",
+      "type": "Bug",
+      "date": "12/05/2024",
+      "description": "Lorsque j'essaie d'exporter la simulation, le fichier ne se télécharge pas.",
+      "reply": ""
+    },
+    {
+      "id": "ticket-cartilage",
+      "tab": "tickets",
+      "subject": "Prix incorrect sur carrelage",
+      "user": "Sophia Martin",
+      "email": "sophia.martin@mail.com",
+      "status": "En cours",
+      "type": "Prix",
+      "date": "11/05/2024",
+      "description": "Le prix affiché dans la simulation ne correspond pas au prix fournisseur.",
+      "reply": ""
+    },
+    {
+      "id": "feedback-navigation",
+      "tab": "feedback",
+      "subject": "Navigation plus fluide",
+      "user": "Jean Dupont",
+      "email": "jean.dupont@mail.com",
+      "status": "Ouvert",
+      "type": "Suggestion",
+      "date": "08/05/2024",
+      "description": "Ajouter un raccourci vers le catalogue depuis la page workspace rendrait le parcours plus rapide.",
+      "reply": ""
+    },
+    {
+      "id": "price-report-oslo",
+      "tab": "priceReports",
+      "subject": "Canapé Oslo trop élevé",
+      "user": "Agence Créa",
+      "email": "contact@agencecrea.bj",
+      "status": "En cours",
+      "type": "Signalement prix",
+      "date": "06/05/2024",
+      "description": "Le prix du Canapé 3 places Oslo semble supérieur à celui observé chez le fournisseur.",
+      "reply": ""
+    }
+  ],
+  "settings": {
+    "margin": "10",
+    "vat": "20",
+    "rounding": "Au centime près",
+    "currency": "EUR"
+  },
+  "regionalCoefficients": [
+    {
+      "id": "city-1",
+      "city": "Cotonou",
+      "coefficient": "1,00"
+    },
+    {
+      "id": "city-2",
+      "city": "Abomey - calavi",
+      "coefficient": "1,00"
+    },
+    {
+      "id": "city-3",
+      "city": "Porto-novo",
+      "coefficient": "1,00"
+    }
+  ]
+}

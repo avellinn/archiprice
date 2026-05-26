@@ -1,13 +1,14 @@
-const express = require('express');
-const {
+import express from 'express';
+import {
   getProjects,
   createProject,
   updateProject,
   deleteProject,
-} = require('../controllers/projectController');
-const { protect } = require('../middleware/auth');
-const requireDb = require('../middleware/requireDb');
-const asyncHandler = require('../utils/asyncHandler');
+} from '../controllers/projectController.js';
+import { downloadProjectRecapPdf } from '../controllers/recapController.js';
+import { protect } from '../middleware/auth.js';
+import requireDb from '../middleware/requireDb.js';
+import asyncHandler from '../utils/asyncHandler.js';
 
 const router = express.Router();
 
@@ -16,7 +17,8 @@ router.use(protect);
 
 router.get('/', asyncHandler(getProjects));
 router.post('/', asyncHandler(createProject));
+router.get('/:id/recap.pdf', asyncHandler(downloadProjectRecapPdf));
 router.put('/:id', asyncHandler(updateProject));
 router.delete('/:id', asyncHandler(deleteProject));
 
-module.exports = router;
+export default router;

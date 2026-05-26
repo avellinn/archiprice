@@ -111,12 +111,22 @@ function formatTrend(value) {
   return `${value > 0 ? '+' : ''}${value.toFixed(2)}%`;
 }
 
+function parseAmount(value) {
+  const amount = Number(String(value || '').replace(/[^\d.-]/g, ''));
+  return Number.isFinite(amount) ? amount : 0;
+}
+
+function formatFCFA(amount) {
+  return `${new Intl.NumberFormat('fr-FR').format(amount)} FCFA`;
+}
+
 function formatCurrency(value) {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'XOF',
-    maximumFractionDigits: 0,
-  }).format(Number(value || 0));
+  return formatFCFA(parseAmount(value));
+}
+
+function formatOptionalCurrency(value) {
+  const amount = parseAmount(value);
+  return amount > 0 ? formatFCFA(amount) : 'Budget non renseigné';
 }
 
 function getProjectShopSeed(project) {
@@ -168,11 +178,13 @@ function extractEditableProjectData(project) {
     name: project?.name || '',
     roomType: knownRoomType,
     budget: budgetMatch?.[1]?.trim() || '',
+    budgetValue: budgetMatch?.[1] ? String(parseAmount(budgetMatch[1])) : '',
     status: project?.status || 'draft',
   };
 }
 
 function buildEditedProjectDescription(project, roomType, budget) {
+  const formattedBudget = formatOptionalCurrency(budget);
   const preservedLines = (project?.description || '')
     .split('\n')
     .filter((line) => (
@@ -182,7 +194,7 @@ function buildEditedProjectDescription(project, roomType, budget) {
 
   return [
     `Type de pièce : ${roomType}`,
-    budget ? `Estimation budget : ${budget}` : '',
+    parseAmount(budget) > 0 ? `Estimation budget : ${formattedBudget}` : '',
     ...preservedLines,
   ]
     .filter(Boolean)
@@ -262,6 +274,16 @@ export default function Workspace() {
   }, [searchParams]);
 
   const selectedProject = projects.find((project) => project.id === selectedProjectId) || projects[0];
+  const workspaceSearchTerm = searchParams.get('q')?.trim().toLowerCase() || '';
+  const filteredProjects = useMemo(() => {
+    if (!workspaceSearchTerm) return projects;
+
+    return projects.filter((project) => (
+      String(project.name || '').toLowerCase().includes(workspaceSearchTerm)
+      || String(project.description || '').toLowerCase().includes(workspaceSearchTerm)
+      || String(project.status || '').toLowerCase().includes(workspaceSearchTerm)
+    ));
+  }, [projects, workspaceSearchTerm]);
   const workspaceCards = useMemo(
     () => WORKSPACE_CARDS.map((card) => {
       if (card.id !== 'purchase-travel') return card;
@@ -314,7 +336,10 @@ export default function Workspace() {
 
   function handleProjectCreated(project) {
     if (project) {
-      setProjects((currentProjects) => [project, ...currentProjects]);
+      setProjects((currentProjects) => [
+        project,
+        ...currentProjects.filter((currentProject) => currentProject.id !== project.id),
+      ]);
       setSelectedProjectId(project.id);
       setProjectsError('');
       setIsModalOpen(false);
@@ -329,7 +354,7 @@ export default function Workspace() {
     setEditingProject(project);
     setEditProjectName(editableProject.name);
     setEditRoomType(editableProject.roomType);
-    setEditBudget(editableProject.budget);
+    setEditBudget(editableProject.budgetValue);
     setEditStatus(editableProject.status);
     setEditProjectError('');
   }
@@ -483,14 +508,14 @@ export default function Workspace() {
         return <p>{projectsError}</p>;
       }
 
-      if (projects.length === 0) {
+      if (filteredProjects.length === 0) {
         return <p>Aucun projet créé pour le moment.</p>;
       }
 
       return (
         <ul className="workspace-feature-card__list workspace-feature-card__list--scroll workspace-feature-card__project-list">
-          {projects.map((project) => (
-            <li className="workspace-feature-card__project-row" key={project.id}>
+          {filteredProjects.map((project, index) => (
+            <li className="workspace-feature-card__project-row" key={`${project.id || project.name}-${index}`}>
               <button
                 type="button"
                 className="workspace-feature-card__project-button"
@@ -539,15 +564,15 @@ export default function Workspace() {
         {card.description && <p>{card.description}</p>}
         {card.items && (
           <ul className="workspace-feature-card__list">
-            {card.items.map((item) => (
-              <li key={item}>{item}</li>
+            {card.items.map((item, index) => (
+              <li key={`${item}-${index}`}>{item}</li>
             ))}
           </ul>
         )}
         {card.details && (
           <dl className="workspace-feature-card__details">
-            {card.details.map(([label, value]) => (
-              <div key={label}>
+            {card.details.map(([label, value], index) => (
+              <div key={`${label}-${index}`}>
                 <dt>{label}</dt>
                 <dd>{value}</dd>
               </div>
@@ -580,7 +605,7 @@ export default function Workspace() {
             />
 
             <EspacePro
-              projects={projects}
+              projects={filteredProjects}
               isProjectsLoading={isProjectsLoading}
               projectsError={projectsError}
               selectedProjectId={selectedProjectId}
@@ -620,7 +645,7 @@ export default function Workspace() {
                       </div>
 
                       <div className="workspace-shop-options" role="listbox" aria-label="Boutiques recommandées">
-                        {projectShops.map((shop) => {
+                        {projectShops.map((shop, index) => {
                           const isSelected = selectedShop?.name === shop.name;
 
                           return (
@@ -632,7 +657,7 @@ export default function Workspace() {
                               ]
                                 .filter(Boolean)
                                 .join(' ')}
-                              key={`${selectedProject?.id || 'project'}-${shop.name}`}
+                              key={`${selectedProject?.id || 'project'}-${shop.name}-${index}`}
                               role="option"
                               aria-selected={isSelected}
                               onClick={() => setSelectedShopName(shop.name)}

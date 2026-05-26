@@ -57,8 +57,8 @@ export default function DonutChartCard({ title, data }) {
                   paddingAngle={4}
                   stroke="none"
                 >
-                  {chartData.map((entry) => (
-                    <Cell key={entry.name} fill={entry.color} />
+                  {chartData.map((entry, index) => (
+                    <Cell key={`${entry.name}-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
                 <Tooltip content={<CustomDonutTooltip />} />
@@ -67,8 +67,8 @@ export default function DonutChartCard({ title, data }) {
           </div>
 
           <div className="chart-legend">
-            {data.map((item) => (
-              <div key={item.name} className="chart-legend__item">
+            {data.map((item, index) => (
+              <div key={`${item.name}-${index}`} className="chart-legend__item">
                 <span
                   className="chart-legend__dot"
                   style={{ backgroundColor: item.color }}

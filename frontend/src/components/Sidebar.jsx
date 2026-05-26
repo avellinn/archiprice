@@ -162,9 +162,9 @@ export default function Sidebar({
 
       <nav className="sidebar__nav" aria-label="Navigation principale">
         {visibleSections.map((section, sectionIndex) => (
-          <div key={section.id || section.title || `section-${sectionIndex}`} className="sidebar__section">
+          <div key={`${section.id || section.title || 'section'}-${sectionIndex}`} className="sidebar__section">
             <ul className="sidebar__nav-list">
-              {section.items.map((item) => {
+              {section.items.map((item, itemIndex) => {
                 if (!item?.id) return null;
 
                 const isActive = isItemActive(item);
@@ -196,7 +196,7 @@ export default function Sidebar({
 
                 return (
                   <li
-                    key={item.id}
+                    key={`${item.id}-${itemIndex}`}
                     className="sidebar__nav-item"
                     onMouseEnter={() => handleSubmenuMouseEnter(item)}
                     onMouseLeave={() => handleSubmenuMouseLeave(item)}
@@ -213,12 +213,12 @@ export default function Sidebar({
                         </button>
                         {isSubmenuOpen && (
                           <ul className="sidebar__submenu">
-                            {item.children.map((child) => {
+                            {item.children.map((child, childIndex) => {
                               const childPath = getItemPath(child);
                               const childActive = isItemActive(child);
 
                               return (
-                                <li key={child.id} className="sidebar__submenu-item">
+                                <li key={`${child.id}-${childIndex}`} className="sidebar__submenu-item">
                                   <Link
                                     to={childPath}
                                     className={[

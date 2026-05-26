@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema(
   {
@@ -22,11 +22,31 @@ const userSchema = new mongoose.Schema(
       minlength: [6, 'Le mot de passe doit contenir au moins 6 caractères'],
       select: false,
     },
-     role: {
+    role: {
       type: String,
       enum: ['user', 'admin'],
-      default: 'user'
-    }
+      default: 'user',
+    },
+    type: {
+      type: String,
+      trim: true,
+      default: 'Architecte',
+    },
+    status: {
+      type: String,
+      enum: ['Actif', 'Inactif'],
+      default: 'Actif',
+    },
+    subscription: {
+      type: String,
+      trim: true,
+      default: 'Essai',
+    },
+    simulations: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
 
   { timestamps: true },
@@ -41,4 +61,4 @@ userSchema.methods.matchPassword = async function matchPassword(enteredPassword)
   return bcrypt.compare(enteredPassword, this.password);
 };
 
-module.exports = mongoose.model('User', userSchema);
+export default mongoose.model('User', userSchema);

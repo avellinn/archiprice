@@ -7,7 +7,7 @@ export default function Dashboard() {
 
   const stats = useMemo(() => [
     {
-      label: 'Produits catalogue',
+      label: 'Articles catalogue',
       value: adminData.products.length,
       detail: `${adminData.products.filter((product) => product.availability === 'Disponible').length} disponibles`,
       tone: 'blue',
@@ -35,7 +35,7 @@ export default function Dashboard() {
   const rows = useMemo(() => [
     ...adminData.products.slice(0, 2).map((product) => ({
       id: `product-${product.id}`,
-      event: `Produit: ${product.name}`,
+      event: `Article: ${product.name}`,
       owner: 'Catalogue',
       status: product.availability,
       date: product.city || '-',

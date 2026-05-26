@@ -15,12 +15,28 @@ const ROOM_TYPES = [
 ];
 
 function buildProjectDescription(roomType, budget) {
+  const formattedBudget = formatBudgetInput(budget);
+
   return [
     `Type de pièce : ${roomType}`,
-    budget ? `Estimation budget : ${budget}` : '',
+    formattedBudget ? `Estimation budget : ${formattedBudget}` : '',
   ]
     .filter(Boolean)
     .join('\n');
+}
+
+function parseAmount(value) {
+  const amount = Number(String(value || '').replace(/[^\d.-]/g, ''));
+  return Number.isFinite(amount) ? amount : 0;
+}
+
+function formatFCFA(amount) {
+  return `${new Intl.NumberFormat('fr-FR').format(amount)} FCFA`;
+}
+
+function formatBudgetInput(value) {
+  const amount = parseAmount(value);
+  return amount > 0 ? formatFCFA(amount) : '';
 }
 
 export default function ModalCreateProject({ isOpen, onCancel, onCreated }) {

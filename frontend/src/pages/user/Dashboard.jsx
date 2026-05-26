@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import Button from '../../components/Button';
 import DonutChartCard from '../../components/DonutChart';
@@ -71,6 +71,7 @@ function getProjectExportedEstimateCount(project) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [projects, setProjects] = useState([]);
 
   useEffect(() => {
@@ -107,7 +108,14 @@ export default function Dashboard() {
     };
   }, [projects]);
 
-  const history = projects.slice(0, 4);
+  const dashboardSearchTerm = searchParams.get('q')?.trim().toLowerCase() || '';
+  const history = projects
+    .filter((project) => (
+      !dashboardSearchTerm
+      || String(project.name || '').toLowerCase().includes(dashboardSearchTerm)
+      || String(project.status || '').toLowerCase().includes(dashboardSearchTerm)
+    ))
+    .slice(0, 4);
   const repartitionData = [
     {
       name: 'Projets en cours',
@@ -227,8 +235,8 @@ export default function Dashboard() {
               <circle cx="329" cy="42" r="5" />
             </svg>
             <div className="chart-axis">
-              {MONTH_ACTIVITY.map((item) => (
-                <Text as="span" size="sm" key={item.label}>
+              {MONTH_ACTIVITY.map((item, index) => (
+                <Text as="span" size="sm" key={`${item.label}-${index}`}>
                   {item.label}
                 </Text>
               ))}
@@ -252,7 +260,7 @@ export default function Dashboard() {
           ) : (
             <ul className="history-list">
               {history.map((project, index) => (
-                <li key={project.id}>
+                <li key={`${project.id || project.name}-${index}`}>
                   <span className={`history-icon history-icon-${index + 1}`} aria-hidden="true" />
                   <div>
                     <Text as="strong" variant="bold" size="sm">

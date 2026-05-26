@@ -1,4 +1,4 @@
-function asyncHandler(fn) {
+export default function asyncHandler(fn) {
   return (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch((err) => {
       if (err.code === 11000) {
@@ -21,5 +21,3 @@ function asyncHandler(fn) {
     });
   };
 }
-
-module.exports = asyncHandler;

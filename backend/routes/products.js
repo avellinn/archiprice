@@ -1,13 +1,14 @@
-const express = require('express');
-const {
+import express from 'express';
+import {
   getProducts,
   createProduct,
   updateProduct,
   deleteProduct,
-} = require('../controllers/productController');
-const { protect } = require('../middleware/auth');
-const requireDb = require('../middleware/requireDb');
-const asyncHandler = require('../utils/asyncHandler');
+  deleteProductImageByPublicId,
+} from '../controllers/productController.js';
+import { protect } from '../middleware/auth.js';
+import requireDb from '../middleware/requireDb.js';
+import asyncHandler from '../utils/asyncHandler.js';
 
 const router = express.Router({ mergeParams: true });
 
@@ -18,5 +19,6 @@ router.get('/', asyncHandler(getProducts));
 router.post('/', asyncHandler(createProduct));
 router.put('/:id', asyncHandler(updateProduct));
 router.delete('/:id', asyncHandler(deleteProduct));
+router.delete('/:id/images', asyncHandler(deleteProductImageByPublicId));
 
-module.exports = router;
+export default router;
