@@ -32,6 +32,7 @@ archi-price/
         ├── context/      # AuthContext
         ├── pages/
         │   ├── admin/    # Pages backoffice
+        │   ├── supplier/ # Pages fournisseur validé
         │   └── user/     # Pages utilisateur
         └── services/     # api.js, auth.js, projects.js
 ```
@@ -123,11 +124,15 @@ Les utilisateurs possèdent un rôle :
 
 - `user` : accès à l'interface utilisateur ;
 - `admin` : accès à l'interface backoffice.
+- `supplier` : accès à l'interface fournisseur après validation admin.
+
+Les fournisseurs ne reçoivent pas librement le rôle `supplier` à l'inscription. Une inscription `accountType=supplier` crée une demande dans `supplier_requests`; l'admin valide ensuite la demande depuis le backoffice.
 
 Le frontend redirige automatiquement :
 
 - un `user` vers `/dashboard` ;
 - un `admin` vers `/admin/dashboard`.
+- un `supplier` vers `/supplier/dashboard`.
 
 ## API — Projets (authentification requise)
 
@@ -159,7 +164,10 @@ Les routes admin sont protégées par JWT et par le middleware `requireAdmin`.
 | `GET` | `/api/admin/users` | Liste tous les utilisateurs |
 | `GET` | `/api/admin/users/:id` | Détail d'un utilisateur |
 | `PUT` | `/api/admin/users/:id/role` | Change le rôle `user` / `admin` |
-| `GET` | `/api/admin/test` | Test backoffice |
+| `GET` | `/api/admin/suppliers` | Liste les fournisseurs validés |
+| `GET` | `/api/admin/supplier-requests` | Liste les demandes fournisseur |
+| `POST` | `/api/admin/supplier-requests/:id/approve` | Valide une demande fournisseur |
+| `POST` | `/api/admin/supplier-requests/:id/reject` | Refuse une demande fournisseur |
 
 Exemple changement de rôle :
 
@@ -169,6 +177,20 @@ curl -X PUT http://localhost:5000/api/admin/users/<userId>/role \
   -H "Content-Type: application/json" \
   -d '{"role":"admin"}'
 ```
+
+## API — Supplier
+
+Les routes supplier sont protégées par JWT et `requireSupplier`.
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| `GET` | `/api/supplier/workspace` | Données de l'espace fournisseur |
+| `GET` | `/api/supplier/products` | Liste des produits du fournisseur |
+| `POST` | `/api/supplier/products` | Crée un produit et upload ses images |
+| `PUT` | `/api/supplier/products/:productId` | Modifie un produit du fournisseur courant |
+| `DELETE` | `/api/supplier/products/:productId` | Supprime un produit du fournisseur courant et ses images Cloudinary |
+
+`POST` et `PUT /api/supplier/products` utilisent `multipart/form-data`, champ fichier `image` répété jusqu'à 10 fois. Les images sont streamées vers Cloudinary, dossier `archiprice/products`.
 
 ## Routes Frontend
 
@@ -192,13 +214,22 @@ Routes admin :
 - `/admin/catalogue/products`
 - `/admin/catalogue/filters`
 - `/admin/suppliers`
+- `/admin/suppliers/requests`
 - `/admin/users`
 - `/admin/simulations`
-- `/admin/support/tickets`
-- `/admin/support/feedback`
-- `/admin/support/price-reports`
-- `/admin/settings/simulations`
-- `/admin/settings/regional-coefficients`
+- `/admin/support`
+- `/admin/settings`
+
+Routes supplier :
+
+- `/supplier/dashboard` : analyses de données
+- `/supplier/shop` : ma boutique
+- `/supplier/products` : produits
+- `/supplier/products/new` : ajouter un produit et uploader des images
+- `/supplier/catalogue`
+- `/supplier/clients`
+- `/supplier/content/files`
+- `/supplier/settings`
 
 ## Design System
 
@@ -223,6 +254,7 @@ Les layouts restent spécifiques :
 
 - `AppShell.jsx` pour les utilisateurs ;
 - `AdminShell.jsx` pour les administrateurs.
+- `SupplierShell.jsx` pour les fournisseurs validés.
 
 ```bash
 curl -X POST http://localhost:5000/api/auth/register \

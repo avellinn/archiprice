@@ -160,6 +160,12 @@ const ICONS = {
       <path key="search-line" d="m16 16 4 4" />,
     ],
   },
+  Tag: {
+    paths: [
+      <path key="tag-shape" d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z" />,
+      <circle key="tag-dot" cx="8" cy="8" r="1.6" />,
+    ],
+  },
   Upload: {
     paths: [
       <path key="upload-line" d="M12 21V10" />,
@@ -221,6 +227,7 @@ const NAME_ALIASES = {
   notifications: 'Notifications',
   receiptLong: 'ReceiptLong',
   search: 'Search',
+  tag: 'Tag',
   upload: 'Upload',
   visibility: 'Visibility',
   visibilityOff: 'VisibilityOff',

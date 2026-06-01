@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import Button from '../../components/Button';
-import Icon from '../../components/Icon';
+import { useSearchParams } from 'react-router-dom';
+import { Button, Icon } from '../../components/ui';
 import { getApiErrorMessage } from '../../services/api';
 import { fetchAdminSupportItems, updateAdminSupportItem } from '../../services/adminMongo';
 import { Badge } from './PageShell';
@@ -21,6 +21,7 @@ function getStatusTone(status) {
 }
 
 export default function Support() {
+  const [searchParams] = useSearchParams();
   const [supportItems, setSupportItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -54,7 +55,7 @@ export default function Support() {
   }, []);
 
   const activeItems = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const normalizedSearch = [searchTerm, searchParams.get('q') || ''].join(' ').trim().toLowerCase();
 
     return supportItems.filter((item) => {
       const matchesTab = item.tab === activeTab;
@@ -66,7 +67,7 @@ export default function Support() {
 
       return matchesTab && matchesSearch && matchesStatus && matchesType;
     });
-  }, [activeTab, searchTerm, statusFilter, supportItems, typeFilter]);
+  }, [activeTab, searchParams, searchTerm, statusFilter, supportItems, typeFilter]);
 
   const selectedItem = useMemo(() => (
     supportItems.find((item) => item.id === selectedItemId && item.tab === activeTab)

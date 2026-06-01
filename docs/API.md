@@ -1,6 +1,6 @@
 # Documentation API ArchiPrice
 
-Date : 2026-05-22
+Date : 2026-06-01
 
 ## Base
 
@@ -54,6 +54,20 @@ Rôles possibles :
 
 - `user`
 - `admin`
+- `supplier`
+
+### Inscription fournisseur
+
+Le frontend peut envoyer `accountType: "supplier"` sur `/api/auth/register`.
+Le backend ne donne jamais directement le rôle `supplier` à partir du payload frontend.
+
+Flux :
+
+1. création d'un `User` avec `role: "user"` et `type: "Fournisseur"` ;
+2. création d'une entrée `supplier_requests` ;
+3. l'utilisateur voit une page d'attente ;
+4. l'admin valide ou refuse la demande ;
+5. après validation, le backend force `role: "supplier"` et crée/lie le profil `Supplier`.
 
 ## Projets
 
@@ -103,8 +117,16 @@ Un utilisateur authentifié sans rôle admin reçoit `403`.
 |---------|-------|-------------|
 | `GET` | `/api/admin/users` | Liste tous les utilisateurs |
 | `GET` | `/api/admin/users/:id` | Détail d'un utilisateur |
+| `PATCH` | `/api/admin/users/:id` | Modifie nom, email, téléphone, statut, etc. |
+| `DELETE` | `/api/admin/users/:id` | Supprime un utilisateur |
 | `PUT` | `/api/admin/users/:id/role` | Change le rôle d'un utilisateur |
-| `GET` | `/api/admin/test` | Vérifie l'accès backoffice |
+| `GET` | `/api/admin/suppliers` | Liste les fournisseurs validés |
+| `POST` | `/api/admin/suppliers` | Crée un fournisseur administré |
+| `PUT` | `/api/admin/suppliers/:id` | Modifie un fournisseur |
+| `DELETE` | `/api/admin/suppliers/:id` | Supprime un fournisseur |
+| `GET` | `/api/admin/supplier-requests` | Liste les demandes fournisseur |
+| `POST` | `/api/admin/supplier-requests/:id/approve` | Valide une demande fournisseur |
+| `POST` | `/api/admin/supplier-requests/:id/reject` | Refuse une demande fournisseur |
 
 Corps pour changer un rôle :
 
@@ -136,6 +158,34 @@ Réponse utilisateur admin :
 ```
 
 Le champ `password` est exclu.
+
+## Supplier
+
+Routes protégées par :
+
+1. `protect`
+2. `requireSupplier`
+
+Un compte fournisseur n'a accès à ces routes qu'après validation admin.
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| `GET` | `/api/supplier/me` | Profil fournisseur courant |
+| `PUT` | `/api/supplier/me` | Met à jour les informations fournisseur |
+| `GET` | `/api/supplier/workspace` | Données de l'espace fournisseur |
+| `GET` | `/api/supplier/products` | Liste les produits du fournisseur |
+| `POST` | `/api/supplier/products` | Crée un produit fournisseur avec images optionnelles |
+| `PUT` | `/api/supplier/products/:productId` | Modifie un produit fournisseur et ajoute éventuellement des images |
+| `DELETE` | `/api/supplier/products/:productId` | Supprime un produit fournisseur et ses images Cloudinary |
+
+`POST` et `PUT /api/supplier/products` acceptent un `multipart/form-data` :
+
+- champs texte : `name`, `description`, `category`, `unit`, `unitPrice` ;
+- fichiers : champ `image`, jusqu'à 10 images ;
+- formats : JPG, PNG, WebP ;
+- taille max : 5 Mo par image.
+
+Les images sont envoyées vers Cloudinary, dossier `archiprice/products`. MongoDB stocke uniquement `secure_url`, `public_id` et `metadata`.
 
 ## Erreurs
 

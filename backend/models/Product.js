@@ -45,6 +45,21 @@ const productSchema = new mongoose.Schema(
       trim: true,
       maxlength: 100,
     },
+    room: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
+    range: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
+    availability: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
     unit: {
       type: String,
       enum: ['u', 'm2', 'ml', 'm3', 'h', 'forfait'],
@@ -58,7 +73,16 @@ const productSchema = new mongoose.Schema(
     project: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Project',
-      required: true,
+      index: true,
+    },
+    supplier: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Supplier',
+      index: true,
+    },
+    supplierUser: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
       index: true,
     },
     images: {

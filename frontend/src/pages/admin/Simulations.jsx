@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import Button from '../../components/Button';
-import Icon from '../../components/Icon';
+import { useSearchParams } from 'react-router-dom';
+import { Button, Icon } from '../../components/ui';
 import { getApiErrorMessage } from '../../services/api';
 import { fetchAdminSimulations } from '../../services/adminMongo';
 import { Badge } from './PageShell';
@@ -8,6 +8,7 @@ import { Badge } from './PageShell';
 const STATUS_OPTIONS = ['Tous', 'Succès', 'Échec'];
 
 export default function Simulations() {
+  const [searchParams] = useSearchParams();
   const [simulations, setSimulations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -40,7 +41,7 @@ export default function Simulations() {
   }, []);
 
   const filteredSimulations = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const normalizedSearch = [searchTerm, searchParams.get('q') || ''].join(' ').trim().toLowerCase();
 
     return simulations.filter((simulation) => {
       const matchesSearch = !normalizedSearch
@@ -50,7 +51,7 @@ export default function Simulations() {
 
       return matchesSearch && matchesStatus;
     });
-  }, [searchTerm, simulations, statusFilter]);
+  }, [searchParams, searchTerm, simulations, statusFilter]);
 
   const selectedSimulation = useMemo(() => (
     simulations.find((simulation) => simulation.id === selectedSimulationId) || filteredSimulations[0] || simulations[0]

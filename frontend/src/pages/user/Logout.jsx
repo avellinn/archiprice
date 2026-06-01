@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import Button from '../../components/Button';
-import Icon from '../../components/Icon';
+import { Button, Icon } from '../../components/ui';
 import useAuth from '../../context/useAuth';
 import './Logout.css';
 

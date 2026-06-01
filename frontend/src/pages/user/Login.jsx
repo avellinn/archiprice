@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import '../../styles/authForm.css';
 import AuthLayout from '../../components/AuthLayout';
 import PasswordInput from '../../components/PasswordInput';
-import Text from '../../components/Text';
+import { Text } from '../../components/ui';
 import useAuth from '../../context/useAuth';
 import { getApiErrorMessage } from '../../services/api';
 
@@ -27,9 +27,16 @@ export default function Login() {
     try {
       const loggedUser = await login(data);
       const isAdmin = loggedUser?.role === 'admin';
-      const fallbackPath = isAdmin ? '/admin/dashboard' : '/dashboard';
+      const isSupplier = loggedUser?.role === 'supplier';
+      const fallbackPath = loggedUser?.redirectTo || (isAdmin ? '/admin/dashboard' : isSupplier ? '/supplier/dashboard' : '/dashboard');
       const requestedPath = from || fallbackPath;
-      const destination = isAdmin === requestedPath.startsWith('/admin') ? requestedPath : fallbackPath;
+      const destination = (
+        (isAdmin && requestedPath.startsWith('/admin'))
+        || (isSupplier && requestedPath.startsWith('/supplier'))
+        || (!isAdmin && !isSupplier && !requestedPath.startsWith('/admin') && !requestedPath.startsWith('/supplier'))
+      )
+        ? requestedPath
+        : fallbackPath;
 
       navigate(destination, { replace: true });
     } catch (err) {

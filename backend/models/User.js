@@ -16,6 +16,11 @@ const userSchema = new mongoose.Schema(
       trim: true,
       match: [/^\S+@\S+\.\S+$/, 'Email invalide'],
     },
+    phone: {
+      type: String,
+      trim: true,
+      maxlength: 60,
+    },
     password: {
       type: String,
       required: [true, 'Mot de passe requis'],
@@ -24,7 +29,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['user', 'admin'],
+      enum: ['user', 'admin', 'supplier'],
       default: 'user',
     },
     type: {
@@ -34,7 +39,7 @@ const userSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Actif', 'Inactif'],
+      enum: ['Actif', 'Inactif', 'Bloqué'],
       default: 'Actif',
     },
     subscription: {

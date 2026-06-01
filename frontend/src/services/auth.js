@@ -29,8 +29,8 @@ export function setStoredToken(token) {
   }
 }
 
-export async function register({ name, email, password }) {
-  const { data } = await api.post(API_ROUTES.auth.register, { name, email, password });
+export async function register(payload) {
+  const { data } = await api.post(API_ROUTES.auth.register, payload);
   return data;
 }
 

@@ -1,6 +1,6 @@
 # Audit Et Nettoyage Du Workspace
 
-Date : 2026-05-22
+Date : 2026-06-01
 
 ## Synthèse
 
@@ -30,6 +30,21 @@ Les volumes principaux constatés avant nettoyage :
 Conclusion : le poids réel vient presque entièrement des dépendances locales. Elles ne sont pas supprimées car elles sont nécessaires au développement et déjà ignorées par Git.
 
 ## Nettoyage Effectué
+
+Dernière passe du 2026-06-01 :
+
+- uniformisation des imports de pages vers le design system `frontend/src/components/ui` ;
+- suppression du fichier fournisseur obsolète `frontend/src/pages/supplier/Dashboard.jsx`, remplacé par `Analysedon.jsx` et non référencé par le routeur ;
+- suppression de styles morts non référencés dans `App.css` :
+  - anciens blocs `supplier-file-list` ;
+  - ancien bloc `supplier-settings` remplacé par `supplier-settings-page` ;
+  - ancien bloc `admin-products-pending` remplacé par la validation inline dans le tableau Articles ;
+- vérification syntaxique backend avec `node --check backend/server.js` et `node --check backend/app.js` ;
+- vérification frontend avec `npm run lint` et `npm run build`.
+
+Le build frontend produit uniquement l'avertissement connu de chunk Vite supérieur à `500 kB`.
+
+## Nettoyage Standard
 
 Commande utilisée depuis la racine :
 
@@ -85,8 +100,9 @@ Important : aucun changement utilisateur n'a été revert.
 
 - `AppShell.jsx` : layout utilisateur.
 - `AdminShell.jsx` : layout administrateur.
+- `SupplierShell.jsx` : layout fournisseur.
 
-Les deux layouts utilisent les mêmes composants UI :
+Les trois layouts utilisent les mêmes composants UI :
 
 - `Header`
 - `Sidebar`
@@ -115,9 +131,10 @@ Toutes les pages utilisateur sont regroupées dans `frontend/src/pages/user/` :
 Toutes les pages admin sont regroupées dans `frontend/src/pages/admin/` :
 
 - `Dashboard.jsx`
-- `Produits.jsx`
+- `Articles.jsx`
 - `CategoriesFiltres.jsx`
 - `Fournisseurs.jsx`
+- `NouvellesDemandes.jsx`
 - `Utilisateurs.jsx`
 - `Simulations.jsx`
 - `Support.jsx`
@@ -132,11 +149,32 @@ Toutes les pages admin sont regroupées dans `frontend/src/pages/admin/` :
 
 Les données backoffice locales et dynamiques sont centralisées dans `frontend/src/services/adminData.js`.
 
+### Pages Supplier
+
+Toutes les pages fournisseur sont regroupées dans `frontend/src/pages/supplier/` :
+
+- `Analysedon.jsx`
+- `MaBoutique.jsx`
+- `Produits.jsx`
+- `AjouterProduit.jsx`
+- `Catalogue.jsx`
+- `Clients.jsx`
+- `Fichiers.jsx`
+- `Parametres.jsx`
+- `Pending.jsx`
+
+Le fichier historique `Dashboard.jsx` a été supprimé : le routeur pointe directement vers `Analysedon.jsx`.
+
 ### Composants Partagés
 
-- `Button.jsx`
-- `Text.jsx`
-- `Icon.jsx`
+- `components/ui/Button.jsx`
+- `components/ui/Text.jsx`
+- `components/ui/Icon.jsx`
+- `components/ui/Badge.jsx`
+- `components/ui/Card.jsx`
+- `components/ui/DataTable.jsx`
+- `components/ui/EmptyState.jsx`
+- `components/ui/Pagination.jsx`
 - `Header.jsx`
 - `Sidebar.jsx`
 - `Avatar.jsx`
@@ -155,6 +193,7 @@ Les données backoffice locales et dynamiques sont centralisées dans `frontend/
 - `/api/projects`
 - `/api/projects/:projectId/products`
 - `/api/admin`
+- `/api/supplier`
 
 ### Admin API
 
@@ -163,7 +202,17 @@ Routes admin protégées par `protect` + `requireAdmin` :
 - `GET /api/admin/users`
 - `GET /api/admin/users/:id`
 - `PUT /api/admin/users/:id/role`
-- `GET /api/admin/test`
+- `GET /api/admin/suppliers`
+- `GET /api/admin/supplier-requests`
+- `POST /api/admin/supplier-requests/:id/approve`
+- `POST /api/admin/supplier-requests/:id/reject`
+- `GET /api/supplier/me`
+- `PUT /api/supplier/me`
+- `GET /api/supplier/workspace`
+- `GET /api/supplier/products`
+- `POST /api/supplier/products`
+- `PUT /api/supplier/products/:productId`
+- `DELETE /api/supplier/products/:productId`
 
 Les réponses utilisateur admin excluent le mot de passe.
 
@@ -204,7 +253,7 @@ Déjà couverts par `.gitignore` :
 
 Priorité 1 :
 
-- garder `src/components/` comme design system partagé ;
+- garder `src/components/ui/` comme point d'entrée du design system partagé ;
 - éviter les doublons de composants entre admin et user ;
 - déplacer progressivement les grands blocs CSS de page hors de `App.css`.
 

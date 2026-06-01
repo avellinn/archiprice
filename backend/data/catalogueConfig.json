@@ -1,6 +1,6 @@
 {
-  "__version": 25,
-  "__updatedAt": 1779815789506,
+  "__version": 42,
+  "__updatedAt": 1780335209643,
   "users": [
     {
       "id": "user-jean-dupont",
@@ -53,131 +53,7 @@
       "subscription": "-"
     }
   ],
-  "products": [
-    {
-      "id": "prod-1779814063385-ff4373",
-      "visual": "sofa",
-      "image": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/oe7tzkid7zqbivs2pglc?_a=BAMAPqhK0",
-      "images": [
-        {
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/oe7tzkid7zqbivs2pglc?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/oe7tzkid7zqbivs2pglc",
-          "metadata": {
-            "originalName": "pexels-pok-rie-1603821.jpg",
-            "mimeType": "image/jpeg",
-            "bytes": 2746439,
-            "width": 3616,
-            "height": 2598,
-            "format": "jpg",
-            "provider": "cloudinary",
-            "folder": "archiprice/products"
-          }
-        },
-        {
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/dzqiubep1r5a7vyd37cq?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/dzqiubep1r5a7vyd37cq",
-          "metadata": {
-            "originalName": "Capture dâÃ©cran du 2026-05-22 15-09-03.png",
-            "mimeType": "image/png",
-            "bytes": 336011,
-            "width": 1047,
-            "height": 430,
-            "format": "png",
-            "provider": "cloudinary",
-            "folder": "archiprice/products"
-          }
-        },
-        {
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/zrtv9fk4omcah13dvxtv?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/zrtv9fk4omcah13dvxtv",
-          "metadata": {
-            "originalName": "Capture dâÃ©cran du 2026-05-22 15-10-14.png",
-            "mimeType": "image/png",
-            "bytes": 232679,
-            "width": 770,
-            "height": 479,
-            "format": "png",
-            "provider": "cloudinary",
-            "folder": "archiprice/products"
-          }
-        },
-        {
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kkhlvbe1jd4inb1pvyk7?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/kkhlvbe1jd4inb1pvyk7",
-          "metadata": {
-            "originalName": "Capture dâÃ©cran du 2026-05-22 15-11-12.png",
-            "mimeType": "image/png",
-            "bytes": 269222,
-            "width": 1019,
-            "height": 474,
-            "format": "png",
-            "provider": "cloudinary",
-            "folder": "archiprice/products"
-          }
-        }
-      ],
-      "name": "",
-      "description": "",
-      "price": "5 000 000 FCFA",
-      "vat": "20%",
-      "category": "Mobilier",
-      "room": "Salon",
-      "range": "Confort",
-      "supplier": "Meubles Plus",
-      "availability": "Sur commande",
-      "city": "Abomey - calavi",
-      "neighborhood": "Godomey"
-    },
-    {
-      "id": "prod-1779810834530-aa6b33",
-      "visual": "sofa",
-      "image": "",
-      "images": [],
-      "name": "Canapé 3 places Oslo",
-      "description": "Canapé moderne 3 places, tissu gris clair, pieds en bois.",
-      "price": "890,00 €",
-      "vat": "20%",
-      "category": "Mobilier",
-      "room": "Salon",
-      "range": "Confort",
-      "supplier": "Meubles Plus",
-      "availability": "Disponible",
-      "city": "Cotonou",
-      "neighborhood": "Fidjrossè"
-    },
-    {
-      "id": "prod-1779810774015-5688b9",
-      "visual": "sofa",
-      "image": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/chdutm1o6b2w7kg1dvyp?_a=BAMAPqhK0",
-      "images": [
-        {
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/chdutm1o6b2w7kg1dvyp?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/chdutm1o6b2w7kg1dvyp",
-          "metadata": {
-            "originalName": "pexels-photo-1379640.jpeg",
-            "mimeType": "image/jpeg",
-            "bytes": 97336,
-            "width": 1125,
-            "height": 750,
-            "format": "jpg",
-            "provider": "cloudinary",
-            "folder": "archiprice/products"
-          }
-        }
-      ],
-      "name": "Canapé 3 places Oslo",
-      "description": "Canapé moderne 3 places, tissu gris clair, pieds en bois.",
-      "price": "890,00 €",
-      "vat": "20%",
-      "category": "Mobilier",
-      "room": "Salon",
-      "range": "Confort",
-      "supplier": "Meubles Plus",
-      "availability": "Disponible",
-      "city": "Cotonou",
-      "neighborhood": "Fidjrossè"
-    }
-  ],
+  "products": [],
   "suppliers": [
     {
       "id": "sup-1",
@@ -477,15 +353,15 @@
   ],
   "settings": {
     "margin": "10",
-    "vat": "20",
+    "vat": "16",
     "rounding": "Au centime près",
     "currency": "EUR"
   },
   "regionalCoefficients": [
     {
       "id": "city-1",
-      "city": "Cotonou",
-      "coefficient": "1,00"
+      "city": "jbjCotonou",
+      "coefficient": "1,00jkb"
     },
     {
       "id": "city-2",
@@ -496,6 +372,34 @@
       "id": "city-3",
       "city": "Porto-novo",
       "coefficient": "1,00"
+    }
+  ],
+  "supplierPublicationNotices": [
+    {
+      "id": "supplier-notice-1780333952066-f20b99",
+      "supplierUserId": "6a1d7a91f44246ee96fd3f4d",
+      "productId": "6a1dbcc0fe22c19bc1230edc",
+      "productName": "jheiuf",
+      "status": "Refusé",
+      "reason": "moon",
+      "createdAt": "2026-06-01T17:12:32.066Z"
+    },
+    {
+      "id": "supplier-notice-1780333903365-e2ed02",
+      "supplierUserId": "6a1d7a91f44246ee96fd3f4d",
+      "productId": "6a1dbcc0fe22c19bc1230edc",
+      "productName": "jheiuf",
+      "status": "Refusé",
+      "reason": "Non",
+      "createdAt": "2026-06-01T17:11:43.365Z"
+    },
+    {
+      "id": "supplier-notice-1780332931907-d33011",
+      "productId": "6a1db3befe22c19bc1230ed7",
+      "productName": "jfnjf",
+      "status": "Refusé",
+      "reason": "Veuiller confiermer",
+      "createdAt": "2026-06-01T16:55:31.907Z"
     }
   ]
 }

@@ -1,28 +1,24 @@
 import { useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Header from './Header';
-import Icon from './Icon';
 import Sidebar from './Sidebar';
+import { Icon } from './ui';
 import useAuth from '../context/useAuth';
+import { useAdminData } from '../services/adminData';
 import { getAvatarColor, getDisplayName, getUserInitials } from '../utils/userDisplay';
 import siteLogo from '../assets/images/log.png';
 
-const PAGE_TITLES = {
-  '/dashboard': 'Tableau de bord',
-  '/catalogue': 'Explorer catalogue',
-  '/workspace': 'Mon espace de travail',
-  '/factures': 'Estimations exportées',
-  '/deconnexion': 'Déconnexion',
+const SUPPLIER_PAGE_TITLES = {
+  '/supplier/dashboard': 'Analyses de données',
+  '/supplier/shop': 'Ma boutique',
+  '/supplier/products': 'Produits',
+  '/supplier/catalogue': 'Catalogue',
+  '/supplier/clients': 'Clients',
+  '/supplier/content/files': 'Fichiers',
+  '/supplier/settings': 'Paramètres',
 };
 
-const SEARCH_PLACEHOLDERS = {
-  '/dashboard': 'Rechercher un projet récent',
-  '/catalogue': 'Rechercher un article, une boutique...',
-  '/workspace': 'Rechercher un projet',
-  '/factures': 'Rechercher une estimation',
-};
-
-export default function AppShell() {
+export default function SupplierShell() {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -32,35 +28,70 @@ export default function AppShell() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [searchMessage, setSearchMessage] = useState('');
+  const [adminData] = useAdminData();
+
+  const publicationNotices = useMemo(() => {
+    const userIds = [user?.id, user?._id].filter(Boolean).map(String);
+    const notices = adminData.supplierPublicationNotices || [];
+
+    if (userIds.length === 0) return notices;
+
+    return notices.filter((notice) => !notice.supplierUserId || userIds.includes(String(notice.supplierUserId)));
+  }, [adminData.supplierPublicationNotices, user]);
 
   const sidebarSections = useMemo(
     () => [
       {
-        title: 'Navigation',
+        title: 'Boutique',
         items: [
           {
-            id: 'dashboard',
-            label: 'Tableau de bord',
-            path: '/dashboard',
+            id: 'supplier-dashboard',
+            label: 'Analyses de données',
+            path: '/supplier/dashboard',
             icon: <Icon name="Dashboard" />,
           },
           {
-            id: 'explorer-catalogue',
-            label: 'Explorer catalogue',
-            path: '/catalogue',
-            icon: <Icon name="Explore" />,
-          },
-          {
-            id: 'workspace',
-            label: 'Mon espace de travail',
-            path: '/workspace',
+            id: 'supplier-shop',
+            label: 'Ma boutique',
+            path: '/supplier/shop',
             icon: <Icon name="Workspaces" />,
           },
           {
-            id: 'invoices',
-            label: 'Estimations exportées',
-            path: '/factures',
+            id: 'supplier-products',
+            label: 'Produits',
+            path: '/supplier/products',
             icon: <Icon name="ReceiptLong" />,
+          },
+          {
+            id: 'supplier-catalogue',
+            label: 'Catalogue',
+            path: '/supplier/catalogue',
+            icon: <Icon name="Explore" />,
+          },
+          {
+            id: 'supplier-clients',
+            label: 'Clients',
+            path: '/supplier/clients',
+            icon: <Icon name="Visibility" />,
+          },
+          {
+            id: 'supplier-content',
+            label: 'Contenu',
+            icon: <Icon name="Folder" />,
+            defaultOpen: true,
+            children: [
+              {
+                id: 'supplier-files',
+                label: 'Fichiers',
+                path: '/supplier/content/files',
+              },
+            ],
+          },
+          {
+            id: 'supplier-settings',
+            label: 'Paramètres',
+            path: '/supplier/settings',
+            icon: <Icon name="Info" />,
           },
           {
             id: 'logout',
@@ -74,22 +105,22 @@ export default function AppShell() {
     [],
   );
 
-  function handleSearchSubmit() {
-    const query = searchValue.trim();
-    setSearchMessage(query ? `Recherche lancée : ${query}` : 'Saisissez un mot-clé pour rechercher.');
-  }
+  const currentPage = SUPPLIER_PAGE_TITLES[location.pathname] || 'Espace supplier';
+  const searchValue = searchParams.get('q') || '';
 
   function handleSearchChange(value) {
     const nextParams = new URLSearchParams(searchParams);
-    const query = value.trim();
-
-    if (query) {
+    if (value.trim()) {
       nextParams.set('q', value);
     } else {
       nextParams.delete('q');
     }
-
     setSearchParams(nextParams, { replace: true });
+  }
+
+  function handleSearchSubmit() {
+    const query = searchValue.trim();
+    setSearchMessage(query ? `Recherche supplier : ${query}` : 'Saisissez un mot-clé pour rechercher.');
   }
 
   function handleLogout() {
@@ -97,14 +128,11 @@ export default function AppShell() {
     navigate('/deconnexion');
   }
 
-  const currentPage = PAGE_TITLES[location.pathname] || 'Tableau de bord';
-  const searchValue = searchParams.get('q') || '';
-  const searchPlaceholder = SEARCH_PLACEHOLDERS[location.pathname] || `Rechercher dans ${currentPage.toLowerCase()}`;
-
   return (
     <main
       className={[
         'dashboard-shell',
+        'supplier-shell',
         isSidebarCollapsed ? 'is-sidebar-collapsed' : '',
         isThemeDark ? 'is-theme-dark' : '',
       ]
@@ -113,6 +141,8 @@ export default function AppShell() {
     >
       <Sidebar
         logo={<img src={siteLogo} alt="ArchiPrice" />}
+        title="Supplier"
+        variant="supplier"
         sections={sidebarSections}
         isOpen={!isSidebarCollapsed}
         onClose={() => setIsSidebarCollapsed(true)}
@@ -124,7 +154,7 @@ export default function AppShell() {
         }}
       />
 
-      <section className="dashboard-content">
+      <section className="dashboard-content supplier-shell__content">
         <Header
           currentPage={currentPage}
           isAccountOpen={isAccountOpen}
@@ -132,7 +162,8 @@ export default function AppShell() {
           isSidebarCollapsed={isSidebarCollapsed}
           isThemeDark={isThemeDark}
           searchValue={searchValue}
-          searchPlaceholder={searchPlaceholder}
+          searchPlaceholder={`Rechercher dans ${currentPage.toLowerCase()}`}
+          notificationCount={publicationNotices.length}
           onAccountClick={() => {
             setIsAccountOpen((open) => !open);
             setIsNotificationsOpen(false);
@@ -150,8 +181,22 @@ export default function AppShell() {
 
         {isNotificationsOpen && (
           <div className="dashboard-floating-panel notification-panel">
-            <strong>Notifications</strong>
-            <span>Aucune nouvelle notification pour le moment.</span>
+            <strong>Notifications supplier</strong>
+            {publicationNotices.length === 0 ? (
+              <span>Aucune nouvelle notification boutique.</span>
+            ) : (
+              <div className="notification-panel__list">
+                {publicationNotices.map((notice) => (
+                  <div key={notice.id} className="notification-panel__item">
+                    <Icon name="Info" size="sm" />
+                    <span>
+                      Publication refusée : <b>{notice.productName}</b>
+                      <small>{notice.reason}</small>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
-import Button from '../../components/Button';
-import Icon from '../../components/Icon';
+import { Button, Icon } from '../../components/ui';
 import { createAdminId, useAdminData } from '../../services/adminData';
 
 const tabs = [
@@ -107,8 +106,6 @@ export default function CategoriesFiltres() {
         <Icon name="ChevronRight" size="sm" />
         <strong>Catégories & filtres</strong>
       </nav>
-
-      <h1>Catégories & filtres</h1>
 
       <div className="admin-taxonomy-layout">
         <section className="admin-taxonomy-main">

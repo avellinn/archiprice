@@ -20,6 +20,7 @@ backend/middleware/multerUpload.js
 backend/services/cloudinaryImageService.js
 backend/controllers/uploadController.js
 backend/routes/uploads.js
+backend/routes/supplier.js
 backend/models/Product.js
 ```
 
@@ -38,9 +39,12 @@ backend/models/Product.js
 POST   /api/uploads/products/images
 DELETE /api/uploads/products/images
 DELETE /api/projects/:projectId/products/:id/images
+POST   /api/supplier/products
 ```
 
 Le `POST` accepte jusqu’à 10 images, chacune en PNG, JPG ou WebP, avec une taille maximale de 5 Mo.
+
+`POST /api/supplier/products` crée directement un produit fournisseur et accepte aussi les fichiers `image`. C'est l'endpoint utilisé par l'interface supplier `/supplier/products/new`.
 
 ## Exemple React upload
 

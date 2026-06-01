@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import Button from '../../components/Button';
-import Icon from '../../components/Icon';
+import { Button, Icon } from '../../components/ui';
 import { createAdminId, useAdminData } from '../../services/adminData';
 
 export default function Paramètres() {

@@ -1,6 +1,4 @@
-import Button from '../../components/Button';
-import Text from '../../components/Text';
-import { Badge, DataTable } from '../../components/ui';
+import { Badge, Button, DataTable, Text } from '../../components/ui';
 
 export function PageShell({ eyebrow = 'Backoffice', title, description, actions, children }) {
   return (

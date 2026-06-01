@@ -60,3 +60,18 @@ export async function updateAdminSupportItem(itemId, payload) {
   const { data } = await api.patch(API_ROUTES.admin.supportItem(itemId), payload);
   return data.supportItem;
 }
+
+export async function fetchSupplierRequests() {
+  const { data } = await api.get(API_ROUTES.admin.supplierRequests);
+  return data.requests || [];
+}
+
+export async function approveSupplierRequest(requestId) {
+  const { data } = await api.post(API_ROUTES.admin.approveSupplierRequest(requestId));
+  return data;
+}
+
+export async function rejectSupplierRequest(requestId, reason = '') {
+  const { data } = await api.post(API_ROUTES.admin.rejectSupplierRequest(requestId), { reason });
+  return data.request;
+}

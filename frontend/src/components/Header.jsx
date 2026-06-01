@@ -22,6 +22,7 @@ export default function Header({
   onSearchSubmit,
   onThemeToggle,
   onLogout,
+  notificationCount = 0,
 }) {
   const { user, isAuthenticated } = useAuth();
   const accountName = getDisplayName(user);
@@ -91,7 +92,7 @@ export default function Header({
               onClick={onNotificationsClick}
             >
               <Icon name="Notifications" />
-              <span className="header__notification-badge">0</span>
+              <span className="header__notification-badge">{notificationCount}</span>
             </button>
           </div>
 

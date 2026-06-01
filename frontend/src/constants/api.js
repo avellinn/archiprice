@@ -14,6 +14,11 @@ export const API_ROUTES = {
     list: (projectId) => `/api/projects/${projectId}/products`,
     detail: (projectId, productId) => `/api/projects/${projectId}/products/${productId}`,
   },
+  supplier: {
+    workspace: '/api/supplier/workspace',
+    products: '/api/supplier/products',
+    product: (id) => `/api/supplier/products/${id}`,
+  },
   admin: {
     users: '/api/admin/users',
     user: (id) => `/api/admin/users/${id}`,
@@ -24,5 +29,8 @@ export const API_ROUTES = {
     simulation: (id) => `/api/admin/simulations/${id}`,
     supportItems: '/api/admin/support-items',
     supportItem: (id) => `/api/admin/support-items/${id}`,
+    supplierRequests: '/api/admin/supplier-requests',
+    approveSupplierRequest: (id) => `/api/admin/supplier-requests/${id}/approve`,
+    rejectSupplierRequest: (id) => `/api/admin/supplier-requests/${id}/reject`,
   },
 };

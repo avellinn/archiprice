@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import Button from '../../components/Button';
-import Icon from '../../components/Icon';
+import { useSearchParams } from 'react-router-dom';
+import { Button, Icon } from '../../components/ui';
 import { createAdminId, useAdminData } from '../../services/adminData';
 import { deleteCatalogueImage, uploadCatalogueImages } from '../../services/catalogueImages';
 import { Badge } from './PageShell';
@@ -119,6 +119,7 @@ function getImagePublicId(image) {
 }
 
 export default function Articles() {
+  const [searchParams] = useSearchParams();
   const [adminData, setAdminData] = useAdminData();
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isImageUploading, setIsImageUploading] = useState(false);
@@ -127,6 +128,8 @@ export default function Articles() {
   const [draftFilterValues, setDraftFilterValues] = useState(INITIAL_FILTER_VALUES);
   const [filterValues, setFilterValues] = useState(INITIAL_FILTER_VALUES);
   const [productForm, setProductForm] = useState(EMPTY_PRODUCT_FORM);
+  const [rejectionProduct, setRejectionProduct] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState('');
 
   const products = Array.isArray(adminData.products) ? adminData.products : [];
   const taxonomyOptions = {
@@ -156,7 +159,7 @@ export default function Articles() {
   const isFilterDirty = !areFiltersEqual(draftFilterValues, filterValues);
 
   const filteredProducts = products.filter((product) => {
-    const query = searchTerm.trim().toLowerCase();
+    const query = [searchTerm, searchParams.get('q') || ''].join(' ').trim().toLowerCase();
     const price = parseProductPrice(product.price);
     const minPrice = parseProductPrice(filterValues.priceMin);
     const maxPrice = parseProductPrice(filterValues.priceMax);
@@ -335,6 +338,53 @@ export default function Articles() {
     resetFilters();
   }
 
+  function approveSupplierPublication(productId) {
+    setAdminData((currentData) => ({
+      ...currentData,
+      products: currentData.products.map((product) => (
+        product.id === productId
+          ? {
+            ...product,
+            publicationStatus: 'Validé',
+            approvedAt: new Date().toISOString(),
+          }
+          : product
+      )),
+    }));
+  }
+
+  function openRejectSupplierPublication(product) {
+    setRejectionProduct(product);
+    setRejectionReason('');
+  }
+
+  function closeRejectSupplierPublication() {
+    setRejectionProduct(null);
+    setRejectionReason('');
+  }
+
+  function confirmRejectSupplierPublication() {
+    if (!rejectionProduct || !rejectionReason.trim()) return;
+
+    setAdminData((currentData) => ({
+      ...currentData,
+      products: currentData.products.filter((product) => product.id !== rejectionProduct.id),
+      supplierPublicationNotices: [
+        {
+          id: createAdminId('supplier-notice'),
+          supplierUserId: rejectionProduct.supplierUserId,
+          productId: rejectionProduct.sourceSupplierProductId,
+          productName: rejectionProduct.name,
+          status: 'Refusé',
+          reason: rejectionReason.trim(),
+          createdAt: new Date().toISOString(),
+        },
+        ...(currentData.supplierPublicationNotices || []),
+      ],
+    }));
+    closeRejectSupplierPublication();
+  }
+
   return (
     <div className="admin-products-page">
       <nav className="admin-products-breadcrumb" aria-label="Fil d'ariane">
@@ -484,20 +534,34 @@ export default function Articles() {
                       <td>{product.category}</td>
                       <td>
                         <Badge tone={getAvailabilityTone(product.availability)}>{product.availability}</Badge>
+                        {product.publicationStatus === 'En attente' && (
+                          <Badge tone="warning">En attente</Badge>
+                        )}
                       </td>
                       <td>{product.supplier}</td>
                       <td>
-                        <span className="admin-products-actions">
-                          <button type="button" aria-label="Modifier" onClick={() => openProductModal(product)}>
-                            <Icon name="Edit" size="sm" />
-                          </button>
-                          <button type="button" aria-label="Dupliquer" onClick={() => duplicateProduct(product)}>
-                            <Icon name="Copy" size="sm" />
-                          </button>
-                          <button type="button" aria-label="Supprimer" className="is-danger" onClick={() => deleteProduct(product.id)}>
-                            <Icon name="Delete" size="sm" />
-                          </button>
-                        </span>
+                        {product.publicationStatus === 'En attente' ? (
+                          <span className="admin-products-actions admin-products-actions--review">
+                            <Button type="button" size="sm" variant="success" onClick={() => approveSupplierPublication(product.id)}>
+                              Valider
+                            </Button>
+                            <Button type="button" size="sm" variant="danger" onClick={() => openRejectSupplierPublication(product)}>
+                              Refuser
+                            </Button>
+                          </span>
+                        ) : (
+                          <span className="admin-products-actions">
+                            <button type="button" aria-label="Modifier" onClick={() => openProductModal(product)}>
+                              <Icon name="Edit" size="sm" />
+                            </button>
+                            <button type="button" aria-label="Dupliquer" onClick={() => duplicateProduct(product)}>
+                              <Icon name="Copy" size="sm" />
+                            </button>
+                            <button type="button" aria-label="Supprimer" className="is-danger" onClick={() => deleteProduct(product.id)}>
+                              <Icon name="Delete" size="sm" />
+                            </button>
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -534,6 +598,52 @@ export default function Articles() {
           </footer>
         </section>
       </div>
+
+      {rejectionProduct && (
+        <div className="admin-product-modal-backdrop" role="presentation">
+          <section
+            className="admin-rejection-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="rejection-modal-title"
+          >
+            <header className="admin-product-modal__header">
+              <h2 id="rejection-modal-title">Justifier le refus</h2>
+              <button
+                type="button"
+                aria-label="Fermer"
+                className="admin-product-modal__close"
+                onClick={closeRejectSupplierPublication}
+              >
+                <Icon name="Close" />
+              </button>
+            </header>
+
+            <div className="admin-rejection-modal__body">
+              <p>
+                Article : <strong>{rejectionProduct.name}</strong>
+              </p>
+              <label className="admin-product-field">
+                <span>Motif du refus <b>*</b></span>
+                <textarea
+                  value={rejectionReason}
+                  placeholder="Expliquez clairement ce que le fournisseur doit corriger."
+                  onChange={(event) => setRejectionReason(event.target.value)}
+                />
+              </label>
+            </div>
+
+            <footer className="admin-rejection-modal__footer">
+              <Button type="button" variant="outline" onClick={closeRejectSupplierPublication}>
+                CANCEL
+              </Button>
+              <Button type="button" disabled={!rejectionReason.trim()} onClick={confirmRejectSupplierPublication}>
+                UPDATE
+              </Button>
+            </footer>
+          </section>
+        </div>
+      )}
 
       {isProductModalOpen && (
         <div className="admin-product-modal-backdrop" role="presentation">

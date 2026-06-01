@@ -3,25 +3,48 @@ import { protect, requireAdmin } from '../middleware/auth.js';
 import requireDb from '../middleware/requireDb.js';
 import Simulation from '../models/Simulation.js';
 import Supplier from '../models/Supplier.js';
+import SupplierRequest from '../models/SupplierRequest.js';
 import SupportItem from '../models/SupportItem.js';
 import User from '../models/User.js';
 
 const router = express.Router();
 
+const USER_ROLES = ['user', 'admin', 'supplier'];
+const ADMIN_MANAGED_USER_ROLES = ['user', 'admin'];
+
+function normalizeRole(role) {
+  const normalizedRole = String(role || '').toLowerCase();
+  return USER_ROLES.includes(normalizedRole) ? normalizedRole : 'user';
+}
+
+function roleFromType(type) {
+  if (type === 'Admin') return 'admin';
+  if (type === 'Fournisseur') return 'supplier';
+  return 'user';
+}
+
+function typeFromRole(role) {
+  if (role === 'admin') return 'Admin';
+  if (role === 'supplier') return 'Fournisseur';
+  return 'Architecte';
+}
+
 function formatAdminUser(user) {
-  const type = user.type || (String(user.role).toLowerCase() === 'admin' ? 'Admin' : 'Architecte');
-  const role = String(user.role).toLowerCase() === 'admin' || type === 'Admin' ? 'admin' : 'user';
+  const role = normalizeRole(user.role);
+  const type = role === 'user' ? user.type || typeFromRole(role) : typeFromRole(role);
+  const hasUsageStats = role === 'user';
 
   return {
     id: String(user._id),
     name: user.name || user.email,
     email: user.email,
+    phone: user.phone || '',
     role,
     type,
-    simulations: role === 'admin' ? '-' : user.simulations || 0,
+    simulations: hasUsageStats ? user.simulations || 0 : '-',
     inscription: new Intl.DateTimeFormat('fr-FR').format(user.createdAt || new Date()),
     status: user.status || 'Actif',
-    subscription: role === 'admin' ? '-' : user.subscription || 'Essai',
+    subscription: hasUsageStats ? user.subscription || 'Essai' : '-',
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
@@ -33,6 +56,40 @@ function formatDocument(document) {
     ...plain,
     id: plain._id,
   };
+}
+
+function formatSupplierRequest(request) {
+  const plain = request.toObject ? request.toObject() : request;
+  return {
+    ...plain,
+    id: String(plain._id),
+  };
+}
+
+async function ensureSupplierProfile(user) {
+  if (user.role !== 'supplier') return null;
+
+  const email = String(user.email || '').toLowerCase().trim();
+  const supplier = await Supplier.findOne({
+    $or: [
+      { user: user._id },
+      ...(email ? [{ email }] : []),
+    ],
+  });
+
+  if (supplier) {
+    supplier.user = supplier.user || user._id;
+    supplier.email = supplier.email || email;
+    supplier.name = supplier.name || user.name || email;
+    return supplier.save();
+  }
+
+  return Supplier.create({
+    user: user._id,
+    name: user.name || email,
+    email,
+    contact: email,
+  });
 }
 
 router.use(requireDb);
@@ -49,23 +106,42 @@ router.get('/users', async (req, res) => {
 });
 
 router.post('/users', async (req, res) => {
-  const { name, email, type = 'Architecte', status = 'Actif', subscription = 'Essai' } = req.body;
+  const {
+    name,
+    email,
+    phone,
+    role: requestedRole,
+    type,
+    status = 'Actif',
+    subscription = 'Essai',
+  } = req.body;
 
   if (!name?.trim() || !email?.trim()) {
     return res.status(400).json({ error: 'Nom et email requis' });
   }
 
+  if (requestedRole !== undefined && !ADMIN_MANAGED_USER_ROLES.includes(String(requestedRole).toLowerCase())) {
+    return res.status(400).json({ error: 'Rôle invalide' });
+  }
+
+  if (type === 'Fournisseur') {
+    return res.status(400).json({ error: 'Le rôle supplier nécessite une demande fournisseur validée' });
+  }
+
   try {
-    const role = type === 'Admin' ? 'admin' : 'user';
+    const role = requestedRole ? normalizeRole(requestedRole) : roleFromType(type);
+    const normalizedType = type || typeFromRole(role);
     const user = await User.create({
       name: name.trim(),
       email: email.trim(),
+      phone: phone?.trim() || undefined,
       password: `Archiprice-${Date.now()}`,
       role,
-      type,
+      type: normalizedType,
       status,
-      subscription: role === 'admin' ? '-' : subscription,
+      subscription: role === 'user' ? subscription : '-',
     });
+    await ensureSupplierProfile(user);
 
     return res.status(201).json(formatAdminUser(user));
   } catch (error) {
@@ -85,17 +161,22 @@ router.get('/users/:id', async (req, res) => {
 
 
 router.put('/users/:id/role', async (req, res) => {
-  const { role } = req.body;
-  if (!['user', 'admin'].includes(role)) {
+  const role = String(req.body.role || '').toLowerCase();
+  if (!ADMIN_MANAGED_USER_ROLES.includes(role)) {
     return res.status(400).json({ error: 'Rôle invalide' });
   }
   try {
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { role },
+      {
+        role,
+        type: typeFromRole(role),
+        ...(role === 'user' ? {} : { subscription: '-' }),
+      },
       { new: true, runValidators: true }
     ).select('-password');
     if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    await ensureSupplierProfile(user);
     res.json(formatAdminUser(user));
   } catch (error) {
     res.status(500).json({ error: 'Erreur serveur' });
@@ -104,13 +185,26 @@ router.put('/users/:id/role', async (req, res) => {
 
 router.patch('/users/:id', async (req, res) => {
   const patch = {};
-  ['name', 'type', 'status', 'subscription', 'simulations'].forEach((field) => {
+  ['name', 'email', 'phone', 'type', 'status', 'subscription', 'simulations'].forEach((field) => {
     if (req.body[field] !== undefined) patch[field] = req.body[field];
   });
 
   if (patch.type) {
-    patch.role = patch.type === 'Admin' ? 'admin' : 'user';
-    if (patch.role === 'admin') patch.subscription = '-';
+    if (patch.type === 'Fournisseur') {
+      return res.status(400).json({ error: 'Le rôle supplier nécessite une demande fournisseur validée' });
+    }
+    patch.role = roleFromType(patch.type);
+    if (patch.role !== 'user') patch.subscription = '-';
+  }
+
+  if (req.body.role !== undefined) {
+    const requestedRole = String(req.body.role || '').toLowerCase();
+    if (!ADMIN_MANAGED_USER_ROLES.includes(requestedRole)) {
+      return res.status(400).json({ error: 'Rôle invalide' });
+    }
+    patch.role = requestedRole;
+    patch.type = patch.type || typeFromRole(requestedRole);
+    if (patch.role !== 'user') patch.subscription = '-';
   }
 
   try {
@@ -119,6 +213,7 @@ router.patch('/users/:id', async (req, res) => {
       runValidators: true,
     }).select('-password');
     if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    await ensureSupplierProfile(user);
     return res.json(formatAdminUser(user));
   } catch (error) {
     return res.status(500).json({ error: 'Erreur serveur' });
@@ -129,10 +224,95 @@ router.delete('/users/:id', async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    await Supplier.deleteOne({ user: user._id });
     return res.json({ message: 'Utilisateur supprimé' });
   } catch (error) {
     return res.status(500).json({ error: 'Erreur serveur' });
   }
+});
+
+router.get('/supplier-requests', async (_req, res) => {
+  const requests = await SupplierRequest.find().sort({ createdAt: -1 });
+  res.json({ requests: requests.map(formatSupplierRequest) });
+});
+
+router.post('/supplier-requests/:id/approve', async (req, res) => {
+  const supplierRequest = await SupplierRequest.findById(req.params.id);
+  if (!supplierRequest) return res.status(404).json({ error: 'Demande fournisseur introuvable' });
+  if (supplierRequest.status !== 'pending') {
+    return res.status(400).json({ error: 'Cette demande a déjà été traitée' });
+  }
+
+  const user = await User.findById(supplierRequest.user);
+  if (!user) return res.status(404).json({ error: 'Utilisateur lié introuvable' });
+
+  user.role = 'supplier';
+  user.type = 'Fournisseur';
+  user.status = 'Actif';
+  user.subscription = '-';
+  await user.save();
+
+  let supplier = await Supplier.findOne({
+    $or: [
+      { user: user._id },
+      { email: supplierRequest.email },
+    ],
+  });
+
+  if (supplier) {
+    supplier.user = user._id;
+    supplier.name = supplierRequest.companyName;
+    supplier.companyName = supplierRequest.companyName;
+    supplier.email = supplierRequest.email;
+    supplier.phone = supplierRequest.phone;
+    supplier.contact = supplierRequest.phone || supplierRequest.email;
+    supplier.categories = supplierRequest.categories;
+    supplier.status = 'Actif';
+    supplier.approvedBy = req.user._id;
+    supplier.approvedAt = new Date();
+    await supplier.save();
+  } else {
+    supplier = await Supplier.create({
+      user: user._id,
+      name: supplierRequest.companyName,
+      companyName: supplierRequest.companyName,
+      email: supplierRequest.email,
+      phone: supplierRequest.phone,
+      contact: supplierRequest.phone || supplierRequest.email,
+      categories: supplierRequest.categories,
+      status: 'Actif',
+      approvedBy: req.user._id,
+      approvedAt: new Date(),
+    });
+  }
+
+  supplierRequest.status = 'approved';
+  supplierRequest.reviewedBy = req.user._id;
+  supplierRequest.reviewedAt = new Date();
+  supplierRequest.supplier = supplier._id;
+  await supplierRequest.save();
+
+  return res.json({
+    request: formatSupplierRequest(supplierRequest),
+    user: formatAdminUser(user),
+    supplier: formatDocument(supplier),
+  });
+});
+
+router.post('/supplier-requests/:id/reject', async (req, res) => {
+  const supplierRequest = await SupplierRequest.findById(req.params.id);
+  if (!supplierRequest) return res.status(404).json({ error: 'Demande fournisseur introuvable' });
+  if (supplierRequest.status !== 'pending') {
+    return res.status(400).json({ error: 'Cette demande a déjà été traitée' });
+  }
+
+  supplierRequest.status = 'rejected';
+  supplierRequest.reviewedBy = req.user._id;
+  supplierRequest.reviewedAt = new Date();
+  supplierRequest.rejectionReason = req.body.reason?.trim() || undefined;
+  await supplierRequest.save();
+
+  return res.json({ request: formatSupplierRequest(supplierRequest) });
 });
 
 router.get('/suppliers', async (_req, res) => {

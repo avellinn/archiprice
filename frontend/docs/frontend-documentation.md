@@ -12,7 +12,7 @@ Le frontend est une SPA React construite avec Vite.
 - Polices CDN : `src/styles/fonts.css`
 - Variables et reset globaux : `src/styles/globals.css`
 - Layouts et styles de pages : `src/App.css`
-- Pages routées : `src/pages/admin/` et `src/pages/user/`
+- Pages routées : `src/pages/admin/`, `src/pages/user/` et `src/pages/supplier/`
 - Composants réutilisables : `src/components/`
 - Services API : `src/services/`
 - Authentification : `src/context/`
@@ -29,13 +29,17 @@ Documentation dédiée : `docs/design-system.md`.
 
 À retenir :
 
-- `src/components/` contient les composants partagés : boutons, inputs, tables, modals, cards, badges, loader, empty states, header, sidebar, icônes, typographie.
+- `src/components/ui/` est le point d'entrée du design system partagé : boutons, tables, cards, badges, empty states, pagination, icônes et typographie.
+- `src/components/` contient encore les composants de layout ou métier plus larges : header, sidebar, avatar, modales, charts et workspace.
 - `src/pages/admin/` contient uniquement les pages backoffice.
 - `src/pages/user/` contient uniquement les pages utilisateur.
+- `src/pages/supplier/` contient uniquement les pages fournisseur validé.
 - `AppShell.jsx` contient le layout utilisateur.
 - `AdminShell.jsx` contient le layout administrateur.
+- `SupplierShell.jsx` contient le layout fournisseur.
 - `ProtectedRoute.jsx` protège l'interface utilisateur.
 - `AdminRoute.jsx` protège l'interface administrateur.
+- `SupplierRoute.jsx` protège l'interface fournisseur.
 - Les variantes de rôle doivent rester minimales, par exemple `.sidebar--admin`, sans créer une identité CSS séparée.
 
 Scripts courants depuis `frontend/` :
@@ -55,6 +59,7 @@ Routes publiques :
 - `/` : accueil
 - `/login` : connexion
 - `/register` : inscription
+- `/supplier/pending` : attente après demande fournisseur
 
 Routes protégées :
 
@@ -72,6 +77,7 @@ Routes admin :
 - `/admin/catalogue/products` : produits
 - `/admin/catalogue/filters` : catégories & filtres
 - `/admin/suppliers` : fournisseurs
+- `/admin/suppliers/requests` : nouvelles demandes fournisseur
 - `/admin/users` : utilisateurs
 - `/admin/simulations` : simulations
 - `/admin/support` : support regroupant tickets, feedback et signalements prix
@@ -81,6 +87,19 @@ Les anciennes URLs `/admin/support/tickets`, `/admin/support/feedback`, `/admin/
 
 Les routes admin passent par `AdminRoute`, puis sont rendues dans `AdminShell`.
 
+Routes supplier :
+
+- `/supplier/dashboard` : analyses de données
+- `/supplier/shop` : ma boutique
+- `/supplier/products` : produits
+- `/supplier/products/new` : ajout de produit avec upload d'images
+- `/supplier/catalogue` : vue catalogue fournisseur
+- `/supplier/clients` : clients
+- `/supplier/content/files` : fichiers
+- `/supplier/settings` : paramètres
+
+Les routes supplier passent par `SupplierRoute`, puis sont rendues dans `SupplierShell`.
+
 ## Pages
 
 ### Admin
@@ -88,29 +107,64 @@ Les routes admin passent par `AdminRoute`, puis sont rendues dans `AdminShell`.
 Fichiers :
 
 - `src/pages/admin/Dashboard.jsx`
-- `src/pages/admin/Produits.jsx`
+- `src/pages/admin/Articles.jsx`
 - `src/pages/admin/CategoriesFiltres.jsx`
 - `src/pages/admin/Fournisseurs.jsx`
+- `src/pages/admin/NouvellesDemandes.jsx`
 - `src/pages/admin/Utilisateurs.jsx`
 - `src/pages/admin/Simulations.jsx`
 - `src/pages/admin/Support.jsx`
 - `src/pages/admin/Paramètres.jsx`
 - `src/pages/admin/PageShell.jsx`
 
-Les données de démonstration et les mutations admin locales sont centralisées dans `src/services/adminData.js`.
+Les données dynamiques admin passent par `src/services/adminMongo.js` quand elles proviennent de MongoDB. `src/services/adminData.js` reste disponible pour les jeux de données locaux ou fallback UI.
 
-`Utilisateurs.jsx` utilise ce store pour :
+`Utilisateurs.jsx` utilise l'API Mongo pour :
 
 - rechercher et filtrer les comptes ;
 - ajouter un utilisateur ;
-- changer le type utilisateur/admin ;
-- changer l'abonnement ;
+- afficher le rôle réel (`user`, `admin`, `supplier`) ;
 - activer/désactiver un compte ;
+- bloquer un compte ;
 - supprimer un compte.
+
+`Fournisseurs.jsx` affiche uniquement les fournisseurs validés. `NouvellesDemandes.jsx` affiche uniquement les demandes supplier en attente et permet de les valider ou refuser.
 
 `PageShell.jsx` centralise la structure commune des pages admin : en-tête, statistiques, toolbar, filtres, tables et badges.
 
 Les pages admin sont rendues dans `AdminShell.jsx` et protégées par `AdminRoute.jsx`.
+
+### Supplier
+
+Fichiers :
+
+- `src/pages/supplier/Analysedon.jsx`
+- `src/pages/supplier/MaBoutique.jsx`
+- `src/pages/supplier/Produits.jsx`
+- `src/pages/supplier/AjouterProduit.jsx`
+- `src/pages/supplier/Catalogue.jsx`
+- `src/pages/supplier/Clients.jsx`
+- `src/pages/supplier/Fichiers.jsx`
+- `src/pages/supplier/Parametres.jsx`
+- `src/pages/supplier/Pending.jsx`
+
+Le workflow fournisseur :
+
+1. inscription avec `Type de compte = Fournisseur` ;
+2. affichage de la page d'attente `Pending.jsx` ;
+3. l'admin traite la demande dans `NouvellesDemandes.jsx` ;
+4. après validation, le compte reçoit le rôle `supplier` ;
+5. le fournisseur accède à `SupplierShell`.
+
+`AjouterProduit.jsx` est une page secondaire fonctionnelle :
+
+- route : `/supplier/products/new` ;
+- formulaire produit : titre, description, catégorie, prix, statut ;
+- upload multiple d'images via `multipart/form-data` ;
+- aperçu local des images avant envoi ;
+- service utilisé : `src/services/supplier.js`.
+
+À l'enregistrement, le bouton `Publier` crée/met à jour le produit fournisseur puis soumet une proposition au backoffice. L'article reste en `publicationStatus: "En attente"` tant que l'admin ne l'a pas validé dans `Articles.jsx`. Les refus admin créent une notification fournisseur avec justification.
 
 ### Dashboard
 
@@ -143,7 +197,7 @@ Le budget live calcule dynamiquement :
 - estimation max ;
 - dépassement éventuel.
 
-Les données produits sont aujourd'hui locales dans `PRODUCTS`. Si elles deviennent API, conserver la même forme de données côté service.
+Les données produits proviennent du store synchronisé `src/services/adminData.js`, alimenté par les actions admin et supplier. Seuls les articles validés (`publicationStatus` absent ou `Validé`) apparaissent dans le catalogue utilisateur.
 
 ### Workspace
 
@@ -177,12 +231,14 @@ Les pages login/register utilisent `AuthLayout`, `PasswordInput`, `react-hook-fo
 
 - `AppShell.jsx` : structure des pages connectées, sidebar, header, thème, menus.
 - `AdminShell.jsx` : structure des pages administrateur, avec les mêmes composants UI et un layout spécifique admin.
+- `SupplierShell.jsx` : structure des pages fournisseur, avec les mêmes composants UI et un layout spécifique supplier.
 - `AdminRoute.jsx` : protection des routes admin selon le rôle `admin`.
+- `SupplierRoute.jsx` : protection des routes supplier selon le rôle `supplier`.
 - `Sidebar.jsx` : navigation latérale. Styles isolés dans `Sidebar.css`.
 - `Header.jsx` : barre supérieure, recherche, thème, utilisateur.
 - `Avatar.jsx` : avatar utilisateur dynamique.
-- `Button.jsx` : bouton générique avec variantes `primary`, `secondary`, `success`, `danger`, `outline`, `ghost`.
-- `Icon.jsx` : registre central des icônes SVG.
+- `components/ui/Button.jsx` : bouton générique avec variantes `primary`, `secondary`, `success`, `danger`, `outline`, `ghost`.
+- `components/ui/Icon.jsx` : registre central des icônes SVG via le design system.
 - `DonutChart.jsx` : chart donut basé sur Recharts.
 - `WorkspaceMiniGrid.jsx` : cards miniatures du workspace.
 - `espacepro.jsx` : layout détaillé des projets dans le workspace.
@@ -213,6 +269,7 @@ Tous les appels API passent par `src/services/api.js`.
 - `adminData.js` : store local dynamique des données backoffice.
 - `projects.js` : CRUD projets.
 - `products.js` : CRUD produits liés à un projet.
+- `supplier.js` : workspace fournisseur, CRUD produits supplier et upload d'images.
 
 Les routes API sont centralisées dans `src/constants/api.js`.
 
@@ -326,11 +383,26 @@ Il contient :
 
 La sidebar admin a des menus spécifiques, mais réutilise les mêmes styles que la sidebar user.
 
+### Supplier
+
+Le layout fournisseur est `SupplierShell.jsx`.
+
+Il contient :
+
+- sidebar supplier ;
+- header partagé ;
+- recherche ;
+- notifications de publication/refus ;
+- avatar ;
+- dark mode ;
+- routes protégées supplier.
+
 ### Guards
 
 - `GuestRoute.jsx` : empêche un utilisateur connecté de voir login/register.
-- `ProtectedRoute.jsx` : protège les routes user et renvoie un admin vers `/admin/dashboard`.
+- `ProtectedRoute.jsx` : protège les routes user et renvoie un admin vers `/admin/dashboard` ou un supplier vers `/supplier/dashboard`.
 - `AdminRoute.jsx` : protège les routes admin et renvoie un non-admin vers `/dashboard`.
+- `SupplierRoute.jsx` : protège les routes supplier et renvoie un non-supplier vers son espace autorisé.
 
 ## Repères De Personnalisation
 
@@ -342,8 +414,17 @@ Modifier la navigation :
 
 Modifier le catalogue :
 
-1. données produits et filtres : `src/pages/user/Catalogue.jsx`
-2. layout et style : blocs `.catalogue-*` dans `src/App.css`
+1. données et synchronisation : `src/services/adminData.js`
+2. rendu user : `src/pages/user/Catalogue.jsx`
+3. rendu des cards : `src/components/cardarticle.jsx` et `src/components/cardarticle.css`
+4. layout et style : blocs `.catalogue-*` dans `src/App.css`
+
+Modifier le parcours fournisseur :
+
+1. liste CRUD : `src/pages/supplier/Produits.jsx`
+2. création/publication : `src/pages/supplier/AjouterProduit.jsx`
+3. grille/liste catalogue supplier : `src/pages/supplier/Catalogue.jsx`
+4. API supplier : `src/services/supplier.js`
 
 Modifier le workspace :
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import Button from '../../components/Button';
-import Icon from '../../components/Icon';
+import { useSearchParams } from 'react-router-dom';
+import { Badge, Button, Icon } from '../../components/ui';
 import { getApiErrorMessage } from '../../services/api';
 import {
   createAdminSupplier,
@@ -8,7 +8,6 @@ import {
   fetchAdminSuppliers,
   updateAdminSupplier,
 } from '../../services/adminMongo';
-import { Badge } from './PageShell';
 
 const EMPTY_SUPPLIER = {
   id: '',
@@ -20,6 +19,7 @@ const EMPTY_SUPPLIER = {
 };
 
 export default function Fournisseurs() {
+  const [searchParams] = useSearchParams();
   const [suppliers, setSuppliers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -48,7 +48,7 @@ export default function Fournisseurs() {
   }, []);
 
   const filteredSuppliers = useMemo(() => {
-    const query = searchTerm.trim().toLowerCase();
+    const query = [searchTerm, searchParams.get('q') || ''].join(' ').trim().toLowerCase();
     if (!query) return suppliers;
 
     return suppliers.filter((supplier) => (
@@ -56,7 +56,7 @@ export default function Fournisseurs() {
       || String(supplier.contact || '').toLowerCase().includes(query)
       || String(supplier.region || '').toLowerCase().includes(query)
     ));
-  }, [searchTerm, suppliers]);
+  }, [searchParams, searchTerm, suppliers]);
 
   async function upsertSupplier(supplier) {
     try {
@@ -97,7 +97,7 @@ export default function Fournisseurs() {
   return (
     <div className="admin-suppliers-page">
       <header className="admin-suppliers-header">
-        <h1>Fournisseurs</h1>
+
 
         <label className="admin-products-search admin-suppliers-search">
           <span className="visually-hidden">Rechercher un fournisseur</span>

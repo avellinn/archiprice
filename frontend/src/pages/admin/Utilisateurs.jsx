@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import Icon from '../../components/Icon';
+import { useSearchParams } from 'react-router-dom';
+import { Badge, Icon } from '../../components/ui';
 import { getApiErrorMessage } from '../../services/api';
 import {
   createAdminUser,
@@ -7,22 +8,16 @@ import {
   fetchAdminUsers,
   updateAdminUser,
 } from '../../services/adminMongo';
-import { Badge } from './PageShell';
 
-const SUBSCRIPTION_FLOW = ['Essai', 'Basique', 'Premium'];
 const ROLE_LABELS = {
   admin: 'Admin',
+  supplier: 'Supplier',
   user: 'User',
 };
 
-function getNextSubscription(currentSubscription) {
-  if (currentSubscription === '-') return '-';
-  const currentIndex = SUBSCRIPTION_FLOW.indexOf(currentSubscription);
-  return SUBSCRIPTION_FLOW[(currentIndex + 1) % SUBSCRIPTION_FLOW.length];
-}
-
 function getUserRole(user) {
   if (String(user.role || '').toLowerCase() === 'admin' || user.type === 'Admin') return 'admin';
+  if (String(user.role || '').toLowerCase() === 'supplier' || user.type === 'Fournisseur') return 'supplier';
   return 'user';
 }
 
@@ -32,6 +27,7 @@ function getSimulationCount(user) {
 }
 
 export default function Utilisateurs() {
+  const [searchParams] = useSearchParams();
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -70,13 +66,15 @@ export default function Utilisateurs() {
   ), [users]);
 
   const filteredUsers = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const headerSearchTerm = searchParams.get('q') || '';
+    const normalizedSearch = [searchTerm, headerSearchTerm].join(' ').trim().toLowerCase();
 
     return users.filter((user) => {
       const role = getUserRole(user);
       const matchesSearch = !normalizedSearch
         || String(user.name || '').toLowerCase().includes(normalizedSearch)
         || String(user.email || '').toLowerCase().includes(normalizedSearch)
+        || String(user.phone || '').toLowerCase().includes(normalizedSearch)
         || String(user.type || '').toLowerCase().includes(normalizedSearch)
         || role.toLowerCase().includes(normalizedSearch);
       const matchesType = typeFilter === 'Tous' || user.type === typeFilter;
@@ -84,7 +82,7 @@ export default function Utilisateurs() {
 
       return matchesSearch && matchesType && matchesRole;
     });
-  }, [roleFilter, searchTerm, typeFilter, users]);
+  }, [roleFilter, searchParams, searchTerm, typeFilter, users]);
 
   async function updateUser(userId, patch) {
     const previousUsers = users;
@@ -127,6 +125,31 @@ export default function Utilisateurs() {
       setUsers(previousUsers);
       setError(getApiErrorMessage(apiError, "La suppression de l'utilisateur a échoué."));
     }
+  }
+
+  function editUser(user) {
+    const nextName = window.prompt('Nom', user.name || '');
+    if (nextName === null) return;
+
+    const nextEmail = window.prompt('Email', user.email || '');
+    if (nextEmail === null) return;
+
+    const nextPhone = window.prompt('Téléphone', user.phone || '');
+    if (nextPhone === null) return;
+
+    const nextStatus = window.prompt('Statut: Actif, Inactif ou Bloqué', user.status || 'Actif');
+    if (nextStatus === null) return;
+
+    const normalizedStatus = ['Actif', 'Inactif', 'Bloqué'].includes(nextStatus.trim())
+      ? nextStatus.trim()
+      : user.status;
+
+    updateUser(user.id, {
+      name: nextName.trim() || user.name,
+      email: nextEmail.trim() || user.email,
+      phone: nextPhone.trim(),
+      status: normalizedStatus,
+    });
   }
 
   return (
@@ -179,6 +202,7 @@ export default function Utilisateurs() {
               <tr>
                 <th>Nom</th>
                 <th>Email</th>
+                <th>Téléphone</th>
                 <th>Type</th>
                 <th>Rôle</th>
                 <th>Simulations</th>
@@ -191,13 +215,13 @@ export default function Utilisateurs() {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan="9" className="admin-users-management__state">
+                  <td colSpan="10" className="admin-users-management__state">
                     Chargement des utilisateurs Mongo...
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="admin-users-management__state">
+                  <td colSpan="10" className="admin-users-management__state">
                     Aucun utilisateur trouvé.
                   </td>
                 </tr>
@@ -206,6 +230,7 @@ export default function Utilisateurs() {
                   <tr key={`${user.id || user.email}-${index}`}>
                     <td>{user.name}</td>
                     <td>{user.email}</td>
+                    <td>{user.phone || '-'}</td>
                     <td>{user.type}</td>
                     <td>
                       <Badge tone={getUserRole(user) === 'admin' ? 'warning' : 'neutral'}>
@@ -215,7 +240,7 @@ export default function Utilisateurs() {
                     <td>{getSimulationCount(user)}</td>
                     <td>{user.inscription}</td>
                     <td>
-                      <Badge tone={user.status === 'Actif' ? 'success' : 'danger'}>
+                      <Badge tone={user.status === 'Actif' ? 'success' : user.status === 'Bloqué' ? 'warning' : 'danger'}>
                         {user.status}
                       </Badge>
                     </td>
@@ -228,31 +253,32 @@ export default function Utilisateurs() {
                       <div className="admin-users-management__actions">
                         <button
                           type="button"
-                          aria-label={`Changer le type de ${user.name}`}
-                          onClick={() => updateUser(user.id, {
-                            type: user.type === 'Admin' ? 'Architecte' : 'Admin',
-                            subscription: user.type === 'Admin' ? 'Essai' : '-',
-                          })}
+                          title="Modifier nom, email, téléphone et statut"
+                          aria-label={`Modifier ${user.name}`}
+                          onClick={() => editUser(user)}
                         >
-                          <Icon name="Workspaces" size="sm" />
+                          <Icon name="Edit" size="sm" />
                         </button>
                         <button
                           type="button"
-                          aria-label={`Changer l'abonnement de ${user.name}`}
-                          onClick={() => updateUser(user.id, { subscription: getNextSubscription(user.subscription) })}
-                        >
-                          <Icon name="Link" size="sm" />
-                        </button>
-                        <button
-                          type="button"
-                          aria-label={`Activer ou désactiver ${user.name}`}
+                          title={user.status === 'Actif' ? 'Désactiver' : 'Activer'}
+                          aria-label={user.status === 'Actif' ? `Désactiver ${user.name}` : `Activer ${user.name}`}
                           onClick={() => updateUser(user.id, { status: user.status === 'Actif' ? 'Inactif' : 'Actif' })}
                         >
                           <Icon name="Visibility" size="sm" />
                         </button>
                         <button
                           type="button"
+                          title="Bloquer"
+                          aria-label={`Bloquer ${user.name}`}
+                          onClick={() => updateUser(user.id, { status: 'Bloqué' })}
+                        >
+                          <Icon name="VisibilityOff" size="sm" />
+                        </button>
+                        <button
+                          type="button"
                           className="is-danger"
+                          title="Supprimer"
                           aria-label={`Supprimer ${user.name}`}
                           onClick={() => deleteUser(user.id)}
                         >

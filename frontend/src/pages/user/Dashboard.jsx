@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import Button from '../../components/Button';
 import DonutChartCard from '../../components/DonutChart';
-import Icon from '../../components/Icon';
-import Text from '../../components/Text';
+import { Button, Icon, Text } from '../../components/ui';
 import { fetchProjects } from '../../services/projects';
 
 const MONTH_ACTIVITY = [

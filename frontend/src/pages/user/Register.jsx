@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import '../../styles/authForm.css';
 import AuthLayout from '../../components/AuthLayout';
 import PasswordInput from '../../components/PasswordInput';
-import Text from '../../components/Text';
+import { Text } from '../../components/ui';
 import useAuth from '../../context/useAuth';
 import { getApiErrorMessage } from '../../services/api';
 
@@ -12,18 +12,20 @@ export default function Register() {
   const navigate = useNavigate();
   const { register: registerUser } = useAuth();
   const [apiError, setApiError] = useState(null);
+  const [accountType, setAccountType] = useState('user');
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm();
 
   const onSubmit = async (data) => {
     setApiError(null);
     try {
-      await registerUser(data);
-      navigate('/dashboard', { replace: true });
+      await registerUser({ ...data, accountType });
+      navigate(accountType === 'supplier' ? '/supplier/pending' : '/dashboard', { replace: true });
     } catch (err) {
       setApiError(getApiErrorMessage(err, 'Inscription impossible'));
     }
@@ -43,6 +45,23 @@ export default function Register() {
       }
     >
       <form className="auth-form" onSubmit={handleSubmit(onSubmit)} noValidate>
+        <div className="auth-field">
+          <label className="auth-label" htmlFor="register-account-type">
+            Type de compte
+          </label>
+          <select
+            id="register-account-type"
+            className="auth-input"
+            value={accountType}
+            onChange={(event) => {
+              setAccountType(event.target.value);
+              setValue('accountType', event.target.value);
+            }}
+          >
+            <option value="user">Utilisateur</option>
+            <option value="supplier">Fournisseur</option>
+          </select>
+        </div>
 
         <div className="auth-field">
           <label className="auth-label" htmlFor="register-email">
@@ -62,6 +81,43 @@ export default function Register() {
             </Text>
           )}
         </div>
+
+        {accountType === 'supplier' && (
+          <>
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="register-company">
+                Nom de la boutique
+              </label>
+              <input
+                id="register-company"
+                type="text"
+                className="auth-input"
+                placeholder="Ex: Meubles Plus"
+                {...register('companyName', {
+                  required: accountType === 'supplier' ? 'Nom de boutique requis' : false,
+                })}
+              />
+              {errors.companyName && (
+                <Text as="span" size="sm" className="auth-field-error">
+                  {errors.companyName.message}
+                </Text>
+              )}
+            </div>
+
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="register-phone">
+                Téléphone
+              </label>
+              <input
+                id="register-phone"
+                type="tel"
+                className="auth-input"
+                placeholder="Votre numéro de téléphone"
+                {...register('phone')}
+              />
+            </div>
+          </>
+        )}
 
         <PasswordInput
           id="register-password"

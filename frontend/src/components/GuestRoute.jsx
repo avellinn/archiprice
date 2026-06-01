@@ -14,7 +14,7 @@ export default function GuestRoute({ children }) {
   }
 
   if (isAuthenticated) {
-    return <Navigate to={user?.role === 'admin' ? '/admin/dashboard' : '/dashboard'} replace />;
+    return <Navigate to={user?.role === 'admin' ? '/admin/dashboard' : user?.role === 'supplier' ? '/supplier/dashboard' : '/dashboard'} replace />;
   }
 
   return children;

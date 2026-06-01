@@ -1,4 +1,4 @@
-import Text from '../../components/Text';
+import { Text } from '../../components/ui';
 
 export default function Invoices() {
   return (

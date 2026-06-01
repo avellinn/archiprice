@@ -5,7 +5,7 @@ function generateToken(userId, role = 'user') {
     throw new Error('JWT_SECRET non configuré');
   }
 
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+  return jwt.sign({ id: userId, role }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
 }

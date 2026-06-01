@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import Button from '../../components/Button';
 import CardArticle, { ArticleFullscreen } from '../../components/cardarticle';
-import Icon from '../../components/Icon';
 import Recap from '../../components/recap';
+import { Button, Icon } from '../../components/ui';
 import { getApiErrorMessage } from '../../services/api';
 import { useAdminData } from '../../services/adminData';
 import { createProduct } from '../../services/products';
@@ -127,6 +126,10 @@ function extractProjectBudget(project) {
   return Number.isFinite(budget) && budget > 0 ? budget : null;
 }
 
+function isPublishedCatalogueProduct(product) {
+  return !product.publicationStatus || product.publicationStatus === 'Validé';
+}
+
 export default function Catalogue() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -171,6 +174,7 @@ export default function Catalogue() {
 
   const products = useMemo(() => (
     (Array.isArray(adminData.products) ? adminData.products : [])
+      .filter(isPublishedCatalogueProduct)
       .map((product) => buildCatalogueProduct(product, adminData))
   ), [adminData]);
 
@@ -180,7 +184,10 @@ export default function Catalogue() {
     ranges: ['Toutes', ...adminData.taxonomies.ranges.map((range) => range.name)],
     neighborhoods: [
       'Tous',
-      ...new Set((Array.isArray(adminData.products) ? adminData.products : []).map((product) => product.neighborhood).filter(Boolean)),
+      ...new Set((Array.isArray(adminData.products) ? adminData.products : [])
+        .filter(isPublishedCatalogueProduct)
+        .map((product) => product.neighborhood)
+        .filter(Boolean)),
     ],
   }), [
     adminData.products,
@@ -352,7 +359,6 @@ export default function Catalogue() {
             onClick={handleWorkspaceReturn}
           >
             <Icon name="ArrowLeft" size="sm" />
-            return
           </button>
           <span className="catalogue-eyebrow">Explorer Catalogue</span>
           <h1>Filtres</h1>

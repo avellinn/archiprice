@@ -6,6 +6,7 @@ import productsRouter from './products.js';
 import adminRouter from './admin.js';
 import catalogueConfigRouter from './catalogueConfig.js';
 import uploadsRouter from './uploads.js';
+import supplierRouter from './supplier.js';
 
 const router = express.Router();
 
@@ -16,5 +17,6 @@ router.use(uploadsRouter);
 router.use('/projects', projectsRouter);
 router.use('/projects/:projectId/products', productsRouter);
 router.use('/admin', adminRouter);
+router.use('/supplier', supplierRouter);
 
 export default router;

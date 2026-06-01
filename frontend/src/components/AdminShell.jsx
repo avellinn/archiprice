@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Header from './Header';
 import Icon from './Icon';
 import Sidebar from './Sidebar';
 import useAuth from '../context/useAuth';
+import { fetchAdminUsers, fetchSupplierRequests } from '../services/adminMongo';
+import { useAdminData } from '../services/adminData';
 import { getAvatarColor, getDisplayName, getUserInitials } from '../utils/userDisplay';
 import siteLogo from '../assets/images/log.png';
 
@@ -12,6 +14,7 @@ const ADMIN_PAGE_TITLES = {
   '/admin/catalogue/products': 'Articles',
   '/admin/catalogue/filters': 'Catégories & filtres',
   '/admin/suppliers': 'Fournisseurs',
+  '/admin/suppliers/requests': 'Nouvelles demandes',
   '/admin/users': 'Administration utilisateurs',
   '/admin/simulations': 'Simulations',
   '/admin/support': 'Support',
@@ -19,15 +22,60 @@ const ADMIN_PAGE_TITLES = {
 };
 
 export default function AdminShell() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isThemeDark, setIsThemeDark] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState('');
   const [searchMessage, setSearchMessage] = useState('');
+  const [adminData] = useAdminData();
+  const [pendingSupplierRequests, setPendingSupplierRequests] = useState([]);
+  const [recentUsers, setRecentUsers] = useState([]);
+  const [lastSeenUsersAt, setLastSeenUsersAt] = useState(() => (
+    Number(window.localStorage.getItem('archiprice:admin-notifications-seen-at') || 0)
+  ));
+
+  const refreshNotifications = useCallback(async () => {
+    try {
+      const [requests, users] = await Promise.all([
+        fetchSupplierRequests(),
+        fetchAdminUsers(),
+      ]);
+
+      setPendingSupplierRequests(requests.filter((request) => request.status === 'pending'));
+      setRecentUsers(
+        users
+          .filter((item) => String(item.role || '').toLowerCase() === 'user')
+          .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+          .slice(0, 5),
+      );
+    } catch {
+      setPendingSupplierRequests([]);
+      setRecentUsers([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    const refreshTimer = window.setTimeout(() => {
+      refreshNotifications();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(refreshTimer);
+    };
+  }, [refreshNotifications, location.pathname]);
+
+  const unseenRecentUsers = useMemo(
+    () => recentUsers.filter((item) => new Date(item.createdAt || 0).getTime() > lastSeenUsersAt),
+    [lastSeenUsersAt, recentUsers],
+  );
+  const pendingPublications = useMemo(() => (
+    (adminData.products || []).filter((product) => product.publicationStatus === 'En attente')
+  ), [adminData.products]);
+  const notificationCount = pendingSupplierRequests.length + unseenRecentUsers.length + pendingPublications.length;
 
   const sidebarSections = useMemo(
     () => [
@@ -61,8 +109,21 @@ export default function AdminShell() {
           {
             id: 'admin-suppliers',
             label: 'Fournisseurs',
-            path: '/admin/suppliers',
             icon: <Icon name="Workspaces" />,
+            defaultOpen: true,
+            children: [
+              {
+                id: 'admin-suppliers-list',
+                label: 'Liste fournisseurs',
+                path: '/admin/suppliers',
+              },
+              {
+                id: 'admin-supplier-requests',
+                label: 'Nouvelles demandes',
+                path: '/admin/suppliers/requests',
+                badge: pendingSupplierRequests.length || undefined,
+              },
+            ],
           },
           {
             id: 'admin-users',
@@ -91,13 +152,13 @@ export default function AdminShell() {
           {
             id: 'logout',
             label: 'Déconnexion',
-            action: true,
+            path: '/deconnexion',
             icon: <Icon name="Logout" />,
           },
         ],
       },
     ],
-    [],
+    [pendingSupplierRequests.length],
   );
 
   function handleSearchSubmit() {
@@ -105,13 +166,40 @@ export default function AdminShell() {
     setSearchMessage(query ? `Recherche admin : ${query}` : 'Saisissez un mot-clé pour rechercher.');
   }
 
+  function handleSearchChange(value) {
+    const nextParams = new URLSearchParams(searchParams);
+    const query = value.trim();
+
+    if (query) {
+      nextParams.set('q', value);
+    } else {
+      nextParams.delete('q');
+    }
+
+    setSearchParams(nextParams, { replace: true });
+  }
+
+  function handleNotificationsClick() {
+    const nextOpen = !isNotificationsOpen;
+    setIsNotificationsOpen(nextOpen);
+    setIsAccountOpen(false);
+
+    if (nextOpen) {
+      refreshNotifications();
+      const now = Date.now();
+      window.localStorage.setItem('archiprice:admin-notifications-seen-at', String(now));
+      setLastSeenUsersAt(now);
+    }
+  }
+
   function handleLogout() {
     setIsAccountOpen(false);
-    logout();
-    navigate('/login', { replace: true });
+    navigate('/deconnexion');
   }
 
   const currentPage = ADMIN_PAGE_TITLES[location.pathname] || 'Administration';
+  const searchValue = searchParams.get('q') || '';
+  const searchPlaceholder = `Rechercher dans ${currentPage.toLowerCase()}`;
 
   return (
     <main
@@ -130,9 +218,6 @@ export default function AdminShell() {
         variant="admin"
         sections={sidebarSections}
         isOpen={!isSidebarCollapsed}
-        onItemClick={(itemId) => {
-          if (itemId === 'logout') handleLogout();
-        }}
         onClose={() => setIsSidebarCollapsed(true)}
         userLink="/admin/users"
         userLinkLabel="Accéder au compte administrateur"
@@ -152,17 +237,16 @@ export default function AdminShell() {
           isSidebarCollapsed={isSidebarCollapsed}
           isThemeDark={isThemeDark}
           searchValue={searchValue}
+          searchPlaceholder={searchPlaceholder}
+          notificationCount={notificationCount}
           onAccountClick={() => {
             setIsAccountOpen((open) => !open);
             setIsNotificationsOpen(false);
           }}
           onLogout={handleLogout}
           onMenuClick={() => setIsSidebarCollapsed((collapsed) => !collapsed)}
-          onNotificationsClick={() => {
-            setIsNotificationsOpen((open) => !open);
-            setIsAccountOpen(false);
-          }}
-          onSearchChange={setSearchValue}
+          onNotificationsClick={handleNotificationsClick}
+          onSearchChange={handleSearchChange}
           onSearchSubmit={handleSearchSubmit}
           onThemeToggle={() => setIsThemeDark((dark) => !dark)}
         />
@@ -170,7 +254,36 @@ export default function AdminShell() {
         {isNotificationsOpen && (
           <div className="dashboard-floating-panel notification-panel">
             <strong>Notifications admin</strong>
-            <span>Aucune nouvelle notification backoffice.</span>
+            {pendingSupplierRequests.length === 0 && recentUsers.length === 0 && pendingPublications.length === 0 ? (
+              <span>Aucune nouvelle notification backoffice.</span>
+            ) : (
+              <div className="notification-panel__list">
+                {pendingSupplierRequests.map((request) => (
+                  <Link key={request.id} to="/admin/suppliers/requests" className="notification-panel__item">
+                    <Icon name="Workspaces" size="sm" />
+                    <span>
+                      Demande fournisseur : <b>{request.companyName}</b>
+                    </span>
+                  </Link>
+                ))}
+                {pendingPublications.map((product) => (
+                  <Link key={product.id} to="/admin/catalogue/products" className="notification-panel__item">
+                    <Icon name="Inventory" size="sm" />
+                    <span>
+                      Publication fournisseur : <b>{product.name}</b>
+                    </span>
+                  </Link>
+                ))}
+                {recentUsers.map((item) => (
+                  <Link key={item.id} to="/admin/users" className="notification-panel__item">
+                    <Icon name="AccountCircle" size="sm" />
+                    <span>
+                      Nouvelle inscription user : <b>{item.name || item.email}</b>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

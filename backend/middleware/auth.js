@@ -29,15 +29,22 @@ async function protect(req, res, next) {
     return res.status(401).json({ error: 'Token invalide ou expiré' });
   }
 }
-function requireAdmin(req, res, next) {
-  const role = String(req.user?.role || '').toLowerCase();
-  const type = String(req.user?.type || '').toLowerCase();
 
-  if (req.user && (role === 'admin' || type === 'admin')) {
-    next(); // utilisateur admin → on continue
-  } else {
-    res.status(403).json({ error: 'Accès réservé aux BackOffice' });
-  }
+// Fonction générique pour vérifier un rôle
+function requireRole(role) {
+  return (req, res, next) => {
+    // protect a déjà placé req.user
+    const userRole = String(req.user?.role || '').toLowerCase();
+    if (userRole === role) {
+      next();
+    } else {
+      res.status(403).json({ error: `Accès réservé aux ${role}s` });
+    }
+  };
 }
 
-export { protect, requireAdmin };
+// Middlewares spécifiques pour chaque rôle
+const requireAdmin = requireRole('admin');
+const requireSupplier = requireRole('supplier');
+
+export { protect, requireAdmin, requireSupplier };

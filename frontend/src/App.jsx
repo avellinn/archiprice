@@ -4,9 +4,12 @@ import AdminShell from './components/AdminShell';
 import AppShell from './components/AppShell';
 import GuestRoute from './components/GuestRoute';
 import ProtectedRoute from './components/ProtectedRoute';
+import SupplierRoute from './components/SupplierRoute';
+import SupplierShell from './components/SupplierShell';
 import CategoriesFiltres from './pages/admin/CategoriesFiltres';
 import BackofficeDashboard from './pages/admin/Dashboard';
 import Fournisseurs from './pages/admin/Fournisseurs';
+import NouvellesDemandes from './pages/admin/NouvellesDemandes';
 import Paramètres from './pages/admin/Paramètres';
 import Articles from './pages/admin/Articles';
 import Simulations from './pages/admin/Simulations';
@@ -20,6 +23,15 @@ import Catalogue from './pages/user/Catalogue';
 import Invoices from './pages/user/Invoices';
 import Logout from './pages/user/Logout';
 import Workspace from './pages/user/Workspace';
+import SupplierAnalysedon from './pages/supplier/Analysedon';
+import SupplierCatalogue from './pages/supplier/Catalogue';
+import SupplierClients from './pages/supplier/Clients';
+import SupplierFichiers from './pages/supplier/Fichiers';
+import SupplierMaBoutique from './pages/supplier/MaBoutique';
+import SupplierParametres from './pages/supplier/Parametres';
+import SupplierPending from './pages/supplier/Pending';
+import SupplierAjouterProduit from './pages/supplier/AjouterProduit';
+import SupplierProduits from './pages/supplier/Produits';
 import './App.css';
 
 function App() {
@@ -43,6 +55,7 @@ function App() {
             </GuestRoute>
           }
         />
+        <Route path="/supplier/pending" element={<SupplierPending />} />
         <Route
           element={
             <AdminRoute>
@@ -55,6 +68,7 @@ function App() {
           <Route path="/admin/catalogue/products" element={<Articles />} />
           <Route path="/admin/catalogue/filters" element={<CategoriesFiltres />} />
           <Route path="/admin/suppliers" element={<Fournisseurs />} />
+          <Route path="/admin/suppliers/requests" element={<NouvellesDemandes />} />
           <Route path="/admin/users" element={<Utilisateurs />} />
           <Route path="/admin/simulations" element={<Simulations />} />
           <Route path="/admin/support" element={<Support />} />
@@ -64,6 +78,23 @@ function App() {
           <Route path="/admin/settings" element={<Paramètres />} />
           <Route path="/admin/settings/simulations" element={<Navigate to="/admin/settings" replace />} />
           <Route path="/admin/settings/regional-coefficients" element={<Navigate to="/admin/settings" replace />} />
+        </Route>
+        <Route
+          element={
+            <SupplierRoute>
+              <SupplierShell />
+            </SupplierRoute>
+          }
+        >
+          <Route path="/supplier" element={<Navigate to="/supplier/dashboard" replace />} />
+          <Route path="/supplier/dashboard" element={<SupplierAnalysedon />} />
+          <Route path="/supplier/shop" element={<SupplierMaBoutique />} />
+          <Route path="/supplier/products" element={<SupplierProduits />} />
+          <Route path="/supplier/products/new" element={<SupplierAjouterProduit />} />
+          <Route path="/supplier/catalogue" element={<SupplierCatalogue />} />
+          <Route path="/supplier/clients" element={<SupplierClients />} />
+          <Route path="/supplier/content/files" element={<SupplierFichiers />} />
+          <Route path="/supplier/settings" element={<SupplierParametres />} />
         </Route>
         <Route
           element={
@@ -77,7 +108,6 @@ function App() {
           <Route path="/workspace" element={<Workspace />} />
           <Route path="/factures" element={<Invoices />} />
           <Route path="/deconnexion" element={<Logout />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
         <Route
           path="*"

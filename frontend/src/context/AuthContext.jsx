@@ -93,6 +93,11 @@ export function AuthProvider({ children }) {
   const register = useCallback(
     async (payload) => {
       const { token, user: userData } = await registerRequest(payload);
+      if (userData?.type === 'Fournisseur' && userData?.role !== 'supplier') {
+        setStoredToken(null);
+        setUser(null);
+        return userData;
+      }
       applySession(token, userData, true);
       return userData;
     },
