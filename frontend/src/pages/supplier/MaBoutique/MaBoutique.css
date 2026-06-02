@@ -1,0 +1,16 @@
+/* Page styles migrated from App.css */
+.supplier-shop-page {
+  min-height: calc(100vh - 64px);
+  padding: 2.4rem 1rem 3rem;
+  background: #F1F1F1;
+  color: #202124;
+}
+
+.supplier-shop-alert {
+  width: min(100%, 1120px);
+  margin: 0 auto 1rem;
+}
+
+.dashboard-shell.is-theme-dark .supplier-shop-page {
+  background: var(--app-content-background);
+}

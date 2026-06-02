@@ -1,0 +1,48 @@
+/* Page styles migrated from App.css */
+.supplier-clients-page {
+  width: 90%;
+  max-width: none;
+  min-height: calc(100vh - 64px);
+  padding: 1.35rem 1rem 3rem;
+  background: #F1F1F1;
+}
+
+.supplier-clients-page .workspace-heading {
+  width: 100%;
+}
+
+.supplier-clients-table {
+  width: 100%;
+}
+
+.supplier-clients-table .ui-table-wrap,
+.supplier-clients-table .ui-data-table {
+  width: 100%;
+}
+
+.supplier-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.9rem;
+}
+
+.supplier-info-grid article {
+  display: grid;
+  gap: 0.35rem;
+  min-height: 120px;
+  padding: 1rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 10px;
+  background: var(--app-panel-background);
+}
+
+.supplier-info-grid article span {
+  color: var(--app-muted-color);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.supplier-info-grid article strong {
+  color: var(--app-heading-color);
+  font-size: 1rem;
+}

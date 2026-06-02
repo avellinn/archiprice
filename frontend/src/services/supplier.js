@@ -1,6 +1,51 @@
 import { API_ROUTES } from '../constants/api';
 import api from './api';
 
+export const SUPPLIER_WORKSPACE_EVENT = 'archiprice:supplier-workspace-change';
+const SUPPLIER_WORKSPACE_CHANNEL = 'archiprice-supplier-workspace';
+
+function getSupplierWorkspaceChannel() {
+  if (typeof window === 'undefined' || typeof window.BroadcastChannel === 'undefined') {
+    return null;
+  }
+
+  return new window.BroadcastChannel(SUPPLIER_WORKSPACE_CHANNEL);
+}
+
+export function notifySupplierWorkspaceChange(detail = {}) {
+  if (typeof window === 'undefined') return;
+
+  const payload = {
+    at: new Date().toISOString(),
+    ...detail,
+  };
+
+  window.dispatchEvent(new CustomEvent(SUPPLIER_WORKSPACE_EVENT, { detail: payload }));
+
+  const channel = getSupplierWorkspaceChannel();
+  if (channel) {
+    channel.postMessage(payload);
+    channel.close();
+  }
+}
+
+export function subscribeSupplierWorkspaceChange(callback) {
+  if (typeof window === 'undefined') return () => {};
+
+  const handleWindowEvent = (event) => callback(event.detail);
+  window.addEventListener(SUPPLIER_WORKSPACE_EVENT, handleWindowEvent);
+
+  const channel = getSupplierWorkspaceChannel();
+  if (channel) {
+    channel.addEventListener('message', (event) => callback(event.data));
+  }
+
+  return () => {
+    window.removeEventListener(SUPPLIER_WORKSPACE_EVENT, handleWindowEvent);
+    channel?.close();
+  };
+}
+
 export async function fetchSupplierWorkspace() {
   const { data } = await api.get(API_ROUTES.supplier.workspace);
   return data;
@@ -23,6 +68,7 @@ export async function createSupplierProduct(payload, files = []) {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 
+  notifySupplierWorkspaceChange({ action: 'create-product', productId: data.product?.id });
   return data.product;
 }
 
@@ -43,11 +89,13 @@ export async function updateSupplierProduct(productId, payload, files = []) {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 
+  notifySupplierWorkspaceChange({ action: 'update-product', productId });
   return data.product;
 }
 
 export async function deleteSupplierProduct(productId) {
   await api.delete(API_ROUTES.supplier.product(productId));
+  notifySupplierWorkspaceChange({ action: 'delete-product', productId });
 }
 
 export async function deleteSupplierProductImage(productId, publicId) {
@@ -55,5 +103,6 @@ export async function deleteSupplierProductImage(productId, publicId) {
     data: { publicId },
   });
 
+  notifySupplierWorkspaceChange({ action: 'delete-product-image', productId, publicId });
   return data.product;
 }

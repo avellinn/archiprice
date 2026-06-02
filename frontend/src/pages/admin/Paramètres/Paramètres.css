@@ -1,0 +1,262 @@
+/* Page styles migrated from App.css */
+.admin-settings-page {
+  display: grid;
+  grid-template-columns: minmax(240px, 280px) minmax(680px, 1fr);
+  gap: 2rem;
+  min-height: calc(100vh - 64px);
+  padding: 1.45rem 1.55rem 2rem;
+  background: var(--dashboard-page-background);
+}
+
+.admin-settings-config-card,
+.admin-settings-coefficients__table-card,
+.admin-settings-city-card {
+  border: 1px solid #e7edf5;
+  border-radius: 10px;
+  background: var(--app-card-background);
+  box-shadow: 0 16px 42px rgb(15 23 42 / 0.045);
+}
+
+.admin-settings-config-card {
+  align-self: start;
+  padding: 1.35rem 1.45rem;
+}
+
+.admin-settings-eyebrow {
+  display: block;
+  margin-bottom: 1.35rem;
+  color: #98a2b3;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.admin-settings-config-card h1,
+.admin-settings-coefficients__table-card h2,
+.admin-settings-city-card h2 {
+  margin: 0;
+  color: var(--app-heading-color);
+  font-weight: 900;
+}
+
+.admin-settings-config-card h1 {
+  margin-bottom: 1.55rem;
+  font-size: 1.2rem;
+}
+
+.admin-settings-form {
+  display: grid;
+  gap: 1.15rem;
+}
+
+.admin-settings-form label,
+.admin-settings-city-form label {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.admin-settings-form span,
+.admin-settings-city-form span {
+  color: #344054;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.admin-settings-form input,
+.admin-settings-form select,
+.admin-settings-city-form input {
+  min-height: 42px;
+  width: 100%;
+  padding: 0 0.85rem;
+  border: 1px solid #e5eaf2;
+  border-radius: 7px;
+  background: var(--app-card-background);
+  color: #344054;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 850;
+  outline: 0;
+  box-shadow: 0 5px 14px rgb(15 23 42 / 0.035);
+}
+
+.admin-settings-form input:focus,
+.admin-settings-form select:focus,
+.admin-settings-city-form input:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.12);
+}
+
+.admin-settings-form .btn {
+  min-height: 44px;
+  margin-top: 0.25rem;
+  background: #1d73f8;
+  font-weight: 900;
+}
+
+.admin-settings-form small,
+.admin-settings-city-form small {
+  color: #98a2b3;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.admin-settings-coefficients {
+  display: grid;
+  grid-template-columns: minmax(360px, 1fr) minmax(300px, 360px);
+  gap: 1.35rem;
+  align-items: start;
+}
+
+.admin-settings-coefficients__table-card {
+  padding: 1.35rem 1.45rem;
+}
+
+.admin-settings-coefficients__table-card h2 {
+  margin-bottom: 1.55rem;
+  font-size: 1.35rem;
+}
+
+.admin-settings-coefficients__table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #475467;
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.admin-settings-coefficients__table th,
+.admin-settings-coefficients__table td {
+  height: 56px;
+  padding: 0.75rem 0.6rem;
+  border-bottom: 1px solid #eef2f7;
+  text-align: left;
+}
+
+.admin-settings-coefficients__table th {
+  color: #344054;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.admin-settings-coefficients__table tr.is-selected {
+  background: #fbfdff;
+}
+
+.admin-settings-coefficients__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.admin-settings-coefficients__actions button,
+.admin-settings-city-card__header button {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #667085;
+  cursor: pointer;
+}
+
+.admin-settings-coefficients__actions button:hover,
+.admin-settings-city-card__header button:hover {
+  background: #eff6ff;
+  color: #1d73f8;
+}
+
+.admin-settings-coefficients__actions .is-danger {
+  color: #ef4444;
+}
+
+.admin-settings-coefficients__actions .is-danger:hover {
+  background: #fff1f2;
+  color: #dc2626;
+}
+
+.admin-settings-city-card {
+  padding: 1.35rem 1.45rem;
+}
+
+.admin-settings-city-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.45rem;
+}
+
+.admin-settings-city-card h2 {
+  font-size: 1.05rem;
+}
+
+.admin-settings-city-form {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.admin-settings-city-form b {
+  color: #ef4444;
+}
+
+.admin-settings-city-form__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+  margin-top: 2.35rem;
+}
+
+.admin-settings-city-form__actions .btn {
+  min-height: 42px;
+  font-weight: 900;
+}
+
+.admin-settings-city-form__actions .btn--outline {
+  border-color: #dfe6ef;
+  color: #344054;
+}
+
+.admin-settings-city-form__actions .btn--primary {
+  background: #1d73f8;
+}
+
+.dashboard-shell.is-theme-dark .admin-settings-config-card,
+.dashboard-shell.is-theme-dark .admin-settings-coefficients__table-card,
+.dashboard-shell.is-theme-dark .admin-settings-city-card,
+.dashboard-shell.is-theme-dark .admin-settings-form input,
+.dashboard-shell.is-theme-dark .admin-settings-form select,
+.dashboard-shell.is-theme-dark .admin-settings-city-form input {
+  border-color: var(--app-border-color);
+  background: var(--app-card-background);
+}
+
+.dashboard-shell.is-theme-dark .admin-settings-form span,
+.dashboard-shell.is-theme-dark .admin-settings-city-form span,
+.dashboard-shell.is-theme-dark .admin-settings-coefficients__table th,
+.dashboard-shell.is-theme-dark .admin-settings-coefficients__table,
+.dashboard-shell.is-theme-dark .admin-settings-form input,
+.dashboard-shell.is-theme-dark .admin-settings-form select,
+.dashboard-shell.is-theme-dark .admin-settings-city-form input {
+  color: var(--app-heading-color);
+}
+
+.dashboard-shell.is-theme-dark .admin-settings-coefficients__table th,
+.dashboard-shell.is-theme-dark .admin-settings-coefficients__table td {
+  border-color: var(--app-border-color);
+}
+
+.dashboard-shell.is-theme-dark .admin-settings-coefficients__table tr.is-selected {
+  background: #1f2937;
+}
+
+.admin-settings-coefficients {
+  overflow: hidden;
+}
+
+.admin-settings-coefficients__table-card,
+.admin-settings-city-card {
+  max-height: 100%;
+}

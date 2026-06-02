@@ -1,0 +1,207 @@
+/* Page styles migrated from App.css */
+.admin-suppliers-page {
+  min-height: calc(100vh - 64px);
+  padding: 1.55rem;
+  background: var(--dashboard-page-background);
+}
+
+.admin-suppliers-header {
+  display: grid;
+  grid-template-columns: auto minmax(280px, 520px) auto;
+  align-items: center;
+  gap: 1.6rem;
+  margin-bottom: 1.45rem;
+}
+
+.admin-suppliers-header h1 {
+  margin: 0;
+  color: var(--app-heading-color);
+  font-size: 1.65rem;
+  font-weight: 900;
+}
+
+.admin-suppliers-search {
+  justify-self: start;
+  width: 100%;
+  max-width: 520px;
+}
+
+.admin-suppliers-search svg {
+  right: 0.75rem;
+  left: auto;
+}
+
+.admin-suppliers-search input {
+  height: 44px;
+  padding-right: 2.3rem;
+  padding-left: 1rem;
+}
+
+.admin-suppliers-card {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 520px;
+  border: 1px solid #e5ebf3;
+  border-radius: 10px;
+  background: var(--app-card-background);
+  box-shadow: 0 16px 42px rgb(15 23 42 / 0.045);
+  overflow: hidden;
+}
+
+.admin-suppliers-requests {
+  grid-template-rows: auto;
+  gap: 0.85rem;
+  min-height: 0;
+  margin-bottom: 1rem;
+  padding: 1rem;
+}
+
+.admin-suppliers-requests__header,
+.admin-suppliers-requests__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.admin-suppliers-requests__header h2 {
+  margin: 0;
+  color: var(--app-heading-color);
+  font-size: 1.05rem;
+}
+
+.admin-suppliers-requests__header p {
+  margin: 0.2rem 0 0;
+  color: var(--app-muted-color);
+}
+
+.admin-suppliers-requests__list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.admin-suppliers-requests__item {
+  padding: 0.9rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 10px;
+  background: var(--app-panel-background);
+}
+
+.admin-suppliers-requests__item strong,
+.admin-suppliers-requests__item span,
+.admin-suppliers-requests__item small {
+  display: block;
+}
+
+.admin-suppliers-requests__item span,
+.admin-suppliers-requests__item small {
+  margin-top: 0.2rem;
+  color: var(--app-muted-color);
+}
+
+.admin-suppliers-requests__actions {
+  display: inline-flex;
+  gap: 0.5rem;
+}
+
+.admin-suppliers-requests__actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 8px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-suppliers-requests__actions button:hover {
+  border-color: #1d73f8;
+  color: #1d73f8;
+}
+
+.admin-suppliers-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-suppliers-table {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: collapse;
+  color: #344054;
+  font-size: 0.9rem;
+}
+
+.admin-suppliers-table thead {
+  background: #f8fafc;
+}
+
+.admin-suppliers-table th,
+.admin-suppliers-table td {
+  height: 58px;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e8edf4;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.admin-suppliers-table th {
+  color: #344054;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.admin-suppliers-table td {
+  font-weight: 850;
+}
+
+.admin-suppliers-table tbody tr:hover {
+  background: #fbfdff;
+}
+
+.admin-suppliers-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.admin-suppliers-actions .is-link {
+  color: #2f7df6;
+}
+
+.admin-suppliers-actions .is-danger {
+  color: #ef4444;
+}
+
+.admin-suppliers-actions .is-danger:hover {
+  background: #fff1f2;
+  color: #dc2626;
+}
+
+.admin-suppliers-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.2rem 1.35rem;
+  border-top: 1px solid #eef2f7;
+}
+
+.dashboard-shell.is-theme-dark .admin-suppliers-table,
+.dashboard-shell.is-theme-dark .admin-suppliers-search input {
+  color: var(--app-text-color);
+}
+
+.dashboard-shell.is-theme-dark .admin-suppliers-table thead,
+.dashboard-shell.is-theme-dark .admin-suppliers-table tbody tr:hover {
+  background: #1f2937;
+}
+
+.dashboard-shell.is-theme-dark .admin-suppliers-table th,
+.dashboard-shell.is-theme-dark .admin-suppliers-table td,
+.dashboard-shell.is-theme-dark .admin-suppliers-pagination {
+  border-color: var(--app-border-color);
+}

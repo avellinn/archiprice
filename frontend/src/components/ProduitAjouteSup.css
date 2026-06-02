@@ -42,7 +42,9 @@
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.7rem;
+  justify-content: flex-start;
+  gap: 0.85rem;
+  min-width: 18rem;
 }
 
 .supplier-products-table__actions button:not(.btn) {
@@ -73,6 +75,15 @@
   min-width: 5.25rem;
   height: auto;
   border-radius: var(--radius-md);
+}
+
+.supplier-products-table__actions .supplier-action-btn + .supplier-action-btn {
+  margin-left: 0.15rem;
+}
+
+.supplier-products-table__actions .supplier-action-btn--publish,
+.supplier-products-table__actions .supplier-action-btn--pending {
+  margin-left: 2.95rem;
 }
 
 
@@ -121,6 +132,10 @@
     color: var(--app-muted-color);
     font-size: 0.75rem;
     font-weight: 900;
+  }
+
+  .supplier-products-table__actions {
+    min-width: 0;
   }
 
   .supplier-products-table td:nth-child(1)::before { content: 'Produit'; }

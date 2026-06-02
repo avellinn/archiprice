@@ -1,4 +1,4 @@
-import { Button, Icon } from './ui';
+import { Alert, Button, Icon } from './ui';
 import './ProduitAjouteSup.css';
 
 function formatFCFA(amount) {
@@ -27,7 +27,7 @@ export default function ProduitAjouteSup({
   return (
     <section className="workspace-card supplier-dashboard__products supplier-products-list">
       <h2>Produits ajoutés</h2>
-      {error && <p className="auth-error">{error}</p>}
+      {error && <Alert variant="danger">{error}</Alert>}
       {isLoading ? (
         <p className="muted">Chargement des produits...</p>
       ) : (
@@ -63,6 +63,18 @@ export default function ProduitAjouteSup({
                     <td>{formatFCFA(product.unitPrice)}</td>
                     <td>
                       <span className="supplier-products-table__actions">
+                        <button type="button" title="Modifier" onClick={() => onEdit(product)}>
+                          <Icon name="Edit" size="sm" />
+                        </button>
+                        <button
+                          type="button"
+                          title="Supprimer"
+                          className="is-danger"
+                          disabled={deletingProductId === product.id}
+                          onClick={() => onDelete(product.id)}
+                        >
+                          <Icon name="Delete" size="sm" />
+                        </button>
                         <Button
                           type="button"
                           size="sm"
@@ -83,18 +95,6 @@ export default function ProduitAjouteSup({
                         >
                           Retirer
                         </Button>
-                        <button type="button" title="Modifier" onClick={() => onEdit(product)}>
-                          <Icon name="Edit" size="sm" />
-                        </button>
-                        <button
-                          type="button"
-                          title="Supprimer"
-                          className="is-danger"
-                          disabled={deletingProductId === product.id}
-                          onClick={() => onDelete(product.id)}
-                        >
-                          <Icon name="Delete" size="sm" />
-                        </button>
                       </span>
                     </td>
                   </tr>

@@ -1,0 +1,57 @@
+/* Page styles migrated from App.css */
+.user-settings-page {
+  min-height: calc(100vh - 64px);
+  padding: 1.25rem;
+  background: var(--app-content-background);
+  color: var(--app-heading-color);
+}
+
+.user-settings-header h1 {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 1rem;
+  font-size: 1.35rem;
+}
+
+.user-settings-list {
+  display: grid;
+  gap: 0.85rem;
+  max-width: 860px;
+}
+
+.user-settings-card {
+  display: grid;
+  grid-template-columns: 2.35rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 82px;
+  padding: 1rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 12px;
+  background: var(--app-card-background);
+  box-shadow: var(--app-card-shadow);
+}
+
+.user-settings-card__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 999px;
+  background: #F5F1EB;
+  color: #224B73;
+}
+
+.user-settings-card h2 {
+  margin: 0 0 0.25rem;
+  color: var(--app-heading-color);
+  font-size: 0.98rem;
+}
+
+.user-settings-card p {
+  margin: 0;
+  color: var(--app-muted-color);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
