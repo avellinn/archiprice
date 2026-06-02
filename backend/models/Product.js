@@ -90,9 +90,9 @@ const productSchema = new mongoose.Schema(
       default: [],
       validate: {
         validator(images) {
-          return images.length <= 10;
+          return images.length <= 12;
         },
-        message: 'Maximum 10 images par produit',
+        message: 'Maximum 12 images par produit',
       },
     },
   },

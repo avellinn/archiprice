@@ -211,7 +211,7 @@ function normalizeProducts(products = []) {
       const images = (Array.isArray(product.images) ? product.images : [])
         .map(normalizeProductImage)
         .filter(Boolean)
-        .slice(0, 10);
+        .slice(0, 12);
       const image = normalizeProductImage(product.image);
       const primaryImage = images[0]?.secure_url || (typeof image === 'string' ? image : image?.secure_url) || '';
 

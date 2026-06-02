@@ -1,0 +1,132 @@
+.supplier-products-list {
+  margin-top: 1rem;
+  overflow: visible;
+}
+
+.supplier-products-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.supplier-products-table th,
+.supplier-products-table td {
+  padding: 0.8rem 0.65rem;
+  border-bottom: 1px solid var(--app-border-color);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.supplier-products-table th {
+  color: var(--app-muted-color);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.supplier-products-table td {
+  color: var(--app-heading-color);
+  font-size: 0.88rem;
+}
+
+.supplier-products-table td strong,
+.supplier-products-table td span {
+  display: block;
+}
+
+.supplier-products-table td span {
+  margin-top: 0.16rem;
+  color: var(--app-muted-color);
+  font-size: 0.78rem;
+}
+
+.supplier-products-table__actions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.supplier-products-table__actions button:not(.btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 7px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  cursor: pointer;
+}
+
+.supplier-products-table__actions button:not(.btn):hover {
+  border-color: #000000;
+  color: #0b0b0b;
+}
+
+.supplier-products-table__actions button.is-danger:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.supplier-products-table__actions .btn {
+  width: auto;
+  min-width: 5.25rem;
+  height: auto;
+  border-radius: var(--radius-md);
+}
+
+
+.supplier-action-btn--withdraw {
+  border-color: #5c5853;
+  background: #F5F1EB;
+  color: #224B73;
+}
+
+
+.supplier-action-btn--pending {
+  border-color: #5c5853;
+  background: #F5F1EB;
+  color: #224B73;
+  
+}
+
+@media (max-width: 860px) {
+  .supplier-products-table,
+  .supplier-products-table thead,
+  .supplier-products-table tbody,
+  .supplier-products-table th,
+  .supplier-products-table td,
+  .supplier-products-table tr {
+    display: block;
+  }
+
+  .supplier-products-table thead {
+    display: none;
+  }
+
+  .supplier-products-table tr {
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--app-border-color);
+  }
+
+  .supplier-products-table td {
+    display: grid;
+    grid-template-columns: 7rem minmax(0, 1fr);
+    gap: 0.75rem;
+    border-bottom: 0;
+    padding: 0.35rem 0;
+  }
+
+  .supplier-products-table td::before {
+    color: var(--app-muted-color);
+    font-size: 0.75rem;
+    font-weight: 900;
+  }
+
+  .supplier-products-table td:nth-child(1)::before { content: 'Produit'; }
+  .supplier-products-table td:nth-child(2)::before { content: 'Catégorie'; }
+  .supplier-products-table td:nth-child(3)::before { content: 'Pièce'; }
+  .supplier-products-table td:nth-child(4)::before { content: 'Gamme'; }
+  .supplier-products-table td:nth-child(5)::before { content: 'Prix'; }
+  .supplier-products-table td:nth-child(6)::before { content: 'Actions'; }
+}

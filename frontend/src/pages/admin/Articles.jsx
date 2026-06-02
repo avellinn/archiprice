@@ -325,6 +325,9 @@ export default function Articles() {
   }
 
   async function resetArticles() {
+    const shouldReset = window.confirm('Supprimer tous les articles du catalogue ? Cette action est irreversible.');
+    if (!shouldReset) return;
+
     const publicIds = products
       .flatMap((product) => getProductImages(product).map(getImagePublicId))
       .filter(Boolean);
@@ -635,10 +638,10 @@ export default function Articles() {
 
             <footer className="admin-rejection-modal__footer">
               <Button type="button" variant="outline" onClick={closeRejectSupplierPublication}>
-                CANCEL
+                Annuler
               </Button>
               <Button type="button" disabled={!rejectionReason.trim()} onClick={confirmRejectSupplierPublication}>
-                UPDATE
+                Envoyer
               </Button>
             </footer>
           </section>

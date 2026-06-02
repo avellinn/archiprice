@@ -12,6 +12,7 @@ const PAGE_TITLES = {
   '/catalogue': 'Explorer catalogue',
   '/workspace': 'Mon espace de travail',
   '/factures': 'Estimations exportées',
+  '/parametres': 'Paramètres',
   '/deconnexion': 'Déconnexion',
 };
 
@@ -20,6 +21,7 @@ const SEARCH_PLACEHOLDERS = {
   '/catalogue': 'Rechercher un article, une boutique...',
   '/workspace': 'Rechercher un projet',
   '/factures': 'Rechercher une estimation',
+  '/parametres': 'Rechercher un paramètre',
 };
 
 export default function AppShell() {
@@ -61,6 +63,12 @@ export default function AppShell() {
             label: 'Estimations exportées',
             path: '/factures',
             icon: <Icon name="ReceiptLong" />,
+          },
+          {
+            id: 'parametres',
+            label: 'Paramètres',
+            path: '/parametres',
+            icon: <Icon name="Info" />,
           },
           {
             id: 'logout',
@@ -150,7 +158,12 @@ export default function AppShell() {
 
         {isNotificationsOpen && (
           <div className="dashboard-floating-panel notification-panel">
-            <strong>Notifications</strong>
+            <div className="notification-panel__header">
+              <strong>Notifications</strong>
+              <button type="button" onClick={() => setIsNotificationsOpen(false)}>
+                Fermer
+              </button>
+            </div>
             <span>Aucune nouvelle notification pour le moment.</span>
           </div>
         )}

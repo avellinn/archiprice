@@ -13,7 +13,7 @@ const INITIAL_PRODUCT_FORM = {
   availability: '',
   type: '',
   range: '',
-  supplier: '',
+  supplier: 'Ma boutique',
   collections: '',
   tags: '',
 };
@@ -183,7 +183,7 @@ export default function AjouterProduit() {
   }
 
   function handleFilesChange(event) {
-    setFiles(Array.from(event.target.files || []).slice(0, 10));
+    setFiles(Array.from(event.target.files || []).slice(0, 12));
   }
 
   function submitProductToAdmin(product) {
@@ -225,17 +225,31 @@ export default function AjouterProduit() {
   async function saveProduct(event) {
     event.preventDefault();
     setError('');
+
+    if (!productForm.name.trim()
+      || !productForm.description.trim()
+      || !selectedCategory
+      || !selectedRoom
+      || !selectedRange
+      || !selectedAvailability
+      || !productForm.supplier
+      || productForm.price === ''
+      || (files.length === 0 && existingImages.length === 0)) {
+      setError('Tous les champs sont requis, y compris au moins une image.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const payload = {
-        name: productForm.name || 'Nouveau produit',
-        description: productForm.description,
+        name: productForm.name.trim(),
+        description: productForm.description.trim(),
         category: selectedCategory,
         room: selectedRoom,
         range: selectedRange,
         availability: selectedAvailability,
-        unitPrice: productForm.price || 0,
+        unitPrice: productForm.price,
         unit: 'u',
       };
 
@@ -244,7 +258,7 @@ export default function AjouterProduit() {
         : await createSupplierProduct(payload, files);
 
       submitProductToAdmin(savedProduct);
-      navigate('/supplier/catalogue');
+      navigate('/supplier/products');
     } catch (apiError) {
       setError(getApiErrorMessage(apiError, "Impossible d'enregistrer le produit."));
     } finally {
@@ -303,6 +317,7 @@ export default function AjouterProduit() {
                   value={productForm.description}
                   onChange={(event) => updateProductForm('description', event.target.value)}
                   placeholder="Ajoutez une description complète du produit."
+                  required
                 />
               </div>
             </label>
@@ -319,6 +334,7 @@ export default function AjouterProduit() {
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
                     multiple
+                    required={existingImages.length === 0 && files.length === 0}
                     onChange={handleFilesChange}
                   />
                 </div>
@@ -345,7 +361,7 @@ export default function AjouterProduit() {
 
             <label className="supplier-product-field">
               <span>Catégorie</span>
-              <select value={selectedCategory} onChange={(event) => updateProductForm('category', event.target.value)}>
+              <select required value={selectedCategory} onChange={(event) => updateProductForm('category', event.target.value)}>
                 <option value="">Choisir une catégorie de produits</option>
                 {taxonomyOptions.categories.map((category) => (
                   <option key={category} value={category}>{category}</option>
@@ -364,6 +380,7 @@ export default function AjouterProduit() {
                   value={productForm.price}
                   onChange={(event) => updateProductForm('price', event.target.value)}
                   placeholder="0"
+                  required
                 />
                 <b>FCFA</b>
               </div>
@@ -380,7 +397,7 @@ export default function AjouterProduit() {
             </div>
             <label className="supplier-product-field">
               <span>Disponibilité</span>
-              <select value={selectedAvailability} onChange={(event) => updateProductForm('availability', event.target.value)}>
+              <select required value={selectedAvailability} onChange={(event) => updateProductForm('availability', event.target.value)}>
                 <option value="">Choisir une disponibilité</option>
                 {taxonomyOptions.availability.map((availability) => (
                   <option key={availability} value={availability}>{availability}</option>
@@ -389,7 +406,7 @@ export default function AjouterProduit() {
             </label>
             <label className="supplier-product-field">
               <span>Pièce</span>
-              <select value={selectedRoom} onChange={(event) => updateProductForm('type', event.target.value)}>
+              <select required value={selectedRoom} onChange={(event) => updateProductForm('type', event.target.value)}>
                 <option value="">Choisir une pièce</option>
                 {taxonomyOptions.rooms.map((room) => (
                   <option key={room} value={room}>{room}</option>
@@ -398,14 +415,13 @@ export default function AjouterProduit() {
             </label>
             <label className="supplier-product-field">
               <span>Fournisseur</span>
-              <select value={productForm.supplier} onChange={(event) => updateProductForm('supplier', event.target.value)}>
-                
-                <option>Ma boutique</option>
+              <select required value={productForm.supplier} onChange={(event) => updateProductForm('supplier', event.target.value)}>
+                <option value="Ma boutique">Ma boutique</option>
               </select>
             </label>
             <label className="supplier-product-field">
               <span>Gamme</span>
-              <select value={selectedRange} onChange={(event) => updateProductForm('range', event.target.value)}>
+              <select required value={selectedRange} onChange={(event) => updateProductForm('range', event.target.value)}>
                 <option value="">Choisir une gamme</option>
                 {taxonomyOptions.ranges.map((range) => (
                   <option key={range} value={range}>{range}</option>

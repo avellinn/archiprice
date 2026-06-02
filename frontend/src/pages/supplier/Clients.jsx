@@ -1,9 +1,44 @@
-import { Badge, Text } from '../../components/ui';
+import { Badge, Table, Text } from '../../components/ui';
 
 const CLIENTS = [
-  { name: 'Architectes', detail: 'Demandes issues du catalogue', status: 'Actif' },
-  { name: 'Décorateurs', detail: 'Sélections et simulations', status: 'Actif' },
-  { name: 'Particuliers', detail: 'Consultations directes', status: 'À suivre' },
+  {
+    id: 'architectes',
+    segment: 'Architectes',
+    source: 'Demandes issues du catalogue',
+    simulations: 12,
+    lastActivity: 'Aujourd’hui',
+    status: 'Actif',
+  },
+  {
+    id: 'decorateurs',
+    segment: 'Décorateurs',
+    source: 'Sélections et simulations',
+    simulations: 8,
+    lastActivity: 'Hier',
+    status: 'Actif',
+  },
+  {
+    id: 'particuliers',
+    segment: 'Particuliers',
+    source: 'Consultations directes',
+    simulations: 3,
+    lastActivity: 'Cette semaine',
+    status: 'À suivre',
+  },
+];
+
+const CLIENT_COLUMNS = [
+  { key: 'segment', label: 'Client' },
+  { key: 'source', label: 'Source' },
+  { key: 'simulations', label: 'Simulations' },
+  { key: 'lastActivity', label: 'Dernière activité' },
+  {
+    key: 'status',
+    label: 'Statut',
+    render: (status) => (
+      <Badge tone={status === 'Actif' ? 'success' : 'warning'}>{status}</Badge>
+    ),
+  },
 ];
 
 export default function Clients() {
@@ -18,15 +53,12 @@ export default function Clients() {
         </div>
       </div>
 
-      <section className="workspace-card supplier-info-grid">
-        {CLIENTS.map((client) => (
-          <article key={client.name}>
-            <span>{client.name}</span>
-            <strong>{client.detail}</strong>
-            <Badge tone={client.status === 'Actif' ? 'success' : 'warning'}>{client.status}</Badge>
-          </article>
-        ))}
-      </section>
+      <Table
+        columns={CLIENT_COLUMNS}
+        data={CLIENTS}
+        getRowId={(client) => client.id}
+        emptyLabel="Aucun client disponible."
+      />
     </div>
   );
 }

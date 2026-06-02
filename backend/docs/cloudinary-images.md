@@ -42,7 +42,7 @@ DELETE /api/projects/:projectId/products/:id/images
 POST   /api/supplier/products
 ```
 
-Le `POST` accepte jusqu’à 10 images, chacune en PNG, JPG ou WebP, avec une taille maximale de 5 Mo.
+Le `POST` accepte jusqu’à 12 images, chacune en PNG, JPG ou WebP, avec une taille maximale de 5 Mo.
 
 `POST /api/supplier/products` crée directement un produit fournisseur et accepte aussi les fichiers `image`. C'est l'endpoint utilisé par l'interface supplier `/supplier/products/new`.
 

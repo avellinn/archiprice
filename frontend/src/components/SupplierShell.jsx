@@ -12,11 +12,20 @@ const SUPPLIER_PAGE_TITLES = {
   '/supplier/dashboard': 'Analyses de données',
   '/supplier/shop': 'Ma boutique',
   '/supplier/products': 'Produits',
-  '/supplier/catalogue': 'Catalogue',
   '/supplier/clients': 'Clients',
   '/supplier/content/files': 'Fichiers',
   '/supplier/settings': 'Paramètres',
 };
+
+const SUPPLIER_DISMISSED_NOTIFICATIONS_KEY = 'archiprice:supplier-dismissed-notifications';
+
+function readDismissedNotificationKeys() {
+  try {
+    return JSON.parse(window.localStorage.getItem(SUPPLIER_DISMISSED_NOTIFICATIONS_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
 
 export default function SupplierShell() {
   const { user } = useAuth();
@@ -29,6 +38,7 @@ export default function SupplierShell() {
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [searchMessage, setSearchMessage] = useState('');
   const [adminData] = useAdminData();
+  const [dismissedNotificationKeys, setDismissedNotificationKeys] = useState(readDismissedNotificationKeys);
 
   const publicationNotices = useMemo(() => {
     const userIds = [user?.id, user?._id].filter(Boolean).map(String);
@@ -38,6 +48,9 @@ export default function SupplierShell() {
 
     return notices.filter((notice) => !notice.supplierUserId || userIds.includes(String(notice.supplierUserId)));
   }, [adminData.supplierPublicationNotices, user]);
+  const visiblePublicationNotices = useMemo(() => (
+    publicationNotices.filter((notice) => !dismissedNotificationKeys.includes(`supplier-notice-${notice.id}`))
+  ), [dismissedNotificationKeys, publicationNotices]);
 
   const sidebarSections = useMemo(
     () => [
@@ -61,12 +74,6 @@ export default function SupplierShell() {
             label: 'Produits',
             path: '/supplier/products',
             icon: <Icon name="ReceiptLong" />,
-          },
-          {
-            id: 'supplier-catalogue',
-            label: 'Catalogue',
-            path: '/supplier/catalogue',
-            icon: <Icon name="Explore" />,
           },
           {
             id: 'supplier-clients',
@@ -128,6 +135,17 @@ export default function SupplierShell() {
     navigate('/deconnexion');
   }
 
+  function dismissVisibleNotifications() {
+    const nextKeys = [
+      ...dismissedNotificationKeys,
+      ...visiblePublicationNotices.map((notice) => `supplier-notice-${notice.id}`),
+    ];
+    const uniqueKeys = [...new Set(nextKeys)];
+    setDismissedNotificationKeys(uniqueKeys);
+    window.localStorage.setItem(SUPPLIER_DISMISSED_NOTIFICATIONS_KEY, JSON.stringify(uniqueKeys));
+    setIsNotificationsOpen(false);
+  }
+
   return (
     <main
       className={[
@@ -163,7 +181,7 @@ export default function SupplierShell() {
           isThemeDark={isThemeDark}
           searchValue={searchValue}
           searchPlaceholder={`Rechercher dans ${currentPage.toLowerCase()}`}
-          notificationCount={publicationNotices.length}
+          notificationCount={visiblePublicationNotices.length}
           onAccountClick={() => {
             setIsAccountOpen((open) => !open);
             setIsNotificationsOpen(false);
@@ -181,12 +199,17 @@ export default function SupplierShell() {
 
         {isNotificationsOpen && (
           <div className="dashboard-floating-panel notification-panel">
-            <strong>Notifications supplier</strong>
-            {publicationNotices.length === 0 ? (
+            <div className="notification-panel__header">
+              <strong>Notifications supplier</strong>
+              <button type="button" onClick={dismissVisibleNotifications}>
+                Tout fermer
+              </button>
+            </div>
+            {visiblePublicationNotices.length === 0 ? (
               <span>Aucune nouvelle notification boutique.</span>
             ) : (
               <div className="notification-panel__list">
-                {publicationNotices.map((notice) => (
+                {visiblePublicationNotices.map((notice) => (
                   <div key={notice.id} className="notification-panel__item">
                     <Icon name="Info" size="sm" />
                     <span>

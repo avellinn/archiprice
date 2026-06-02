@@ -21,6 +21,20 @@ const ADMIN_PAGE_TITLES = {
   '/admin/settings': 'Paramètres',
 };
 
+const ADMIN_DISMISSED_NOTIFICATIONS_KEY = 'archiprice:admin-dismissed-notifications';
+
+function readDismissedNotificationKeys(storageKey) {
+  try {
+    return JSON.parse(window.localStorage.getItem(storageKey) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function writeDismissedNotificationKeys(storageKey, keys) {
+  window.localStorage.setItem(storageKey, JSON.stringify([...new Set(keys)]));
+}
+
 export default function AdminShell() {
   const { user } = useAuth();
   const location = useLocation();
@@ -36,6 +50,9 @@ export default function AdminShell() {
   const [recentUsers, setRecentUsers] = useState([]);
   const [lastSeenUsersAt, setLastSeenUsersAt] = useState(() => (
     Number(window.localStorage.getItem('archiprice:admin-notifications-seen-at') || 0)
+  ));
+  const [dismissedNotificationKeys, setDismissedNotificationKeys] = useState(() => (
+    readDismissedNotificationKeys(ADMIN_DISMISSED_NOTIFICATIONS_KEY)
   ));
 
   const refreshNotifications = useCallback(async () => {
@@ -75,7 +92,25 @@ export default function AdminShell() {
   const pendingPublications = useMemo(() => (
     (adminData.products || []).filter((product) => product.publicationStatus === 'En attente')
   ), [adminData.products]);
-  const notificationCount = pendingSupplierRequests.length + unseenRecentUsers.length + pendingPublications.length;
+  const visibleSupplierRequests = useMemo(() => (
+    pendingSupplierRequests.filter((request) => !dismissedNotificationKeys.includes(`supplier-request-${request.id}`))
+  ), [dismissedNotificationKeys, pendingSupplierRequests]);
+  const visiblePublications = useMemo(() => (
+    pendingPublications.filter((product) => !dismissedNotificationKeys.includes(`publication-${product.id}`))
+  ), [dismissedNotificationKeys, pendingPublications]);
+  const visibleRecentUsers = useMemo(() => (
+    recentUsers.filter((item) => !dismissedNotificationKeys.includes(`user-${item.id}`))
+  ), [dismissedNotificationKeys, recentUsers]);
+  const visibleUnseenRecentUsers = useMemo(() => (
+    unseenRecentUsers.filter((item) => !dismissedNotificationKeys.includes(`user-${item.id}`))
+  ), [dismissedNotificationKeys, unseenRecentUsers]);
+  const visibleNotificationKeys = useMemo(() => [
+    ...visibleSupplierRequests.map((request) => `supplier-request-${request.id}`),
+    ...visiblePublications.map((product) => `publication-${product.id}`),
+    ...visibleRecentUsers.map((item) => `user-${item.id}`),
+  ], [visiblePublications, visibleRecentUsers, visibleSupplierRequests]);
+  const notificationCount = visibleSupplierRequests.length + visibleUnseenRecentUsers.length + visiblePublications.length;
+  const visiblePanelNotificationCount = visibleSupplierRequests.length + visibleRecentUsers.length + visiblePublications.length;
 
   const sidebarSections = useMemo(
     () => [
@@ -197,6 +232,13 @@ export default function AdminShell() {
     navigate('/deconnexion');
   }
 
+  function dismissVisibleNotifications() {
+    const nextKeys = [...dismissedNotificationKeys, ...visibleNotificationKeys];
+    setDismissedNotificationKeys([...new Set(nextKeys)]);
+    writeDismissedNotificationKeys(ADMIN_DISMISSED_NOTIFICATIONS_KEY, nextKeys);
+    setIsNotificationsOpen(false);
+  }
+
   const currentPage = ADMIN_PAGE_TITLES[location.pathname] || 'Administration';
   const searchValue = searchParams.get('q') || '';
   const searchPlaceholder = `Rechercher dans ${currentPage.toLowerCase()}`;
@@ -253,12 +295,17 @@ export default function AdminShell() {
 
         {isNotificationsOpen && (
           <div className="dashboard-floating-panel notification-panel">
-            <strong>Notifications admin</strong>
-            {pendingSupplierRequests.length === 0 && recentUsers.length === 0 && pendingPublications.length === 0 ? (
+            <div className="notification-panel__header">
+              <strong>Notifications admin</strong>
+              <button type="button" onClick={dismissVisibleNotifications}>
+                Tout fermer
+              </button>
+            </div>
+            {visiblePanelNotificationCount === 0 ? (
               <span>Aucune nouvelle notification backoffice.</span>
             ) : (
               <div className="notification-panel__list">
-                {pendingSupplierRequests.map((request) => (
+                {visibleSupplierRequests.map((request) => (
                   <Link key={request.id} to="/admin/suppliers/requests" className="notification-panel__item">
                     <Icon name="Workspaces" size="sm" />
                     <span>
@@ -266,7 +313,7 @@ export default function AdminShell() {
                     </span>
                   </Link>
                 ))}
-                {pendingPublications.map((product) => (
+                {visiblePublications.map((product) => (
                   <Link key={product.id} to="/admin/catalogue/products" className="notification-panel__item">
                     <Icon name="Inventory" size="sm" />
                     <span>
@@ -274,7 +321,7 @@ export default function AdminShell() {
                     </span>
                   </Link>
                 ))}
-                {recentUsers.map((item) => (
+                {visibleRecentUsers.map((item) => (
                   <Link key={item.id} to="/admin/users" className="notification-panel__item">
                     <Icon name="AccountCircle" size="sm" />
                     <span>

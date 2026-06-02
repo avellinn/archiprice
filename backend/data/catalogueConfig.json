@@ -1,6 +1,6 @@
 {
-  "__version": 42,
-  "__updatedAt": 1780335209643,
+  "__version": 77,
+  "__updatedAt": 1780416919869,
   "users": [
     {
       "id": "user-jean-dupont",
@@ -53,7 +53,162 @@
       "subscription": "-"
     }
   ],
-  "products": [],
+  "products": [
+    {
+      "id": "supplier-product-6a1ecd3f30c50def1529d92c",
+      "sourceSupplierProductId": "6a1ecd3f30c50def1529d92c",
+      "supplierUserId": "6a1d7a91f44246ee96fd3f4d",
+      "name": "gjvh",
+      "description": "gyuyu",
+      "price": 2000000,
+      "image": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/pjyp1flmqq3x2ripsm3v?_a=BAMAPqhK0",
+      "images": [
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/pjyp1flmqq3x2ripsm3v?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/pjyp1flmqq3x2ripsm3v",
+          "metadata": {
+            "originalName": "Capture dâÃ©cran du 2026-05-28 15-56-22.png",
+            "mimeType": "image/png",
+            "bytes": 96376,
+            "width": 881,
+            "height": 968,
+            "format": "png",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        }
+      ],
+      "category": "Luminaire",
+      "room": "Chambre",
+      "range": "Essentiel",
+      "supplier": "Ma boutique",
+      "vat": "20%",
+      "visual": "sofa",
+      "city": "Cotonou",
+      "neighborhood": "",
+      "availability": "Disponible",
+      "publicationStatus": "En attente",
+      "publicationSource": "supplier",
+      "submittedAt": "2026-06-02T12:31:59.582Z"
+    },
+    {
+      "id": "supplier-product-1780402801843-d307db",
+      "sourceSupplierProductId": "6a1ebe6930c50def1529d92a",
+      "supplierUserId": "6a1d7a91f44246ee96fd3f4d",
+      "name": "n j d",
+      "description": "",
+      "price": 0,
+      "image": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/cciopikhpmh4ec8vvxtz?_a=BAMAPqhK0",
+      "images": [
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/cciopikhpmh4ec8vvxtz?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/cciopikhpmh4ec8vvxtz",
+          "metadata": {
+            "originalName": "Capture dâÃ©cran du 2026-05-28 15-54-43.png",
+            "mimeType": "image/png",
+            "bytes": 69202,
+            "width": 1036,
+            "height": 919,
+            "format": "png",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        },
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/lkbbqrxagtjfcaztzwae?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/lkbbqrxagtjfcaztzwae",
+          "metadata": {
+            "originalName": "Capture dâÃ©cran du 2026-05-28 15-56-22.png",
+            "mimeType": "image/png",
+            "bytes": 96376,
+            "width": 881,
+            "height": 968,
+            "format": "png",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        },
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/w5kcsmdswi7hwjcxg2p6?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/w5kcsmdswi7hwjcxg2p6",
+          "metadata": {
+            "originalName": "Capture dâÃ©cran du 2026-06-01 10-35-42.png",
+            "mimeType": "image/png",
+            "bytes": 144045,
+            "width": 1474,
+            "height": 1050,
+            "format": "png",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        }
+      ],
+      "category": "Luminaire",
+      "room": "",
+      "range": "",
+      "supplier": "Ma boutique",
+      "vat": "20%",
+      "visual": "sofa",
+      "city": "Cotonou",
+      "neighborhood": "",
+      "availability": "Disponible",
+      "publicationStatus": "En attente",
+      "publicationSource": "supplier",
+      "submittedAt": "2026-06-02T12:20:01.843Z"
+    },
+    {
+      "id": "prod-1780402715114-0459c2",
+      "sourceSupplierProductId": "6a1dbcc0fe22c19bc1230edc",
+      "supplierUserId": "6a1d7a91f44246ee96fd3f4d",
+      "name": "jheiuf copie",
+      "description": "eonfnbibrubif",
+      "price": 45412000,
+      "image": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/q0xnpnubjd060nrqesmb?_a=BAMAPqhK0",
+      "images": [
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/q0xnpnubjd060nrqesmb?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/q0xnpnubjd060nrqesmb",
+          "metadata": {
+            "originalName": "pexels-photo-1379640.jpeg",
+            "mimeType": "image/jpeg",
+            "bytes": 97336,
+            "width": 1125,
+            "height": 750,
+            "format": "jpg",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        },
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/xscaa1ljvgwlakltsjhz?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/xscaa1ljvgwlakltsjhz",
+          "metadata": {
+            "originalName": "pexels-pok-rie-1603821.jpg",
+            "mimeType": "image/jpeg",
+            "bytes": 2746439,
+            "width": 3616,
+            "height": 2598,
+            "format": "jpg",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        }
+      ],
+      "category": "Décoration",
+      "room": "Chambre",
+      "range": "Essentiel",
+      "supplier": "Ma boutique",
+      "vat": "20%",
+      "visual": "sofa",
+      "city": "Cotonou",
+      "neighborhood": "",
+      "availability": "Sur commande",
+      "publicationStatus": "Validé",
+      "publicationSource": "supplier",
+      "submittedAt": "2026-06-02T11:05:47.448Z",
+      "approvedAt": "2026-06-02T11:29:20.507Z"
+    }
+  ],
   "suppliers": [
     {
       "id": "sup-1",
@@ -376,6 +531,15 @@
   ],
   "supplierPublicationNotices": [
     {
+      "id": "supplier-notice-1780399746549-2c1002",
+      "supplierUserId": "6a1d7a91f44246ee96fd3f4d",
+      "productId": "6a1ebe6930c50def1529d92a",
+      "productName": "n j d",
+      "status": "Refusé",
+      "reason": "nj c",
+      "createdAt": "2026-06-02T11:29:06.549Z"
+    },
+    {
       "id": "supplier-notice-1780333952066-f20b99",
       "supplierUserId": "6a1d7a91f44246ee96fd3f4d",
       "productId": "6a1dbcc0fe22c19bc1230edc",
@@ -401,5 +565,22 @@
       "reason": "Veuiller confiermer",
       "createdAt": "2026-06-01T16:55:31.907Z"
     }
-  ]
+  ],
+  "supplierSettings": {
+    "shopProfile": {
+      "name": "Lookth",
+      "email": "avellinadjai@gmail.com",
+      "phone": "97456512"
+    },
+    "settings": {
+      "location": "Bénin",
+      "companyName": "",
+      "address": "",
+      "neighborhood": "",
+      "city": "Cotonou",
+      "timezone": "(GMT +01:00) Afrique centrale et de l’Ouest",
+      "language": "Français"
+    },
+    "savedAt": "2026-06-02T16:15:19.829Z"
+  }
 }

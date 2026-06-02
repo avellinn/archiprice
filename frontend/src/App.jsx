@@ -23,8 +23,8 @@ import Catalogue from './pages/user/Catalogue';
 import Invoices from './pages/user/Invoices';
 import Logout from './pages/user/Logout';
 import Workspace from './pages/user/Workspace';
+import UserParametres from './pages/user/Parametres';
 import SupplierAnalysedon from './pages/supplier/Analysedon';
-import SupplierCatalogue from './pages/supplier/Catalogue';
 import SupplierClients from './pages/supplier/Clients';
 import SupplierFichiers from './pages/supplier/Fichiers';
 import SupplierMaBoutique from './pages/supplier/MaBoutique';
@@ -91,7 +91,6 @@ function App() {
           <Route path="/supplier/shop" element={<SupplierMaBoutique />} />
           <Route path="/supplier/products" element={<SupplierProduits />} />
           <Route path="/supplier/products/new" element={<SupplierAjouterProduit />} />
-          <Route path="/supplier/catalogue" element={<SupplierCatalogue />} />
           <Route path="/supplier/clients" element={<SupplierClients />} />
           <Route path="/supplier/content/files" element={<SupplierFichiers />} />
           <Route path="/supplier/settings" element={<SupplierParametres />} />
@@ -107,6 +106,7 @@ function App() {
           <Route path="/catalogue" element={<Catalogue />} />
           <Route path="/workspace" element={<Workspace />} />
           <Route path="/factures" element={<Invoices />} />
+          <Route path="/parametres" element={<UserParametres />} />
           <Route path="/deconnexion" element={<Logout />} />
         </Route>
         <Route

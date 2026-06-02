@@ -18,6 +18,7 @@ export const API_ROUTES = {
     workspace: '/api/supplier/workspace',
     products: '/api/supplier/products',
     product: (id) => `/api/supplier/products/${id}`,
+    productImages: (id) => `/api/supplier/products/${id}/images`,
   },
   admin: {
     users: '/api/admin/users',

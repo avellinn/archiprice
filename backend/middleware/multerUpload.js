@@ -1,7 +1,7 @@
 import multer from 'multer';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
-const MAX_IMAGE_COUNT = 10;
+const MAX_IMAGE_COUNT = 12;
 const ALLOWED_IMAGE_MIME_TYPES = new Set([
   'image/jpeg',
   'image/png',
@@ -33,7 +33,7 @@ function handleMulterError(err, _req, res, next) {
   if (err instanceof multer.MulterError) {
     const messages = {
       LIMIT_FILE_SIZE: 'Image trop lourde. Taille maximale : 5 Mo',
-      LIMIT_FILE_COUNT: 'Maximum 10 images par article',
+      LIMIT_FILE_COUNT: 'Maximum 12 images par article',
       LIMIT_UNEXPECTED_FILE: 'Format image non autorisé. Utilisez JPG, PNG ou WebP',
     };
 

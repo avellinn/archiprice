@@ -57,7 +57,7 @@ function getProductImages(product) {
     ? product.images.map(getImageUrl).filter(Boolean)
     : [];
 
-  if (images.length > 0) return images.slice(0, 10);
+  if (images.length > 0) return images.slice(0, 12);
 
   const singleImage = getImageUrl(product?.image);
   return singleImage ? [singleImage] : [];

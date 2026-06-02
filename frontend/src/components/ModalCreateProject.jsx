@@ -69,6 +69,11 @@ export default function ModalCreateProject({ isOpen, onCancel, onCreated }) {
       return;
     }
 
+    if (!roomType || !budget.trim()) {
+      setError('Tous les champs sont requis');
+      return;
+    }
+
     setSubmitting(true);
     setError('');
 
@@ -122,12 +127,13 @@ export default function ModalCreateProject({ isOpen, onCancel, onCreated }) {
               placeholder="Entrez le nom de votre projet"
               maxLength={200}
               autoFocus
+              required
             />
           </label>
 
           <label className="modal-create-project__field">
             Type de pièce
-            <select value={roomType} onChange={(event) => setRoomType(event.target.value)}>
+            <select required value={roomType} onChange={(event) => setRoomType(event.target.value)}>
               {ROOM_TYPES.map((type) => (
                 <option key={type.value} value={type.value}>
                   {type.label}
@@ -145,6 +151,7 @@ export default function ModalCreateProject({ isOpen, onCancel, onCreated }) {
               placeholder="Votre budget"
               min="0"
               inputMode="numeric"
+              required
             />
           </label>
         </div>
@@ -159,7 +166,7 @@ export default function ModalCreateProject({ isOpen, onCancel, onCreated }) {
           <Button type="button" variant="danger" onClick={handleCancel} disabled={submitting}>
             Annuler
           </Button>
-          <Button type="submit" variant="success" isLoading={submitting} disabled={!projectName.trim()}>
+          <Button type="submit" variant="success" isLoading={submitting} disabled={!projectName.trim() || !budget.trim()}>
             Valider
           </Button>
         </div>

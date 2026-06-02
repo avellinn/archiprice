@@ -115,7 +115,7 @@ router.get('/products', asyncHandler(async (req, res) => {
 
 router.post(
   '/products',
-  upload.array('image', 10),
+  upload.array('image', 12),
   handleMulterError,
   asyncHandler(async (req, res) => {
     const supplier = await findOrCreateSupplierProfile(req.user);
@@ -168,7 +168,7 @@ router.post(
 
 router.put(
   '/products/:productId',
-  upload.array('image', 10),
+  upload.array('image', 12),
   handleMulterError,
   asyncHandler(async (req, res) => {
     const supplier = await findOrCreateSupplierProfile(req.user);
@@ -202,7 +202,7 @@ router.put(
         if (req.body[field] !== undefined) product[field] = req.body[field];
       });
       product.unitPrice = nextUnitPrice;
-      product.images = [...(product.images || []), ...uploadedImages].slice(0, 10);
+      product.images = [...(product.images || []), ...uploadedImages].slice(0, 12);
 
       if (!String(product.name || '').trim()) {
         return res.status(400).json({ error: 'Nom du produit requis' });
@@ -243,6 +243,38 @@ router.delete('/products/:productId', asyncHandler(async (req, res) => {
   await supplier.save();
 
   res.status(204).end();
+}));
+
+router.delete('/products/:productId/images', asyncHandler(async (req, res) => {
+  const supplier = await findOrCreateSupplierProfile(req.user);
+  const publicId = String(req.body.publicId || '').trim();
+
+  if (!publicId) {
+    return res.status(400).json({ error: 'Identifiant Cloudinary requis' });
+  }
+
+  const product = await Product.findOne({
+    _id: req.params.productId,
+    $or: [
+      { supplier: supplier._id },
+      { supplierUser: req.user._id },
+    ],
+  });
+
+  if (!product) {
+    return res.status(404).json({ error: 'Produit introuvable' });
+  }
+
+  const imageExists = (product.images || []).some((image) => image.public_id === publicId);
+  if (!imageExists) {
+    return res.status(404).json({ error: 'Image introuvable' });
+  }
+
+  await deleteProductImage(publicId);
+  product.images = product.images.filter((image) => image.public_id !== publicId);
+  await product.save();
+
+  return res.json({ product: formatProduct(product) });
 }));
 
 router.get('/workspace', asyncHandler(async (req, res) => {

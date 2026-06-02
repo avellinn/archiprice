@@ -1,9 +1,89 @@
-import { useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Icon } from '../../components/ui';
+import { getApiErrorMessage } from '../../services/api';
+import { deleteSupplierProductImage, fetchSupplierWorkspace } from '../../services/supplier';
+
+function getImageUrl(image) {
+  if (!image) return '';
+  if (typeof image === 'string') return image;
+  return image.secure_url || image.url || '';
+}
+
+function formatFileSize(bytes) {
+  const size = Number(bytes || 0);
+  if (!size) return 'Taille non renseignée';
+  if (size < 1024 * 1024) return `${Math.round(size / 1024)} Ko`;
+  return `${(size / (1024 * 1024)).toFixed(1)} Mo`;
+}
+
+function getProductFiles(products = []) {
+  return products.flatMap((product) => {
+    const images = Array.isArray(product.images) ? product.images : [];
+
+    return images.map((image, index) => {
+      const metadata = image?.metadata || {};
+
+      return {
+        id: `${product.id || product._id || product.name}-${image?.public_id || index}`,
+        productId: product.id || product._id || '',
+        publicId: image?.public_id || '',
+        productName: product.name || 'Produit sans nom',
+        name: metadata.originalName || `${product.name || 'produit'}-${index + 1}`,
+        type: metadata.mimeType || 'Image produit',
+        size: metadata.bytes,
+        url: getImageUrl(image),
+      };
+    }).filter((file) => file.url);
+  });
+}
 
 export default function Fichiers() {
   const fileInputRef = useRef(null);
   const [files, setFiles] = useState([]);
+  const [workspace, setWorkspace] = useState(null);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [deletingFileId, setDeletingFileId] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchSupplierWorkspace()
+      .then((data) => {
+        if (!cancelled) {
+          setWorkspace(data);
+          setError('');
+        }
+      })
+      .catch((apiError) => {
+        if (!cancelled) setError(getApiErrorMessage(apiError, 'Impossible de charger vos fichiers.'));
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const uploadedFiles = useMemo(() => getProductFiles(workspace?.products || []), [workspace?.products]);
+  const localFiles = useMemo(() => files.map((file, index) => ({
+    id: `local-${file.name}-${index}`,
+    productName: 'Import manuel',
+    name: file.name,
+    type: file.type || 'Fichier local',
+    size: file.size,
+    url: file.type?.startsWith('image/') ? URL.createObjectURL(file) : '',
+    isLocal: true,
+  })), [files]);
+  const visibleFiles = [...uploadedFiles, ...localFiles];
+
+  useEffect(() => () => {
+    localFiles.forEach((file) => {
+      if (file.url) URL.revokeObjectURL(file.url);
+    });
+  }, [localFiles]);
 
   function openFilePicker() {
     fileInputRef.current?.click();
@@ -11,6 +91,31 @@ export default function Fichiers() {
 
   function handleFilesChange(event) {
     setFiles(Array.from(event.target.files || []));
+  }
+
+  async function removeProductImage(file) {
+    if (!file.productId || !file.publicId) return;
+
+    const shouldDelete = window.confirm(`Supprimer l'image "${file.name}" ?`);
+    if (!shouldDelete) return;
+
+    setDeletingFileId(file.id);
+    setError('');
+
+    try {
+      const updatedProduct = await deleteSupplierProductImage(file.productId, file.publicId);
+
+      setWorkspace((currentWorkspace) => ({
+        ...currentWorkspace,
+        products: (currentWorkspace?.products || []).map((product) => (
+          product.id === updatedProduct.id ? updatedProduct : product
+        )),
+      }));
+    } catch (apiError) {
+      setError(getApiErrorMessage(apiError, "Impossible de supprimer l'image."));
+    } finally {
+      setDeletingFileId('');
+    }
   }
 
   return (
@@ -39,33 +144,73 @@ export default function Fichiers() {
           onChange={handleFilesChange}
         />
 
-        <div className="supplier-files-empty">
-          <div className="supplier-files-art" aria-hidden="true">
-            <span className="supplier-files-art__video">
-              <i />
-            </span>
-            <span className="supplier-files-art__image" />
-            <span className="supplier-files-art__document">
-              <i />
-              <b />
-              <b />
-              <b />
-            </span>
+        {isLoading && <p className="supplier-files-status">Chargement des fichiers...</p>}
+        {error && <p className="supplier-files-status auth-error">{error}</p>}
+
+        {!isLoading && !error && visibleFiles.length === 0 && (
+          <div className="supplier-files-empty">
+            <div className="supplier-files-art" aria-hidden="true">
+              <span className="supplier-files-art__video">
+                <i />
+              </span>
+              <span className="supplier-files-art__image" />
+              <span className="supplier-files-art__document">
+                <i />
+                <b />
+                <b />
+                <b />
+              </span>
+            </div>
+            <h2>Chargez et gérez vos fichiers</h2>
+            <p>Les fichiers peuvent être des images, des vidéos, des documents, etc.</p>
+            <Button type="button" variant="outline" size="sm" onClick={openFilePicker}>
+              Charger des fichiers
+            </Button>
           </div>
-          <h2>Chargez et gérez vos fichiers</h2>
-          <p>Les fichiers peuvent être des images, des vidéos, des documents, etc.</p>
-          <Button type="button" variant="outline" size="sm" onClick={openFilePicker}>
-            Charger des fichiers
-          </Button>
-          {files.length > 0 && (
-            <small>{files.length} fichier(s) sélectionné(s)</small>
-          )}
-        </div>
+        )}
+
+        {!isLoading && !error && visibleFiles.length > 0 && (
+          <div className="supplier-files-grid">
+            {visibleFiles.map((file) => (
+              <article key={file.id} className="supplier-file-card">
+                <div className="supplier-file-card__preview">
+                  {file.url ? <img src={file.url} alt={file.name} /> : <Icon name="Folder" size="lg" />}
+                </div>
+                <div className="supplier-file-card__body">
+                  <strong>{file.name}</strong>
+                  <span>{file.productName}</span>
+                  <small>{file.type} · {formatFileSize(file.size)}</small>
+                </div>
+                {file.isLocal && <span className="supplier-file-card__badge">Sélectionné</span>}
+                {!file.isLocal && file.publicId && (
+                  <button
+                    type="button"
+                    className="supplier-file-card__delete"
+                    title="Supprimer l'image"
+                    disabled={deletingFileId === file.id}
+                    onClick={() => removeProductImage(file)}
+                  >
+                    <Icon name="Delete" size="sm" />
+                  </button>
+                )}
+              </article>
+            ))}
+          </div>
+        )}
+
+        {!isLoading && !error && visibleFiles.length > 0 && (
+          <div className="supplier-files-empty supplier-files-empty--compact">
+            <Button type="button" variant="outline" size="sm" onClick={openFilePicker}>
+              Charger des fichiers
+            </Button>
+            {files.length > 0 && (
+              <small>{files.length} fichier(s) sélectionné(s)</small>
+            )}
+          </div>
+        )}
       </section>
 
-      <button type="button" className="supplier-files-help">
-        En savoir plus sur fichiers
-      </button>
+      
     </div>
   );
 }

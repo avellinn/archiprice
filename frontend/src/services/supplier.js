@@ -49,3 +49,11 @@ export async function updateSupplierProduct(productId, payload, files = []) {
 export async function deleteSupplierProduct(productId) {
   await api.delete(API_ROUTES.supplier.product(productId));
 }
+
+export async function deleteSupplierProductImage(productId, publicId) {
+  const { data } = await api.delete(API_ROUTES.supplier.productImages(productId), {
+    data: { publicId },
+  });
+
+  return data.product;
+}

@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.post(
   '/uploads/products/images',
-  upload.array('image', 10),
+  upload.array('image', 12),
   handleMulterError,
   asyncHandler(uploadImages),
 );

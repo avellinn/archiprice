@@ -75,10 +75,10 @@ function buildCatalogueProduct(product, adminData) {
   const supplier = adminData.suppliers.find((item) => item.name === product.supplier);
   const locationLabel = [product.city, product.neighborhood].filter(Boolean).join(' · ');
   const imageDocuments = Array.isArray(product.images) && product.images.length > 0
-    ? product.images.filter(Boolean).slice(0, 10)
+    ? product.images.filter(Boolean).slice(0, 12)
     : [];
   const images = imageDocuments.length > 0
-    ? imageDocuments.map(getImageUrl).filter(Boolean).slice(0, 10)
+    ? imageDocuments.map(getImageUrl).filter(Boolean).slice(0, 12)
     : [product.image].filter(Boolean);
   const primaryImage = images[0] || '';
 
@@ -246,6 +246,7 @@ export default function Catalogue() {
   );
   const fullscreenProduct = products.find((product) => product.id === fullscreenProductId);
   const fullscreenImage = fullscreenProduct?.images?.[fullscreenImageIndex] || fullscreenProduct?.image || '';
+  const hasCatalogueProducts = products.length > 0;
 
   function toggleProduct(productId) {
     setValidationError('');
@@ -350,7 +351,8 @@ export default function Catalogue() {
   }
 
   return (
-    <div className="catalogue-page catalogue-page--products">
+    <div className={`catalogue-page catalogue-page--products ${hasCatalogueProducts ? '' : 'catalogue-page--empty'}`}>
+      {hasCatalogueProducts && (
       <aside className="catalogue-filter-panel" aria-label="Filtres du catalogue">
         <div>
           <button
@@ -428,12 +430,13 @@ export default function Catalogue() {
           </div>
         </section>
       </aside>
+      )}
 
       <main className="catalogue-product-main">
         <div className="catalogue-product-heading">
           <div>
             <span className="catalogue-eyebrow">Cartes articles</span>
-            <h2>{filteredProducts.length} articles disponibles</h2>
+            <h2>{hasCatalogueProducts ? `${filteredProducts.length} articles disponibles` : 'Aucun catalogue ou produits disponible'}</h2>
           </div>
 
         </div>
@@ -441,7 +444,9 @@ export default function Catalogue() {
         <section className="catalogue-product-grid" aria-label="Articles du catalogue">
           {filteredProducts.length === 0 && (
             <p className="catalogue-empty-state">
-              Aucun article ne correspond aux filtres actuels.
+              {hasCatalogueProducts
+                ? 'Aucun article ne correspond aux filtres actuels.'
+                : 'Aucun catalogue ou produits disponible '}
             </p>
           )}
 

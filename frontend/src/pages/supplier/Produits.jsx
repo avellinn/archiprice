@@ -1,16 +1,23 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import ProduitAjouteSup from '../../components/ProduitAjouteSup';
 import { Button, Icon } from '../../components/ui';
 import { getApiErrorMessage } from '../../services/api';
+import { createAdminId, useAdminData } from '../../services/adminData';
 import { deleteSupplierProduct, fetchSupplierWorkspace } from '../../services/supplier';
 
-function formatFCFA(amount) {
-  return `${new Intl.NumberFormat('fr-FR').format(Number(amount || 0))} FCFA`;
+function getProductImage(product) {
+  const image = Array.isArray(product.images) ? product.images[0] : product.image;
+
+  if (!image) return '';
+  if (typeof image === 'string') return image;
+  return image.secure_url || image.url || '';
 }
 
 export default function Produits() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [adminData, setAdminData] = useAdminData();
   const [products, setProducts] = useState([]);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -49,6 +56,60 @@ export default function Produits() {
       || String(product.category || '').toLowerCase().includes(query)
     ))
   ), [products, query]);
+  const adminProductsBySupplierSource = useMemo(() => {
+    const entries = (adminData.products || [])
+      .filter((product) => product.sourceSupplierProductId)
+      .map((product) => [product.sourceSupplierProductId, product]);
+
+    return new Map(entries);
+  }, [adminData.products]);
+
+  function publishProduct(product) {
+    setAdminData((currentData) => {
+      const existingProduct = (currentData.products || []).find((item) => item.sourceSupplierProductId === product.id);
+      const image = getProductImage(product);
+      const proposal = {
+        ...(existingProduct || {}),
+        id: existingProduct?.id || createAdminId('supplier-product'),
+        sourceSupplierProductId: product.id,
+        supplierUserId: product.supplierUserId,
+        name: product.name,
+        description: product.description,
+        price: product.unitPrice,
+        image,
+        images: product.images || [],
+        category: product.category,
+        room: product.room,
+        range: product.range,
+        supplier: 'Ma boutique',
+        vat: '20%',
+        visual: 'sofa',
+        city: 'Cotonou',
+        neighborhood: '',
+        availability: product.availability || 'Disponible',
+        publicationStatus: 'En attente',
+        publicationSource: 'supplier',
+        submittedAt: existingProduct?.submittedAt || new Date().toISOString(),
+      };
+
+      return {
+        ...currentData,
+        products: existingProduct
+          ? currentData.products.map((item) => (item.id === existingProduct.id ? proposal : item))
+          : [proposal, ...(currentData.products || [])],
+      };
+    });
+  }
+
+  function withdrawProduct(product) {
+    const publishedProduct = adminProductsBySupplierSource.get(product.id);
+    if (!publishedProduct) return;
+
+    setAdminData((currentData) => ({
+      ...currentData,
+      products: (currentData.products || []).filter((item) => item.id !== publishedProduct.id),
+    }));
+  }
 
   async function removeProduct(productId) {
     setDeletingProductId(productId);
@@ -57,6 +118,10 @@ export default function Produits() {
     try {
       await deleteSupplierProduct(productId);
       setProducts((currentProducts) => currentProducts.filter((product) => product.id !== productId));
+      setAdminData((currentData) => ({
+        ...currentData,
+        products: (currentData.products || []).filter((product) => product.sourceSupplierProductId !== productId),
+      }));
     } catch (apiError) {
       setError(getApiErrorMessage(apiError, 'Impossible de supprimer le produit.'));
     } finally {
@@ -98,66 +163,17 @@ export default function Produits() {
         </div>
       </section>
 
-      {(isLoading || error || filteredProducts.length > 0) && (
-        <section className="workspace-card supplier-dashboard__products supplier-products-list">
-          <h2>Produits ajoutés</h2>
-          {error && <p className="auth-error">{error}</p>}
-          {isLoading ? (
-            <p className="muted">Chargement des produits...</p>
-          ) : (
-            <div className="supplier-products-table-wrap">
-              <table className="supplier-products-table">
-                <thead>
-                  <tr>
-                    <th>Produit</th>
-                    <th>Catégorie</th>
-                    <th>Pièce</th>
-                    <th>Gamme</th>
-                    <th>Prix</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProducts.length === 0 ? (
-                    <tr>
-                      <td colSpan="6">Aucun produit ajouté.</td>
-                    </tr>
-                  ) : (
-                    filteredProducts.map((product) => (
-                      <tr key={product.id}>
-                        <td>
-                          <strong>{product.name}</strong>
-                          <span>{product.availability || 'Disponibilité non renseignée'}</span>
-                        </td>
-                        <td>{product.category || '-'}</td>
-                        <td>{product.room || '-'}</td>
-                        <td>{product.range || '-'}</td>
-                        <td>{formatFCFA(product.unitPrice)}</td>
-                        <td>
-                          <span className="supplier-products-table__actions">
-                            <button type="button" title="Modifier" onClick={() => navigate(`/supplier/products/new?edit=${product.id}`)}>
-                              <Icon name="Edit" size="sm" />
-                            </button>
-                            <button
-                              type="button"
-                              title="Supprimer"
-                              className="is-danger"
-                              disabled={deletingProductId === product.id}
-                              onClick={() => removeProduct(product.id)}
-                            >
-                              <Icon name="Delete" size="sm" />
-                            </button>
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      )}
+      <ProduitAjouteSup
+        products={filteredProducts}
+        adminProductsBySupplierSource={adminProductsBySupplierSource}
+        deletingProductId={deletingProductId}
+        error={error}
+        isLoading={isLoading}
+        onDelete={removeProduct}
+        onEdit={(product) => navigate(`/supplier/products/new?edit=${product.id}`)}
+        onPublish={publishProduct}
+        onWithdraw={withdrawProduct}
+      />
     </div>
   );
 }
