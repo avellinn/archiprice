@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Button from './Button';
 import Text from './Text';
+import { Alert } from './ui';
 import { getApiErrorMessage } from '../services/api';
 import { createProject } from '../services/projects';
 import './ModalCreateProject.css';
@@ -157,9 +158,7 @@ export default function ModalCreateProject({ isOpen, onCancel, onCreated }) {
         </div>
 
         {error && (
-          <Text size="sm" className="modal-create-project__error">
-            {error}
-          </Text>
+          <Alert variant="danger" className="modal-create-project__error">{error}</Alert>
         )}
 
         <div className="modal-create-project__actions">

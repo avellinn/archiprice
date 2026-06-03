@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
 import Avatar from './Avatar';
 import './Header.css';
 import Icon from './Icon';
@@ -14,6 +15,7 @@ export default function Header({
   isNotificationsOpen = false,
   isAccountOpen = false,
   searchValue = '',
+  searchIcon = 'Search',
   searchPlaceholder = 'Rechercher',
   onAccountClick,
   onMenuClick,
@@ -28,10 +30,67 @@ export default function Header({
   const accountName = getDisplayName(user);
   const accountInitials = getUserInitials(user);
   const avatarColor = getAvatarColor(user);
+  const accountSpacePath = user?.role === 'admin'
+    ? '/admin/settings'
+    : user?.role === 'supplier'
+      ? '/supplier/settings'
+      : '/parametres';
+  const [pageSearchIndex, setPageSearchIndex] = useState([]);
+  const searchQuery = searchValue.trim().toLowerCase();
+  const searchMatches = useMemo(() => {
+    if (!searchQuery) return [];
+
+    return pageSearchIndex.filter((entry) => entry.toLowerCase().includes(searchQuery)).slice(0, 8);
+  }, [pageSearchIndex, searchQuery]);
+  const effectiveSearchIcon = searchQuery
+    ? (searchMatches.length > 0 ? 'CheckCircle' : 'Info')
+    : searchIcon;
+  const searchDatalistId = `header-search-index-${String(currentPage).toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'page'}`;
+
+  useEffect(() => {
+    if (!isAuthenticated || typeof window === 'undefined') return undefined;
+
+    let animationFrame = 0;
+    const root = document.querySelector('.dashboard-content');
+    if (!root) return undefined;
+
+    function collectSearchIndex() {
+      window.cancelAnimationFrame(animationFrame);
+      animationFrame = window.requestAnimationFrame(() => {
+        const values = new Set();
+        const nodes = root.querySelectorAll('h1,h2,h3,h4,p,li,td,th,strong,span,small,label,button,a,dt,dd');
+
+        nodes.forEach((node) => {
+          if (
+            node.closest('.header')
+            || node.closest('.dashboard-floating-panel')
+            || node.closest('.dashboard-search-message')
+          ) {
+            return;
+          }
+
+          const text = node.textContent?.replace(/\s+/g, ' ').trim();
+          if (!text || text.length < 2 || text.length > 120) return;
+          values.add(text);
+        });
+
+        setPageSearchIndex([...values].slice(0, 160));
+      });
+    }
+
+    collectSearchIndex();
+    const observer = new MutationObserver(collectSearchIndex);
+    observer.observe(root, { childList: true, subtree: true, characterData: true });
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      observer.disconnect();
+    };
+  }, [currentPage, isAuthenticated]);
 
   function handleSearchSubmit(event) {
     event.preventDefault();
-    onSearchSubmit?.();
+    onSearchSubmit?.({ query: searchValue.trim(), matches: searchMatches });
   }
 
   if (isAuthenticated) {
@@ -61,7 +120,7 @@ export default function Header({
         <div className="header__right">
           <form className="header__search" onSubmit={handleSearchSubmit}>
             <span className="header__search-icon">
-              <Icon name="Search" />
+              <Icon name={effectiveSearchIcon} />
             </span>
             <input
               type="search"
@@ -70,7 +129,13 @@ export default function Header({
               onChange={(event) => onSearchChange?.(event.target.value)}
               placeholder={searchPlaceholder}
               aria-label={searchPlaceholder}
+              list={searchDatalistId}
             />
+            <datalist id={searchDatalistId}>
+              {searchMatches.map((match) => (
+                <option key={match} value={match} />
+              ))}
+            </datalist>
             <kbd className="header__search-shortcut">⌘/</kbd>
           </form>
 
@@ -121,7 +186,7 @@ export default function Header({
 
             {isAccountOpen && (
               <div className="header__user-menu">
-                <Link to="/workspace" className="header__user-menu-item">Mon espace</Link>
+                <Link to={accountSpacePath} className="header__user-menu-item">Mon espace</Link>
                 <hr className="header__user-menu-separator" />
                 <button
                   type="button"

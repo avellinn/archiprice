@@ -101,7 +101,9 @@ export default function Fichiers() {
   }
 
   function handleFilesChange(event) {
-    setFiles(Array.from(event.target.files || []));
+    const selectedFiles = Array.from(event.target.files || []);
+    setFiles((currentFiles) => [...currentFiles, ...selectedFiles]);
+    event.target.value = '';
   }
 
   function removeLocalFile(fileId) {

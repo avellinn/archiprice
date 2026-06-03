@@ -1,37 +1,136 @@
+import { useState } from 'react';
 import Icon from '../Icon';
 
-const POLICY_ROWS = [
-  { icon: 'Info', title: 'Politique de confidentialité', status: 'Automatisée', tone: 'success' },
-  { icon: 'ReceiptLong', title: 'Conditions de service', status: 'Aucune politique définie' },
-  { icon: 'Logout', title: 'Politique d’expédition', status: 'Aucune politique définie' },
-  { icon: 'Workspaces', title: 'Coordonnées', status: 'Obligatoire', tone: 'warning' },
-  { icon: 'Folder', title: 'Mention légale', status: 'Aucune politique définie' },
+const POLICY_PAGES = [
+  {
+    id: 'terms',
+    icon: 'ReceiptLong',
+    title: "CONDITIONS GÉNÉRALES D'UTILISATION (CGU)",
+    summary: 'Cadre d’utilisation de la boutique, des produits publiés et des services ArchiPrice.',
+    sections: [
+      {
+        title: 'Utilisation de la plateforme',
+        content: 'Le fournisseur utilise son espace pour créer, gérer et soumettre des produits liés à son activité commerciale.',
+      },
+      {
+        title: 'Responsabilité des contenus',
+        content: 'Les informations, prix, images et disponibilités transmis doivent être exacts, vérifiables et mis à jour régulièrement.',
+      },
+      {
+        title: 'Validation et publication',
+        content: 'ArchiPrice peut examiner, valider, refuser ou retirer une publication afin de protéger la qualité du catalogue.',
+      },
+    ],
+  },
+  {
+    id: 'privacy',
+    icon: 'Info',
+    title: 'POLITIQUE DE CONFIDENTIALITÉ',
+    summary: 'Règles de collecte, d’utilisation et de protection des données liées au compte fournisseur.',
+    sections: [
+      {
+        title: 'Données collectées',
+        content: 'Les données de boutique, coordonnées, produits, fichiers et historiques de publication servent à opérer le service.',
+      },
+      {
+        title: 'Confidentialité',
+        content: 'Les données sensibles ne sont partagées qu’avec les rôles autorisés et selon les besoins de fonctionnement.',
+      },
+      {
+        title: 'Sécurité',
+        content: 'Les accès sont protégés par authentification et les fichiers médias sont stockés via des services sécurisés.',
+      },
+    ],
+  },
+  {
+    id: 'supplier-conditions',
+    icon: 'Workspaces',
+    title: 'CONDITIONS FOURNISSEURS',
+    summary: 'Engagements propres aux fournisseurs qui souhaitent publier leurs articles dans le catalogue.',
+    sections: [
+      {
+        title: 'Qualité des articles',
+        content: 'Chaque article doit inclure un nom clair, une description utile, un prix, une catégorie et des images conformes.',
+      },
+      {
+        title: 'Disponibilité',
+        content: 'Le fournisseur s’engage à signaler les ruptures, délais et conditions de commande dans les meilleurs délais.',
+      },
+      {
+        title: 'Refus de publication',
+        content: 'En cas de refus, une justification peut être transmise afin de permettre au fournisseur de corriger sa proposition.',
+      },
+    ],
+  },
+  {
+    id: 'legal',
+    icon: 'Folder',
+    title: 'MENTIONS LÉGALES',
+    summary: 'Informations légales relatives à la boutique et aux responsabilités de publication.',
+    sections: [
+      {
+        title: 'Identification',
+        content: 'La boutique doit renseigner une identité commerciale, une adresse de contact et des coordonnées exploitables.',
+      },
+      {
+        title: 'Propriété des médias',
+        content: 'Le fournisseur garantit disposer des droits nécessaires pour publier les images et fichiers associés aux articles.',
+      },
+      {
+        title: 'Traçabilité',
+        content: 'Les actions de publication, validation ou refus peuvent être enregistrées pour assurer le suivi opérationnel.',
+      },
+    ],
+  },
 ];
 
 export function SupplierPolicyModal({ onClose, onSave }) {
+  const [activePolicyId, setActivePolicyId] = useState(null);
+  const activePolicy = POLICY_PAGES.find((policy) => policy.id === activePolicyId);
+
   return (
     <div className="supplier-settings-modal-backdrop" role="presentation">
       <section className="supplier-settings-modal supplier-settings-modal--policy" role="dialog" aria-modal="true" aria-labelledby="supplier-policy-title">
         <header className="supplier-settings-modal__header">
-          <h2 id="supplier-policy-title">Politiques</h2>
+          <div className="supplier-policy-header-title">
+            {activePolicy && (
+              <button type="button" className="supplier-policy-back" aria-label="Retour aux politiques" onClick={() => setActivePolicyId(null)}>
+                <Icon name="ChevronLeft" size="sm" />
+              </button>
+            )}
+            <h2 id="supplier-policy-title">{activePolicy?.title || 'Politiques'}</h2>
+          </div>
           <button type="button" aria-label="Fermer" onClick={onClose}>
             <Icon name="Close" size="sm" />
           </button>
         </header>
 
-        <div className="supplier-policy-list">
-          {POLICY_ROWS.map((policy) => (
-            <button type="button" key={policy.title} className="supplier-policy-row">
-              <Icon name={policy.icon} size="sm" />
-              <strong>{policy.title}</strong>
-              <span className={['supplier-policy-status', policy.tone ? `supplier-policy-status--${policy.tone}` : ''].filter(Boolean).join(' ')}>
-                {policy.tone === 'success' && <i />}
-                {policy.status}
-              </span>
-              <Icon name="ChevronRight" size="sm" />
-            </button>
-          ))}
-        </div>
+        {activePolicy ? (
+          <div className="supplier-policy-page">
+            <p>{activePolicy.summary}</p>
+            <div className="supplier-policy-page__content">
+              {activePolicy.sections.map((section) => (
+                <article key={section.title}>
+                  <h3>{section.title}</h3>
+                  <p>{section.content}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="supplier-policy-list">
+            {POLICY_PAGES.map((policy) => (
+              <button type="button" key={policy.id} className="supplier-policy-row" onClick={() => setActivePolicyId(policy.id)}>
+                <Icon name={policy.icon} size="sm" />
+                <span>
+                  <strong>{policy.title}</strong>
+                  <small>{policy.summary}</small>
+                </span>
+                <Icon name="ChevronRight" size="sm" />
+              </button>
+            ))}
+          </div>
+        )}
 
         <footer className="supplier-settings-modal__footer">
           <button type="button" onClick={onClose}>Annuler</button>
@@ -104,16 +203,13 @@ export function SupplierLocationModal({
         </header>
 
         <div className="supplier-location-form">
-          <label>
-            <span>Nom de l’entreprise</span>
-            <input value={settings.companyName} onChange={(event) => onChange('companyName', event.target.value)} />
-          </label>
+          
           <label>
             <span>Pays/région</span>
             <select value={settings.location} onChange={(event) => onChange('location', event.target.value)} disabled>
               <option value="Bénin">Bénin</option>
             </select>
-            <small>Changer de pays dans <u>informations sur l’entreprise</u></small>
+            
           </label>
           <label>
             <span>Adresse</span>

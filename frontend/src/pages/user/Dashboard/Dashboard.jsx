@@ -4,6 +4,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import DonutChartCard from '../../../components/DonutChart';
 import { Button, Icon, Text } from '../../../components/ui';
+import {
+  fetchExportedDocuments,
+  subscribeExportedDocumentsChange,
+} from '../../../services/exportedDocuments';
 import { fetchProjects } from '../../../services/projects';
 
 const MONTH_ACTIVITY = [
@@ -72,6 +76,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [projects, setProjects] = useState([]);
+  const [exportedDocuments, setExportedDocuments] = useState(() => fetchExportedDocuments());
 
   useEffect(() => {
     let cancelled = false;
@@ -89,14 +94,17 @@ export default function Dashboard() {
     };
   }, []);
 
+  useEffect(() => subscribeExportedDocumentsChange(setExportedDocuments), []);
+
   const stats = useMemo(() => {
     const completed = projects.filter(isFinished).length;
     const active = Math.max(projects.length - completed, 0);
     const processed = projects.filter((project) => project.status !== 'draft').length;
-    const exportedEstimates = projects.reduce(
+    const projectExportedEstimates = projects.reduce(
       (total, project) => total + getProjectExportedEstimateCount(project),
       0,
     );
+    const exportedEstimates = Math.max(projectExportedEstimates, exportedDocuments.length);
 
     return {
       total: projects.length,
@@ -105,7 +113,7 @@ export default function Dashboard() {
       processed,
       exportedEstimates,
     };
-  }, [projects]);
+  }, [exportedDocuments.length, projects]);
 
   const dashboardSearchTerm = searchParams.get('q')?.trim().toLowerCase() || '';
   const history = projects

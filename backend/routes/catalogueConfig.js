@@ -2,6 +2,7 @@ import express from 'express';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { publishCrudEvent } from '../services/realtimeService.js';
 
 const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
@@ -42,6 +43,7 @@ router.put('/catalogue-config', async (req, res) => {
   };
 
   await writeCatalogueConfig(nextConfig);
+  publishCrudEvent('catalogue-config', 'updated', { updatedAt: nextConfig.__updatedAt });
   return res.json({ config: nextConfig });
 });
 

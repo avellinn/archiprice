@@ -7,6 +7,13 @@ const ICONS = {
       <path key="add-vertical" d="M12 5v14" />,
     ],
   },
+  AccountCircle: {
+    paths: [
+      <circle key="account-circle" cx="12" cy="12" r="9" />,
+      <circle key="account-head" cx="12" cy="9" r="3" />,
+      <path key="account-body" d="M6.8 18a6 6 0 0 1 10.4 0" />,
+    ],
+  },
   ArrowRight: {
     paths: [
       <path key="arrow-line" d="M5 12h14" />,
@@ -197,6 +204,7 @@ const ICONS = {
 
 const NAME_ALIASES = {
   add: 'Add',
+  accountCircle: 'AccountCircle',
   plus: 'Add',
   arrowRight: 'ArrowRight',
   arrowLeft: 'ArrowLeft',

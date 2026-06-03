@@ -1,5 +1,6 @@
 import Button from './Button';
 import Icon from './Icon';
+import { Alert } from './ui';
 import './recap.css';
 
 export default function Recap({
@@ -133,7 +134,7 @@ export default function Recap({
               Confirmer la Validation
             </Button>
           </div>
-          {validationError && <p className="catalogue-summary-error">{validationError}</p>}
+          {validationError && <Alert variant="danger" className="catalogue-summary-error">{validationError}</Alert>}
         </footer>
       </div>
     </section>

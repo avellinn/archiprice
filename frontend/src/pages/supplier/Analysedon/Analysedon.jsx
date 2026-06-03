@@ -1,79 +1,97 @@
 import './Analysedon.css';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Icon } from '../../../components/ui';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+
+import DonutChartCard from '../../../components/DonutChart';
+import { Button, Icon, Text } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
 import { fetchSupplierWorkspace, subscribeSupplierWorkspaceChange } from '../../../services/supplier';
 
-function formatFCFA(amount) {
-  return `${new Intl.NumberFormat('fr-FR').format(Number(amount || 0))} FCFA`;
-}
+const MONTH_ACTIVITY = [
+  { label: 'Jan', value: 14 },
+  { label: 'Fév', value: 22 },
+  { label: 'Mar', value: 18 },
+  { label: 'Avr', value: 34 },
+  { label: 'Mai', value: 42 },
+  { label: 'Juin', value: 58 },
+  { label: 'Juil', value: 51 },
+  { label: 'Août', value: 66 },
+];
 
-function formatTime(date = new Date()) {
+const STATUS_COPY = {
+  active: 'Actif',
+  actif: 'Actif',
+  draft: 'Brouillon',
+  pending: 'En attente',
+  submitted: 'En attente',
+  published: 'Publié',
+  approved: 'Publié',
+  rejected: 'Refusé',
+  archived: 'Archivé',
+};
+
+function formatDate(value) {
+  if (!value) return 'Date non renseignée';
+
   return new Intl.DateTimeFormat('fr-FR', {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date);
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(value));
 }
 
-function MetricCard({ title, value, suffix = '—' }) {
-  return (
-    <article className="analysedon-metric-card">
-      <span>{title}</span>
-      <strong>{value}</strong>
-      <small>{suffix}</small>
-      <i aria-hidden="true" />
-    </article>
-  );
+function getPercent(value, total) {
+  if (!total) return 0;
+  return Math.round((value / total) * 100);
 }
 
-function EmptyPanel({ title, children }) {
-  return (
-    <section className="analysedon-panel analysedon-empty-panel">
-      <h2>{title}</h2>
-      <div className="analysedon-empty-content">{children}</div>
-    </section>
-  );
+function getDonutDisplayValue(value, total) {
+  if (!total) return 0;
+  return value > 0 ? value : Math.max(total * 0.04, 0.08);
 }
 
-function LineChartPanel({ title, value, compact = false }) {
-  const axisLabels = compact ? ['00 h', '04 h', '08 h', '12 h', '16 h', '20 h'] : ['00 h', '02 h', '04 h', '06 h', '08 h', '10 h', '12 h', '14 h', '16 h', '18 h', '20 h', '22 h'];
+function normalizeStatus(value) {
+  return String(value || '').trim().toLowerCase();
+}
 
-  return (
-    <section className={`analysedon-panel analysedon-chart-panel ${compact ? 'analysedon-chart-panel--compact' : ''}`}>
-      <h2>{title}</h2>
-      <strong>{value}</strong>
-      <span className="analysedon-chart-dash">—</span>
-      <div className="analysedon-line-chart" aria-label={title}>
-        <div className="analysedon-y-axis">
-          <span>10 F CFA</span>
-          <span>5 F CFA</span>
-          <span>0 F CFA</span>
-        </div>
-        <div className="analysedon-chart-stage">
-          <i className="analysedon-grid-line analysedon-grid-line--top" />
-          <i className="analysedon-grid-line analysedon-grid-line--middle" />
-          <i className="analysedon-chart-line" />
-          <i className="analysedon-chart-line analysedon-chart-line--dashed" />
-        </div>
-        <div className="analysedon-x-axis">
-          {axisLabels.map((label) => (
-            <span key={label}>{label}</span>
-          ))}
-        </div>
-      </div>
-      <div className="analysedon-legend">
-        <span><i /> 1 juin 2026</span>
-        <span><i /> 31 mai 2026</span>
-      </div>
-    </section>
-  );
+function isPublished(product) {
+  const publicationStatus = normalizeStatus(product.publicationStatus || product.statusPublication);
+  const status = normalizeStatus(product.status);
+
+  return ['validé', 'valide', 'approved', 'published', 'publié', 'publie'].includes(publicationStatus)
+    || ['approved', 'published', 'publié', 'publie'].includes(status);
+}
+
+function isPending(product) {
+  const publicationStatus = normalizeStatus(product.publicationStatus || product.statusPublication);
+  const status = normalizeStatus(product.status);
+
+  return ['en attente', 'pending', 'submitted', 'soumis'].includes(publicationStatus)
+    || ['pending', 'submitted'].includes(status);
+}
+
+function isActive(product) {
+  const status = normalizeStatus(product.status);
+  const availability = normalizeStatus(product.availability);
+
+  return !['archived', 'archive', 'archivé', 'rejected', 'refusé', 'refuse'].includes(status)
+    && !['rupture', 'non disponible'].includes(availability);
+}
+
+function getProductStatusLabel(product) {
+  if (isPublished(product)) return 'Publié';
+  if (isPending(product)) return 'En attente';
+
+  const status = normalizeStatus(product.status);
+  return STATUS_COPY[status] || product.status || product.availability || 'Brouillon';
 }
 
 export default function Analysedon() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [workspace, setWorkspace] = useState(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState(() => formatTime());
 
   function loadWorkspace() {
     let cancelled = false;
@@ -82,12 +100,11 @@ export default function Analysedon() {
       .then((data) => {
         if (!cancelled) {
           setWorkspace(data);
-          setLastUpdated(formatTime());
           setError('');
         }
       })
       .catch((apiError) => {
-        if (!cancelled) setError(getApiErrorMessage(apiError, 'Impossible de charger les analyses.'));
+        if (!cancelled) setError(getApiErrorMessage(apiError, 'Impossible de charger les analyses fournisseur.'));
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -109,115 +126,204 @@ export default function Analysedon() {
   }, []);
 
   const products = useMemo(() => workspace?.products || [], [workspace]);
-  const analytics = useMemo(() => {
-    const productSales = products.map((product) => Number(product.salesTotal || product.revenue || 0));
-    const grossSales = productSales.reduce((sum, value) => sum + value, 0);
-    const orders = Number(workspace?.stats?.orders || 0);
-    const visits = Math.max(Number(workspace?.stats?.visits || 0), products.length ? 2 : 0);
+  const stats = useMemo(() => {
+    const published = products.filter(isPublished).length;
+    const pending = products.filter(isPending).length;
+    const active = products.filter(isActive).length;
 
     return {
-      grossSales,
-      recurringRate: Number(workspace?.stats?.recurringRate || 0),
-      processedOrders: Number(workspace?.stats?.processedOrders || orders),
-      orders,
-      visits,
-      averageBasket: orders ? grossSales / orders : 0,
+      total: products.length,
+      active,
+      published,
+      pending,
     };
-  }, [products, workspace]);
+  }, [products]);
 
-  const salesBreakdown = [
-    ['Ventes brutes', analytics.grossSales],
-    ['Réductions', 0],
-    ['Retours', 0],
-    ['Ventes nettes', analytics.grossSales],
-    ["Frais d'expédition", 0],
-    ['Frais de retour', 0],
-    ['Taxes', 0],
-    ['Ventes totales', analytics.grossSales],
+  const dashboardSearchTerm = searchParams.get('q')?.trim().toLowerCase() || '';
+  const history = products
+    .filter((product) => (
+      !dashboardSearchTerm
+      || String(product.name || '').toLowerCase().includes(dashboardSearchTerm)
+      || String(product.category || '').toLowerCase().includes(dashboardSearchTerm)
+      || String(product.availability || '').toLowerCase().includes(dashboardSearchTerm)
+      || String(product.publicationStatus || '').toLowerCase().includes(dashboardSearchTerm)
+    ))
+    .slice(0, 4);
+  const repartitionData = [
+    {
+      name: 'Articles actifs',
+      value: stats.active,
+      chartValue: getDonutDisplayValue(stats.active, stats.total),
+      percent: getPercent(stats.active, stats.total),
+      color: '#5877f7',
+      unit: 'article',
+    },
+    {
+      name: 'Articles publiés',
+      value: stats.published,
+      chartValue: getDonutDisplayValue(stats.published, stats.total),
+      percent: getPercent(stats.published, stats.total),
+      color: '#ffc865',
+      unit: 'article',
+    },
+    {
+      name: 'En attente',
+      value: stats.pending,
+      chartValue: getDonutDisplayValue(stats.pending, stats.total),
+      percent: getPercent(stats.pending, stats.total),
+      color: '#22c55e',
+      unit: 'article',
+    },
+    {
+      name: 'Total articles',
+      value: stats.total,
+      chartValue: getDonutDisplayValue(stats.total, stats.total),
+      percent: stats.total ? 100 : 0,
+      color: '#1d0870',
+      unit: 'article',
+    },
   ];
 
   return (
-    <div className="analysedon-page">
-      <header className="analysedon-header">
-        <div className="analysedon-title-row">
-          <div>
-            <h1><Icon name="Dashboard" size="sm" /> Analyses de données</h1>
-            <span>Dernière actualisation : {lastUpdated}</span>
+    <div className="dashboard-page supplier-dashboard-page">
+      <div className="dashboard-grid">
+        <section id="supplier-products-summary" className="dashboard-stats" aria-label="Résumé des articles fournisseur">
+          <article className="stat-card stat-blue">
+            <Text as="span" variant="bold" size="sm">
+              Articles actifs
+            </Text>
+            <Text as="strong" variant="medium" size="lg">
+              {String(stats.active).padStart(2, '0')}
+            </Text>
+            <svg viewBox="0 0 78 34" aria-hidden="true">
+              <path d="M4 23 C16 10 22 30 35 16 S58 6 74 10" />
+            </svg>
+          </article>
+
+          <article className="stat-card stat-yellow">
+            <Text as="span" variant="bold" size="sm">
+              Articles publiés
+            </Text>
+            <Text as="strong" variant="medium" size="lg">
+              {String(stats.published).padStart(2, '0')}
+            </Text>
+            <svg viewBox="0 0 78 34" aria-hidden="true">
+              <path d="M4 24 C18 12 24 22 35 18 S50 29 74 7" />
+            </svg>
+          </article>
+
+          <article className="stat-card stat-red">
+            <Text as="span" variant="bold" size="sm">
+              En attente
+            </Text>
+            <Text as="strong" variant="medium" size="lg">
+              {String(stats.pending).padStart(2, '0')}
+            </Text>
+            <svg viewBox="0 0 78 34" aria-hidden="true">
+              <path d="M4 22 C13 17 19 27 30 20 S46 10 55 19 S66 9 74 13" />
+            </svg>
+          </article>
+
+          <article className="stat-card stat-cyan">
+            <Text as="span" variant="bold" size="sm">
+              Total articles
+            </Text>
+            <Text as="strong" variant="medium" size="lg">
+              {String(stats.total).padStart(2, '0')}
+            </Text>
+            <svg viewBox="0 0 78 34" aria-hidden="true">
+              <path d="M4 21 C18 20 17 12 29 13 S39 25 50 20 S58 6 74 16" />
+            </svg>
+          </article>
+        </section>
+
+        <section className="dashboard-panel activity-panel">
+          <div className="panel-heading">
+            <h1>Activité des articles</h1>
+            <Text as="span" variant="bold" size="sm">
+              Ventes vs publications
+            </Text>
           </div>
-          <div className="analysedon-actions">
-            <button type="button" className="analysedon-icon-button" aria-label="Plus d'options">•••</button>
-            <Button type="button" variant="outline" size="sm">Créer un objectif</Button>
-            <Button type="button" size="sm">Nouvelle exploration</Button>
+          <div className="line-chart" aria-label="Graphique d'activité fournisseur">
+            <svg viewBox="0 0 420 210" role="img">
+              <defs>
+                <linearGradient id="supplierActivityFill" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="#ffac4a" stopOpacity="0.55" />
+                  <stop offset="100%" stopColor="#ffac4a" stopOpacity="0.02" />
+                </linearGradient>
+              </defs>
+              <path
+                className="chart-fill supplier-chart-fill"
+                d="M30 162 C55 78 86 120 112 118 S150 146 178 75 S225 116 252 58 S300 106 329 42 S376 104 394 18 L394 184 L30 184 Z"
+              />
+              <path
+                className="chart-line"
+                d="M30 162 C55 78 86 120 112 118 S150 146 178 75 S225 116 252 58 S300 106 329 42 S376 104 394 18"
+              />
+              <circle cx="112" cy="118" r="5" />
+              <circle cx="329" cy="42" r="5" />
+            </svg>
+            <div className="chart-axis">
+              {MONTH_ACTIVITY.map((item, index) => (
+                <Text as="span" size="sm" key={`${item.label}-${index}`}>
+                  {item.label}
+                </Text>
+              ))}
+            </div>
+            <div className="chart-legend">
+              <Text as="span" variant="bold" size="sm"><i className="legend-blue" /> Ventes</Text>
+              <Text as="span" variant="bold" size="sm"><i className="legend-orange" /> Publications</Text>
+            </div>
           </div>
-        </div>
+        </section>
 
-        <div className="analysedon-filters">
-          <button type="button"><Icon name="History" size="sm" /> Aujourd’hui <Icon name="ChevronDown" size="sm" /></button>
-          <button type="button"><Icon name="History" size="sm" /> 31 mai 2026 <Icon name="ChevronDown" size="sm" /></button>
-          <button type="button">XOF F CFA</button>
-        </div>
-      </header>
-
-      {isLoading && <section className="analysedon-panel">Chargement des analyses...</section>}
-      {error && (
-        <Alert variant="danger" className="analysedon-panel" onClose={() => setError('')}>
-          {error}
-        </Alert>
-      )}
-
-      {!isLoading && !error && (
-        <>
-          <section className="analysedon-metric-grid">
-            <MetricCard title="Ventes brutes" value={formatFCFA(analytics.grossSales)} />
-            <MetricCard title="Taux de clients récurrents" value={`${analytics.recurringRate} %`} />
-            <MetricCard title="Commandes traitées" value={analytics.processedOrders} />
-            <MetricCard title="Commandes" value={analytics.orders} />
-          </section>
-
-          <section className="analysedon-main-grid">
-            <LineChartPanel title="Ventes totales au fil du temps" value={formatFCFA(analytics.grossSales)} />
-
-            <section className="analysedon-panel analysedon-breakdown">
-              <h2>Ventilation des ventes totales</h2>
-              <div className="analysedon-breakdown-list">
-                {salesBreakdown.map(([label, value]) => (
-                  <div key={label}>
-                    <span>{label}</span>
-                    <strong>{formatFCFA(value)}</strong>
-                    <small>—</small>
+        <section id="supplier-product-history" className="dashboard-panel history-panel">
+          <div className="panel-heading row-heading">
+            <h2>Articles récents</h2>
+            <Text as="span" variant="bold" size="sm">
+              Filtrer par date : Tout
+            </Text>
+          </div>
+          {isLoading ? (
+            <Text className="muted history-empty">Chargement des articles...</Text>
+          ) : error ? (
+            <Text className="muted history-empty">{error}</Text>
+          ) : history.length === 0 ? (
+            <Text className="muted history-empty">Aucun article enregistré pour le moment.</Text>
+          ) : (
+            <ul className="history-list">
+              {history.map((product, index) => (
+                <li key={`${product.id || product.name}-${index}`}>
+                  <span className={`history-icon history-icon-${index + 1}`} aria-hidden="true" />
+                  <div>
+                    <Text as="strong" variant="bold" size="sm">
+                      {product.name}
+                    </Text>
+                    <Text as="span" variant="bold" size="sm">
+                      {getProductStatusLabel(product)} ·{' '}
+                      {formatDate(product.updatedAt || product.createdAt)}
+                    </Text>
                   </div>
-                ))}
-              </div>
-            </section>
-          </section>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
-          <section className="analysedon-secondary-grid">
-            <EmptyPanel title="Ventes totales par canal de vente">
-              Aucune donnée pour cette plage de dates
-            </EmptyPanel>
-            <LineChartPanel title="Valeur moyenne du panier au fil du temps" value={formatFCFA(analytics.averageBasket)} compact />
-            <EmptyPanel title="Ventes totales par produit">
-              {products.length === 0 ? 'Aucune donnée pour cette plage de dates' : `${products.length} produit(s) dans la boutique`}
-            </EmptyPanel>
-          </section>
-
-          <section className="analysedon-secondary-grid analysedon-secondary-grid--bottom">
-            <LineChartPanel title="Visites au fil du temps" value={analytics.visits} compact />
-            <LineChartPanel title="Taux de conversion au fil du temps" value="0 %" compact />
-            <section className="analysedon-panel analysedon-conversion">
-              <h2>Ventilation du taux de conversion</h2>
-              <strong>0 %</strong>
-              <span>—</span>
-              <div>
-                <article><small>Visites</small><b>{analytics.visits > 0 ? '100 %' : '0 %'}</b></article>
-                <article><small>Ajouté au panier</small><b>0 %</b></article>
-                <article><small>Paiement atteint</small><b>0 %</b></article>
-                <article><small>Paiement finalisé</small><b>0 %</b></article>
-              </div>
-            </section>
-          </section>
-        </>
-      )}
+        <section id="supplier-products-repartition" className="dashboard-panel repartition-panel">
+          <DonutChartCard title="Répartition" data={repartitionData} />
+        </section>
+      </div>
+      <div className="dashboard-new-project">
+        <Button
+          type="button"
+          size="lg"
+          icon={<Icon name="Add" />}
+          onClick={() => navigate('/supplier/products/new')}
+        >
+          Ajouter un produit
+        </Button>
+      </div>
     </div>
   );
 }

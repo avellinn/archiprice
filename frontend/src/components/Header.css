@@ -157,10 +157,14 @@
   position: absolute;
   left: var(--spacing-md);
   z-index: 1;
+  top: 50%;
+  display: grid;
   width: 17px;
   height: 17px;
+  place-items: center;
   color: var(--color-grey);
   pointer-events: none;
+  transform: translateY(-50%);
 }
 
 .header__search-icon svg,

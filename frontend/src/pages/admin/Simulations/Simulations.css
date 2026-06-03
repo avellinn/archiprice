@@ -12,6 +12,10 @@
   font-weight: 900;
 }
 
+.admin-simulations-alert {
+  margin: -0.55rem 0 1rem;
+}
+
 .admin-simulations-toolbar {
   display: grid;
   grid-template-columns: minmax(240px, 290px) minmax(300px, 1fr) minmax(170px, 190px) auto;

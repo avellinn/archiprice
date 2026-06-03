@@ -2,34 +2,14 @@ import './Workspace.css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import EspacePro from '../../../components/espacepro';
+import ModalBoutique from '../../../components/modalBoutique';
 import ModalCreateProject from '../../../components/ModalCreateProject';
-import { Button, Icon } from '../../../components/ui';
+import { Alert, Button, Icon } from '../../../components/ui';
 import WorkspaceMiniGrid from '../../../components/WorkspaceMiniGrid';
+import useAuth from '../../../context/useAuth';
 import { getApiErrorMessage } from '../../../services/api';
+import { useAdminData } from '../../../services/adminData';
 import { deleteProject, fetchProjects, updateProject } from '../../../services/projects';
-
-const RECOMMENDED_SHOPS = [
-  {
-    name: 'Archi Matériaux',
-    zone: 'Cotonou - Akpakpa',
-    categories: 'Ciment, peinture, plomberie, électricité',
-  },
-  {
-    name: 'BatiPlus Déco',
-    zone: 'Cotonou - Fidjrossè',
-    categories: 'Carrelage, luminaires, peinture décorative',
-  },
-  {
-    name: 'Maison Pro',
-    zone: 'Abomey-Calavi',
-    categories: 'Menuiserie, sanitaires, accessoires cuisine',
-  },
-  {
-    name: 'Jardin & Terrasse',
-    zone: 'Porto-Novo',
-    categories: 'Revêtements extérieurs, plantes, mobilier jardin',
-  },
-];
 
 const WORKSPACE_CARDS = [
   {
@@ -165,6 +145,77 @@ function getDynamicProjectShops(project, products, shops) {
   return getProjectRecommendedShops(project, shops);
 }
 
+function getUserProfession(user) {
+  return user?.profession
+    || user?.type
+    || user?.accountType
+    || user?.role
+    || 'Client';
+}
+
+function getArticleImageUrl(image) {
+  if (!image) return '';
+  if (typeof image === 'string') return image;
+
+  return image.secure_url || image.url || '';
+}
+
+function getArticleCloudinaryLinks(product) {
+  const images = Array.isArray(product?.images) ? product.images : [];
+  const normalizedImages = images
+    .map((image) => ({
+      name: product?.name || 'Article',
+      secure_url: getArticleImageUrl(image),
+      public_id: typeof image === 'object' ? image.public_id || '' : '',
+    }))
+    .filter((image) => image.secure_url);
+
+  if (normalizedImages.length > 0) return normalizedImages;
+
+  const singleImage = getArticleImageUrl(product?.image);
+  return singleImage ? [{ name: product?.name || 'Article', secure_url: singleImage, public_id: '' }] : [];
+}
+
+function buildSupplierClientNotification({
+  shop,
+  user,
+  project,
+  simulation,
+  products = [],
+}) {
+  const now = new Date().toISOString();
+  const userId = user?.id || user?._id || user?.email || 'client';
+  const supplierKey = shop?.id || shop?.name || 'boutique';
+
+  return {
+    id: `supplier-client-${supplierKey}-${userId}-${Date.now()}`,
+    supplierId: shop?.id || '',
+    supplierName: shop?.name || '',
+    supplierContact: shop?.contact || '',
+    clientId: user?.id || user?._id || '',
+    clientName: user?.name || user?.fullName || user?.email || 'Client ArchiPrice',
+    clientProfession: getUserProfession(user),
+    clientEmail: user?.email || '',
+    clientPhone: user?.phone || user?.telephone || user?.phoneNumber || 'Non renseigné',
+    projectId: project?.id || '',
+    projectName: project?.name || 'Projet sans nom',
+    simulationTotal: simulation.total,
+    simulationTotalLabel: formatCurrency(simulation.total),
+    articleCount: simulation.count,
+    categories: simulation.categories,
+    articleImages: products.flatMap(getArticleCloudinaryLinks),
+    selectedArticles: products.map((product) => ({
+      id: product.id || product._id || '',
+      name: product.name || 'Article sans nom',
+      category: product.category || '',
+      unitPrice: Number(product.unitPrice || 0),
+      images: getArticleCloudinaryLinks(product),
+    })),
+    status: 'Nouveau',
+    createdAt: now,
+  };
+}
+
 function extractEditableProjectData(project) {
   const description = project?.description || '';
   const roomMatch = description.match(/Type de pièce\s*:\s*(.+)/i);
@@ -202,15 +253,16 @@ function buildEditedProjectDescription(project, roomType, budget) {
 }
 
 export default function Workspace() {
+  const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [adminData, updateAdminData] = useAdminData();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isModalOpen, setIsModalOpen] = useState(() => searchParams.get('newProject') === '1');
   const [projects, setProjects] = useState([]);
   const [isProjectsLoading, setIsProjectsLoading] = useState(true);
   const [projectsError, setProjectsError] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState('');
-  const [isShopRevealed, setIsShopRevealed] = useState(false);
   const [isShopSelectorOpen, setIsShopSelectorOpen] = useState(false);
   const [selectedShopName, setSelectedShopName] = useState('');
   const [activeCardId, setActiveCardId] = useState('');
@@ -235,9 +287,9 @@ export default function Workspace() {
       totalProjects: projects.length,
       activeProjects: active,
       exportedEstimates,
-      recommendedShops: RECOMMENDED_SHOPS.length,
+      recommendedShops: (adminData.suppliers || []).length,
     };
-  }, [projects]);
+  }, [adminData.suppliers, projects]);
 
   useEffect(() => {
     let cancelled = false;
@@ -284,34 +336,26 @@ export default function Workspace() {
       || String(project.status || '').toLowerCase().includes(workspaceSearchTerm)
     ));
   }, [projects, workspaceSearchTerm]);
-  const workspaceCards = useMemo(
-    () => WORKSPACE_CARDS.map((card) => {
-      if (card.id !== 'purchase-travel') return card;
-
-      const simulationTotal = selectedProjectProducts.reduce(
-        (total, product) => total + Number(product.unitPrice || 0),
-        0,
-      );
-
-      return {
-        ...card,
-        details: isShopRevealed
-          ? [
-            ['Projet', selectedProject?.name || 'Aucun projet'],
-            ['Articles sélectionnés', selectedProjectProducts.length],
-            ['Simulation achat', formatCurrency(simulationTotal)],
-          ]
-          : null,
-      };
-    }),
-    [isShopRevealed, selectedProject?.name, selectedProjectProducts],
-  );
+  const workspaceCards = useMemo(() => WORKSPACE_CARDS, []);
   const activeCard = activeCardId
     ? workspaceCards.find((card) => card.id === activeCardId)
     : null;
   const projectShops = useMemo(
-    () => getDynamicProjectShops(selectedProject, selectedProjectProducts, RECOMMENDED_SHOPS),
-    [selectedProject, selectedProjectProducts],
+    () => {
+      const adminShops = (adminData.suppliers || []).map((supplier) => ({
+        id: supplier.id,
+        name: supplier.name,
+        contact: supplier.contact || supplier.email || '',
+        zone: supplier.region || supplier.zone || 'Zone non renseignée',
+        categories: supplier.products
+          ? `${supplier.products} article(s) lié(s)`
+          : 'Catégories configurées par l’admin',
+        status: supplier.status,
+      }));
+
+      return getDynamicProjectShops(selectedProject, selectedProjectProducts, adminShops);
+    },
+    [adminData.suppliers, selectedProject, selectedProjectProducts],
   );
   const selectedShop = projectShops.find((shop) => shop.name === selectedShopName) || projectShops[0];
   const selectedProjectPurchaseSimulation = useMemo(() => {
@@ -434,12 +478,11 @@ export default function Workspace() {
       return;
     }
 
-    setActiveCardId(card.id);
-
     if (card.intent === 'shop') {
-      setIsShopRevealed(true);
-      setIsShopSelectorOpen(true);
+      return;
     }
+
+    setActiveCardId(card.id);
   }
 
   function handleMiniCardClick(card) {
@@ -466,6 +509,27 @@ export default function Workspace() {
   function handleRecentProjectClick(projectId) {
     setSelectedProjectId(projectId);
     setActiveCardId('catalogue-projects');
+  }
+
+  function handleShopSelect(shop) {
+    if (!shop?.name) return;
+
+    setSelectedShopName(shop.name);
+    const notification = buildSupplierClientNotification({
+      shop,
+      user,
+      project: selectedProject,
+      simulation: selectedProjectPurchaseSimulation,
+      products: selectedProjectProducts,
+    });
+
+    updateAdminData((currentData) => ({
+      ...currentData,
+      supplierClientNotifications: [
+        notification,
+        ...(currentData.supplierClientNotifications || []),
+      ],
+    }));
   }
 
   function getMiniCardMetric(card) {
@@ -505,7 +569,7 @@ export default function Workspace() {
       }
 
       if (projectsError) {
-        return <p>{projectsError}</p>;
+        return <Alert variant="danger">{projectsError}</Alert>;
       }
 
       if (filteredProjects.length === 0) {
@@ -617,63 +681,6 @@ export default function Workspace() {
             />
 
             <div className="workspace-shop-cta">
-              {isShopSelectorOpen && (
-                <div className="workspace-shop-popover" role="dialog" aria-label="Choisir une boutique">
-                  <div className="workspace-shop-popover__header">
-                    <h2>Choisir une boutique</h2>
-                    <button
-                      type="button"
-                      aria-label="Fermer la sélection des boutiques"
-                      onClick={() => setIsShopSelectorOpen(false)}
-                    >
-                      <Icon name="Close" size="sm" />
-                    </button>
-                  </div>
-
-                  {projectShops.length === 0 ? (
-                    <p>Aucune boutique recommandée pour ce projet.</p>
-                  ) : (
-                    <>
-                      <div className="workspace-shop-simulation">
-                        <strong>{formatCurrency(selectedProjectPurchaseSimulation.total)}</strong>
-                        <span>
-                          {selectedProjectPurchaseSimulation.count} article(s)
-                          {selectedProjectPurchaseSimulation.categories.length > 0
-                            ? ` · ${selectedProjectPurchaseSimulation.categories.join(', ')}`
-                            : ''}
-                        </span>
-                      </div>
-
-                      <div className="workspace-shop-options" role="listbox" aria-label="Boutiques recommandées">
-                        {projectShops.map((shop, index) => {
-                          const isSelected = selectedShop?.name === shop.name;
-
-                          return (
-                            <button
-                              type="button"
-                              className={[
-                                'workspace-shop-option',
-                                isSelected ? 'workspace-shop-option--selected' : '',
-                              ]
-                                .filter(Boolean)
-                                .join(' ')}
-                              key={`${selectedProject?.id || 'project'}-${shop.name}-${index}`}
-                              role="option"
-                              aria-selected={isSelected}
-                              onClick={() => setSelectedShopName(shop.name)}
-                            >
-                              <strong>{shop.name}</strong>
-                              <span>{shop.zone}</span>
-                              <small>{shop.categories}</small>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-
               <Button
                 type="button"
                 variant="secondary"
@@ -736,6 +743,19 @@ export default function Workspace() {
         isOpen={isModalOpen}
         onCancel={closeModal}
         onCreated={handleProjectCreated}
+      />
+
+      <ModalBoutique
+        isOpen={isShopSelectorOpen}
+        shops={projectShops}
+        selectedShopName={selectedShop?.name || selectedShopName}
+        simulation={{
+          totalLabel: formatCurrency(selectedProjectPurchaseSimulation.total),
+          count: selectedProjectPurchaseSimulation.count,
+          categories: selectedProjectPurchaseSimulation.categories,
+        }}
+        onClose={() => setIsShopSelectorOpen(false)}
+        onSelectShop={handleShopSelect}
       />
 
       {editingProject && (
@@ -807,7 +827,7 @@ export default function Workspace() {
             </div>
 
             {editProjectError && (
-              <p className="modal-create-project__error">{editProjectError}</p>
+              <Alert variant="danger" className="modal-create-project__error">{editProjectError}</Alert>
             )}
 
             <div className="modal-create-project__actions">

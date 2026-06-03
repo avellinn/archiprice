@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import Icon from './Icon';
+import { Alert } from './ui';
+import useAuth from '../context/useAuth';
 import { getApiErrorMessage } from '../services/api';
+import { addExportedDocument } from '../services/exportedDocuments';
 import { fetchProducts } from '../services/products';
 import { downloadProjectRecapPdf } from '../services/projects';
+import { API_ROUTES } from '../constants/api';
 import './espacepro.css';
 
 function formatDate(value) {
@@ -67,11 +71,30 @@ function getProjectReference(project) {
   return project?.id ? String(project.id).slice(-8).toUpperCase() : 'ARCHI';
 }
 
+function getProjectRecapFileName(project) {
+  const projectName = String(project?.name || 'recapitulatif')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+
+  return `${projectName || 'recapitulatif'}.pdf`;
+}
+
+function getProjectRecapHref(project) {
+  if (!project?.id || String(project.id).startsWith('local-project-')) return '#';
+  return API_ROUTES.projects.recapPdf(project.id);
+}
+
 function getRecapRows(products) {
   return products.map((product) => ({
     name: product.name || 'Article sans nom',
     category: product.category || 'Catégorie non renseignée',
     price: parseAmount(product.unitPrice),
+    imageUrl: getProductImages(product)[0] || '',
+    images: getProductImages(product),
   }));
 }
 
@@ -86,6 +109,7 @@ export default function EspacePro({
   deletingProjectId,
   onProductsChange,
 }) {
+  const { user } = useAuth();
   const effectiveSelectedProjectId = selectedProjectId || projects[0]?.id || '';
   const selectedProject = projects.find((project) => project.id === effectiveSelectedProjectId) || projects[0];
   const projectMetadata = extractProjectMetadata(selectedProject);
@@ -212,6 +236,29 @@ export default function EspacePro({
       link.click();
       link.remove();
       URL.revokeObjectURL(fileUrl);
+      addExportedDocument({
+        projectId: selectedProject.id,
+        projectName: selectedProject.name,
+        userName: user?.name || user?.fullName || user?.email || 'Utilisateur ArchiPrice',
+        userEmail: user?.email || '',
+        fileName,
+        reference: getProjectReference(selectedProject),
+        amount: articleSimulation.total,
+        itemCount: articleSimulation.count,
+        status: 'Succès',
+        city: projectMetadata.roomType,
+        coefficient: '1,00',
+        items: recapRows.map((row) => ({
+          name: row.name,
+          category: row.category,
+          quantity: 1,
+          price: formatCurrency(row.price),
+          total: formatCurrency(row.price),
+          rawPrice: row.price,
+          imageUrl: row.imageUrl,
+          images: row.images,
+        })),
+      });
     } catch (error) {
       setRecapError(getApiErrorMessage(error, 'Impossible de générer le PDF'));
     } finally {
@@ -223,7 +270,7 @@ export default function EspacePro({
     <div className="espacepro">
       <aside className="espacepro__projects" aria-label="Tous les projets créés">
         {isProjectsLoading && <p>Chargement des projets...</p>}
-        {projectsError && <p>{projectsError}</p>}
+        {projectsError && <Alert variant="danger" className="espacepro__alert">{projectsError}</Alert>}
         {!isProjectsLoading && !projectsError && projects.length === 0 && (
           <p>Aucun projet créé pour le moment.</p>
         )}
@@ -279,7 +326,7 @@ export default function EspacePro({
         </div>
 
         {visibleIsProductsLoading && <p className="espacepro__empty">Chargement des articles...</p>}
-        {productsError && <p className="espacepro__empty">{productsError}</p>}
+        {productsError && <Alert variant="danger" className="espacepro__alert">{productsError}</Alert>}
         {!visibleIsProductsLoading && !productsError && visibleProjectProducts.length === 0 && (
           <p className="espacepro__empty">Aucun article choisi pour ce projet.</p>
         )}
@@ -314,14 +361,26 @@ export default function EspacePro({
               <p>{activeArticle.category || 'Catégorie non renseignée'}</p>
               <strong>{formatCurrency(activeArticle.unitPrice)}</strong>
               {canShowRecapLink && (
-                <button
-                  type="button"
-                  className="espacepro__recap-link"
-                  onClick={() => setIsRecapOpen(true)}
-                >
-                  <Icon name="ReceiptLong" size="sm" />
-                  Récapitulatif PDF
-                </button>
+                <div className="espacepro__recap-actions">
+                  <a
+                    className="espacepro__recap-link"
+                    href={getProjectRecapHref(selectedProject)}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      handleDownloadRecap();
+                    }}
+                  >
+                    {getProjectRecapFileName(selectedProject)}
+                  </a>
+                  <button
+                    type="button"
+                    className="espacepro__recap-open"
+                    aria-label="Afficher le récapitulatif"
+                    onClick={() => setIsRecapOpen(true)}
+                  >
+                    <Icon name="ReceiptLong" size="sm" />
+                  </button>
+                </div>
               )}
             </div>
           </article>
@@ -422,10 +481,10 @@ export default function EspacePro({
               <span>Réf. #{getProjectReference(selectedProject)}</span>
               <button type="button" onClick={handleDownloadRecap} disabled={isRecapDownloading}>
                 <Icon name="Download" size="sm" />
-                {isRecapDownloading ? 'Génération...' : 'Télécharger PDF'}
+                {isRecapDownloading ? 'Génération...' : 'Exporter en PDF'}
               </button>
             </footer>
-            {recapError && <p className="espacepro__recap-error">{recapError}</p>}
+            {recapError && <Alert variant="danger" className="espacepro__recap-error">{recapError}</Alert>}
           </div>
         </div>
       )}

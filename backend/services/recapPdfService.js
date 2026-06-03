@@ -65,6 +65,22 @@ function textCommand(text, x, y, size = 10, font = 'F1') {
   return `BT /${font} ${size} Tf ${x} ${y} Td (${escapePdfText(text)}) Tj ET`;
 }
 
+function getImageUrl(image) {
+  if (!image) return '';
+  if (typeof image === 'string') return image;
+
+  return image.secure_url || image.url || '';
+}
+
+function getProductImageUrl(product) {
+  const images = Array.isArray(product?.images)
+    ? product.images.map(getImageUrl).filter(Boolean)
+    : [];
+
+  if (images.length > 0) return images[0];
+  return getImageUrl(product?.image);
+}
+
 function lineCommand(x1, y1, x2, y2) {
   return `${x1} ${y1} m ${x2} ${y2} l S`;
 }
@@ -83,6 +99,7 @@ function buildPageContent({ project, user, products, pageProducts, pageIndex, pa
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date());
+  const links = [];
   const commands = [
     '0.07 0.14 0.24 RG',
     textCommand('ARCHIPRICE', 48, 792, 10, 'F2'),
@@ -106,8 +123,9 @@ function buildPageContent({ project, user, products, pageProducts, pageIndex, pa
     textCommand('Articles selectionnes', 48, 560, 14, 'F2'),
     fillRectCommand(48, 532, 499, 24, '0.93 0.95 0.98'),
     textCommand('Article', 60, 540, 8, 'F2'),
-    textCommand('Categorie', 300, 540, 8, 'F2'),
-    textCommand('Prix unitaire', 430, 540, 8, 'F2'),
+    textCommand('Categorie', 270, 540, 8, 'F2'),
+    textCommand('Prix unitaire', 390, 540, 8, 'F2'),
+    textCommand('Image', 505, 540, 8, 'F2'),
   ];
 
   let y = 510;
@@ -118,8 +136,19 @@ function buildPageContent({ project, user, products, pageProducts, pageIndex, pa
     nameLines.forEach((line, index) => {
       commands.push(textCommand(line, 60, y - index * 11, 9));
     });
-    commands.push(textCommand(product.category || 'Non renseigne', 300, y, 9));
-    commands.push(textCommand(formatFCFA(product.unitPrice), 430, y, 9, 'F2'));
+    commands.push(textCommand(product.category || 'Non renseigne', 270, y, 9));
+    commands.push(textCommand(formatFCFA(product.unitPrice), 390, y, 9, 'F2'));
+    if (product.imageUrl) {
+      commands.push('0.1 0.3 0.8 RG');
+      commands.push(textCommand('Voir image', 505, y, 8));
+      commands.push('0.07 0.14 0.24 RG');
+      links.push({
+        url: product.imageUrl,
+        rect: [503, y - 3, 546, y + 10],
+      });
+    } else {
+      commands.push(textCommand('-', 505, y, 9));
+    }
     y -= rowHeight;
   });
 
@@ -133,7 +162,10 @@ function buildPageContent({ project, user, products, pageProducts, pageIndex, pa
   }
 
   commands.push(textCommand(`Page ${pageIndex + 1}/${pageCount}`, 500, 38, 8));
-  return commands.join('\n');
+  return {
+    content: commands.join('\n'),
+    links,
+  };
 }
 
 function chunkProducts(products, size = 12) {
@@ -176,6 +208,7 @@ function generateProjectRecapPdf({ project, products, user }) {
     name: product.name,
     category: product.category,
     unitPrice: parseAmount(product.unitPrice),
+    imageUrl: getProductImageUrl(product),
   }));
   const metadata = extractProjectMetadata(project);
   const totals = {
@@ -183,15 +216,7 @@ function generateProjectRecapPdf({ project, products, user }) {
     budget: parseAmount(metadata.budget),
   };
   const chunks = chunkProducts(normalizedProducts);
-  const objects = [
-    '<< /Type /Catalog /Pages 2 0 R >>',
-    `<< /Type /Pages /Kids [${chunks.map((_, index) => `${3 + index * 2} 0 R`).join(' ')}] /Count ${chunks.length} >>`,
-  ];
-
-  chunks.forEach((pageProducts, index) => {
-    const pageObjectNumber = 3 + index * 2;
-    const streamObjectNumber = pageObjectNumber + 1;
-    const content = buildPageContent({
+  const pages = chunks.map((pageProducts, index) => buildPageContent({
       project,
       user,
       products: normalizedProducts,
@@ -199,11 +224,43 @@ function generateProjectRecapPdf({ project, products, user }) {
       pageIndex: index,
       pageCount: chunks.length,
       totals,
+    }));
+  let nextObjectNumber = 3;
+  const pageRefs = pages.map((page) => {
+    const pageObjectNumber = nextObjectNumber;
+    nextObjectNumber += 1;
+    const streamObjectNumber = nextObjectNumber;
+    nextObjectNumber += 1;
+    const annotationObjectNumbers = page.links.map(() => {
+      const objectNumber = nextObjectNumber;
+      nextObjectNumber += 1;
+      return objectNumber;
     });
-    const contentLength = Buffer.byteLength(content, 'binary');
 
-    objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> /F2 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >> >> >> /Contents ${streamObjectNumber} 0 R >>`);
+    return {
+      pageObjectNumber,
+      streamObjectNumber,
+      annotationObjectNumbers,
+    };
+  });
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    `<< /Type /Pages /Kids [${pageRefs.map((page) => `${page.pageObjectNumber} 0 R`).join(' ')}] /Count ${chunks.length} >>`,
+  ];
+
+  pages.forEach((page, index) => {
+    const { pageObjectNumber, streamObjectNumber, annotationObjectNumbers } = pageRefs[index];
+    const content = page.content;
+    const contentLength = Buffer.byteLength(content, 'binary');
+    const annotations = annotationObjectNumbers.length > 0
+      ? ` /Annots [${annotationObjectNumbers.map((objectNumber) => `${objectNumber} 0 R`).join(' ')}]`
+      : '';
+
+    objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> /F2 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >> >> >> /Contents ${streamObjectNumber} 0 R${annotations} >>`);
     objects.push(`<< /Length ${contentLength} >>\nstream\n${content}\nendstream`);
+    page.links.forEach((link) => {
+      objects.push(`<< /Type /Annot /Subtype /Link /Rect [${link.rect.join(' ')}] /Border [0 0 0] /A << /S /URI /URI (${escapePdfText(link.url)}) >> >>`);
+    });
   });
 
   return buildPdf(objects);

@@ -1,7 +1,8 @@
 import './AjouterProduit.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Alert, Button, Icon } from '../../../components/ui';
+import { Alert, Button, Icon, ServerError } from '../../../components/ui';
+import useAuth from '../../../context/useAuth';
 import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
 import {
@@ -10,7 +11,9 @@ import {
   fetchSupplierWorkspace,
   updateSupplierProduct,
 } from '../../../services/supplier';
+import { getSupplierTranslations } from '../../../utils/supplierLanguage';
 
+const MAX_PRODUCT_FILES = 12;
 const INITIAL_PRODUCT_FORM = {
   name: '',
   description: '',
@@ -40,6 +43,11 @@ function getProductImage(product) {
   return image.secure_url || image.url || '';
 }
 
+function isServerApiError(error) {
+  const status = Number(error?.response?.status || 0);
+  return status >= 500 || (!error?.response && Boolean(error?.request));
+}
+
 const DESCRIPTION_TOOLS = [
   { key: 'bold', label: 'B', title: 'Gras' },
   { key: 'italic', label: 'I', title: 'Italique' },
@@ -52,6 +60,7 @@ const DESCRIPTION_TOOLS = [
 ];
 
 export default function AjouterProduit() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const descriptionRef = useRef(null);
@@ -62,8 +71,21 @@ export default function AjouterProduit() {
   const [existingImages, setExistingImages] = useState([]);
   const [files, setFiles] = useState([]);
   const [error, setError] = useState('');
+  const [serverError, setServerError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingImageId, setDeletingImageId] = useState('');
+  const supplierText = getSupplierTranslations(adminData);
+  const productText = supplierText.productForm;
+  const savedSupplierSettings = adminData.supplierSettings || {};
+  const shopName = savedSupplierSettings.shopProfile?.name
+    || user?.shopName
+    || user?.companyName
+    || user?.storeLabel
+    || user?.name
+    || 'Ma boutique';
+  const effectiveSupplierName = productForm.supplier && productForm.supplier !== 'Ma boutique'
+    ? productForm.supplier
+    : shopName;
 
   const taxonomyOptions = useMemo(() => ({
     categories: getTaxonomyNames(adminData.taxonomies?.categories),
@@ -80,6 +102,19 @@ export default function AjouterProduit() {
     name: file.name,
     url: URL.createObjectURL(file),
   })), [files]);
+  const totalImageCount = existingImages.length + files.length;
+  const remainingFileSlots = Math.max(MAX_PRODUCT_FILES - totalImageCount, 0);
+
+  function handleApiError(apiError, fallback) {
+    const message = getApiErrorMessage(apiError, fallback);
+
+    if (isServerApiError(apiError)) {
+      setServerError({ message });
+      return;
+    }
+
+    setError(message);
+  }
 
   useEffect(() => {
     if (!productIdToEdit) return undefined;
@@ -91,7 +126,7 @@ export default function AjouterProduit() {
         if (cancelled) return;
         const product = (data.products || []).find((item) => item.id === productIdToEdit);
         if (!product) {
-          setError('Produit introuvable.');
+          setError(productText.missingProduct);
           return;
         }
 
@@ -104,24 +139,25 @@ export default function AjouterProduit() {
           availability: product.availability || '',
           type: product.room || '',
           range: product.range || '',
-          supplier: 'Ma boutique',
+          supplier: product.supplierName || product.supplierLabel || product.supplier || shopName,
         });
         setExistingImages(product.images || []);
       })
       .catch((apiError) => {
-        if (!cancelled) setError(getApiErrorMessage(apiError, 'Impossible de charger le produit.'));
+        if (!cancelled) handleApiError(apiError, productText.loadError);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [productIdToEdit]);
+  }, [productIdToEdit, productText.loadError, productText.missingProduct, shopName]);
 
   useEffect(() => () => {
     previews.forEach((preview) => URL.revokeObjectURL(preview.url));
   }, [previews]);
 
   function updateProductForm(field, value) {
+    setServerError(null);
     setProductForm((currentForm) => ({
       ...currentForm,
       [field]: value,
@@ -191,7 +227,25 @@ export default function AjouterProduit() {
   }
 
   function handleFilesChange(event) {
-    setFiles(Array.from(event.target.files || []).slice(0, 12));
+    const selectedFiles = Array.from(event.target.files || []);
+    if (selectedFiles.length === 0) return;
+
+    setFiles((currentFiles) => {
+      const availableSlots = Math.max(MAX_PRODUCT_FILES - existingImages.length - currentFiles.length, 0);
+      const filesToAdd = selectedFiles.slice(0, availableSlots);
+
+      if (selectedFiles.length > availableSlots) {
+        setError(productText.maxFilesError(MAX_PRODUCT_FILES));
+      } else {
+        setError('');
+      }
+
+      return [...currentFiles, ...filesToAdd];
+    });
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   }
 
   function removeSelectedFile(fileIndex) {
@@ -216,12 +270,13 @@ export default function AjouterProduit() {
 
     setDeletingImageId(imageKey);
     setError('');
+    setServerError(null);
 
     try {
       const updatedProduct = await deleteSupplierProductImage(productIdToEdit, publicId);
       setExistingImages(updatedProduct.images || []);
     } catch (apiError) {
-      setError(getApiErrorMessage(apiError, "Impossible de supprimer l'image."));
+      handleApiError(apiError, productText.imageDeleteError);
     } finally {
       setDeletingImageId('');
     }
@@ -242,7 +297,7 @@ export default function AjouterProduit() {
         category: product.category,
         room: product.room,
         range: product.range,
-        supplier: 'Ma boutique',
+        supplier: effectiveSupplierName,
         vat: '20%',
         visual: 'sofa',
         city: 'Cotonou',
@@ -266,6 +321,7 @@ export default function AjouterProduit() {
   async function saveProduct(event) {
     event.preventDefault();
     setError('');
+    setServerError(null);
 
     if (!productForm.name.trim()
       || !productForm.description.trim()
@@ -273,10 +329,10 @@ export default function AjouterProduit() {
       || !selectedRoom
       || !selectedRange
       || !selectedAvailability
-      || !productForm.supplier
+      || !effectiveSupplierName
       || productForm.price === ''
       || (files.length === 0 && existingImages.length === 0)) {
-      setError('Tous les champs sont requis, y compris au moins une image.');
+      setError(productText.requiredError);
       return;
     }
 
@@ -301,7 +357,7 @@ export default function AjouterProduit() {
       submitProductToAdmin(savedProduct);
       navigate('/supplier/products');
     } catch (apiError) {
-      setError(getApiErrorMessage(apiError, "Impossible d'enregistrer le produit."));
+      handleApiError(apiError, productText.saveError);
     } finally {
       setIsSubmitting(false);
     }
@@ -310,12 +366,22 @@ export default function AjouterProduit() {
   return (
     <form className="supplier-product-editor-page" onSubmit={saveProduct}>
       <header className="supplier-product-editor-header">
-        <button type="button" className="supplier-product-editor-back" onClick={() => navigate('/supplier/products')} aria-label="Retour aux produits">
+        <button type="button" className="supplier-product-editor-back" onClick={() => navigate('/supplier/products')} aria-label={productText.backLabel}>
           <Icon name="Tag" size="sm" />
         </button>
         <Icon name="ChevronRight" size="sm" />
-        <h1>{productIdToEdit ? 'Modifier un produit' : 'Ajouter un produit'}</h1>
+        <h1>{productIdToEdit ? productText.editTitle : productText.addTitle}</h1>
       </header>
+
+      {serverError && (
+        <ServerError
+          className="supplier-product-editor-server-error"
+          title={productText.serverErrorTitle}
+          message={serverError.message || productText.serverErrorMessage}
+          actionLabel={productText.retry}
+          onRetry={() => window.location.reload()}
+        />
+      )}
 
       {error && (
         <Alert
@@ -331,23 +397,23 @@ export default function AjouterProduit() {
         <main className="supplier-product-editor-main">
           <section className="supplier-product-editor-card">
             <label className="supplier-product-field">
-              <span>Titre</span>
+              <span>{productText.title}</span>
               <input
                 type="text"
                 value={productForm.name}
                 onChange={(event) => updateProductForm('name', event.target.value)}
-                placeholder="Ex: Canapé 3 places Oslo"
+                placeholder={productText.titlePlaceholder}
                 required
               />
             </label>
 
             <label className="supplier-product-field">
-              <span>Description</span>
+              <span>{productText.description}</span>
               <div className="supplier-product-rich-editor">
-                <div className="supplier-product-rich-toolbar" aria-label="Outils de mise en forme de la description">
+                <div className="supplier-product-rich-toolbar" aria-label={productText.formattingToolsLabel}>
                   <select defaultValue="Paragraphe" onChange={(event) => applyDescriptionStyle(event.target.value)}>
-                    <option>Paragraphe</option>
-                    <option>Titre</option>
+                    <option value="Paragraphe">{productText.paragraph}</option>
+                    <option value="Titre">{productText.heading}</option>
                   </select>
                   {DESCRIPTION_TOOLS.map((tool) => (
                     <button
@@ -365,18 +431,18 @@ export default function AjouterProduit() {
                   ref={descriptionRef}
                   value={productForm.description}
                   onChange={(event) => updateProductForm('description', event.target.value)}
-                  placeholder="Ajoutez une description complète du produit."
+                  placeholder={productText.descriptionPlaceholder}
                   required
                 />
               </div>
             </label>
 
             <div className="supplier-product-field">
-              <span>Supports multimédias</span>
+              <span>{productText.media}</span>
               <div className="supplier-product-upload">
                 <div className="supplier-product-upload__controls">
                   <label className="supplier-product-upload-button" htmlFor="supplier-product-images">
-                    Importer
+                    {productText.import}
                   </label>
                   <input
                     ref={fileInputRef}
@@ -384,10 +450,13 @@ export default function AjouterProduit() {
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
                     multiple
+                    disabled={remainingFileSlots === 0}
                     required={existingImages.length === 0 && files.length === 0}
                     onChange={handleFilesChange}
                   />
                 </div>
+                <p>{productText.mediaHint}</p>
+                <p>{productText.selectedFiles(totalImageCount, MAX_PRODUCT_FILES)}</p>
                 {previews.length > 0 && (
                   <div className="supplier-product-preview-grid">
                     {previews.map((preview, index) => (
@@ -396,8 +465,8 @@ export default function AjouterProduit() {
                         <button
                           type="button"
                           className="supplier-product-preview-remove"
-                          aria-label={`Supprimer ${preview.name}`}
-                          title="Supprimer ce fichier"
+                          aria-label={productText.deleteFile(preview.name)}
+                          title={productText.deleteFile(preview.name)}
                           onClick={() => removeSelectedFile(index)}
                         >
                           <Icon name="Delete" size="sm" />
@@ -414,8 +483,8 @@ export default function AjouterProduit() {
                         <button
                           type="button"
                           className="supplier-product-preview-remove"
-                          aria-label={`Supprimer l'image existante ${index + 1}`}
-                          title="Supprimer cette image"
+                          aria-label={productText.deleteExistingImage(index + 1)}
+                          title={productText.deleteExistingImage(index + 1)}
                           disabled={deletingImageId === (image.public_id || image.secure_url || image.url)}
                           onClick={() => removeExistingImage(image)}
                         >
@@ -429,9 +498,9 @@ export default function AjouterProduit() {
             </div>
 
             <label className="supplier-product-field">
-              <span>Catégorie</span>
+              <span>{productText.category}</span>
               <select required value={selectedCategory} onChange={(event) => updateProductForm('category', event.target.value)}>
-                <option value="">Choisir une catégorie de produits</option>
+                <option value="">{productText.categoryPlaceholder}</option>
                 {taxonomyOptions.categories.map((category) => (
                   <option key={category} value={category}>{category}</option>
                 ))}
@@ -441,7 +510,7 @@ export default function AjouterProduit() {
 
           <section className="supplier-product-editor-card supplier-product-price-card">
             <label className="supplier-product-field supplier-product-price-field">
-              <span>Prix</span>
+              <span>{productText.price}</span>
               <div>
                 <input
                   type="number"
@@ -461,37 +530,37 @@ export default function AjouterProduit() {
         <aside className="supplier-product-editor-aside">
           <section className="supplier-product-side-card supplier-product-organization">
             <div className="supplier-product-side-title">
-              <strong>Organisation du produit</strong>
+              <strong>{productText.organization}</strong>
               <Icon name="Info" size="sm" />
             </div>
             <label className="supplier-product-field">
-              <span>Disponibilité</span>
+              <span>{productText.availability}</span>
               <select required value={selectedAvailability} onChange={(event) => updateProductForm('availability', event.target.value)}>
-                <option value="">Choisir une disponibilité</option>
+                <option value="">{productText.availabilityPlaceholder}</option>
                 {taxonomyOptions.availability.map((availability) => (
                   <option key={availability} value={availability}>{availability}</option>
                 ))}
               </select>
             </label>
             <label className="supplier-product-field">
-              <span>Pièce</span>
+              <span>{productText.room}</span>
               <select required value={selectedRoom} onChange={(event) => updateProductForm('type', event.target.value)}>
-                <option value="">Choisir une pièce</option>
+                <option value="">{productText.roomPlaceholder}</option>
                 {taxonomyOptions.rooms.map((room) => (
                   <option key={room} value={room}>{room}</option>
                 ))}
               </select>
             </label>
             <label className="supplier-product-field">
-              <span>Fournisseur</span>
-              <select required value={productForm.supplier} onChange={(event) => updateProductForm('supplier', event.target.value)}>
-                <option value="Ma boutique">Ma boutique</option>
+              <span>{productText.supplier}</span>
+              <select required value={effectiveSupplierName} onChange={(event) => updateProductForm('supplier', event.target.value)}>
+                <option value={shopName}>{shopName}</option>
               </select>
             </label>
             <label className="supplier-product-field">
-              <span>Gamme</span>
+              <span>{productText.range}</span>
               <select required value={selectedRange} onChange={(event) => updateProductForm('range', event.target.value)}>
-                <option value="">Choisir une gamme</option>
+                <option value="">{productText.rangePlaceholder}</option>
                 {taxonomyOptions.ranges.map((range) => (
                   <option key={range} value={range}>{range}</option>
                 ))}
@@ -500,8 +569,8 @@ export default function AjouterProduit() {
           </section>
 
           <div className="supplier-product-editor-submit">
-            <Button type="button" variant="outline" onClick={() => navigate('/supplier/products')}>Annuler</Button>
-            <Button type="submit" isLoading={isSubmitting}>Publier</Button>
+            <Button type="button" variant="outline" onClick={() => navigate('/supplier/products')}>{productText.cancel}</Button>
+            <Button type="submit" isLoading={isSubmitting}>{productText.publish}</Button>
           </div>
         </aside>
       </div>

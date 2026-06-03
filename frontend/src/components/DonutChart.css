@@ -36,7 +36,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  color: #7d8897;
+  color: #977d7d;
 }
 
 .chart--donut .chart-legend__item {
@@ -44,7 +44,7 @@
   grid-template-columns: 8px minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.5rem;
-  color: #7d8897;
+  color: #222223c6;
   font-size: 0.78rem;
   font-weight: 700;
 }
@@ -62,7 +62,7 @@
 }
 
 .chart--donut .chart-legend__value {
-  color: #0f172a;
+  color: #2a100faf;
 }
 
 .chart-tooltip {
@@ -95,7 +95,7 @@
 
 .dashboard-shell.is-theme-dark .chart-card__title,
 .dashboard-shell.is-theme-dark .chart--donut .chart-legend__value {
-  color: #f8fafc;
+  color: #fcf8f8;
 }
 
 .dashboard-shell.is-theme-dark .chart--donut .chart-legend,

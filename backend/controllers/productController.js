@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import Project from '../models/Project.js';
 import Product from '../models/Product.js';
 import { deleteProductImage } from '../services/cloudinaryImageService.js';
+import { publishCrudEvent } from '../services/realtimeService.js';
 
 function isValidObjectId(id) {
   return mongoose.Types.ObjectId.isValid(id);
@@ -73,6 +74,14 @@ async function createProduct(req, res) {
     project: projectId,
   });
 
+  publishCrudEvent('project-products', 'created', {
+    projectId: String(project._id),
+    productId: String(product._id),
+  }, {
+    roles: ['admin'],
+    userIds: [req.user._id],
+  });
+
   res.status(201).json({ product: formatProduct(product) });
 }
 
@@ -131,6 +140,14 @@ async function updateProduct(req, res) {
 
   await product.save();
 
+  publishCrudEvent('project-products', 'updated', {
+    projectId: String(project._id),
+    productId: String(product._id),
+  }, {
+    roles: ['admin'],
+    userIds: [req.user._id],
+  });
+
   res.json({ product: formatProduct(product) });
 }
 
@@ -155,6 +172,14 @@ async function deleteProduct(req, res) {
   await Promise.allSettled((product.images || []).map((image) => (
     image.public_id ? deleteProductImage(image.public_id) : Promise.resolve()
   )));
+
+  publishCrudEvent('project-products', 'deleted', {
+    projectId: String(project._id),
+    productId: String(product._id),
+  }, {
+    roles: ['admin'],
+    userIds: [req.user._id],
+  });
 
   res.json({ message: 'Produit supprimé' });
 }
@@ -185,6 +210,15 @@ async function deleteProductImageByPublicId(req, res) {
   await deleteProductImage(publicId);
   product.images = product.images.filter((image) => image.public_id !== publicId);
   await product.save();
+
+  publishCrudEvent('project-products', 'image-deleted', {
+    projectId: String(project._id),
+    productId: String(product._id),
+    publicId,
+  }, {
+    roles: ['admin'],
+    userIds: [req.user._id],
+  });
 
   return res.json({ product: formatProduct(product) });
 }

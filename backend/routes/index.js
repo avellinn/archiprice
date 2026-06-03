@@ -7,6 +7,7 @@ import adminRouter from './admin.js';
 import catalogueConfigRouter from './catalogueConfig.js';
 import uploadsRouter from './uploads.js';
 import supplierRouter from './supplier.js';
+import realtimeRouter from './realtime.js';
 
 const router = express.Router();
 
@@ -14,6 +15,7 @@ router.use(healthRouter);
 router.use('/auth', authRouter);
 router.use(catalogueConfigRouter);
 router.use(uploadsRouter);
+router.use(realtimeRouter);
 router.use('/projects', projectsRouter);
 router.use('/projects/:projectId/products', productsRouter);
 router.use('/admin', adminRouter);

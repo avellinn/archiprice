@@ -58,6 +58,7 @@ Documentation API : [`docs/API.md`](docs/API.md).
 Documentation frontend : [`frontend/docs/frontend-documentation.md`](frontend/docs/frontend-documentation.md).
 Design system : [`frontend/docs/design-system.md`](frontend/docs/design-system.md).
 Audit et nettoyage du workspace : [`docs/WORKSPACE_AUDIT.md`](docs/WORKSPACE_AUDIT.md).
+Architecture MVC et flux de données : [`docs/ARCHITECTURE_MVC_DATA_FLOW.md`](docs/ARCHITECTURE_MVC_DATA_FLOW.md).
 
 ## Lancement
 
@@ -190,7 +191,7 @@ Les routes supplier sont protégées par JWT et `requireSupplier`.
 | `PUT` | `/api/supplier/products/:productId` | Modifie un produit du fournisseur courant |
 | `DELETE` | `/api/supplier/products/:productId` | Supprime un produit du fournisseur courant et ses images Cloudinary |
 
-`POST` et `PUT /api/supplier/products` utilisent `multipart/form-data`, champ fichier `image` répété jusqu'à 10 fois. Les images sont streamées vers Cloudinary, dossier `archiprice/products`.
+`POST` et `PUT /api/supplier/products` utilisent `multipart/form-data`, champ fichier `image` répété jusqu'à 12 fois. Les images sont streamées vers Cloudinary, dossier `archiprice/products`.
 
 ## Routes Frontend
 
@@ -226,7 +227,6 @@ Routes supplier :
 - `/supplier/shop` : ma boutique
 - `/supplier/products` : produits
 - `/supplier/products/new` : ajouter un produit et uploader des images
-- `/supplier/catalogue`
 - `/supplier/clients`
 - `/supplier/content/files`
 - `/supplier/settings`

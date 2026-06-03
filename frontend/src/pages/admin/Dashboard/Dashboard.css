@@ -1,75 +1,14 @@
-/* Page styles migrated from App.css */
-.admin-page {
-  min-height: calc(100vh - 64px);
-  padding: 2rem;
-  background: var(--dashboard-page-background);
+@import '../../user/Dashboard/Dashboard.css';
+
+.admin-dashboard-page .dashboard-new-project .btn {
+  background: #224b73;
+  color: #fff4f4;
 }
 
-.admin-page__heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+.admin-dashboard-page .dashboard-new-project .btn:hover:not(:disabled) {
+  background: #183752;
 }
 
-.admin-page__heading h1 {
-  margin: 0.25rem 0 0;
-  color: var(--app-heading-color);
-  font-size: 1.75rem;
-  font-weight: 800;
-}
-
-.admin-page__eyebrow {
-  color: #c0893f;
-  text-transform: uppercase;
-}
-
-.admin-page__actions,
-.admin-toolbar__actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.admin-stat-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.admin-stat-card,
-.admin-table-card,
-.admin-filter-panel {
-  border: 1px solid var(--app-border-color);
-  border-radius: 12px;
-  background: var(--app-card-background);
-  box-shadow: 0 12px 28px rgb(15 23 42 / 0.04);
-}
-
-.admin-stat-card {
-  display: grid;
-  gap: 0.4rem;
-  padding: 1rem;
-}
-
-.admin-stat-card span,
-.admin-stat-card small {
-  color: var(--app-muted-color);
-  font-size: 0.82rem;
-  font-weight: 800;
-}
-
-.admin-stat-card strong {
-  color: var(--app-heading-color);
-  font-size: 2rem;
-  line-height: 1;
-}
-
-
-/* Admin page layout migrated from App.css */
 /* Admin one-page layout: the page itself does not scroll; content panels do. */
 .admin-shell {
   height: 100vh;
@@ -187,90 +126,9 @@
 .admin-settings-config-card,
 .admin-settings-coefficients {
   max-height: 100%;
-}@media (max-width: 980px) {
-.dashboard-content {
-    margin-left: 0;
-    padding: 64px 0 0;
-    border: 0;
-    border-radius: 0;
-  }
+}
 
-  .dashboard-content:has(.dashboard-page),
-  .dashboard-content:has(.workspace-page) {
-    height: auto;
-    min-height: 100vh;
-    overflow: auto;
-  }
-
-  .dashboard-page,
-  .workspace-page {
-    height: auto;
-    min-height: calc(100vh - 64px);
-    overflow: visible;
-  }
-
-  .dashboard-grid,
-  .workspace-card-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-products-header,
-  .admin-suppliers-header,
-  .admin-users-management__header,
-  .admin-simulations-toolbar,
-  .admin-support-toolbar {
-    grid-template-columns: 1fr;
-    align-items: stretch;
-  }
-
-  .admin-products-toolbar,
-  .admin-toolbar,
-  .admin-products-pagination,
-  .admin-suppliers-pagination,
-  .admin-simulations-pagination,
-  .admin-support-actions {
-    flex-wrap: wrap;
-  }
-
-  .admin-products-toolbar,
-  .admin-toolbar,
-  .admin-products-pagination,
-  .admin-suppliers-pagination,
-  .admin-simulations-pagination {
-    align-items: stretch;
-  }
-
-  .admin-products-search,
-  .admin-suppliers-search,
-  .admin-toolbar__search {
-    width: 100%;
-    max-width: none;
-    min-width: 0;
-  }
-
-  .admin-products-content,
-  .admin-products-layout,
-  .admin-taxonomy-layout,
-  .admin-simulations-layout,
-  .admin-support-page,
-  .admin-settings-page,
-  .admin-settings-coefficients {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-taxonomy-layout,
-  .admin-simulations-layout {
-    overflow: visible;
-  }
-
-  .admin-support-detail,
-  .admin-settings-config-card,
-  .admin-settings-coefficients,
-  .admin-settings-coefficients__table-card,
-  .admin-settings-city-card {
-    max-height: none;
-  }
-
+@media (max-width: 980px) {
   .admin-shell,
   .admin-shell .dashboard-content,
   .admin-shell__content,
@@ -296,95 +154,5 @@
   .admin-settings-page,
   .admin-page {
     padding: 1rem;
-  }
-}
-@media (max-width: 620px) {
-.dashboard-content {
-    padding-top: 58px;
-  }
-
-  .dashboard-page,
-  .workspace-page,
-  .catalogue-page,
-  .catalogue-page--products {
-    min-height: calc(100vh - 58px);
-  }
-
-  .dashboard-grid,
-  .workspace-page {
-    padding: 1rem;
-  }
-
-  .row-heading,
-  .workspace-heading,
-  .project-item,
-  .project-actions {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .catalogue-filter-panel,
-  .catalogue-budget-card,
-  .admin-stat-card,
-  .admin-table-card,
-  .admin-products-content,
-  .admin-taxonomy-table-card,
-  .admin-taxonomy-form-card,
-  .admin-taxonomy-danger-card,
-  .admin-suppliers-card,
-  .admin-users-management__card,
-  .admin-simulations-card,
-  .admin-support-table-card,
-  .admin-support-detail,
-  .admin-settings-config-card,
-  .admin-settings-coefficients__table-card,
-  .admin-settings-city-card {
-    border-radius: 10px;
-  }
-
-  .admin-stat-grid,
-  .admin-users-stats {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-page__heading,
-  .admin-users-heading,
-  .admin-products-header,
-  .admin-suppliers-header {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .admin-products-toolbar,
-  .admin-page__actions,
-  .admin-toolbar__actions,
-  .admin-support-actions,
-  .admin-product-modal__footer {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .admin-products-toolbar .btn,
-  .admin-suppliers-header .admin-products-add,
-  .admin-product-modal__footer .btn {
-    width: 100%;
-  }
-
-  .admin-products-filter,
-  .admin-product-form__row,
-  .admin-taxonomy-form-actions,
-  .admin-settings-city-form__actions,
-  .admin-support-detail__meta div {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-products-table,
-  .admin-suppliers-table,
-  .admin-users-management__table,
-  .admin-simulations-table,
-  .admin-support-table,
-  .admin-settings-coefficients__table,
-  .admin-taxonomy-table {
-    font-size: 0.78rem;
   }
 }

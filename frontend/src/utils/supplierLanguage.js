@@ -1,0 +1,187 @@
+export const SUPPLIER_LANGUAGE_LABELS = {
+  fr: 'Français',
+  en: 'Anglais',
+};
+
+export const SUPPLIER_TRANSLATIONS = {
+  fr: {
+    pageTitles: {
+      '/supplier/dashboard': 'Analyses de données',
+      '/supplier/shop': 'Ma boutique',
+      '/supplier/products': 'Produits',
+      '/supplier/clients': 'Clients',
+      '/supplier/content/files': 'Fichiers',
+      '/supplier/settings': 'Paramètres',
+      fallback: 'Espace supplier',
+    },
+    sidebar: {
+      section: 'Boutique',
+      dashboard: 'Analyses de données',
+      shop: 'Ma boutique',
+      products: 'Produits',
+      clients: 'Clients',
+      content: 'Contenu',
+      files: 'Fichiers',
+      settings: 'Paramètres',
+      logout: 'Déconnexion',
+    },
+    settings: {
+      title: 'Paramètres',
+      section: 'Général',
+      location: 'Emplacements',
+      timezone: 'Fuseau horaire',
+      language: 'Langue',
+      policy: 'Politique',
+      policyDescription: 'CGU, confidentialité, fournisseurs et mentions légales',
+    },
+    search: {
+      placeholder: (page) => `Rechercher dans ${page.toLowerCase()}`,
+      message: (query) => (query ? `Recherche supplier : ${query}` : 'Saisissez un mot-clé pour rechercher.'),
+    },
+    notifications: {
+      title: 'Notifications supplier',
+      closeAll: 'Tout fermer',
+      empty: 'Aucune nouvelle notification boutique.',
+      refused: 'Publication refusée',
+    },
+    productForm: {
+      addTitle: 'Ajouter un produit',
+      editTitle: 'Modifier un produit',
+      backLabel: 'Retour aux produits',
+      title: 'Titre',
+      titlePlaceholder: 'Ex: Canapé 3 places Oslo',
+      description: 'Description',
+      descriptionPlaceholder: 'Ajoutez une description complète du produit.',
+      formattingToolsLabel: 'Outils de mise en forme de la description',
+      paragraph: 'Paragraphe',
+      heading: 'Titre',
+      media: 'Supports multimédias',
+      import: 'Importer',
+      mediaHint: 'Jusqu’à 12 images JPG, PNG ou WebP. 5 Mo maximum par fichier.',
+      selectedFiles: (count, max) => `${count}/${max} fichier(s) sélectionné(s)`,
+      maxFilesError: (max) => `Maximum ${max} images par article.`,
+      deleteFile: (name) => `Supprimer ${name}`,
+      deleteExistingImage: (index) => `Supprimer l'image existante ${index}`,
+      category: 'Catégorie',
+      categoryPlaceholder: 'Choisir une catégorie de produits',
+      price: 'Prix',
+      organization: 'Organisation du produit',
+      availability: 'Disponibilité',
+      availabilityPlaceholder: 'Choisir une disponibilité',
+      room: 'Pièce',
+      roomPlaceholder: 'Choisir une pièce',
+      supplier: 'Fournisseur',
+      range: 'Gamme',
+      rangePlaceholder: 'Choisir une gamme',
+      cancel: 'Annuler',
+      publish: 'Publier',
+      requiredError: 'Tous les champs sont requis, y compris au moins une image.',
+      missingProduct: 'Produit introuvable.',
+      loadError: 'Impossible de charger le produit.',
+      imageDeleteError: "Impossible de supprimer l'image.",
+      saveError: "Impossible d'enregistrer le produit.",
+      serverErrorTitle: 'Un problème est survenu lors du chargement de cette page',
+      serverErrorMessage: "Un problème technique a empêché le chargement de cette page. Essayez de recharger cette page ou d'accéder à une autre page.",
+      retry: 'Réessayer',
+    },
+  },
+  en: {
+    pageTitles: {
+      '/supplier/dashboard': 'Data analytics',
+      '/supplier/shop': 'My shop',
+      '/supplier/products': 'Products',
+      '/supplier/clients': 'Customers',
+      '/supplier/content/files': 'Files',
+      '/supplier/settings': 'Settings',
+      fallback: 'Supplier space',
+    },
+    sidebar: {
+      section: 'Shop',
+      dashboard: 'Data analytics',
+      shop: 'My shop',
+      products: 'Products',
+      clients: 'Customers',
+      content: 'Content',
+      files: 'Files',
+      settings: 'Settings',
+      logout: 'Logout',
+    },
+    settings: {
+      title: 'Settings',
+      section: 'General',
+      location: 'Locations',
+      timezone: 'Time zone',
+      language: 'Language',
+      policy: 'Policy',
+      policyDescription: 'Terms, privacy, supplier conditions and legal notices',
+    },
+    search: {
+      placeholder: (page) => `Search in ${page.toLowerCase()}`,
+      message: (query) => (query ? `Supplier search: ${query}` : 'Enter a keyword to search.'),
+    },
+    notifications: {
+      title: 'Supplier notifications',
+      closeAll: 'Close all',
+      empty: 'No new shop notification.',
+      refused: 'Publication refused',
+    },
+    productForm: {
+      addTitle: 'Add product',
+      editTitle: 'Edit product',
+      backLabel: 'Back to products',
+      title: 'Title',
+      titlePlaceholder: 'Ex: Oslo 3-seat sofa',
+      description: 'Description',
+      descriptionPlaceholder: 'Add a complete product description.',
+      formattingToolsLabel: 'Description formatting tools',
+      paragraph: 'Paragraph',
+      heading: 'Heading',
+      media: 'Media',
+      import: 'Import',
+      mediaHint: 'Up to 12 JPG, PNG or WebP images. 5 MB maximum per file.',
+      selectedFiles: (count, max) => `${count}/${max} file(s) selected`,
+      maxFilesError: (max) => `Maximum ${max} images per item.`,
+      deleteFile: (name) => `Remove ${name}`,
+      deleteExistingImage: (index) => `Remove existing image ${index}`,
+      category: 'Category',
+      categoryPlaceholder: 'Choose a product category',
+      price: 'Price',
+      organization: 'Product organization',
+      availability: 'Availability',
+      availabilityPlaceholder: 'Choose an availability',
+      room: 'Room',
+      roomPlaceholder: 'Choose a room',
+      supplier: 'Supplier',
+      range: 'Range',
+      rangePlaceholder: 'Choose a range',
+      cancel: 'Cancel',
+      publish: 'Publish',
+      requiredError: 'All fields are required, including at least one image.',
+      missingProduct: 'Product not found.',
+      loadError: 'Unable to load the product.',
+      imageDeleteError: 'Unable to remove the image.',
+      saveError: 'Unable to save the product.',
+      serverErrorTitle: 'A problem occurred while loading this page',
+      serverErrorMessage: 'A technical issue prevented this page from loading. Try reloading this page or opening another page.',
+      retry: 'Try again',
+    },
+  },
+};
+
+export function normalizeSupplierLanguage(language) {
+  return String(language || '').toLowerCase().startsWith('ang') || String(language || '').toLowerCase().startsWith('en')
+    ? 'en'
+    : 'fr';
+}
+
+export function getSupplierLanguage(adminData) {
+  return normalizeSupplierLanguage(adminData?.supplierSettings?.settings?.language);
+}
+
+export function getSupplierTranslations(adminDataOrLanguage) {
+  const language = typeof adminDataOrLanguage === 'string'
+    ? normalizeSupplierLanguage(adminDataOrLanguage)
+    : getSupplierLanguage(adminDataOrLanguage);
+
+  return SUPPLIER_TRANSLATIONS[language] || SUPPLIER_TRANSLATIONS.fr;
+}

@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import Project from '../models/Project.js';
+import { publishCrudEvent } from '../services/realtimeService.js';
 
 function formatProject(project) {
   return {
@@ -35,6 +36,11 @@ async function createProject(req, res) {
     clientName: clientName?.trim() || undefined,
     status,
     user: req.user._id,
+  });
+
+  publishCrudEvent('projects', 'created', { projectId: String(project._id) }, {
+    roles: ['admin'],
+    userIds: [req.user._id],
   });
 
   res.status(201).json({ project: formatProject(project) });
@@ -76,6 +82,11 @@ async function updateProject(req, res) {
 
   await project.save();
 
+  publishCrudEvent('projects', 'updated', { projectId: String(project._id) }, {
+    roles: ['admin'],
+    userIds: [req.user._id],
+  });
+
   res.json({ project: formatProject(project) });
 }
 
@@ -91,6 +102,11 @@ async function deleteProject(req, res) {
   if (!project) {
     return res.status(404).json({ error: 'Projet introuvable' });
   }
+
+  publishCrudEvent('projects', 'deleted', { projectId: String(project._id) }, {
+    roles: ['admin'],
+    userIds: [req.user._id],
+  });
 
   res.json({ message: 'Projet supprimé' });
 }

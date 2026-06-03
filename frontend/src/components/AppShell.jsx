@@ -1,28 +1,34 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Header from './Header';
 import Icon from './Icon';
 import Sidebar from './Sidebar';
 import useAuth from '../context/useAuth';
+import { syncAdminDataFromRemote } from '../services/adminData';
+import { connectRealtime } from '../services/realtime';
+import { getUserTranslations, normalizeUserLanguage } from '../utils/userLanguage';
 import { getAvatarColor, getDisplayName, getUserInitials } from '../utils/userDisplay';
 import siteLogo from '../assets/images/log.png';
 
-const PAGE_TITLES = {
-  '/dashboard': 'Tableau de bord',
-  '/catalogue': 'Explorer catalogue',
-  '/workspace': 'Mon espace de travail',
-  '/factures': 'Estimations exportées',
-  '/parametres': 'Paramètres',
-  '/deconnexion': 'Déconnexion',
+const USER_PROFILE_KEY = 'archiprice_user_profile_preferences';
+const USER_PROFILE_EVENT = 'archiprice:user-profile-change';
+const USER_SEARCH_ICONS = {
+  '/dashboard': 'Dashboard',
+  '/catalogue': 'Explore',
+  '/workspace': 'Workspaces',
+  '/factures': 'ReceiptLong',
+  '/parametres': 'AccountCircle',
+  '/deconnexion': 'Logout',
 };
 
-const SEARCH_PLACEHOLDERS = {
-  '/dashboard': 'Rechercher un projet récent',
-  '/catalogue': 'Rechercher un article, une boutique...',
-  '/workspace': 'Rechercher un projet',
-  '/factures': 'Rechercher une estimation',
-  '/parametres': 'Rechercher un paramètre',
-};
+function readUserLanguage() {
+  try {
+    const profile = JSON.parse(window.localStorage.getItem(USER_PROFILE_KEY) || '{}');
+    return normalizeUserLanguage(profile.language);
+  } catch {
+    return 'fr';
+  }
+}
 
 export default function AppShell() {
   const { user } = useAuth();
@@ -34,57 +40,83 @@ export default function AppShell() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [searchMessage, setSearchMessage] = useState('');
+  const [userLanguage, setUserLanguage] = useState(readUserLanguage);
+  const userText = getUserTranslations(userLanguage);
+
+  useEffect(() => {
+    function handleProfileChange(event) {
+      if (event.type === 'storage' && event.key !== USER_PROFILE_KEY) return;
+      setUserLanguage(readUserLanguage());
+    }
+
+    window.addEventListener(USER_PROFILE_EVENT, handleProfileChange);
+    window.addEventListener('storage', handleProfileChange);
+
+    return () => {
+      window.removeEventListener(USER_PROFILE_EVENT, handleProfileChange);
+      window.removeEventListener('storage', handleProfileChange);
+    };
+  }, []);
+
+  useEffect(() => connectRealtime({
+    onEvent: (event) => {
+      if (event?.type === 'connected') return;
+      syncAdminDataFromRemote().catch(() => {});
+    },
+  }), []);
 
   const sidebarSections = useMemo(
     () => [
       {
-        title: 'Navigation',
+        title: userText.sidebar.section,
         items: [
           {
             id: 'dashboard',
-            label: 'Tableau de bord',
+            label: userText.sidebar.dashboard,
             path: '/dashboard',
             icon: <Icon name="Dashboard" />,
           },
           {
             id: 'explorer-catalogue',
-            label: 'Explorer catalogue',
+            label: userText.sidebar.catalogue,
             path: '/catalogue',
             icon: <Icon name="Explore" />,
           },
           {
             id: 'workspace',
-            label: 'Mon espace de travail',
+            label: userText.sidebar.workspace,
             path: '/workspace',
             icon: <Icon name="Workspaces" />,
           },
           {
             id: 'invoices',
-            label: 'Estimations exportées',
+            label: userText.sidebar.invoices,
             path: '/factures',
             icon: <Icon name="ReceiptLong" />,
           },
           {
             id: 'parametres',
-            label: 'Paramètres',
+            label: userText.sidebar.settings,
             path: '/parametres',
             icon: <Icon name="Info" />,
           },
           {
             id: 'logout',
-            label: 'Déconnexion',
+            label: userText.sidebar.logout,
             path: '/deconnexion',
             icon: <Icon name="Logout" />,
           },
         ],
       },
     ],
-    [],
+    [userText],
   );
 
-  function handleSearchSubmit() {
-    const query = searchValue.trim();
-    setSearchMessage(query ? `Recherche lancée : ${query}` : 'Saisissez un mot-clé pour rechercher.');
+  function handleSearchSubmit(payload = {}) {
+    const query = payload.query ?? searchValue.trim();
+    const indexedCount = Array.isArray(payload.matches) ? payload.matches.length : 0;
+    const suffix = query ? ` · ${indexedCount} résultat(s) indexé(s)` : '';
+    setSearchMessage(`${userText.search.message(query)}${suffix}`);
   }
 
   function handleSearchChange(value) {
@@ -105,9 +137,10 @@ export default function AppShell() {
     navigate('/deconnexion');
   }
 
-  const currentPage = PAGE_TITLES[location.pathname] || 'Tableau de bord';
+  const currentPage = userText.pageTitles[location.pathname] || userText.pageTitles.fallback;
   const searchValue = searchParams.get('q') || '';
-  const searchPlaceholder = SEARCH_PLACEHOLDERS[location.pathname] || `Rechercher dans ${currentPage.toLowerCase()}`;
+  const searchIcon = USER_SEARCH_ICONS[location.pathname] || 'Search';
+  const searchPlaceholder = userText.searchPlaceholders[location.pathname] || `Rechercher dans ${currentPage.toLowerCase()}`;
 
   return (
     <main
@@ -140,6 +173,7 @@ export default function AppShell() {
           isSidebarCollapsed={isSidebarCollapsed}
           isThemeDark={isThemeDark}
           searchValue={searchValue}
+          searchIcon={searchIcon}
           searchPlaceholder={searchPlaceholder}
           onAccountClick={() => {
             setIsAccountOpen((open) => !open);
@@ -159,12 +193,12 @@ export default function AppShell() {
         {isNotificationsOpen && (
           <div className="dashboard-floating-panel notification-panel">
             <div className="notification-panel__header">
-              <strong>Notifications</strong>
-              <button type="button" onClick={() => setIsNotificationsOpen(false)}>
-                Fermer
+              <strong>{userText.notifications.title}</strong>
+              <button type="button" aria-label={userText.notifications.close} onClick={() => setIsNotificationsOpen(false)}>
+                <Icon name="Close" size="sm" />
               </button>
             </div>
-            <span>Aucune nouvelle notification pour le moment.</span>
+            <span>{userText.notifications.empty}</span>
           </div>
         )}
 

@@ -345,6 +345,13 @@
   justify-content: space-between;
 }
 
+.supplier-policy-header-title {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  gap: 0.45rem;
+}
+
 .supplier-settings-modal__header h2,
 .supplier-settings-modal__titlebar h2 {
   margin: 0;
@@ -364,6 +371,13 @@
   cursor: pointer;
 }
 
+.supplier-settings-modal__header .supplier-policy-back {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid #d6d6d6;
+  background: #ffffff;
+}
+
 .supplier-policy-list {
   overflow: hidden;
   margin: 0.6rem;
@@ -374,12 +388,12 @@
 
 .supplier-policy-row {
   display: grid;
-  grid-template-columns: 1.4rem minmax(0, 1fr) auto 1rem;
+  grid-template-columns: 1.4rem minmax(0, 1fr) 1rem;
   align-items: center;
   gap: 0.8rem;
   width: 100%;
-  min-height: 44px;
-  padding: 0.55rem 0.75rem;
+  min-height: 62px;
+  padding: 0.72rem 0.75rem;
   border: 0;
   border-bottom: 1px solid #dcdcdc;
   background: transparent;
@@ -400,33 +414,56 @@
 }
 
 .supplier-policy-row strong {
+  display: block;
   font-size: 0.9rem;
+  letter-spacing: 0;
 }
 
-.supplier-policy-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-height: 1.5rem;
-  padding: 0 0.55rem;
-  border-radius: 999px;
-  background: #eeeeee;
-  color: #5f5f5f;
-  font-size: 0.78rem;
-  font-weight: 900;
-  white-space: nowrap;
+.supplier-policy-row small {
+  display: block;
+  margin-top: 0.2rem;
+  color: #5f6368;
+  font-size: 0.8rem;
+  line-height: 1.35;
 }
 
-.supplier-policy-status i {
-  width: 0.45rem;
-  height: 0.45rem;
-  border-radius: 999px;
-  background: #008060;
+.supplier-policy-page {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  background: #ffffff;
 }
 
-.supplier-policy-status--warning {
-  background: #ffd79a;
-  color: #7c4a00;
+.supplier-policy-page > p {
+  margin: 0;
+  color: #4b5563;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.supplier-policy-page__content {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.supplier-policy-page__content article {
+  padding: 0.85rem;
+  border: 1px solid #dcdcdc;
+  border-radius: 9px;
+  background: #f8fafc;
+}
+
+.supplier-policy-page__content h3 {
+  margin: 0 0 0.35rem;
+  color: #202124;
+  font-size: 0.92rem;
+}
+
+.supplier-policy-page__content p {
+  margin: 0;
+  color: #4b5563;
+  font-size: 0.86rem;
+  line-height: 1.55;
 }
 
 .supplier-settings-modal-card {
@@ -531,6 +568,7 @@
 
 .dashboard-shell.is-theme-dark .supplier-settings-modal,
 .dashboard-shell.is-theme-dark .supplier-policy-list,
+.dashboard-shell.is-theme-dark .supplier-policy-page,
 .dashboard-shell.is-theme-dark .supplier-settings-modal-card,
 .dashboard-shell.is-theme-dark .supplier-location-form,
 .dashboard-shell.is-theme-dark .supplier-settings-modal__footer {
@@ -547,9 +585,21 @@
 .dashboard-shell.is-theme-dark .supplier-settings-modal h2,
 .dashboard-shell.is-theme-dark .supplier-settings-modal h3,
 .dashboard-shell.is-theme-dark .supplier-policy-row,
+.dashboard-shell.is-theme-dark .supplier-policy-page__content article,
 .dashboard-shell.is-theme-dark .supplier-settings-modal-card label,
 .dashboard-shell.is-theme-dark .supplier-location-form label {
   color: var(--app-heading-color);
+}
+
+.dashboard-shell.is-theme-dark .supplier-policy-row small,
+.dashboard-shell.is-theme-dark .supplier-policy-page > p,
+.dashboard-shell.is-theme-dark .supplier-policy-page__content p {
+  color: var(--app-muted-color);
+}
+
+.dashboard-shell.is-theme-dark .supplier-policy-page__content article {
+  border-color: var(--app-border-color);
+  background: #0f172a;
 }
 
 .dashboard-shell.is-theme-dark .supplier-settings-modal-card input,

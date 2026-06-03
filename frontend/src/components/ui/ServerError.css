@@ -1,0 +1,111 @@
+.server-error {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  align-items: center;
+  gap: 2rem;
+  width: min(100%, 920px);
+  padding: 0.75rem 0;
+  color: var(--app-heading-color, #1f2937);
+}
+
+.server-error__illustration {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  min-height: 156px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: #ffffff;
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.2);
+}
+
+.server-error__side {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 1.1rem;
+  background: #087a57;
+}
+
+.server-error__side span {
+  width: 24px;
+  height: 10px;
+  border-top: 2px solid #13a372;
+  border-bottom: 2px solid #13a372;
+  transform: skewX(-18deg);
+}
+
+.server-error__paper {
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.server-error__paper i {
+  width: 82px;
+  height: 8px;
+  justify-self: start;
+  border-radius: 999px;
+  background: #b3bac4;
+}
+
+.server-error__paper strong {
+  display: grid;
+  place-items: center;
+  width: 144px;
+  height: 110px;
+  background: #eef0f2;
+  color: #9ba3af;
+  font-family: var(--font-heading);
+  font-size: clamp(2.5rem, 6vw, 3.75rem);
+  font-weight: 800;
+}
+
+.server-error__content {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.server-error__content h2 {
+  max-width: 560px;
+  margin: 0;
+  color: #1f2937;
+  font-size: clamp(1.7rem, 4vw, 2.2rem);
+  line-height: 1.08;
+}
+
+.server-error__content p {
+  max-width: 650px;
+  margin: 0;
+  color: #374151;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.server-error__retry {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2rem;
+  margin-top: 0.4rem;
+  padding: 0 0.8rem;
+  border: 1px solid #d8d8d8;
+  border-radius: 7px;
+  background: #183752;
+  color: #fff4f4;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  .server-error {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .server-error__illustration {
+    width: min(100%, 220px);
+  }
+}

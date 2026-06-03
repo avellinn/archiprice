@@ -11,24 +11,34 @@ import {
 import { getRandomAvatarColor } from '../utils/userDisplay';
 
 const AVATAR_COLOR_KEY = 'archiprice_avatar_color';
+const AVATAR_LAST_COLOR_KEY = 'archiprice_last_avatar_color';
 
 function withSessionAvatarColor(userData, shouldRefresh = false) {
   if (!userData) return userData;
 
-  const previousColor = (() => {
+  const previousSessionColor = (() => {
     try {
       return sessionStorage.getItem(AVATAR_COLOR_KEY);
     } catch {
       return '';
     }
   })();
+  const previousStoredColor = (() => {
+    try {
+      return localStorage.getItem(AVATAR_LAST_COLOR_KEY);
+    } catch {
+      return '';
+    }
+  })();
+  const previousColor = shouldRefresh ? previousStoredColor : previousSessionColor;
 
-  const avatarColor = shouldRefresh || !previousColor
+  const avatarColor = shouldRefresh || !previousSessionColor
     ? getRandomAvatarColor(previousColor)
-    : previousColor;
+    : previousSessionColor;
 
   try {
     sessionStorage.setItem(AVATAR_COLOR_KEY, avatarColor);
+    localStorage.setItem(AVATAR_LAST_COLOR_KEY, avatarColor);
   } catch {
     // Le rendu peut continuer même si sessionStorage est indisponible.
   }

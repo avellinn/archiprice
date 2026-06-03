@@ -1,6 +1,6 @@
 # Audit Et Nettoyage Du Workspace
 
-Date : 2026-06-01
+Date : 2026-06-03
 
 ## Synthèse
 
@@ -31,16 +31,17 @@ Conclusion : le poids réel vient presque entièrement des dépendances locales.
 
 ## Nettoyage Effectué
 
-Dernière passe du 2026-06-01 :
+Dernière passe du 2026-06-03 :
 
-- uniformisation des imports de pages vers le design system `frontend/src/components/ui` ;
-- suppression du fichier fournisseur obsolète `frontend/src/pages/supplier/Dashboard.jsx`, remplacé par `Analysedon.jsx` et non référencé par le routeur ;
-- suppression de styles morts non référencés dans `App.css` :
-  - anciens blocs `supplier-file-list` ;
-  - ancien bloc `supplier-settings` remplacé par `supplier-settings-page` ;
-  - ancien bloc `admin-products-pending` remplacé par la validation inline dans le tableau Articles ;
-- vérification syntaxique backend avec `node --check backend/server.js` et `node --check backend/app.js` ;
-- vérification frontend avec `npm run lint` et `npm run build`.
+- suppression des artefacts générés avec `npm run clean` :
+  - `frontend/dist` ;
+  - `frontend/node_modules/.vite` ;
+  - `frontend/node_modules/.vite-temp` ;
+  - `frontend/node_modules/.tmp` ;
+  - `backend/node_modules/.cache` ;
+- vérification que les pages frontend actives sont organisées par dossiers `Page/Page.jsx` + `Page/Page.css` ;
+- mise à jour du README et de la documentation frontend pour retirer les références obsolètes à l'ancien catalogue supplier ;
+- ajout de la documentation MVC/data-flow : `docs/ARCHITECTURE_MVC_DATA_FLOW.md`.
 
 Le build frontend produit uniquement l'avertissement connu de chunk Vite supérieur à `500 kB`.
 
@@ -60,7 +61,7 @@ Le script supprime uniquement des fichiers générés ou caches locaux :
 - `frontend/node_modules/.tmp`
 - `backend/node_modules/.cache`
 
-Après nettoyage, aucun dossier `frontend/dist`, `.vite`, `.vite-temp`, `.tmp` ou `.cache` n'est présent dans les zones ciblées.
+Après nettoyage, les caches Vite et le dossier `frontend/dist` généré sont supprimés. Si `npm run build` est relancé, `frontend/dist` sera recréé automatiquement puis pourra être supprimé à nouveau avec `npm run clean`.
 
 ## Ce Qui N'a Pas Été Supprimé
 
@@ -117,28 +118,29 @@ La différence se situe dans les menus, routes et contenus métier.
 
 Toutes les pages utilisateur sont regroupées dans `frontend/src/pages/user/` :
 
-- `Home.jsx`
-- `Login.jsx`
-- `Register.jsx`
-- `Dashboard.jsx`
-- `Catalogue.jsx`
-- `Workspace.jsx`
-- `Invoices.jsx`
-- `Logout.jsx`
+- `Home/Home.jsx`
+- `Login/Login.jsx`
+- `Register/Register.jsx`
+- `Dashboard/Dashboard.jsx`
+- `Catalogue/Catalogue.jsx`
+- `Workspace/Workspace.jsx`
+- `Invoices/Invoices.jsx`
+- `Logout/Logout.jsx`
+- `Parametres/Parametres.jsx`
 
 ### Pages Admin
 
 Toutes les pages admin sont regroupées dans `frontend/src/pages/admin/` :
 
-- `Dashboard.jsx`
-- `Articles.jsx`
-- `CategoriesFiltres.jsx`
-- `Fournisseurs.jsx`
-- `NouvellesDemandes.jsx`
-- `Utilisateurs.jsx`
-- `Simulations.jsx`
-- `Support.jsx`
-- `Paramètres.jsx`
+- `Dashboard/Dashboard.jsx`
+- `Articles/Articles.jsx`
+- `CategoriesFiltres/CategoriesFiltres.jsx`
+- `Fournisseurs/Fournisseurs.jsx`
+- `NouvellesDemandes/NouvellesDemandes.jsx`
+- `Utilisateurs/Utilisateurs.jsx`
+- `Simulations/Simulations.jsx`
+- `Support/Support.jsx`
+- `Paramètres/Paramètres.jsx`
 - `PageShell.jsx`
 
 `Support.jsx` regroupe tickets, feedback et signalements prix.
@@ -153,17 +155,16 @@ Les données backoffice locales et dynamiques sont centralisées dans `frontend/
 
 Toutes les pages fournisseur sont regroupées dans `frontend/src/pages/supplier/` :
 
-- `Analysedon.jsx`
-- `MaBoutique.jsx`
-- `Produits.jsx`
-- `AjouterProduit.jsx`
-- `Catalogue.jsx`
-- `Clients.jsx`
-- `Fichiers.jsx`
-- `Parametres.jsx`
-- `Pending.jsx`
+- `Analysedon/Analysedon.jsx`
+- `MaBoutique/MaBoutique.jsx`
+- `Produits/Produits.jsx`
+- `AjouterProduit/AjouterProduit.jsx`
+- `Clients/Clients.jsx`
+- `Fichiers/Fichiers.jsx`
+- `Parametres/Parametres.jsx`
+- `Pending/Pending.jsx`
 
-Le fichier historique `Dashboard.jsx` a été supprimé : le routeur pointe directement vers `Analysedon.jsx`.
+Le fichier historique `Dashboard.jsx` a été supprimé lors d'une passe précédente : le routeur pointe directement vers `Analysedon/Analysedon.jsx`. La page catalogue supplier a aussi été retirée du routeur ; les produits fournisseur sont gérés via `Produits`, `AjouterProduit`, `MaBoutique` et `Fichiers`.
 
 ### Composants Partagés
 
@@ -259,14 +260,20 @@ Priorité 1 :
 
 Priorité 2 :
 
-- créer `Dashboard.css`, `Catalogue.css`, `Workspace.css`, `Admin.css` si les pages continuent de grossir ;
+- continuer à sortir les derniers styles transversaux de `App.css` vers les CSS de pages ;
 - ajouter du code splitting par route avec `React.lazy()` pour réduire le warning Vite sur le bundle ;
-- stabiliser les pages admin encore en placeholder.
+- déplacer progressivement la logique volumineuse de `backend/routes/admin.js` et `backend/routes/supplier.js` vers des contrôleurs/services.
 
 Priorité 3 :
 
 - ajouter des tests frontend sur les guards `ProtectedRoute` et `AdminRoute` ;
 - ajouter des tests API sur `requireAdmin` et les routes admin.
+
+## Documentation Mise À Jour
+
+- `README.md` : routes supplier actuelles, limite d'upload à 12 fichiers, lien vers l'architecture MVC.
+- `frontend/docs/frontend-documentation.md` : chemins de pages en dossiers, retrait du catalogue supplier obsolète, repères CSS actualisés.
+- `docs/ARCHITECTURE_MVC_DATA_FLOW.md` : description détaillée du modèle MVC et des flux de données user/admin/supplier.
 
 ## Commandes De Contrôle
 

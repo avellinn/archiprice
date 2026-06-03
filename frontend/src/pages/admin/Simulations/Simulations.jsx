@@ -1,16 +1,55 @@
 import './Simulations.css';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Button, Icon } from '../../../components/ui';
+import { Alert, Button, Icon } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
 import { fetchAdminSimulations } from '../../../services/adminMongo';
+import { fetchExportedDocuments, subscribeExportedDocumentsChange } from '../../../services/exportedDocuments';
 import { Badge } from '../PageShell';
 
 const STATUS_OPTIONS = ['Tous', 'Succès', 'Échec'];
 
+function formatFCFA(amount) {
+  return `${new Intl.NumberFormat('fr-FR').format(Number(amount || 0))} FCFA`;
+}
+
+function formatExportDate(value) {
+  if (!value) return '-';
+
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value));
+}
+
+function mapExportToSimulation(document) {
+  return {
+    id: `exported-${document.id}`,
+    user: document.userName || 'Utilisateur ArchiPrice',
+    email: document.userEmail || 'Compte user',
+    avatar: 'AP',
+    date: formatExportDate(document.exportedAt),
+    total: formatFCFA(document.amount),
+    products: document.itemCount || document.items?.length || 0,
+    status: document.status || 'Succès',
+    city: document.city || document.projectName || '-',
+    coefficient: document.coefficient || '1,00',
+    items: (document.items || []).map((item) => ({
+      name: item.name,
+      quantity: item.quantity || 1,
+      price: item.price || formatFCFA(item.rawPrice),
+      total: item.total || formatFCFA(item.rawPrice),
+    })),
+  };
+}
+
 export default function Simulations() {
   const [searchParams] = useSearchParams();
   const [simulations, setSimulations] = useState([]);
+  const [exportedDocuments, setExportedDocuments] = useState(() => fetchExportedDocuments());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedSimulationId, setSelectedSimulationId] = useState('');
@@ -41,10 +80,17 @@ export default function Simulations() {
     };
   }, []);
 
+  useEffect(() => subscribeExportedDocumentsChange(setExportedDocuments), []);
+
+  const synchronizedSimulations = useMemo(() => ([
+    ...exportedDocuments.map(mapExportToSimulation),
+    ...simulations,
+  ]), [exportedDocuments, simulations]);
+
   const filteredSimulations = useMemo(() => {
     const normalizedSearch = [searchTerm, searchParams.get('q') || ''].join(' ').trim().toLowerCase();
 
-    return simulations.filter((simulation) => {
+    return synchronizedSimulations.filter((simulation) => {
       const matchesSearch = !normalizedSearch
         || String(simulation.user || '').toLowerCase().includes(normalizedSearch)
         || String(simulation.email || '').toLowerCase().includes(normalizedSearch);
@@ -52,11 +98,11 @@ export default function Simulations() {
 
       return matchesSearch && matchesStatus;
     });
-  }, [searchParams, searchTerm, simulations, statusFilter]);
+  }, [searchParams, searchTerm, statusFilter, synchronizedSimulations]);
 
   const selectedSimulation = useMemo(() => (
-    simulations.find((simulation) => simulation.id === selectedSimulationId) || filteredSimulations[0] || simulations[0]
-  ), [filteredSimulations, selectedSimulationId, simulations]);
+    synchronizedSimulations.find((simulation) => simulation.id === selectedSimulationId) || filteredSimulations[0] || synchronizedSimulations[0]
+  ), [filteredSimulations, selectedSimulationId, synchronizedSimulations]);
 
   const selectedItems = selectedSimulation?.items || [];
 
@@ -69,7 +115,7 @@ export default function Simulations() {
     <div className="admin-simulations-page">
       <header className="admin-simulations-header">
         <h1>Simulations</h1>
-        {error && <p className="admin-products-empty">{error}</p>}
+        {error && <Alert variant="danger" className="admin-simulations-alert">{error}</Alert>}
 
         <div className="admin-simulations-toolbar">
           <label className="admin-simulations-date">

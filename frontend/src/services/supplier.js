@@ -51,6 +51,12 @@ export async function fetchSupplierWorkspace() {
   return data;
 }
 
+export async function updateSupplierProfile(payload) {
+  const { data } = await api.put(API_ROUTES.supplier.me, payload);
+  notifySupplierWorkspaceChange({ action: 'update-supplier-profile', supplierId: data.supplier?.id });
+  return data.supplier;
+}
+
 export async function createSupplierProduct(payload, files = []) {
   const formData = new FormData();
 

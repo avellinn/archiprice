@@ -93,7 +93,6 @@ Routes supplier :
 - `/supplier/shop` : ma boutique
 - `/supplier/products` : produits
 - `/supplier/products/new` : ajout de produit avec upload d'images
-- `/supplier/catalogue` : vue catalogue fournisseur
 - `/supplier/clients` : clients
 - `/supplier/content/files` : fichiers
 - `/supplier/settings` : paramètres
@@ -106,15 +105,15 @@ Les routes supplier passent par `SupplierRoute`, puis sont rendues dans `Supplie
 
 Fichiers :
 
-- `src/pages/admin/Dashboard.jsx`
-- `src/pages/admin/Articles.jsx`
-- `src/pages/admin/CategoriesFiltres.jsx`
-- `src/pages/admin/Fournisseurs.jsx`
-- `src/pages/admin/NouvellesDemandes.jsx`
-- `src/pages/admin/Utilisateurs.jsx`
-- `src/pages/admin/Simulations.jsx`
-- `src/pages/admin/Support.jsx`
-- `src/pages/admin/Paramètres.jsx`
+- `src/pages/admin/Dashboard/Dashboard.jsx`
+- `src/pages/admin/Articles/Articles.jsx`
+- `src/pages/admin/CategoriesFiltres/CategoriesFiltres.jsx`
+- `src/pages/admin/Fournisseurs/Fournisseurs.jsx`
+- `src/pages/admin/NouvellesDemandes/NouvellesDemandes.jsx`
+- `src/pages/admin/Utilisateurs/Utilisateurs.jsx`
+- `src/pages/admin/Simulations/Simulations.jsx`
+- `src/pages/admin/Support/Support.jsx`
+- `src/pages/admin/Paramètres/Paramètres.jsx`
 - `src/pages/admin/PageShell.jsx`
 
 Les données dynamiques admin passent par `src/services/adminMongo.js` quand elles proviennent de MongoDB. `src/services/adminData.js` reste disponible pour les jeux de données locaux ou fallback UI.
@@ -138,15 +137,14 @@ Les pages admin sont rendues dans `AdminShell.jsx` et protégées par `AdminRout
 
 Fichiers :
 
-- `src/pages/supplier/Analysedon.jsx`
-- `src/pages/supplier/MaBoutique.jsx`
-- `src/pages/supplier/Produits.jsx`
-- `src/pages/supplier/AjouterProduit.jsx`
-- `src/pages/supplier/Catalogue.jsx`
-- `src/pages/supplier/Clients.jsx`
-- `src/pages/supplier/Fichiers.jsx`
-- `src/pages/supplier/Parametres.jsx`
-- `src/pages/supplier/Pending.jsx`
+- `src/pages/supplier/Analysedon/Analysedon.jsx`
+- `src/pages/supplier/MaBoutique/MaBoutique.jsx`
+- `src/pages/supplier/Produits/Produits.jsx`
+- `src/pages/supplier/AjouterProduit/AjouterProduit.jsx`
+- `src/pages/supplier/Clients/Clients.jsx`
+- `src/pages/supplier/Fichiers/Fichiers.jsx`
+- `src/pages/supplier/Parametres/Parametres.jsx`
+- `src/pages/supplier/Pending/Pending.jsx`
 
 Le workflow fournisseur :
 
@@ -160,7 +158,7 @@ Le workflow fournisseur :
 
 - route : `/supplier/products/new` ;
 - formulaire produit : titre, description, catégorie, prix, statut ;
-- upload multiple d'images via `multipart/form-data` ;
+- upload multiple d'images via `multipart/form-data`, jusqu'à 12 fichiers ;
 - aperçu local des images avant envoi ;
 - service utilisé : `src/services/supplier.js`.
 
@@ -168,7 +166,7 @@ Le workflow fournisseur :
 
 ### Dashboard
 
-Fichier : `src/pages/user/Dashboard.jsx`
+Fichier : `src/pages/user/Dashboard/Dashboard.jsx`
 
 Le dashboard affiche :
 
@@ -182,7 +180,7 @@ La page est pensée comme une vue one-page sans scroll global.
 
 ### Catalogue
 
-Fichier : `src/pages/user/Catalogue.jsx`
+Fichier : `src/pages/user/Catalogue/Catalogue.jsx`
 
 La page catalogue est structurée en trois zones :
 
@@ -201,7 +199,7 @@ Les données produits proviennent du store synchronisé `src/services/adminData.
 
 ### Workspace
 
-Fichier : `src/pages/user/Workspace.jsx`
+Fichier : `src/pages/user/Workspace/Workspace.jsx`
 
 La page workspace contient deux modes :
 
@@ -315,14 +313,17 @@ Modifier ici les choix partagés par toute l'application.
 
 ### `src/App.css`
 
-Contient les styles transversaux et de pages :
+Contient les styles transversaux :
 
 - shell connecté ;
-- dashboard ;
-- workspace ;
-- catalogue ;
-- modales ;
 - responsive global.
+
+Les styles de page doivent rester dans le dossier de la page concernée :
+
+- `src/pages/user/Dashboard/Dashboard.css`
+- `src/pages/user/Workspace/Workspace.css`
+- `src/pages/admin/Articles/Articles.css`
+- `src/pages/supplier/AjouterProduit/AjouterProduit.css`
 
 Pour changer le fond des pages connectées, regarder les variables de `.dashboard-shell`, notamment :
 
@@ -415,27 +416,28 @@ Modifier la navigation :
 Modifier le catalogue :
 
 1. données et synchronisation : `src/services/adminData.js`
-2. rendu user : `src/pages/user/Catalogue.jsx`
+2. rendu user : `src/pages/user/Catalogue/Catalogue.jsx`
 3. rendu des cards : `src/components/cardarticle.jsx` et `src/components/cardarticle.css`
-4. layout et style : blocs `.catalogue-*` dans `src/App.css`
+4. layout et style : `src/pages/user/Catalogue/Catalogue.css`
 
 Modifier le parcours fournisseur :
 
-1. liste CRUD : `src/pages/supplier/Produits.jsx`
-2. création/publication : `src/pages/supplier/AjouterProduit.jsx`
-3. grille/liste catalogue supplier : `src/pages/supplier/Catalogue.jsx`
-4. API supplier : `src/services/supplier.js`
+1. liste CRUD : `src/pages/supplier/Produits/Produits.jsx`
+2. création/publication : `src/pages/supplier/AjouterProduit/AjouterProduit.jsx`
+3. boutique et nouveautés : `src/pages/supplier/MaBoutique/MaBoutique.jsx`
+4. fichiers : `src/pages/supplier/Fichiers/Fichiers.jsx`
+5. API supplier : `src/services/supplier.js`
 
 Modifier le workspace :
 
-1. orchestration : `src/pages/user/Workspace.jsx`
+1. orchestration : `src/pages/user/Workspace/Workspace.jsx`
 2. cards miniatures : `WorkspaceMiniGrid.jsx` et `WorkspaceMiniGrid.css`
 3. espace projet : `espacepro.jsx` et `espacepro.css`
 
 Modifier le dashboard :
 
-1. logique : `src/pages/user/Dashboard.jsx`
-2. styles : `.dashboard-*`, `.stat-*`, `.history-*` dans `src/App.css`
+1. logique : `src/pages/user/Dashboard/Dashboard.jsx`
+2. styles : `src/pages/user/Dashboard/Dashboard.css`
 
 ## Nettoyage Et Build
 

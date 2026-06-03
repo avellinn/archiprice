@@ -72,6 +72,7 @@ export const DEFAULT_ADMIN_DATA = {
     { id: 'sup-5', name: 'BatiPro', contact: 'contact@batipro.bj', region: 'Parakou', status: 'Inactif', products: 10 },
     { id: 'sup-6', name: 'BureauPro', contact: 'info@bureaupro.bj', region: 'Cotonou', status: 'Actif', products: 15 },
   ],
+  supplierClientNotifications: [],
   taxonomies: {
     categories: [
       { id: 'cat-1', name: 'Mobilier', count: 56 },
@@ -309,6 +310,13 @@ function notifyAdminDataChange(data) {
     channel.postMessage({ type: ADMIN_DATA_EVENT, data });
     channel.close();
   }
+}
+
+export async function syncAdminDataFromRemote() {
+  const remoteData = await fetchRemoteAdminData();
+  if (!remoteData) return getAdminData();
+
+  return persistSyncedAdminData(remoteData);
 }
 
 export function saveAdminData(data) {

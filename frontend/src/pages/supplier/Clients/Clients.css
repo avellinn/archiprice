@@ -46,3 +46,36 @@
   color: var(--app-heading-color);
   font-size: 1rem;
 }
+
+.supplier-clients-images {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.supplier-clients-images a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.7rem;
+  padding: 0 0.55rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 7px;
+  background: var(--app-card-background);
+  color: #224b73;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.supplier-clients-images a:hover,
+.supplier-clients-images a:focus-visible {
+  border-color: #224b73;
+}
+
+.supplier-clients-images span,
+.supplier-clients-images__empty {
+  color: var(--app-muted-color);
+  font-size: 0.78rem;
+  font-weight: 700;
+}

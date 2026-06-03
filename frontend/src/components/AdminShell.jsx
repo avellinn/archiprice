@@ -5,7 +5,8 @@ import Icon from './Icon';
 import Sidebar from './Sidebar';
 import useAuth from '../context/useAuth';
 import { fetchAdminUsers, fetchSupplierRequests } from '../services/adminMongo';
-import { useAdminData } from '../services/adminData';
+import { syncAdminDataFromRemote, useAdminData } from '../services/adminData';
+import { connectRealtime } from '../services/realtime';
 import { getAvatarColor, getDisplayName, getUserInitials } from '../utils/userDisplay';
 import siteLogo from '../assets/images/log.png';
 
@@ -19,6 +20,17 @@ const ADMIN_PAGE_TITLES = {
   '/admin/simulations': 'Simulations',
   '/admin/support': 'Support',
   '/admin/settings': 'Paramètres',
+};
+const ADMIN_SEARCH_ICONS = {
+  '/admin/dashboard': 'Dashboard',
+  '/admin/catalogue/products': 'Tag',
+  '/admin/catalogue/filters': 'Explore',
+  '/admin/suppliers': 'Workspaces',
+  '/admin/suppliers/requests': 'Notifications',
+  '/admin/users': 'AccountCircle',
+  '/admin/simulations': 'ReceiptLong',
+  '/admin/support': 'Chat',
+  '/admin/settings': 'Info',
 };
 
 const ADMIN_DISMISSED_NOTIFICATIONS_KEY = 'archiprice:admin-dismissed-notifications';
@@ -84,6 +96,14 @@ export default function AdminShell() {
       window.clearTimeout(refreshTimer);
     };
   }, [refreshNotifications, location.pathname]);
+
+  useEffect(() => connectRealtime({
+    onEvent: (event) => {
+      if (event?.type === 'connected') return;
+      refreshNotifications();
+      syncAdminDataFromRemote().catch(() => {});
+    },
+  }), [refreshNotifications]);
 
   const unseenRecentUsers = useMemo(
     () => recentUsers.filter((item) => new Date(item.createdAt || 0).getTime() > lastSeenUsersAt),
@@ -196,9 +216,10 @@ export default function AdminShell() {
     [pendingSupplierRequests.length],
   );
 
-  function handleSearchSubmit() {
-    const query = searchValue.trim();
-    setSearchMessage(query ? `Recherche admin : ${query}` : 'Saisissez un mot-clé pour rechercher.');
+  function handleSearchSubmit(payload = {}) {
+    const query = payload.query ?? searchValue.trim();
+    const indexedCount = Array.isArray(payload.matches) ? payload.matches.length : 0;
+    setSearchMessage(query ? `Recherche admin : ${query} · ${indexedCount} résultat(s) indexé(s)` : 'Saisissez un mot-clé pour rechercher.');
   }
 
   function handleSearchChange(value) {
@@ -241,6 +262,7 @@ export default function AdminShell() {
 
   const currentPage = ADMIN_PAGE_TITLES[location.pathname] || 'Administration';
   const searchValue = searchParams.get('q') || '';
+  const searchIcon = ADMIN_SEARCH_ICONS[location.pathname] || 'Search';
   const searchPlaceholder = `Rechercher dans ${currentPage.toLowerCase()}`;
 
   return (
@@ -279,6 +301,7 @@ export default function AdminShell() {
           isSidebarCollapsed={isSidebarCollapsed}
           isThemeDark={isThemeDark}
           searchValue={searchValue}
+          searchIcon={searchIcon}
           searchPlaceholder={searchPlaceholder}
           notificationCount={notificationCount}
           onAccountClick={() => {
@@ -297,8 +320,8 @@ export default function AdminShell() {
           <div className="dashboard-floating-panel notification-panel">
             <div className="notification-panel__header">
               <strong>Notifications admin</strong>
-              <button type="button" onClick={dismissVisibleNotifications}>
-                Tout fermer
+              <button type="button" aria-label="Fermer les notifications" onClick={dismissVisibleNotifications}>
+                <Icon name="Close" size="sm" />
               </button>
             </div>
             {visiblePanelNotificationCount === 0 ? (
@@ -315,7 +338,7 @@ export default function AdminShell() {
                 ))}
                 {visiblePublications.map((product) => (
                   <Link key={product.id} to="/admin/catalogue/products" className="notification-panel__item">
-                    <Icon name="Inventory" size="sm" />
+                    <Icon name="Tag" size="sm" />
                     <span>
                       Publication fournisseur : <b>{product.name}</b>
                     </span>

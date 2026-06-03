@@ -1,6 +1,6 @@
 import express from 'express';
 import { protect, requireSupplier } from '../middleware/auth.js';
-import { handleMulterError, upload } from '../middleware/multerUpload.js';
+import { MAX_IMAGE_COUNT, handleMulterError, upload } from '../middleware/multerUpload.js';
 import requireDb from '../middleware/requireDb.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import Product from '../models/Product.js';
@@ -9,6 +9,7 @@ import {
   deleteProductImage,
   uploadProductImages,
 } from '../services/cloudinaryImageService.js';
+import { publishCrudEvent } from '../services/realtimeService.js';
 
 const router = express.Router();
 
@@ -92,16 +93,24 @@ router.put('/me', asyncHandler(async (req, res) => {
   const supplier = await findOrCreateSupplierProfile(req.user);
   const patch = {};
 
-  ['name', 'contact', 'region', 'status'].forEach((field) => {
+  ['name', 'companyName', 'email', 'contact', 'phone', 'region', 'status'].forEach((field) => {
     if (req.body[field] !== undefined) patch[field] = req.body[field];
   });
 
   if (patch.name !== undefined && !patch.name?.trim()) {
     return res.status(400).json({ error: 'Nom du fournisseur requis' });
   }
+  if (patch.companyName !== undefined && !patch.companyName?.trim()) {
+    return res.status(400).json({ error: 'Nom de la boutique requis' });
+  }
 
   Object.assign(supplier, patch);
   await supplier.save();
+
+  publishCrudEvent('suppliers', 'profile-updated', { supplierId: String(supplier._id) }, {
+    roles: ['admin'],
+    userIds: [req.user._id],
+  });
 
   return res.json({ supplier: formatSupplier(supplier) });
 }));
@@ -158,6 +167,14 @@ router.post(
       });
       await supplier.save();
 
+      publishCrudEvent('supplier-products', 'created', {
+        supplierId: String(supplier._id),
+        productId: String(product._id),
+      }, {
+        roles: ['admin'],
+        userIds: [req.user._id],
+      });
+
       res.status(201).json({ product: formatProduct(product) });
     } catch (error) {
       await Promise.allSettled(images.map((image) => deleteProductImage(image.public_id)));
@@ -193,6 +210,10 @@ router.put(
       return res.status(400).json({ error: 'Prix unitaire invalide' });
     }
 
+    if ((product.images || []).length + files.length > MAX_IMAGE_COUNT) {
+      return res.status(400).json({ error: `Maximum ${MAX_IMAGE_COUNT} images par article` });
+    }
+
     const uploadedImages = files.length > 0
       ? await uploadProductImages(files, { source: 'supplier-product-update' })
       : [];
@@ -202,13 +223,20 @@ router.put(
         if (req.body[field] !== undefined) product[field] = req.body[field];
       });
       product.unitPrice = nextUnitPrice;
-      product.images = [...(product.images || []), ...uploadedImages].slice(0, 12);
+      product.images = [...(product.images || []), ...uploadedImages].slice(0, MAX_IMAGE_COUNT);
 
       if (!String(product.name || '').trim()) {
         return res.status(400).json({ error: 'Nom du produit requis' });
       }
 
       await product.save();
+      publishCrudEvent('supplier-products', 'updated', {
+        supplierId: String(supplier._id),
+        productId: String(product._id),
+      }, {
+        roles: ['admin'],
+        userIds: [req.user._id],
+      });
       res.json({ product: formatProduct(product) });
     } catch (error) {
       await Promise.allSettled(uploadedImages.map((image) => deleteProductImage(image.public_id)));
@@ -242,6 +270,14 @@ router.delete('/products/:productId', asyncHandler(async (req, res) => {
   });
   await supplier.save();
 
+  publishCrudEvent('supplier-products', 'deleted', {
+    supplierId: String(supplier._id),
+    productId: String(product._id),
+  }, {
+    roles: ['admin'],
+    userIds: [req.user._id],
+  });
+
   res.status(204).end();
 }));
 
@@ -273,6 +309,15 @@ router.delete('/products/:productId/images', asyncHandler(async (req, res) => {
   await deleteProductImage(publicId);
   product.images = product.images.filter((image) => image.public_id !== publicId);
   await product.save();
+
+  publishCrudEvent('supplier-products', 'image-deleted', {
+    supplierId: String(supplier._id),
+    productId: String(product._id),
+    publicId,
+  }, {
+    roles: ['admin'],
+    userIds: [req.user._id],
+  });
 
   return res.json({ product: formatProduct(product) });
 }));

@@ -8,6 +8,10 @@ async function protect(req, res, next) {
     token = req.headers.authorization.split(' ')[1];
   }
 
+  if (!token && typeof req.query?.token === 'string') {
+    token = req.query.token;
+  }
+
   if (!token) {
     return res.status(401).json({ error: 'Non autorisé — token manquant' });
   }

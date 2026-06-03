@@ -1,11 +1,13 @@
 import express from 'express';
 import { protect, requireAdmin } from '../middleware/auth.js';
 import requireDb from '../middleware/requireDb.js';
+import Product from '../models/Product.js';
 import Simulation from '../models/Simulation.js';
 import Supplier from '../models/Supplier.js';
 import SupplierRequest from '../models/SupplierRequest.js';
 import SupportItem from '../models/SupportItem.js';
 import User from '../models/User.js';
+import { publishCrudEvent } from '../services/realtimeService.js';
 
 const router = express.Router();
 
@@ -29,18 +31,23 @@ function typeFromRole(role) {
   return 'Architecte';
 }
 
-function formatAdminUser(user) {
+function formatAdminUser(user, supplier = null) {
   const role = normalizeRole(user.role);
   const type = role === 'user' ? user.type || typeFromRole(role) : typeFromRole(role);
   const hasUsageStats = role === 'user';
+  const formattedSupplier = supplier ? formatAdminSupplier(supplier) : null;
 
   return {
     id: String(user._id),
-    name: user.name || user.email,
+    name: role === 'supplier'
+      ? formattedSupplier?.companyName || formattedSupplier?.name || user.name || user.email
+      : user.name || user.email,
     email: user.email,
-    phone: user.phone || '',
+    phone: user.phone || formattedSupplier?.phone || '',
     role,
     type,
+    supplier: formattedSupplier,
+    shopName: formattedSupplier?.companyName || formattedSupplier?.name || '',
     simulations: hasUsageStats ? user.simulations || 0 : '-',
     inscription: new Intl.DateTimeFormat('fr-FR').format(user.createdAt || new Date()),
     status: user.status || 'Actif',
@@ -63,6 +70,25 @@ function formatSupplierRequest(request) {
   return {
     ...plain,
     id: String(plain._id),
+  };
+}
+
+function formatAdminSupplier(supplier, productCount) {
+  const plain = supplier.toObject ? supplier.toObject() : supplier;
+  const user = plain.user && typeof plain.user === 'object' ? plain.user : null;
+
+  return {
+    ...plain,
+    id: String(plain._id),
+    userId: user?._id ? String(user._id) : String(plain.user || ''),
+    name: plain.companyName || plain.name || user?.name || plain.email,
+    companyName: plain.companyName || plain.name || user?.name || '',
+    email: plain.email || user?.email || '',
+    contact: plain.contact || plain.email || user?.email || '',
+    phone: plain.phone || user?.phone || '',
+    region: plain.region || 'Cotonou',
+    status: plain.status || 'Actif',
+    products: productCount ?? plain.products ?? 0,
   };
 }
 
@@ -99,7 +125,10 @@ router.use(requireAdmin);
 router.get('/users', async (req, res) => {
   try {
     const users = await User.find().select('-password');
-    res.json(users.map(formatAdminUser));
+    const suppliers = await Supplier.find({ user: { $in: users.map((user) => user._id) } });
+    const supplierByUserId = new Map(suppliers.map((supplier) => [String(supplier.user), supplier]));
+
+    res.json(users.map((user) => formatAdminUser(user, supplierByUserId.get(String(user._id)))));
   } catch (error) {
     res.status(500).json({ error: 'Erreur serveur' });
   }
@@ -143,6 +172,11 @@ router.post('/users', async (req, res) => {
     });
     await ensureSupplierProfile(user);
 
+    publishCrudEvent('users', 'created', { userId: String(user._id), role: user.role }, {
+      roles: ['admin'],
+      userIds: [user._id],
+    });
+
     return res.status(201).json(formatAdminUser(user));
   } catch (error) {
     return res.status(500).json({ error: 'Erreur serveur' });
@@ -153,7 +187,8 @@ router.get('/users/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
     if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
-    res.json(formatAdminUser(user));
+    const supplier = await Supplier.findOne({ user: user._id });
+    res.json(formatAdminUser(user, supplier));
   } catch (error) {
     res.status(500).json({ error: 'Erreur serveur' });
   }
@@ -177,6 +212,10 @@ router.put('/users/:id/role', async (req, res) => {
     ).select('-password');
     if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
     await ensureSupplierProfile(user);
+    publishCrudEvent('users', 'role-updated', { userId: String(user._id), role: user.role }, {
+      roles: ['admin'],
+      userIds: [user._id],
+    });
     res.json(formatAdminUser(user));
   } catch (error) {
     res.status(500).json({ error: 'Erreur serveur' });
@@ -214,6 +253,10 @@ router.patch('/users/:id', async (req, res) => {
     }).select('-password');
     if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
     await ensureSupplierProfile(user);
+    publishCrudEvent('users', 'updated', { userId: String(user._id), role: user.role }, {
+      roles: ['admin'],
+      userIds: [user._id],
+    });
     return res.json(formatAdminUser(user));
   } catch (error) {
     return res.status(500).json({ error: 'Erreur serveur' });
@@ -225,6 +268,10 @@ router.delete('/users/:id', async (req, res) => {
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
     await Supplier.deleteOne({ user: user._id });
+    publishCrudEvent('users', 'deleted', { userId: String(user._id), role: user.role }, {
+      roles: ['admin'],
+      userIds: [user._id],
+    });
     return res.json({ message: 'Utilisateur supprimé' });
   } catch (error) {
     return res.status(500).json({ error: 'Erreur serveur' });
@@ -292,6 +339,15 @@ router.post('/supplier-requests/:id/approve', async (req, res) => {
   supplierRequest.supplier = supplier._id;
   await supplierRequest.save();
 
+  publishCrudEvent('supplier-requests', 'approved', {
+    requestId: String(supplierRequest._id),
+    supplierId: String(supplier._id),
+    userId: String(user._id),
+  }, {
+    roles: ['admin'],
+    userIds: [user._id],
+  });
+
   return res.json({
     request: formatSupplierRequest(supplierRequest),
     user: formatAdminUser(user),
@@ -312,17 +368,36 @@ router.post('/supplier-requests/:id/reject', async (req, res) => {
   supplierRequest.rejectionReason = req.body.reason?.trim() || undefined;
   await supplierRequest.save();
 
+  publishCrudEvent('supplier-requests', 'rejected', {
+    requestId: String(supplierRequest._id),
+    userId: String(supplierRequest.user || ''),
+  }, {
+    roles: ['admin'],
+    userIds: [supplierRequest.user].filter(Boolean),
+  });
+
   return res.json({ request: formatSupplierRequest(supplierRequest) });
 });
 
 router.get('/suppliers', async (_req, res) => {
-  const suppliers = await Supplier.find().sort({ name: 1 });
-  res.json({ suppliers: suppliers.map(formatDocument) });
+  const suppliers = await Supplier.find().populate('user', 'name email phone role status').sort({ name: 1 });
+  const productCounts = await Product.aggregate([
+    { $match: { supplier: { $in: suppliers.map((supplier) => supplier._id) } } },
+    { $group: { _id: '$supplier', count: { $sum: 1 } } },
+  ]);
+  const productCountBySupplier = new Map(productCounts.map((item) => [String(item._id), item.count]));
+
+  res.json({
+    suppliers: suppliers.map((supplier) => (
+      formatAdminSupplier(supplier, productCountBySupplier.get(String(supplier._id)))
+    )),
+  });
 });
 
 router.post('/suppliers', async (req, res) => {
   const supplier = await Supplier.create(req.body);
-  res.status(201).json({ supplier: formatDocument(supplier) });
+  publishCrudEvent('suppliers', 'created', { supplierId: String(supplier._id) }, { roles: ['admin'] });
+  res.status(201).json({ supplier: formatAdminSupplier(supplier) });
 });
 
 router.put('/suppliers/:id', async (req, res) => {
@@ -331,12 +406,20 @@ router.put('/suppliers/:id', async (req, res) => {
     runValidators: true,
   });
   if (!supplier) return res.status(404).json({ error: 'Fournisseur non trouvé' });
-  return res.json({ supplier: formatDocument(supplier) });
+  publishCrudEvent('suppliers', 'updated', { supplierId: String(supplier._id) }, {
+    roles: ['admin', 'supplier'],
+    userIds: [supplier.user].filter(Boolean),
+  });
+  return res.json({ supplier: formatAdminSupplier(supplier) });
 });
 
 router.delete('/suppliers/:id', async (req, res) => {
   const supplier = await Supplier.findByIdAndDelete(req.params.id);
   if (!supplier) return res.status(404).json({ error: 'Fournisseur non trouvé' });
+  publishCrudEvent('suppliers', 'deleted', { supplierId: String(supplier._id) }, {
+    roles: ['admin', 'supplier'],
+    userIds: [supplier.user].filter(Boolean),
+  });
   return res.json({ message: 'Fournisseur supprimé' });
 });
 
@@ -347,6 +430,7 @@ router.get('/simulations', async (_req, res) => {
 
 router.post('/simulations', async (req, res) => {
   const simulation = await Simulation.create(req.body);
+  publishCrudEvent('simulations', 'created', { simulationId: String(simulation._id) }, { roles: ['admin'] });
   res.status(201).json({ simulation: formatDocument(simulation) });
 });
 
@@ -356,6 +440,7 @@ router.patch('/simulations/:id', async (req, res) => {
     runValidators: true,
   });
   if (!simulation) return res.status(404).json({ error: 'Simulation non trouvée' });
+  publishCrudEvent('simulations', 'updated', { simulationId: String(simulation._id) }, { roles: ['admin'] });
   return res.json({ simulation: formatDocument(simulation) });
 });
 
@@ -366,6 +451,7 @@ router.get('/support-items', async (_req, res) => {
 
 router.post('/support-items', async (req, res) => {
   const supportItem = await SupportItem.create(req.body);
+  publishCrudEvent('support-items', 'created', { supportItemId: String(supportItem._id) }, { roles: ['admin'] });
   res.status(201).json({ supportItem: formatDocument(supportItem) });
 });
 
@@ -375,6 +461,7 @@ router.patch('/support-items/:id', async (req, res) => {
     runValidators: true,
   });
   if (!supportItem) return res.status(404).json({ error: 'Demande support non trouvée' });
+  publishCrudEvent('support-items', 'updated', { supportItemId: String(supportItem._id) }, { roles: ['admin'] });
   return res.json({ supportItem: formatDocument(supportItem) });
 });
 

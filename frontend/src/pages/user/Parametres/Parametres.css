@@ -1,57 +1,180 @@
-/* Page styles migrated from App.css */
-.user-settings-page {
+.user-profile-page {
   min-height: calc(100vh - 64px);
-  padding: 1.25rem;
+  overflow: auto;
+  padding: 2.4rem 1.5rem 3rem;
   background: var(--app-content-background);
   color: var(--app-heading-color);
 }
 
-.user-settings-header h1 {
+.user-profile-panel {
+  width: min(100%, 820px);
+  margin: 0 auto;
+}
+
+.user-profile-panel h1 {
+  margin: 0 0 4.6rem;
+  color: var(--app-heading-color);
+  font-size: clamp(1.9rem, 3vw, 2.5rem);
+  line-height: 1;
+  text-align: center;
+}
+
+.user-profile-row,
+.user-profile-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.25rem;
+  min-height: 86px;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--app-border-color);
+}
+
+.user-profile-row--photo {
+  min-height: 132px;
+}
+
+.user-profile-row__content {
+  display: grid;
+  gap: 0.62rem;
+}
+
+.user-profile-row strong,
+.user-profile-field strong,
+.user-profile-social h2 {
+  color: var(--app-heading-color);
+  font-size: 0.94rem;
+  font-weight: 900;
+}
+
+.user-profile-row span,
+.user-profile-social p,
+.user-profile-social article span {
+  color: var(--app-text-color);
+  font-size: 0.95rem;
+}
+
+.user-profile-avatar {
+  display: grid;
+  width: 80px;
+  height: 80px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--user-profile-avatar-color, #7e57c2);
+  color: #595656;
+  font-size: 2.25rem;
+  font-weight: 800;
+  text-transform: lowercase;
+}
+
+.user-profile-avatar--image {
+  display: block;
+  object-fit: cover;
+}
+
+.user-profile-file-input {
+  display: none;
+}
+
+.user-profile-actions {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  margin: 0 0 1rem;
-  font-size: 1.35rem;
+  gap: 1rem;
 }
 
-.user-settings-list {
-  display: grid;
-  gap: 0.85rem;
-  max-width: 860px;
+.user-profile-mini-button {
+  display: inline-grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid var(--app-border-color);
+  border-radius: 7px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  cursor: pointer;
 }
 
-.user-settings-card {
+.user-profile-mini-button:hover,
+.user-profile-mini-button:focus-visible {
+  border-color: #0f172a;
+ 
+  color: #0f172a;
+  outline: 0;
+}
+
+.user-profile-field {
   display: grid;
-  grid-template-columns: 2.35rem minmax(0, 1fr) auto;
+  justify-items: start;
+}
+
+.user-profile-field select {
+  width: min(100%, 390px);
+  min-height: 40px;
+  padding: 0 0.8rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 10px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  font: inherit;
+  cursor: pointer;
+}
+
+.user-profile-social {
+  display: grid;
+  gap: 1rem;
+  padding-top: 1.35rem;
+}
+
+.user-profile-social h2 {
+  margin: 0;
+}
+
+.user-profile-social p {
+  margin: 1rem 0 0.35rem;
+}
+
+.user-profile-social article {
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr) auto auto;
   align-items: center;
-  gap: 0.85rem;
-  min-height: 82px;
+  gap: 1rem;
+  min-height: 90px;
   padding: 1rem;
   border: 1px solid var(--app-border-color);
   border-radius: 12px;
   background: var(--app-card-background);
-  box-shadow: var(--app-card-shadow);
 }
 
-.user-settings-card__icon {
-  display: inline-grid;
-  place-items: center;
-  width: 2.35rem;
-  height: 2.35rem;
-  border-radius: 999px;
-  background: #F5F1EB;
-  color: #224B73;
+.avatar.user-profile-social__avatar {
+  border: 1px solid var(--app-border-color);
+  color: #4285f4;
+  font-size: 1.2rem;
+  font-weight: 900;
 }
 
-.user-settings-card h2 {
-  margin: 0 0 0.25rem;
-  color: var(--app-heading-color);
-  font-size: 0.98rem;
+.user-profile-social article strong,
+.user-profile-social article span {
+  display: block;
 }
 
-.user-settings-card p {
-  margin: 0;
+.user-profile-social article span {
+  margin-top: 0.25rem;
   color: var(--app-muted-color);
-  font-size: 0.84rem;
-  line-height: 1.45;
+}
+
+@media (max-width: 720px) {
+  .user-profile-panel h1 {
+    margin-bottom: 2rem;
+  }
+
+  .user-profile-row,
+  .user-profile-row--photo,
+  .user-profile-social article {
+    grid-template-columns: 1fr;
+  }
+
+  .user-profile-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
 }

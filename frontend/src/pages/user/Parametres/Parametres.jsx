@@ -1,48 +1,200 @@
 import './Parametres.css';
-import { Icon } from '../../../components/ui';
+import { useRef, useMemo, useState } from 'react';
+import Avatar from '../../../components/Avatar';
+import { Button, Icon } from '../../../components/ui';
+import useAuth from '../../../context/useAuth';
+import { getUserTranslations, USER_LANGUAGE_LABELS } from '../../../utils/userLanguage';
+import { getAvatarColor, getDisplayName, getRandomAvatarColor, getUserInitials } from '../../../utils/userDisplay';
 
-const USER_SETTINGS = [
-  {
-    title: 'Profil',
-    description: 'Gérez vos informations personnelles et vos préférences de compte.',
-    icon: 'Workspaces',
-  },
-  {
-    title: 'Notifications',
-    description: 'Choisissez les alertes liées aux projets, estimations et validations.',
-    icon: 'Notifications',
-  },
-  {
-    title: 'Préférences budget',
-    description: 'Ajustez les paramètres utilisés pour vos simulations et récapitulatifs.',
-    icon: 'ReceiptLong',
-  },
-];
+const USER_PROFILE_KEY = 'archiprice_user_profile_preferences';
+const USER_PROFILE_EVENT = 'archiprice:user-profile-change';
+const USE_CASES = ['Petite entreprise', 'Usage personnel', 'Agence', 'Architecture', 'Décoration'];
+const LANGUAGES = Object.values(USER_LANGUAGE_LABELS);
+
+function readStoredProfile() {
+  try {
+    return JSON.parse(window.localStorage.getItem(USER_PROFILE_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function writeStoredProfile(profile) {
+  try {
+    window.localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(profile));
+    window.dispatchEvent(new CustomEvent(USER_PROFILE_EVENT, { detail: profile }));
+  } catch {
+    // Le profil reste utilisable en mémoire si le stockage navigateur est indisponible.
+  }
+}
 
 export default function Parametres() {
-  return (
-    <div className="user-settings-page">
-      <header className="user-settings-header">
-        <h1>
-          <Icon name="Info" size="sm" />
-          Paramètres
-        </h1>
-      </header>
+  const { user, logout } = useAuth();
+  const fileInputRef = useRef(null);
+  const storedProfile = useMemo(() => readStoredProfile(), []);
+  const [profile, setProfile] = useState({
+    name: storedProfile.name || getDisplayName(user),
+    email: storedProfile.email || user?.email || '',
+    useCase: storedProfile.useCase || USE_CASES[0],
+    language: storedProfile.language || LANGUAGES[0],
+    socialProvider: storedProfile.socialProvider || 'Google',
+    isGoogleConnected: storedProfile.isGoogleConnected ?? true,
+    photoUrl: storedProfile.photoUrl || '',
+  });
+  const [photoRemoved, setPhotoRemoved] = useState(false);
+  const [removedAvatarColor, setRemovedAvatarColor] = useState(() => getRandomAvatarColor(getAvatarColor(user)));
+  const profileText = getUserTranslations(profile.language).profile;
 
-      <section className="user-settings-list">
-        {USER_SETTINGS.map((setting) => (
-          <article key={setting.title} className="user-settings-card">
-            <span className="user-settings-card__icon">
-              <Icon name={setting.icon} size="sm" />
-            </span>
+  const avatarInitials = getUserInitials({ ...user, name: profile.name });
+  const avatarColor = getAvatarColor(user);
+
+  function updateProfile(field, value) {
+    const nextProfile = {
+      ...profile,
+      [field]: value,
+    };
+    setProfile(nextProfile);
+    writeStoredProfile(nextProfile);
+  }
+
+  function editField(field, label) {
+    const nextValue = window.prompt(label, profile[field]);
+    if (nextValue === null) return;
+    updateProfile(field, nextValue.trim() || profile[field]);
+  }
+
+  function handlePhotoUpload(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      updateProfile('photoUrl', String(reader.result || ''));
+      setPhotoRemoved(false);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removePhoto() {
+    setRemovedAvatarColor((currentColor) => getRandomAvatarColor(currentColor || avatarColor));
+    setPhotoRemoved(true);
+    updateProfile('photoUrl', '');
+  }
+
+  return (
+    <main className="user-profile-page">
+      <section className="user-profile-panel" aria-label="Votre profil">
+        <h1>{profileText.title}</h1>
+
+        <div className="user-profile-row user-profile-row--photo">
+          <div className="user-profile-row__content">
+            <strong>{profileText.photo}</strong>
+            {profile.photoUrl && !photoRemoved ? (
+              <img className="user-profile-avatar user-profile-avatar--image" src={profile.photoUrl} alt="Profil" />
+            ) : (
+              <span
+                className="user-profile-avatar"
+                style={{ '--user-profile-avatar-color=#ffff': photoRemoved ? removedAvatarColor : avatarColor }}
+              >
+                {photoRemoved ? 'a' : avatarInitials}
+              </span>
+            )}
+          </div>
+          <div className="user-profile-actions">
+            <button
+              type="button"
+              className="user-profile-mini-button"
+              aria-label={profileText.deletePhoto}
+              title={profileText.deletePhoto}
+              onClick={removePhoto}
+            >
+              <Icon name="Delete" size="sm" />
+            </button>
+            <input
+              ref={fileInputRef}
+              className="user-profile-file-input"
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoUpload}
+            />
+            <button
+              type="button"
+              className="user-profile-mini-button"
+              aria-label={profileText.editPhoto}
+              title={profileText.editPhoto}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Icon name="Edit" size="sm" />
+            </button>
+          </div>
+        </div>
+
+        <div className="user-profile-row">
+          <div className="user-profile-row__content">
+            <strong>{profileText.name}</strong>
+            <span>{profile.name}</span>
+          </div>
+          <button
+            type="button"
+            className="user-profile-mini-button"
+            aria-label={profileText.name}
+            title={profileText.name}
+            onClick={() => editField('name', profileText.name)}
+          >
+            <Icon name="Edit" size="sm" />
+          </button>
+        </div>
+
+        <div className="user-profile-row">
+          <div className="user-profile-row__content">
+            <strong>{profileText.email}</strong>
+            <span>{profile.email}</span>
+          </div>
+          <button
+            type="button"
+            className="user-profile-mini-button"
+            aria-label={profileText.email}
+            title={profileText.email}
+            onClick={() => editField('email', profileText.email)}
+          >
+            <Icon name="Edit" size="sm" />
+          </button>
+        </div>
+
+        <label className="user-profile-field">
+          <strong>{profileText.useCase}</strong>
+          <select value={profile.useCase} onChange={(event) => updateProfile('useCase', event.target.value)}>
+            {USE_CASES.map((useCase) => (
+              <option key={useCase} value={useCase}>{useCase}</option>
+            ))}
+          </select>
+        </label>
+
+        <label className="user-profile-field">
+          <strong>{profileText.language}</strong>
+          <select value={profile.language} onChange={(event) => updateProfile('language', event.target.value)}>
+            {LANGUAGES.map((language) => (
+              <option key={language} value={language}>{language}</option>
+            ))}
+          </select>
+        </label>
+
+        <section className="user-profile-social" aria-label="Comptes de réseaux sociaux associés">
+          <h2>{profileText.socialTitle}</h2>
+          <p>{profileText.socialDescription}</p>
+          <article>
+            <Avatar initials="G" name="Google" size="lg" color="#ffffff" className="user-profile-social__avatar" />
             <div>
-              <h2>{setting.title}</h2>
-              <p>{setting.description}</p>
+              <strong>{profile.socialProvider}</strong>
+              <span>{profile.isGoogleConnected ? profile.name : profileText.disconnected}</span>
             </div>
-            <Icon name="ChevronRight" size="sm" />
+            
+            <Button type="button" variant="ghost" onClick={logout}>
+              {profileText.accountLogout}
+            </Button>
           </article>
-        ))}
+        </section>
       </section>
-    </div>
+    </main>
   );
 }

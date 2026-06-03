@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import CardArticle, { ArticleFullscreen } from '../../../components/cardarticle';
 import Recap from '../../../components/recap';
-import { Button, Icon } from '../../../components/ui';
+import { Alert, Button, Icon } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
 import { createProduct } from '../../../services/products';
@@ -517,7 +517,7 @@ export default function Catalogue() {
               : `${selectedProducts.length} article(s) ajouté(s) au panier budget.`}
           </p>
           {validationError && !isRecapVisible && (
-            <p className="catalogue-summary-error">{validationError}</p>
+            <Alert variant="danger" className="catalogue-summary-error">{validationError}</Alert>
           )}
           <Button
             type="button"

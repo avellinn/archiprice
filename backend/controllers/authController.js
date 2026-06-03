@@ -1,6 +1,7 @@
 import User from '../models/User.js';
 import Supplier from '../models/Supplier.js';
 import SupplierRequest from '../models/SupplierRequest.js';
+import { publishCrudEvent } from '../services/realtimeService.js';
 import generateToken from '../utils/generateToken.js';
 
 function getRedirectTo(role) {
@@ -109,14 +110,23 @@ async function register(req, res) {
       return res.status(400).json({ error: 'Nom de la boutique requis pour une demande fournisseur' });
     }
 
-    await SupplierRequest.create({
+    const supplierRequest = await SupplierRequest.create({
       user: user._id,
       companyName: companyName.trim(),
       email: user.email,
       phone: phone?.trim() || undefined,
       categories: normalizeCategories(categories),
     });
+    publishCrudEvent('supplier-requests', 'created', {
+      requestId: String(supplierRequest._id),
+      userId: String(user._id),
+    }, { roles: ['admin'] });
   }
+
+  publishCrudEvent('users', 'registered', { userId: String(user._id), role: user.role }, {
+    roles: ['admin'],
+    userIds: [user._id],
+  });
 
   sendAuthResponse(res, user, 201);
 }

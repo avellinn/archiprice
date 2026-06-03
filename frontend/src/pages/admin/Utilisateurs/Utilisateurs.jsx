@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Alert, Badge, Icon } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
+import { useAdminData } from '../../../services/adminData';
 import {
   createAdminUser,
   deleteAdminUser,
@@ -27,8 +28,26 @@ function getSimulationCount(user) {
   return user.simulations || 0;
 }
 
+function normalizeUserForWorkspace(user) {
+  return {
+    id: user.id,
+    name: user.name || user.email,
+    email: user.email || '',
+    phone: user.phone || '',
+    role: getUserRole(user),
+    type: user.type || ROLE_LABELS[getUserRole(user)],
+    simulations: user.simulations || 0,
+    inscription: user.inscription || '',
+    status: user.status || 'Actif',
+    subscription: user.subscription || '-',
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
+}
+
 export default function Utilisateurs() {
   const [searchParams] = useSearchParams();
+  const [, updateAdminData] = useAdminData();
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -44,6 +63,10 @@ export default function Utilisateurs() {
       .then((list) => {
         if (!cancelled) {
           setUsers(list);
+          updateAdminData((currentData) => ({
+            ...currentData,
+            users: list.map(normalizeUserForWorkspace),
+          }));
           setError('');
         }
       })
@@ -57,7 +80,7 @@ export default function Utilisateurs() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [updateAdminData]);
 
   const userTypes = useMemo(() => (
     ['Tous', ...new Set(users.map((user) => user.type).filter(Boolean))]
@@ -77,6 +100,8 @@ export default function Utilisateurs() {
         || String(user.name || '').toLowerCase().includes(normalizedSearch)
         || String(user.email || '').toLowerCase().includes(normalizedSearch)
         || String(user.phone || '').toLowerCase().includes(normalizedSearch)
+        || String(user.shopName || '').toLowerCase().includes(normalizedSearch)
+        || String(user.supplier?.companyName || '').toLowerCase().includes(normalizedSearch)
         || String(user.type || '').toLowerCase().includes(normalizedSearch)
         || role.toLowerCase().includes(normalizedSearch);
       const matchesType = typeFilter === 'Tous' || user.type === typeFilter;
@@ -91,15 +116,31 @@ export default function Utilisateurs() {
 
   async function updateUser(userId, patch) {
     const previousUsers = users;
-    setUsers((currentUsers) => currentUsers.map((user) => (
+    const optimisticUsers = users.map((user) => (
       user.id === userId ? { ...user, ...patch } : user
-    )));
+    ));
+    setUsers(optimisticUsers);
+    updateAdminData((currentData) => ({
+      ...currentData,
+      users: optimisticUsers.map(normalizeUserForWorkspace),
+    }));
 
     try {
       const user = await updateAdminUser(userId, patch);
-      setUsers((currentUsers) => currentUsers.map((item) => (item.id === user.id ? user : item)));
+      setUsers((currentUsers) => {
+        const nextUsers = currentUsers.map((item) => (item.id === user.id ? user : item));
+        updateAdminData((currentData) => ({
+          ...currentData,
+          users: nextUsers.map(normalizeUserForWorkspace),
+        }));
+        return nextUsers;
+      });
     } catch (apiError) {
       setUsers(previousUsers);
+      updateAdminData((currentData) => ({
+        ...currentData,
+        users: previousUsers.map(normalizeUserForWorkspace),
+      }));
       setError(getApiErrorMessage(apiError, "La modification de l'utilisateur a échoué."));
     }
   }
@@ -113,7 +154,14 @@ export default function Utilisateurs() {
         status: 'Actif',
         subscription: 'Essai',
       });
-      setUsers((currentUsers) => [user, ...currentUsers]);
+      setUsers((currentUsers) => {
+        const nextUsers = [user, ...currentUsers];
+        updateAdminData((currentData) => ({
+          ...currentData,
+          users: nextUsers.map(normalizeUserForWorkspace),
+        }));
+        return nextUsers;
+      });
       setError('');
     } catch (apiError) {
       setError(getApiErrorMessage(apiError, "La création de l'utilisateur a échoué."));
@@ -122,12 +170,21 @@ export default function Utilisateurs() {
 
   async function deleteUser(userId) {
     const previousUsers = users;
-    setUsers((currentUsers) => currentUsers.filter((user) => user.id !== userId));
+    const nextUsers = users.filter((user) => user.id !== userId);
+    setUsers(nextUsers);
+    updateAdminData((currentData) => ({
+      ...currentData,
+      users: nextUsers.map(normalizeUserForWorkspace),
+    }));
 
     try {
       await deleteAdminUser(userId);
     } catch (apiError) {
       setUsers(previousUsers);
+      updateAdminData((currentData) => ({
+        ...currentData,
+        users: previousUsers.map(normalizeUserForWorkspace),
+      }));
       setError(getApiErrorMessage(apiError, "La suppression de l'utilisateur a échoué."));
     }
   }

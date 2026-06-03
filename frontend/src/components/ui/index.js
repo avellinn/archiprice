@@ -6,6 +6,7 @@ export { default as DataTable } from './DataTable';
 export { default as EmptyState } from './EmptyState';
 export { default as Icon } from './Icon';
 export { default as Pagination } from './Pagination';
+export { default as ServerError } from './ServerError';
 export { default as Table } from './Table';
 export { default as Text } from './Text';
 export * from './modals';

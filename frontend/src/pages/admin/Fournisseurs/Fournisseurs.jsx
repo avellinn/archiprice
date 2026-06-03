@@ -1,8 +1,9 @@
 import './Fournisseurs.css';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Badge, Button, Icon } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
+import { useAdminData } from '../../../services/adminData';
 import {
   createAdminSupplier,
   deleteAdminSupplier,
@@ -19,12 +20,34 @@ const EMPTY_SUPPLIER = {
   products: 0,
 };
 
+function normalizeSupplierForWorkspace(supplier) {
+  return {
+    id: supplier.id,
+    userId: supplier.userId || supplier.user || '',
+    name: supplier.companyName || supplier.name,
+    companyName: supplier.companyName || supplier.name,
+    contact: supplier.contact || supplier.email || '',
+    email: supplier.email || '',
+    phone: supplier.phone || '',
+    region: supplier.region || supplier.zone || '',
+    status: supplier.status || 'Actif',
+    products: supplier.products || 0,
+    categories: supplier.categories || [],
+  };
+}
+
 export default function Fournisseurs() {
   const [searchParams] = useSearchParams();
-  const [suppliers, setSuppliers] = useState([]);
+  const [adminData, updateAdminData] = useAdminData();
+  const cachedSuppliersRef = useRef(adminData.suppliers || []);
+  const [suppliers, setSuppliers] = useState(() => adminData.suppliers || []);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    cachedSuppliersRef.current = adminData.suppliers || [];
+  }, [adminData.suppliers]);
 
   useEffect(() => {
     let cancelled = false;
@@ -33,11 +56,18 @@ export default function Fournisseurs() {
       .then((list) => {
         if (!cancelled) {
           setSuppliers(list);
+          updateAdminData((currentData) => ({
+            ...currentData,
+            suppliers: list.map(normalizeSupplierForWorkspace),
+          }));
           setError('');
         }
       })
       .catch((apiError) => {
-        if (!cancelled) setError(getApiErrorMessage(apiError, 'Impossible de charger les fournisseurs Mongo.'));
+        if (!cancelled) {
+          setSuppliers(cachedSuppliersRef.current);
+          setError(getApiErrorMessage(apiError, 'Impossible de charger les fournisseurs Mongo.'));
+        }
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -46,15 +76,17 @@ export default function Fournisseurs() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [updateAdminData]);
 
   const filteredSuppliers = useMemo(() => {
     const query = [searchTerm, searchParams.get('q') || ''].join(' ').trim().toLowerCase();
     if (!query) return suppliers;
 
     return suppliers.filter((supplier) => (
-      String(supplier.name || '').toLowerCase().includes(query)
+      String(supplier.companyName || supplier.name || '').toLowerCase().includes(query)
       || String(supplier.contact || '').toLowerCase().includes(query)
+      || String(supplier.email || '').toLowerCase().includes(query)
+      || String(supplier.phone || '').toLowerCase().includes(query)
       || String(supplier.region || '').toLowerCase().includes(query)
     ));
   }, [searchParams, searchTerm, suppliers]);
@@ -63,12 +95,26 @@ export default function Fournisseurs() {
     try {
       if (supplier.id) {
         const updatedSupplier = await updateAdminSupplier(supplier.id, supplier);
-        setSuppliers((currentSuppliers) => currentSuppliers.map((item) => (
-          item.id === updatedSupplier.id ? updatedSupplier : item
-        )));
+        setSuppliers((currentSuppliers) => {
+          const nextSuppliers = currentSuppliers.map((item) => (
+            item.id === updatedSupplier.id ? updatedSupplier : item
+          ));
+          updateAdminData((currentData) => ({
+            ...currentData,
+            suppliers: nextSuppliers.map(normalizeSupplierForWorkspace),
+          }));
+          return nextSuppliers;
+        });
       } else {
         const createdSupplier = await createAdminSupplier(supplier);
-        setSuppliers((currentSuppliers) => [createdSupplier, ...currentSuppliers]);
+        setSuppliers((currentSuppliers) => {
+          const nextSuppliers = [createdSupplier, ...currentSuppliers];
+          updateAdminData((currentData) => ({
+            ...currentData,
+            suppliers: nextSuppliers.map(normalizeSupplierForWorkspace),
+          }));
+          return nextSuppliers;
+        });
       }
       setError('');
     } catch (apiError) {
@@ -85,12 +131,21 @@ export default function Fournisseurs() {
 
   async function deleteSupplier(supplierId) {
     const previousSuppliers = suppliers;
-    setSuppliers((currentSuppliers) => currentSuppliers.filter((supplier) => supplier.id !== supplierId));
+    const nextSuppliers = suppliers.filter((supplier) => supplier.id !== supplierId);
+    setSuppliers(nextSuppliers);
+    updateAdminData((currentData) => ({
+      ...currentData,
+      suppliers: nextSuppliers.map(normalizeSupplierForWorkspace),
+    }));
 
     try {
       await deleteAdminSupplier(supplierId);
     } catch (apiError) {
       setSuppliers(previousSuppliers);
+      updateAdminData((currentData) => ({
+        ...currentData,
+        suppliers: previousSuppliers.map(normalizeSupplierForWorkspace),
+      }));
       setError(getApiErrorMessage(apiError, 'La suppression du fournisseur a échoué.'));
     }
   }
@@ -142,8 +197,8 @@ export default function Fournisseurs() {
               ) : (
                 filteredSuppliers.map((supplier, index) => (
                   <tr key={`${supplier.id || supplier.name}-${index}`}>
-                    <td>{supplier.name}</td>
-                    <td>{supplier.contact}</td>
+                    <td>{supplier.companyName || supplier.name}</td>
+                    <td>{supplier.contact || supplier.email || supplier.phone}</td>
                     <td>{supplier.region}</td>
                     <td>
                       <Badge tone={supplier.status === 'Actif' ? 'success' : 'danger'}>
@@ -153,17 +208,18 @@ export default function Fournisseurs() {
                     <td>{supplier.products}</td>
                     <td>
                       <span className="admin-suppliers-actions">
-                        <button type="button" aria-label={`Modifier ${supplier.name}`} onClick={() => upsertSupplier({
+                        <button type="button" aria-label={`Modifier ${supplier.companyName || supplier.name}`} onClick={() => upsertSupplier({
                           ...supplier,
-                          name: `${supplier.name} modifié`,
+                          name: `${supplier.companyName || supplier.name} modifié`,
+                          companyName: `${supplier.companyName || supplier.name} modifié`,
                         })}
                         >
                           <Icon name="Edit" size="sm" />
                         </button>
-                        <button type="button" aria-label={`Activer ou désactiver ${supplier.name}`} className="is-link" onClick={() => toggleSupplierStatus(supplier)}>
+                        <button type="button" aria-label={`Activer ou désactiver ${supplier.companyName || supplier.name}`} className="is-link" onClick={() => toggleSupplierStatus(supplier)}>
                           <Icon name="Link" size="sm" />
                         </button>
-                        <button type="button" aria-label={`Supprimer ${supplier.name}`} className="is-danger" onClick={() => deleteSupplier(supplier.id)}>
+                        <button type="button" aria-label={`Supprimer ${supplier.companyName || supplier.name}`} className="is-danger" onClick={() => deleteSupplier(supplier.id)}>
                           <Icon name="Delete" size="sm" />
                         </button>
                       </span>

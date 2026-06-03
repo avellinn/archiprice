@@ -103,7 +103,7 @@
 
 .workspace-feature-card--clickable:hover,
 .workspace-feature-card--clickable:focus-visible {
-  border-color: #4f46e5;
+  border-color: #323234;
   box-shadow: 0 16px 34px rgb(79 70 229 / 0.12);
   outline: 0;
   transform: translateY(-1px);
@@ -362,12 +362,23 @@
 }
 
 .workspace-shop-cta .btn {
-  background: #ff9800;
-  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0 0.8rem;
+  border: 1px solid #d8d8d8;
+  border-radius: 7px;
+  background: #183752;
+  color: #fff4f4;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 .workspace-shop-cta .btn:hover:not(:disabled) {
-  background: #e88900;
+  border-color: #183752;
+  background: #bdc8d2;
 }
 
 .workspace-shop-popover {

@@ -15,6 +15,7 @@ export const API_ROUTES = {
     detail: (projectId, productId) => `/api/projects/${projectId}/products/${productId}`,
   },
   supplier: {
+    me: '/api/supplier/me',
     workspace: '/api/supplier/workspace',
     products: '/api/supplier/products',
     product: (id) => `/api/supplier/products/${id}`,
