@@ -42,6 +42,10 @@ Dernière passe du 2026-06-03 :
 - vérification que les pages frontend actives sont organisées par dossiers `Page/Page.jsx` + `Page/Page.css` ;
 - mise à jour du README et de la documentation frontend pour retirer les références obsolètes à l'ancien catalogue supplier ;
 - ajout de la documentation MVC/data-flow : `docs/ARCHITECTURE_MVC_DATA_FLOW.md`.
+- mise à jour de la documentation pour les trois rôles `user`, `admin`, `supplier` ;
+- clarification du dark mode global et des variables `--app-*` ;
+- clarification de l'usage obligatoire de `Alert.jsx` pour les messages applicatifs ;
+- documentation du canal realtime `/api/realtime`.
 
 Le build frontend produit uniquement l'avertissement connu de chunk Vite supérieur à `500 kB`.
 
@@ -111,6 +115,8 @@ Les trois layouts utilisent les mêmes composants UI :
 - `Icon`
 - `Text`
 - `Avatar`
+- `Alert`
+- `Table`
 
 La différence se situe dans les menus, routes et contenus métier.
 
@@ -151,6 +157,8 @@ Toutes les pages admin sont regroupées dans `frontend/src/pages/admin/` :
 
 Les données backoffice locales et dynamiques sont centralisées dans `frontend/src/services/adminData.js`.
 
+Les pages admin n'utilisent plus les alertes navigateur pour les messages métier. Les erreurs et confirmations passent par `Alert.jsx` ou par des modales React.
+
 ### Pages Supplier
 
 Toutes les pages fournisseur sont regroupées dans `frontend/src/pages/supplier/` :
@@ -176,6 +184,9 @@ Le fichier historique `Dashboard.jsx` a été supprimé lors d'une passe précé
 - `components/ui/DataTable.jsx`
 - `components/ui/EmptyState.jsx`
 - `components/ui/Pagination.jsx`
+- `components/ui/Alert.jsx`
+- `components/ui/Table.jsx`
+- `components/ui/ServerError.jsx`
 - `Header.jsx`
 - `Sidebar.jsx`
 - `Avatar.jsx`
@@ -195,6 +206,7 @@ Le fichier historique `Dashboard.jsx` a été supprimé lors d'une passe précé
 - `/api/projects/:projectId/products`
 - `/api/admin`
 - `/api/supplier`
+- `/api/realtime`
 
 ### Admin API
 
@@ -214,6 +226,21 @@ Routes admin protégées par `protect` + `requireAdmin` :
 - `POST /api/supplier/products`
 - `PUT /api/supplier/products/:productId`
 - `DELETE /api/supplier/products/:productId`
+- `DELETE /api/supplier/products/:productId/images`
+
+### Realtime
+
+Le backend expose `/api/realtime`, un canal Server-Sent Events authentifié.
+
+Il sert à synchroniser :
+
+- créations/modifications/suppressions user ;
+- projets ;
+- produits ;
+- catalogue config ;
+- fournisseurs ;
+- publications supplier ;
+- notifications entre user/admin/supplier.
 
 Les réponses utilisateur admin excluent le mot de passe.
 
@@ -255,8 +282,10 @@ Déjà couverts par `.gitignore` :
 Priorité 1 :
 
 - garder `src/components/ui/` comme point d'entrée du design system partagé ;
-- éviter les doublons de composants entre admin et user ;
+- éviter les doublons de composants entre user, admin et supplier ;
 - déplacer progressivement les grands blocs CSS de page hors de `App.css`.
+- conserver les styles de page dans le dossier de la page ;
+- conserver les messages applicatifs dans `Alert.jsx`.
 
 Priorité 2 :
 
@@ -274,6 +303,8 @@ Priorité 3 :
 - `README.md` : routes supplier actuelles, limite d'upload à 12 fichiers, lien vers l'architecture MVC.
 - `frontend/docs/frontend-documentation.md` : chemins de pages en dossiers, retrait du catalogue supplier obsolète, repères CSS actualisés.
 - `docs/ARCHITECTURE_MVC_DATA_FLOW.md` : description détaillée du modèle MVC et des flux de données user/admin/supplier.
+- `frontend/docs/design-system.md` : règle shared design system, dark mode et alertes applicatives.
+- `docs/API.md` : routes realtime, supplier, admin, uploads Cloudinary et PDF.
 
 ## Commandes De Contrôle
 

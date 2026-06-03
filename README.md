@@ -22,11 +22,12 @@ archi-price/
 │   ├── middleware/       # auth, errors, requireDb
 │   ├── models/           # Schémas Mongoose
 │   ├── routes/           # Routeurs API (/api)
+│   ├── services/         # Cloudinary, PDF, realtime
 │   └── utils/
 └── frontend/
     ├── vite.config.js    # Proxy /api en dev
     └── src/
-        ├── components/   # UI réutilisable
+        ├── components/   # UI réutilisable + shells
         ├── constants/    # Routes API, clés storage
         ├── config/       # env frontend
         ├── context/      # AuthContext
@@ -97,6 +98,7 @@ Si `MONGODB_URI` est défini et la connexion échoue, l’API ne démarre pas. E
 - **Client unique** : `src/services/api.js` (axios + intercepteurs JWT / 401).
 - **Routes centralisées** : `src/constants/api.js` — ne pas disperser les URLs.
 - **Services par domaine** : `auth.js`, `projects.js` — un fichier par ressource API, tous passent par `api.js`.
+- **Realtime** : `src/services/realtime.js` écoute `/api/realtime` pour synchroniser les rôles user/admin/supplier.
 - **Dev** : proxy Vite (`/api` → backend), `baseURL` vide.
 - **Prod** : définir `VITE_API_URL` vers l'API déployée.
 - **Erreurs** : `getApiErrorMessage(error)` pour afficher `error` renvoyé par l'API.
@@ -112,6 +114,9 @@ Si `MONGODB_URI` est défini et la connexion échoue, l’API ne démarre pas. E
 | `JWT_EXPIRES_IN` | Expiration token | `7d` |
 | `FRONTEND_URL` | CORS | `http://localhost:5173` |
 | `VITE_API_URL` | URL API (prod) | vide (proxy en dev) |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary uploads images | — |
+| `CLOUDINARY_API_KEY` | Cloudinary uploads images | — |
+| `CLOUDINARY_API_SECRET` | Cloudinary uploads images | — |
 
 ## API — Authentification
 
@@ -120,6 +125,7 @@ Si `MONGODB_URI` est défini et la connexion échoue, l’API ne démarre pas. E
 | `POST` | `/api/auth/register` | Inscription |
 | `POST` | `/api/auth/login` | Connexion → `{ token, user }` |
 | `GET` | `/api/auth/me` | Profil (Bearer token) |
+| `GET` | `/api/realtime` | Canal Server-Sent Events authentifié |
 
 Les utilisateurs possèdent un rôle :
 
@@ -134,6 +140,8 @@ Le frontend redirige automatiquement :
 - un `user` vers `/dashboard` ;
 - un `admin` vers `/admin/dashboard`.
 - un `supplier` vers `/supplier/dashboard`.
+
+Le canal realtime publie les événements CRUD principaux pour garder les interfaces synchronisées entre plusieurs navigateurs.
 
 ## API — Projets (authentification requise)
 
@@ -166,9 +174,14 @@ Les routes admin sont protégées par JWT et par le middleware `requireAdmin`.
 | `GET` | `/api/admin/users/:id` | Détail d'un utilisateur |
 | `PUT` | `/api/admin/users/:id/role` | Change le rôle `user` / `admin` |
 | `GET` | `/api/admin/suppliers` | Liste les fournisseurs validés |
+| `POST` | `/api/admin/suppliers` | Crée un fournisseur administré |
+| `PUT` | `/api/admin/suppliers/:id` | Modifie un fournisseur |
+| `DELETE` | `/api/admin/suppliers/:id` | Supprime un fournisseur |
 | `GET` | `/api/admin/supplier-requests` | Liste les demandes fournisseur |
 | `POST` | `/api/admin/supplier-requests/:id/approve` | Valide une demande fournisseur |
 | `POST` | `/api/admin/supplier-requests/:id/reject` | Refuse une demande fournisseur |
+| `GET` | `/api/admin/simulations` | Liste les simulations et estimations exportées |
+| `GET` | `/api/admin/support-items` | Liste tickets, feedback et signalements |
 
 Exemple changement de rôle :
 
@@ -231,6 +244,8 @@ Routes supplier :
 - `/supplier/content/files`
 - `/supplier/settings`
 
+La route supplier catalogue a été supprimée. Les produits et catalogues fournisseur passent par `/supplier/products`, `/supplier/products/new`, `/supplier/shop` et `/supplier/content/files`.
+
 ## Design System
 
 Règle d'interface :
@@ -249,12 +264,17 @@ Les composants UI sont partagés :
 - sidebar ;
 - icônes ;
 - typographie.
+- alertes applicatives (`Alert.jsx`) ;
+- tables (`Table.jsx`) ;
+- écran serveur (`ServerError.jsx`).
 
 Les layouts restent spécifiques :
 
 - `AppShell.jsx` pour les utilisateurs ;
 - `AdminShell.jsx` pour les administrateurs.
 - `SupplierShell.jsx` pour les fournisseurs validés.
+
+Les messages applicatifs ne doivent pas utiliser `window.alert`, `window.confirm` ou `window.prompt` dans les workflows admin. Utiliser `Alert.jsx` ou une modale React.
 
 ```bash
 curl -X POST http://localhost:5000/api/auth/register \

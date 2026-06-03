@@ -25,8 +25,8 @@
 
 .invoices-list__item:hover,
 .invoices-list__item:focus-visible {
-  border-color: #cbd5e1;
-  background: #f8fafc;
+  border-color: var(--app-border-color);
+  background: var(--app-panel-background);
   outline: 0;
 }
 
@@ -36,8 +36,8 @@
   height: 2.3rem;
   place-items: center;
   border-radius: 10px;
-  background: #f8fafc;
-  color: #64748b;
+  background: var(--app-panel-background);
+  color: var(--app-muted-color);
 }
 
 .invoices-list__item h2 {
@@ -78,14 +78,14 @@
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #64748b;
+  color: var(--app-muted-color);
   cursor: pointer;
 }
 
 .invoices-list__item button:hover,
 .invoices-list__item button:focus-visible {
-  background: #f1f5f9;
-  color: #111827;
+  background: var(--app-panel-background);
+  color: var(--app-heading-color);
   outline: 0;
 }
 

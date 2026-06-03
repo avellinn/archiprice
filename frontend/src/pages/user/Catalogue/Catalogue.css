@@ -2,8 +2,8 @@
 .catalogue-page {
   min-height: calc(100vh - 64px);
   padding: 0.15rem 0.45rem 1.2rem;
-  background: #f4f7fb;
-  color: #0b1020;
+  background: var(--dashboard-page-background);
+  color: var(--app-text-color);
   overflow-y: auto;
 }
 
@@ -169,36 +169,47 @@
   top: 88px;
   display: grid;
   gap: 1rem;
+  min-width: 0;
+  overflow: hidden;
   padding: 1.15rem;
 }
 
 .catalogue-budget-field {
   display: grid;
   gap: 0.45rem;
+  min-width: 0;
   color: var(--app-muted-color);
   font-size: 0.84rem;
   font-weight: 800;
 }
 
 .catalogue-budget-field input {
+  box-sizing: border-box;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding: 0.72rem 0.8rem;
   border: 1px solid var(--app-border-color);
   border-radius: 10px;
   background: var(--app-panel-background);
   color: var(--app-text-color);
   font: inherit;
+  font-size: clamp(0.78rem, 2vw, 0.95rem);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
 }
 
 .catalogue-budget-list {
   display: grid;
   gap: 0.7rem;
+  min-width: 0;
   margin: 0;
 }
 
 .catalogue-budget-list div {
   display: grid;
   gap: 0.2rem;
+  min-width: 0;
   padding: 0.8rem;
   border: 1px solid var(--app-border-color);
   border-radius: 10px;
@@ -214,7 +225,9 @@
 .catalogue-budget-list dd {
   margin: 0;
   color: var(--app-heading-color);
-  font-size: 1.08rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: clamp(0.92rem, 2vw, 1.08rem);
   font-weight: 900;
 }
 

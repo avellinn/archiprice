@@ -71,6 +71,7 @@ Les services sont dans `backend/services/`.
 
 - `cloudinaryImageService.js` : upload Cloudinary par stream, suppression d'images, validation de fichiers.
 - `recapPdfService.js` : génération PDF en mémoire à partir des données MongoDB.
+- `realtimeService.js` : canal Server-Sent Events et publication d'événements CRUD.
 
 Les images ne sont pas stockées localement. MongoDB conserve uniquement les métadonnées utiles : `secure_url`, `public_id`, dimensions, format, taille.
 
@@ -143,9 +144,10 @@ Les routes API sont centralisées dans `frontend/src/constants/api.js`.
 1. Le supplier modifie sa boutique dans `pages/supplier/Parametres/`.
 2. React appelle `updateSupplierProfile()` dans `services/supplier.js`.
 3. Le backend met à jour le document `Supplier`.
-4. La page admin `Fournisseurs` recharge `/api/admin/suppliers`.
-5. `services/adminData.js` conserve aussi une copie synchronisée pour les composants qui lisent le store frontend.
-6. Le modal user "Où acheter" lit les fournisseurs validés pour proposer des boutiques.
+4. Le backend publie un événement realtime.
+5. La page admin `Fournisseurs` recharge `/api/admin/suppliers`.
+6. `services/adminData.js` conserve aussi une copie synchronisée pour les composants qui lisent le store frontend.
+7. Le modal user "Où acheter" lit uniquement les fournisseurs validés issus de cette liste. Il ne crée pas de boutique locale à partir d'une description produit.
 
 ## Flux 4 — Création Et Publication D'Articles Supplier
 
@@ -199,19 +201,25 @@ Les routes API sont centralisées dans `frontend/src/constants/api.js`.
 6. Quand l'utilisateur choisit une boutique, une notification client est enregistrée pour le supplier concerné.
 7. Le supplier voit ensuite les informations client dans `pages/supplier/Clients/`.
 
+La page supplier `Clients` reste cliquable pour afficher les détails client et les liens Cloudinary des articles choisis. Le supplier ne peut pas ajouter ni modifier ces clients ; seule la suppression côté supplier est exposée dans l'interface.
+
 ## Synchronisation
 
-La synchronisation repose sur deux niveaux :
+La synchronisation repose sur trois niveaux :
 
 1. **Source durable** : MongoDB via les APIs backend.
 2. **Source UI immédiate** : `adminData.js` et les services frontend, pour mettre à jour l'interface sans attendre un rechargement complet.
+3. **Canal temps réel** : `/api/realtime`, basé sur Server-Sent Events.
 
 Pour une donnée partagée entre plusieurs rôles, la règle est :
 
 1. mutation par API ;
 2. réponse backend normalisée ;
 3. mise à jour du store frontend concerné ;
-4. rechargement automatique ou abonnement local si la page est déjà ouverte.
+4. publication realtime par le backend ;
+5. rechargement automatique ou abonnement local si la page est déjà ouverte.
+
+Les shells `AppShell.jsx`, `AdminShell.jsx` et `SupplierShell.jsx` se connectent au canal realtime. Une action CRUD admin/supplier/user peut donc mettre à jour les interfaces ouvertes dans d'autres navigateurs.
 
 ## Règles De Cohérence
 
@@ -223,6 +231,8 @@ Pour une donnée partagée entre plusieurs rôles, la règle est :
 - Le user ne voit que les articles validés.
 - Les composants UI génériques restent partagés.
 - Les pages gardent leur CSS dans leur dossier.
+- Les messages applicatifs doivent utiliser `Alert.jsx` et des modales React plutôt que les alertes navigateur.
+- Le dark mode doit passer par les variables `--app-*` du shell.
 
 ## Où Modifier Quoi
 

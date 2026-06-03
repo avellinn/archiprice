@@ -46,6 +46,7 @@ export default function Parametres() {
   const profileText = getUserTranslations(profile.language).profile;
 
   const avatarInitials = getUserInitials({ ...user, name: profile.name });
+  const removedAvatarInitial = avatarInitials.slice(0, 1) || getUserInitials(user).slice(0, 1) || 'U';
   const avatarColor = getAvatarColor(user);
 
   function updateProfile(field, value) {
@@ -94,9 +95,9 @@ export default function Parametres() {
             ) : (
               <span
                 className="user-profile-avatar"
-                style={{ '--user-profile-avatar-color=#ffff': photoRemoved ? removedAvatarColor : avatarColor }}
+                style={{ '--user-profile-avatar-color': photoRemoved ? removedAvatarColor : avatarColor }}
               >
-                {photoRemoved ? 'a' : avatarInitials}
+                {photoRemoved ? removedAvatarInitial : avatarInitials}
               </span>
             )}
           </div>
@@ -183,7 +184,7 @@ export default function Parametres() {
           <h2>{profileText.socialTitle}</h2>
           <p>{profileText.socialDescription}</p>
           <article>
-            <Avatar initials="G" name="Google" size="lg" color="#ffffff" className="user-profile-social__avatar" />
+            <Avatar  name="Google" size="lg" color="#ffffff" className="" />
             <div>
               <strong>{profile.socialProvider}</strong>
               <span>{profile.isGoogleConnected ? profile.name : profileText.disconnected}</span>

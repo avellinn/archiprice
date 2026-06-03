@@ -2,8 +2,8 @@
 .supplier-shop-page {
   min-height: calc(100vh - 64px);
   padding: 2.4rem 1rem 3rem;
-  background: #F1F1F1;
-  color: #202124;
+  background: var(--dashboard-page-background);
+  color: var(--app-text-color);
 }
 
 .supplier-shop-alert {
@@ -11,6 +11,30 @@
   margin: 0 auto 1rem;
 }
 
+.supplier-shop-confirm-alert__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.65rem;
+}
+
+.supplier-shop-confirm-alert__actions button {
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 7px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.supplier-shop-confirm-alert__actions button:last-child {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: #fff;
+}
+
 .dashboard-shell.is-theme-dark .supplier-shop-page {
-  background: var(--app-content-background);
+  background: var(--dashboard-page-background);
 }

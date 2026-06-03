@@ -13,6 +13,7 @@ export default function MaBoutique() {
   const [workspace, setWorkspace] = useState(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [pendingProductDelete, setPendingProductDelete] = useState(null);
 
   function loadWorkspace() {
     let cancelled = false;
@@ -64,9 +65,11 @@ export default function MaBoutique() {
     || '';
   const products = workspace?.products || [];
 
-  async function removeProduct(product) {
-    const shouldDelete = window.confirm('Supprimer ce catalogue de votre boutique ?');
-    if (!shouldDelete) return;
+  async function confirmProductDelete() {
+    const product = pendingProductDelete;
+    if (!product) return;
+
+    setPendingProductDelete(null);
 
     try {
       await deleteSupplierProduct(product.id);
@@ -79,12 +82,30 @@ export default function MaBoutique() {
     }
   }
 
+  function removeProduct(product) {
+    setPendingProductDelete(product);
+  }
+
   return (
     <div className="supplier-shop-page">
       {isLoading && <section className="supplier-shop-card">Chargement de la boutique...</section>}
       {error && (
         <Alert variant="danger" className="supplier-shop-alert" onClose={() => setError('')}>
           {error}
+        </Alert>
+      )}
+      {pendingProductDelete && (
+        <Alert
+          variant="warning"
+          title="Suppression catalogue"
+          className="supplier-shop-alert supplier-shop-confirm-alert"
+          onClose={() => setPendingProductDelete(null)}
+        >
+          <span>Supprimer ce catalogue de votre boutique ?</span>
+          <span className="supplier-shop-confirm-alert__actions">
+            <button type="button" onClick={() => setPendingProductDelete(null)}>Annuler</button>
+            <button type="button" onClick={confirmProductDelete}>Supprimer</button>
+          </span>
         </Alert>
       )}
 

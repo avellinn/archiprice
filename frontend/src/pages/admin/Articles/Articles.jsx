@@ -1,7 +1,7 @@
 import './Articles.css';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Button, Icon } from '../../../components/ui';
+import { Alert, Button, Icon } from '../../../components/ui';
 import { createAdminId, useAdminData } from '../../../services/adminData';
 import { deleteCatalogueImage, uploadCatalogueImages } from '../../../services/catalogueImages';
 import { Badge } from '../PageShell';
@@ -131,6 +131,7 @@ export default function Articles() {
   const [productForm, setProductForm] = useState(EMPTY_PRODUCT_FORM);
   const [rejectionProduct, setRejectionProduct] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
   const products = Array.isArray(adminData.products) ? adminData.products : [];
   const taxonomyOptions = {
@@ -325,10 +326,7 @@ export default function Articles() {
     setFilterValues(INITIAL_FILTER_VALUES);
   }
 
-  async function resetArticles() {
-    const shouldReset = window.confirm('Supprimer tous les articles du catalogue ? Cette action est irreversible.');
-    if (!shouldReset) return;
-
+  async function confirmResetArticles() {
     const publicIds = products
       .flatMap((product) => getProductImages(product).map(getImagePublicId))
       .filter(Boolean);
@@ -340,6 +338,11 @@ export default function Articles() {
     }));
     setSearchTerm('');
     resetFilters();
+    setIsResetConfirmOpen(false);
+  }
+
+  function resetArticles() {
+    setIsResetConfirmOpen(true);
   }
 
   function approveSupplierPublication(productId) {
@@ -438,6 +441,21 @@ export default function Articles() {
           </Button>
         </div>
       </header>
+
+      {isResetConfirmOpen && (
+        <Alert
+          variant="warning"
+          title="Réinitialiser les articles"
+          className="admin-products-confirm-alert"
+          onClose={() => setIsResetConfirmOpen(false)}
+        >
+          <span>Supprimer tous les articles du catalogue ? Cette action est irréversible.</span>
+          <span className="admin-products-confirm-alert__actions">
+            <button type="button" onClick={() => setIsResetConfirmOpen(false)}>Annuler</button>
+            <button type="button" onClick={confirmResetArticles}>Supprimer</button>
+          </span>
+        </Alert>
+      )}
 
       <div className="admin-products-content">
         <aside className="admin-products-filters">

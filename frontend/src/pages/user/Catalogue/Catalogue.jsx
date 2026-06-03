@@ -487,10 +487,7 @@ export default function Catalogue() {
           </label>
 
           <dl className="catalogue-budget-list">
-            <div>
-              <dt>Budget cible</dt>
-              <dd>{formatOptionalCurrency(budgetSummary.target)}</dd>
-            </div>
+            
             <div>
               <dt>Estimation min</dt>
               <dd>{formatCurrency(budgetSummary.min)}</dd>

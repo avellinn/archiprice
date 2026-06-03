@@ -4,7 +4,7 @@ ArchiPrice suit une règle simple pour toutes les interfaces :
 
 **70 à 80% mutualisé, 20 à 30% spécifique au rôle.**
 
-L'objectif est de garder une expérience uniforme tout en permettant aux interfaces utilisateur et administrateur d'avoir leur propre structure métier.
+L'objectif est de garder une expérience uniforme tout en permettant aux interfaces utilisateur, administrateur et fournisseur d'avoir leur propre structure métier.
 
 ## Ce Qui Est Partagé
 
@@ -24,6 +24,7 @@ Exemples :
 - upload image ;
 - date picker ;
 - notifications ;
+- alertes applicatives ;
 - loader ;
 - empty states ;
 - icônes ;
@@ -32,7 +33,7 @@ Exemples :
 - header ;
 - sidebar.
 
-Ces composants vivent dans `src/components/` et doivent être réutilisés par les pages user et admin.
+Ces composants vivent dans `src/components/` et `src/components/ui/` et doivent être réutilisés par les pages user, admin et supplier.
 
 Exemples actuels :
 
@@ -44,6 +45,9 @@ Exemples actuels :
 - `components/ui/DataTable.jsx`
 - `components/ui/EmptyState.jsx`
 - `components/ui/Pagination.jsx`
+- `components/ui/Alert.jsx`
+- `components/ui/Table.jsx`
+- `components/ui/ServerError.jsx`
 - `Header.jsx` et `Header.css`
 - `Sidebar.jsx` et `Sidebar.css`
 - `Avatar.jsx` et `Avatar.css`
@@ -51,6 +55,8 @@ Exemples actuels :
 - `DonutChart.jsx` et `DonutChart.css`
 
 Les nouveaux composants génériques doivent être créés dans `src/components/ui/` lorsqu'ils ne dépendent pas d'un domaine métier.
+
+Les modals génériques doivent être rangées dans `src/components/ui/modals/`. Une modale métier transverse peut rester dans `src/components/`, par exemple `modalBoutique.jsx`.
 
 `src/pages/admin/PageShell.jsx` peut réexporter certains composants partagés pour préserver les imports admin existants, mais la source de vérité doit rester dans `src/components/ui/`.
 
@@ -70,6 +76,12 @@ Interface admin :
 - route protégée admin : `AdminRoute.jsx`
 - pages : dashboard admin, produits, catégories & filtres, fournisseurs, utilisateurs, simulations, support, paramètres.
 
+Interface supplier :
+
+- layout : `SupplierShell.jsx`
+- route protégée supplier : `SupplierRoute.jsx`
+- pages : analyses de données, ma boutique, produits, ajout produit, clients, fichiers, paramètres.
+
 Un layout spécifique peut personnaliser :
 
 - la structure de navigation ;
@@ -86,7 +98,7 @@ Avant de créer un nouveau composant, vérifier s'il s'agit :
 2. d'un bloc métier spécifique à une page ;
 3. d'un layout propre à un rôle.
 
-Si c'est générique, il doit aller dans `src/components/` et être pensé pour user + admin.
+Si c'est générique, il doit aller dans `src/components/` ou `src/components/ui/` et être pensé pour user + admin + supplier.
 
 Pour les composants UI purs, préférer :
 
@@ -99,7 +111,7 @@ Pour les composants historiques déjà partagés (`Button`, `Icon`, `Text`, `Sid
 
 Si c'est métier, il peut rester dans la page concernée ou dans un composant dédié au domaine.
 
-Si c'est une structure de rôle, il doit être placé dans un shell spécifique, par exemple `AppShell.jsx` ou `AdminShell.jsx`.
+Si c'est une structure de rôle, il doit être placé dans un shell spécifique, par exemple `AppShell.jsx`, `AdminShell.jsx` ou `SupplierShell.jsx`.
 
 ## Exemple De Bonne Séparation
 
@@ -109,10 +121,13 @@ Si c'est une structure de rôle, il doit être placé dans un shell spécifique,
 
 `AdminShell.jsx` fournit les menus admin.
 
+`SupplierShell.jsx` fournit les menus fournisseur.
+
 `Sidebar.css` contient la base commune et les variantes de rôle minimales :
 
 - `.sidebar--user`
 - `.sidebar--admin`
+- `.sidebar--supplier`
 
 Ainsi, le composant reste unique, les styles restent uniformes, et seul le contenu du layout s'adapte au rôle.
 
@@ -122,7 +137,29 @@ Comportements partagés :
 - sous-menus contrôlables au clic ;
 - état actif basé sur la route ;
 - support dark mode ;
-- footer utilisateur/admin basé sur les mêmes classes.
+- footer utilisateur/admin/supplier basé sur les mêmes classes.
+
+Le dark mode est piloté par `.dashboard-shell.is-theme-dark` et par les variables `--app-*` définies dans `App.css`. Les pages ne doivent pas forcer un fond global clair qui empêcherait le thème de s'appliquer.
+
+## Messages Et Alertes
+
+Les messages applicatifs doivent utiliser `components/ui/Alert.jsx`.
+
+À utiliser pour :
+
+- erreurs API ;
+- confirmations non bloquantes ;
+- notifications de succès ;
+- avertissements métier ;
+- états d'attente visibles.
+
+À éviter dans les workflows admin :
+
+- `window.alert` ;
+- `window.confirm` ;
+- `window.prompt`.
+
+Quand une saisie est nécessaire, créer une modale React avec un formulaire.
 
 ## Pourquoi Cette Règle Existe
 
@@ -133,8 +170,8 @@ Cette organisation garantit :
 - moins de duplication ;
 - évolution plus rapide ;
 - styles plus faciles à retrouver ;
-- interfaces admin et user uniformes sans être identiques.
-- styles CSS cohérents entre admin et user.
+- interfaces user, admin et supplier uniformes sans être identiques.
+- styles CSS cohérents entre user, admin et supplier.
 
 ## À Éviter
 
@@ -145,6 +182,8 @@ Cette organisation garantit :
 - Mettre de la logique admin dans `AppShell.jsx`.
 - Mettre de la logique user dans `AdminShell.jsx`.
 - Mélanger les routes admin et user dans un même layout.
+- Ajouter une alerte navigateur alors que `Alert.jsx` existe.
+- Ajouter un style clair fixe qui ignore `is-theme-dark`.
 
 ## Checklist Sprint UI
 
@@ -164,3 +203,5 @@ Puis vérifier :
 - le style est-il dans le bon fichier CSS ?
 - le dark mode reste-t-il cohérent ?
 - l'interface admin n'utilise-t-elle pas accidentellement le shell user ?
+- l'interface supplier utilise-t-elle bien `SupplierShell.jsx` ?
+- les messages passent-ils par `Alert.jsx` ?

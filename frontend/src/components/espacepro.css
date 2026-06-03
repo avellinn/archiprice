@@ -192,12 +192,12 @@
   height: 32px;
   place-items: center;
   border-radius: 50%;
-  background: #f1edff;
+  background: var(--app-panel-background);
   color: #514cc4;
 }
 
 .espacepro__project-row--active .espacepro__project-icon {
-  background: #ffffff;
+  background: var(--app-card-background);
 }
 
 .espacepro__project-item strong,
@@ -232,7 +232,7 @@
 .espacepro__articles-header span {
   padding: 0.65rem;
   border-radius: 10px;
-  background: #fcfcfc;
+  background: var(--app-card-background);
   color: var(--app-heading-color);
   font-weight: 700;
   box-shadow: 0 1px 6px rgb(15 23 42 / 0.08);

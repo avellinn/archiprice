@@ -974,3 +974,31 @@
 .admin-rejection-modal__footer .btn {
   min-width: 6rem;
 }
+
+.admin-products-confirm-alert {
+  margin: 0 0 1rem;
+}
+
+.admin-products-confirm-alert__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.65rem;
+}
+
+.admin-products-confirm-alert__actions button {
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 7px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-products-confirm-alert__actions button:last-child {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: #fff;
+}

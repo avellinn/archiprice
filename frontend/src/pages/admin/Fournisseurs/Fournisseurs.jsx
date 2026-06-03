@@ -1,7 +1,7 @@
 import './Fournisseurs.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Badge, Button, Icon } from '../../../components/ui';
+import { Alert, Badge, Button, Icon } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
 import {
@@ -172,7 +172,11 @@ export default function Fournisseurs() {
       </header>
 
       <section className="admin-suppliers-card" aria-label="Liste des fournisseurs">
-        {error && <p className="admin-products-empty">{error}</p>}
+        {error && (
+          <Alert variant="danger" className="admin-suppliers-alert" onClose={() => setError('')}>
+            {error}
+          </Alert>
+        )}
         <div className="admin-suppliers-table-wrap">
           <table className="admin-suppliers-table">
             <thead>

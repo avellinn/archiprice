@@ -1,6 +1,6 @@
 # Documentation API ArchiPrice
 
-Date : 2026-06-01
+Date : 2026-06-03
 
 ## Base
 
@@ -27,6 +27,30 @@ Le token est généré à la connexion et stocké côté frontend via le service
 | Méthode | Route | Accès | Description |
 |---------|-------|-------|-------------|
 | `GET` | `/api/health` | Public | État API et MongoDB |
+
+## Temps Réel
+
+Le backend expose un canal Server-Sent Events pour synchroniser les interfaces ouvertes dans plusieurs navigateurs ou comptes.
+
+| Méthode | Route | Accès | Description |
+|---------|-------|-------|-------------|
+| `GET` | `/api/realtime` | Auth | Flux SSE des événements CRUD et notifications |
+
+Authentification :
+
+- via header `Authorization: Bearer <token>` quand le client le supporte ;
+- via query `?token=<token>` pour `EventSource`.
+
+Exemples d'événements :
+
+- `auth:create`
+- `project:create|update|delete`
+- `product:create|update|delete`
+- `catalogue-config:update`
+- `admin:supplier:update`
+- `supplier:product:update`
+
+Les shells React (`AppShell`, `AdminShell`, `SupplierShell`) écoutent ce canal pour rafraîchir les stores frontend concernés.
 
 ## Auth
 
@@ -127,6 +151,12 @@ Un utilisateur authentifié sans rôle admin reçoit `403`.
 | `GET` | `/api/admin/supplier-requests` | Liste les demandes fournisseur |
 | `POST` | `/api/admin/supplier-requests/:id/approve` | Valide une demande fournisseur |
 | `POST` | `/api/admin/supplier-requests/:id/reject` | Refuse une demande fournisseur |
+| `GET` | `/api/admin/simulations` | Liste les simulations/estimations exportées |
+| `POST` | `/api/admin/simulations` | Crée une simulation admin/fallback |
+| `PATCH` | `/api/admin/simulations/:id` | Modifie une simulation |
+| `GET` | `/api/admin/support-items` | Liste tickets, feedback et signalements |
+| `POST` | `/api/admin/support-items` | Crée un élément support |
+| `PATCH` | `/api/admin/support-items/:id` | Modifie un élément support |
 
 Corps pour changer un rôle :
 
@@ -159,6 +189,8 @@ Réponse utilisateur admin :
 
 Le champ `password` est exclu.
 
+Les pages admin n'utilisent pas les alertes navigateur. Les erreurs et confirmations UI passent par `frontend/src/components/ui/Alert.jsx` ou par des modales React.
+
 ## Supplier
 
 Routes protégées par :
@@ -177,6 +209,7 @@ Un compte fournisseur n'a accès à ces routes qu'après validation admin.
 | `POST` | `/api/supplier/products` | Crée un produit fournisseur avec images optionnelles |
 | `PUT` | `/api/supplier/products/:productId` | Modifie un produit fournisseur et ajoute éventuellement des images |
 | `DELETE` | `/api/supplier/products/:productId` | Supprime un produit fournisseur et ses images Cloudinary |
+| `DELETE` | `/api/supplier/products/:productId/images` | Supprime une image Cloudinary d'un produit fournisseur |
 
 `POST` et `PUT /api/supplier/products` acceptent un `multipart/form-data` :
 
@@ -186,6 +219,36 @@ Un compte fournisseur n'a accès à ces routes qu'après validation admin.
 - taille max : 5 Mo par image.
 
 Les images sont envoyées vers Cloudinary, dossier `archiprice/products`. MongoDB stocke uniquement `secure_url`, `public_id` et `metadata`.
+
+## Catalogue Config
+
+| Méthode | Route | Accès | Description |
+|---------|-------|-------|-------------|
+| `GET` | `/api/catalogue-config` | Public/Auth selon contexte dev | Configuration catalogue |
+| `PUT` | `/api/catalogue-config` | Admin | Met à jour catégories, pièces, gammes, villes, quartiers, disponibilités |
+
+La configuration catalogue alimente :
+
+- les filtres user dans `Catalogue.jsx` ;
+- les formulaires admin `CategoriesFiltres.jsx` et `Articles.jsx` ;
+- les formulaires supplier `AjouterProduit.jsx`.
+
+## Uploads
+
+| Méthode | Route | Accès | Description |
+|---------|-------|-------|-------------|
+| `POST` | `/api/uploads/products/images` | Auth | Upload images produit vers Cloudinary |
+| `DELETE` | `/api/uploads/products/images` | Auth | Supprime une image via `public_id` |
+
+Les uploads utilisent `multer.memoryStorage()` et ne stockent aucun fichier local.
+
+## PDF Récapitulatif
+
+| Méthode | Route | Accès | Description |
+|---------|-------|-------|-------------|
+| `GET` | `/api/projects/:id/recap.pdf` | Auth propriétaire/admin selon règles backend | Génère un PDF en mémoire |
+
+Le PDF contient les données MongoDB au moment de la génération : projet, utilisateur, articles, prix, totaux et liens Cloudinary vers les images.
 
 ## Erreurs
 

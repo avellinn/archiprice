@@ -130,15 +130,9 @@ function getProductShopName(product) {
 
 function getDynamicProjectShops(project, products, shops) {
   const productShopNames = [...new Set(products.map(getProductShopName).filter(Boolean))];
-  const matchedShops = productShopNames.map((shopName) => {
-    const knownShop = shops.find((shop) => shop.name.toLowerCase() === shopName.toLowerCase());
-
-    return knownShop || {
-      name: shopName,
-      zone: 'Zone à confirmer',
-      categories: 'Articles sélectionnés pour ce projet',
-    };
-  });
+  const matchedShops = productShopNames
+    .map((shopName) => shops.find((shop) => shop.name.toLowerCase() === shopName.toLowerCase()))
+    .filter(Boolean);
 
   if (matchedShops.length > 0) return matchedShops;
 
@@ -274,6 +268,7 @@ export default function Workspace() {
   const [editProjectError, setEditProjectError] = useState('');
   const [isUpdatingProject, setIsUpdatingProject] = useState(false);
   const [deletingProjectId, setDeletingProjectId] = useState('');
+  const [pendingProjectDelete, setPendingProjectDelete] = useState(null);
   const [selectedProjectProducts, setSelectedProjectProducts] = useState([]);
   const workspaceStats = useMemo(() => {
     const completed = projects.filter(isFinished).length;
@@ -344,14 +339,17 @@ export default function Workspace() {
     () => {
       const adminShops = (adminData.suppliers || []).map((supplier) => ({
         id: supplier.id,
-        name: supplier.name,
+        name: supplier.companyName || supplier.name,
+        companyName: supplier.companyName || supplier.name,
         contact: supplier.contact || supplier.email || '',
         zone: supplier.region || supplier.zone || 'Zone non renseignée',
-        categories: supplier.products
-          ? `${supplier.products} article(s) lié(s)`
-          : 'Catégories configurées par l’admin',
+        categories: Array.isArray(supplier.categories) && supplier.categories.length > 0
+          ? supplier.categories.join(', ')
+          : supplier.products
+            ? `${supplier.products} article(s) lié(s)`
+            : 'Catégories configurées par l’admin',
         status: supplier.status,
-      }));
+      })).filter((supplier) => supplier.name);
 
       return getDynamicProjectShops(selectedProject, selectedProjectProducts, adminShops);
     },
@@ -443,12 +441,13 @@ export default function Workspace() {
     }
   }
 
-  async function handleProjectDelete(project) {
-    const shouldDelete = window.confirm(`Supprimer définitivement le projet "${project.name}" ?`);
-    if (!shouldDelete) return;
+  async function confirmProjectDelete() {
+    const project = pendingProjectDelete;
+    if (!project) return;
 
     setDeletingProjectId(project.id);
     setProjectsError('');
+    setPendingProjectDelete(null);
 
     try {
       await deleteProject(project.id);
@@ -470,6 +469,10 @@ export default function Workspace() {
     } finally {
       setDeletingProjectId('');
     }
+  }
+
+  function handleProjectDelete(project) {
+    setPendingProjectDelete(project);
   }
 
   function handleCardAction(card) {
@@ -652,6 +655,20 @@ export default function Workspace() {
       <section className="workspace-hub" aria-label="Mon espace de travail">
         {activeCard ? (
           <>
+            {pendingProjectDelete && (
+              <Alert
+                variant="warning"
+                title="Suppression de projet"
+                className="workspace-confirm-alert"
+                onClose={() => setPendingProjectDelete(null)}
+              >
+                <span>Supprimer définitivement le projet "{pendingProjectDelete.name}" ?</span>
+                <span className="workspace-confirm-alert__actions">
+                  <button type="button" onClick={() => setPendingProjectDelete(null)}>Annuler</button>
+                  <button type="button" onClick={confirmProjectDelete}>Supprimer</button>
+                </span>
+              </Alert>
+            )}
             <button
               type="button"
               className="workspace-back-button"

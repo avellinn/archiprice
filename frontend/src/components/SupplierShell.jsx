@@ -225,7 +225,6 @@ export default function SupplierShell() {
     >
       <Sidebar
         logo={<img src={siteLogo} alt="ArchiPrice" />}
-        title="Supplier"
         variant="supplier"
         sections={sidebarSections}
         isOpen={!isSidebarCollapsed}

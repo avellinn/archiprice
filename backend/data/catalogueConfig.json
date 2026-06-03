@@ -1,6 +1,6 @@
 {
-  "__version": 142,
-  "__updatedAt": 1780506946785,
+  "__version": 193,
+  "__updatedAt": 1780512085692,
   "users": [
     {
       "id": "6a102521e9a37f1239d69fc8",
@@ -15,75 +15,37 @@
       "subscription": "-",
       "createdAt": "2026-05-22T09:42:57.933Z",
       "updatedAt": "2026-06-01T07:52:43.587Z"
+    },
+    {
+      "id": "6a20610a317e76a6de8c593f",
+      "name": "Miione",
+      "email": "avellinadjai@gmail.com",
+      "phone": "019745651784",
+      "role": "supplier",
+      "type": "Fournisseur",
+      "simulations": "-",
+      "inscription": "03/06/2026",
+      "status": "Inactif",
+      "subscription": "-",
+      "createdAt": "2026-06-03T17:14:50.008Z",
+      "updatedAt": "2026-06-03T17:21:54.762Z"
+    },
+    {
+      "id": "6a2063890914362592ebe587",
+      "name": "test@gmail.com",
+      "email": "test@gmail.com",
+      "phone": "",
+      "role": "user",
+      "type": "Architecte",
+      "simulations": 0,
+      "inscription": "03/06/2026",
+      "status": "Actif",
+      "subscription": "Essai",
+      "createdAt": "2026-06-03T17:25:29.917Z",
+      "updatedAt": "2026-06-03T17:25:29.917Z"
     }
   ],
   "products": [
-    {
-      "id": "supplier-product-6a205a8aec86c80211763cb7",
-      "sourceSupplierProductId": "6a205a8aec86c80211763cb7",
-      "supplierUserId": "6a1d7a91f44246ee96fd3f4d",
-      "name": "vr",
-      "description": "rcfv",
-      "price": 5101000,
-      "image": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jeaprs5s0hlq9ump804a?_a=BAMAPqhK0",
-      "images": [
-        {
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jeaprs5s0hlq9ump804a?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/jeaprs5s0hlq9ump804a",
-          "metadata": {
-            "originalName": "pexels-mateusz-dach-450035 (1).jpg",
-            "mimeType": "image/jpeg",
-            "bytes": 1600979,
-            "width": 4608,
-            "height": 3072,
-            "format": "jpg",
-            "provider": "cloudinary",
-            "folder": "archiprice/products"
-          }
-        },
-        {
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/bx75ougmxmehfhda4w09?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/bx75ougmxmehfhda4w09",
-          "metadata": {
-            "originalName": "pexels-photo-1379640.jpeg",
-            "mimeType": "image/jpeg",
-            "bytes": 97336,
-            "width": 1125,
-            "height": 750,
-            "format": "jpg",
-            "provider": "cloudinary",
-            "folder": "archiprice/products"
-          }
-        },
-        {
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/r6c3kqjh8sawrp7icdkk?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/r6c3kqjh8sawrp7icdkk",
-          "metadata": {
-            "originalName": "pexels-pok-rie-1603821.jpg",
-            "mimeType": "image/jpeg",
-            "bytes": 2746439,
-            "width": 3616,
-            "height": 2598,
-            "format": "jpg",
-            "provider": "cloudinary",
-            "folder": "archiprice/products"
-          }
-        }
-      ],
-      "category": "Revêtement",
-      "room": "Chambre",
-      "range": "Premium",
-      "supplier": "Lookable",
-      "vat": "20%",
-      "visual": "sofa",
-      "city": "Cotonou",
-      "neighborhood": "",
-      "availability": "Sur commande",
-      "publicationStatus": "Validé",
-      "publicationSource": "supplier",
-      "submittedAt": "2026-06-03T16:47:07.653Z",
-      "approvedAt": "2026-06-03T16:47:29.984Z"
-    },
     {
       "id": "supplier-product-6a1f1f6230c50def1529d92f",
       "sourceSupplierProductId": "6a1f1f6230c50def1529d92f",
@@ -163,41 +125,75 @@
   ],
   "suppliers": [
     {
-      "id": "6a204cd5ec86c80211763cb4",
-      "userId": "6a20610a317e76a6de8c593f",
-      "name": "Mior",
-      "companyName": "Mior",
-      "contact": "019745651784",
-      "email": "avellinadjai@gmail.com",
-      "phone": "019745651784",
+      "id": "6a20754a0914362592ebe58a",
+      "userId": "",
+      "name": "Nouveau fournisseur modifié modifié",
+      "companyName": "Nouveau fournisseur modifié modifié",
+      "contact": "contact@fournisseur.bj",
+      "email": "",
+      "phone": "",
       "region": "Cotonou",
       "status": "Actif",
-      "products": 1,
+      "products": 0,
+      "categories": []
+    },
+    {
+      "id": "6a204cd5ec86c80211763cb4",
+      "userId": "6a20610a317e76a6de8c593f",
+      "name": "Miione",
+      "companyName": "Miione",
+      "contact": "avellinadjai@gmail.com",
+      "email": "avellinadjai@gmail.com",
+      "phone": "97456512",
+      "region": "Cotonou",
+      "status": "Actif",
+      "products": 0,
       "categories": []
     }
   ],
   "supplierClientNotifications": [
     {
-      "id": "supplier-client-Lookable-6a1d8556f44246ee96fd3f50-1780505323497",
-      "supplierId": "",
-      "supplierName": "Lookable",
-      "supplierContact": "",
-      "clientId": "6a1d8556f44246ee96fd3f50",
+      "id": "supplier-client-6a204cd5ec86c80211763cb4-6a2063890914362592ebe587-1780511860191",
+      "supplierId": "6a204cd5ec86c80211763cb4",
+      "supplierName": "Mior",
+      "supplierContact": "avellinadjai@gmail.com",
+      "clientId": "6a2063890914362592ebe587",
       "clientName": "test@gmail.com",
       "clientProfession": "Architecte",
       "clientEmail": "test@gmail.com",
       "clientPhone": "Non renseigné",
-      "projectId": "6a205ab2ec86c80211763cb8",
+      "projectId": "6a2068c10914362592ebe588",
       "projectName": "Projet catalogue 03/06/2026",
-      "simulationTotal": 69602100876,
-      "simulationTotalLabel": "69 602 100 876 FCFA",
-      "articleCount": 3,
+      "simulationTotal": 2552000,
+      "simulationTotalLabel": "2 552 000 FCFA",
+      "articleCount": 1,
       "categories": [
-        "Revêtement",
         "Luminaire"
       ],
+      "articleImages": [
+        {
+          "name": "gjvh",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/pjyp1flmqq3x2ripsm3v?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/pjyp1flmqq3x2ripsm3v"
+        }
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a2068c20914362592ebe589",
+          "name": "gjvh",
+          "category": "Luminaire",
+          "unitPrice": 2552000,
+          "images": [
+            {
+              "name": "gjvh",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/pjyp1flmqq3x2ripsm3v?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/pjyp1flmqq3x2ripsm3v"
+            }
+          ]
+        }
+      ],
       "status": "Nouveau",
-      "createdAt": "2026-06-03T16:48:43.497Z"
+      "createdAt": "2026-06-03T18:37:40.191Z"
     },
     {
       "id": "supplier-client-Ma boutique-6a1d8556f44246ee96fd3f50-1780505322536",
@@ -222,50 +218,6 @@
       "createdAt": "2026-06-03T16:48:42.536Z"
     },
     {
-      "id": "supplier-client-Lookable-6a1d8556f44246ee96fd3f50-1780505321746",
-      "supplierId": "",
-      "supplierName": "Lookable",
-      "supplierContact": "",
-      "clientId": "6a1d8556f44246ee96fd3f50",
-      "clientName": "test@gmail.com",
-      "clientProfession": "Architecte",
-      "clientEmail": "test@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a205ab2ec86c80211763cb8",
-      "projectName": "Projet catalogue 03/06/2026",
-      "simulationTotal": 69602100876,
-      "simulationTotalLabel": "69 602 100 876 FCFA",
-      "articleCount": 3,
-      "categories": [
-        "Revêtement",
-        "Luminaire"
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-03T16:48:41.746Z"
-    },
-    {
-      "id": "supplier-client-Lookable-6a1d8556f44246ee96fd3f50-1780505314194",
-      "supplierId": "",
-      "supplierName": "Lookable",
-      "supplierContact": "",
-      "clientId": "6a1d8556f44246ee96fd3f50",
-      "clientName": "test@gmail.com",
-      "clientProfession": "Architecte",
-      "clientEmail": "test@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a205ab2ec86c80211763cb8",
-      "projectName": "Projet catalogue 03/06/2026",
-      "simulationTotal": 69602100876,
-      "simulationTotalLabel": "69 602 100 876 FCFA",
-      "articleCount": 3,
-      "categories": [
-        "Revêtement",
-        "Luminaire"
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-03T16:48:34.194Z"
-    },
-    {
       "id": "supplier-client-Ma boutique-6a1d8556f44246ee96fd3f50-1780505313268",
       "supplierId": "",
       "supplierName": "Ma boutique",
@@ -288,116 +240,6 @@
       "createdAt": "2026-06-03T16:48:33.268Z"
     },
     {
-      "id": "supplier-client-Lookable-6a1d8556f44246ee96fd3f50-1780505305395",
-      "supplierId": "",
-      "supplierName": "Lookable",
-      "supplierContact": "",
-      "clientId": "6a1d8556f44246ee96fd3f50",
-      "clientName": "test@gmail.com",
-      "clientProfession": "Architecte",
-      "clientEmail": "test@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a205ab2ec86c80211763cb8",
-      "projectName": "Projet catalogue 03/06/2026",
-      "simulationTotal": 69602100876,
-      "simulationTotalLabel": "69 602 100 876 FCFA",
-      "articleCount": 3,
-      "categories": [
-        "Revêtement",
-        "Luminaire"
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-03T16:48:25.395Z"
-    },
-    {
-      "id": "supplier-client-Lookable-6a1d8556f44246ee96fd3f50-1780505305215",
-      "supplierId": "",
-      "supplierName": "Lookable",
-      "supplierContact": "",
-      "clientId": "6a1d8556f44246ee96fd3f50",
-      "clientName": "test@gmail.com",
-      "clientProfession": "Architecte",
-      "clientEmail": "test@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a205ab2ec86c80211763cb8",
-      "projectName": "Projet catalogue 03/06/2026",
-      "simulationTotal": 69602100876,
-      "simulationTotalLabel": "69 602 100 876 FCFA",
-      "articleCount": 3,
-      "categories": [
-        "Revêtement",
-        "Luminaire"
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-03T16:48:25.215Z"
-    },
-    {
-      "id": "supplier-client-Lookable-6a1d8556f44246ee96fd3f50-1780505304327",
-      "supplierId": "",
-      "supplierName": "Lookable",
-      "supplierContact": "",
-      "clientId": "6a1d8556f44246ee96fd3f50",
-      "clientName": "test@gmail.com",
-      "clientProfession": "Architecte",
-      "clientEmail": "test@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a205ab2ec86c80211763cb8",
-      "projectName": "Projet catalogue 03/06/2026",
-      "simulationTotal": 69602100876,
-      "simulationTotalLabel": "69 602 100 876 FCFA",
-      "articleCount": 3,
-      "categories": [
-        "Revêtement",
-        "Luminaire"
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-03T16:48:24.327Z"
-    },
-    {
-      "id": "supplier-client-Lookable-6a1d8556f44246ee96fd3f50-1780505303566",
-      "supplierId": "",
-      "supplierName": "Lookable",
-      "supplierContact": "",
-      "clientId": "6a1d8556f44246ee96fd3f50",
-      "clientName": "test@gmail.com",
-      "clientProfession": "Architecte",
-      "clientEmail": "test@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a205ab2ec86c80211763cb8",
-      "projectName": "Projet catalogue 03/06/2026",
-      "simulationTotal": 69602100876,
-      "simulationTotalLabel": "69 602 100 876 FCFA",
-      "articleCount": 3,
-      "categories": [
-        "Revêtement",
-        "Luminaire"
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-03T16:48:23.566Z"
-    },
-    {
-      "id": "supplier-client-Lookable-6a1d8556f44246ee96fd3f50-1780505302299",
-      "supplierId": "",
-      "supplierName": "Lookable",
-      "supplierContact": "",
-      "clientId": "6a1d8556f44246ee96fd3f50",
-      "clientName": "test@gmail.com",
-      "clientProfession": "Architecte",
-      "clientEmail": "test@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a205ab2ec86c80211763cb8",
-      "projectName": "Projet catalogue 03/06/2026",
-      "simulationTotal": 69602100876,
-      "simulationTotalLabel": "69 602 100 876 FCFA",
-      "articleCount": 3,
-      "categories": [
-        "Revêtement",
-        "Luminaire"
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-03T16:48:22.299Z"
-    },
-    {
       "id": "supplier-client-Ma boutique-6a1d8556f44246ee96fd3f50-1780505301189",
       "supplierId": "",
       "supplierName": "Ma boutique",
@@ -418,50 +260,6 @@
       ],
       "status": "Nouveau",
       "createdAt": "2026-06-03T16:48:21.189Z"
-    },
-    {
-      "id": "supplier-client-Lookable-6a1d8556f44246ee96fd3f50-1780505299180",
-      "supplierId": "",
-      "supplierName": "Lookable",
-      "supplierContact": "",
-      "clientId": "6a1d8556f44246ee96fd3f50",
-      "clientName": "test@gmail.com",
-      "clientProfession": "Architecte",
-      "clientEmail": "test@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a205ab2ec86c80211763cb8",
-      "projectName": "Projet catalogue 03/06/2026",
-      "simulationTotal": 69602100876,
-      "simulationTotalLabel": "69 602 100 876 FCFA",
-      "articleCount": 3,
-      "categories": [
-        "Revêtement",
-        "Luminaire"
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-03T16:48:19.180Z"
-    },
-    {
-      "id": "supplier-client-Lookable-6a1d8556f44246ee96fd3f50-1780505299001",
-      "supplierId": "",
-      "supplierName": "Lookable",
-      "supplierContact": "",
-      "clientId": "6a1d8556f44246ee96fd3f50",
-      "clientName": "test@gmail.com",
-      "clientProfession": "Architecte",
-      "clientEmail": "test@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a205ab2ec86c80211763cb8",
-      "projectName": "Projet catalogue 03/06/2026",
-      "simulationTotal": 69602100876,
-      "simulationTotalLabel": "69 602 100 876 FCFA",
-      "articleCount": 3,
-      "categories": [
-        "Revêtement",
-        "Luminaire"
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-03T16:48:19.001Z"
     },
     {
       "id": "supplier-client-Lookable-6a1d8556f44246ee96fd3f50-1780505298454",
@@ -919,7 +717,7 @@
   ],
   "supplierSettings": {
     "shopProfile": {
-      "name": "Lookable",
+      "name": "Miione",
       "email": "avellinadjai@gmail.com",
       "phone": "97456512"
     },
@@ -932,6 +730,6 @@
       "timezone": "(GMT +01:00) Afrique centrale et de l’Ouest",
       "language": "Français"
     },
-    "savedAt": "2026-06-03T15:04:17.929Z"
+    "savedAt": "2026-06-03T18:13:49.199Z"
   }
 }

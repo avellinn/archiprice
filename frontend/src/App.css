@@ -104,6 +104,14 @@
   --app-muted-color: #64748b;
   --app-heading-color: #222633;
   --app-border-color: #e2e8f0;
+  --bg-primary: var(--app-card-background);
+  --bg-secondary: var(--app-panel-background);
+  --border-color: var(--app-border-color);
+  --text-primary: var(--app-heading-color);
+  --text-secondary: var(--app-text-color);
+  --color-grey: var(--app-muted-color);
+  --color-grey-dark: var(--app-heading-color);
+  --color-grey-light: #f1f5f9;
   min-height: 100vh;
   background: var(--app-shell-background);
   color: var(--app-text-color);
@@ -119,6 +127,14 @@
   --app-muted-color: #94a3b8;
   --app-heading-color: #f8fafc;
   --app-border-color: #334155;
+  --bg-primary: var(--app-card-background);
+  --bg-secondary: var(--app-panel-background);
+  --border-color: var(--app-border-color);
+  --text-primary: var(--app-heading-color);
+  --text-secondary: var(--app-text-color);
+  --color-grey: var(--app-muted-color);
+  --color-grey-dark: var(--app-heading-color);
+  --color-grey-light: #1f2937;
 }
 
 .dashboard-content {
@@ -141,13 +157,13 @@
 .supplier-shell {
   height: 100vh;
   overflow: hidden;
-  background: #F1F1F1;
+  background: var(--dashboard-page-background);
 }
 
 .supplier-shell__content {
   height: 100vh;
   min-height: 0;
-  background: #F1F1F1;
+  background: var(--dashboard-page-background);
   overflow: hidden;
 }
 
@@ -162,7 +178,15 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  background: #F1F1F1;
+  background: var(--dashboard-page-background);
+}
+
+.dashboard-shell.is-theme-dark .dashboard-content,
+.dashboard-shell.is-theme-dark .admin-shell__content,
+.dashboard-shell.is-theme-dark .supplier-shell__content,
+.dashboard-shell.is-theme-dark .supplier-shell {
+  background: var(--dashboard-page-background);
+  color: var(--app-text-color);
 }
 
 .dashboard-floating-panel {
@@ -172,9 +196,9 @@
   z-index: 1000;
   width: min(300px, calc(100% - 2rem));
   padding: 1rem;
-  border: 1px solid var(--color-grey-light);
+  border: 1px solid var(--app-border-color);
   border-radius: var(--radius-md);
-  background-color: var(--color-white);
+  background-color: var(--app-card-background);
   box-shadow: var(--shadow-lg);
 }
 
@@ -239,7 +263,7 @@
 
 .notification-panel__item:hover {
   border-color: #1d73f8;
-  background: #f8fbff;
+  background: var(--app-panel-background);
 }
 
 .notification-panel__item span {
@@ -517,8 +541,10 @@
 .project-modal {
   width: min(440px, 100%);
   padding: 1.25rem;
+  border: 1px solid var(--app-border-color);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--app-card-background);
+  color: var(--app-text-color);
   box-shadow: 0 24px 60px rgb(15 23 42 / 0.24);
 }
 
@@ -532,7 +558,7 @@
 
 .project-modal__header h2 {
   margin: 0;
-  color: #111827;
+  color: var(--app-heading-color);
   font-size: 1.2rem;
 }
 
@@ -541,8 +567,8 @@
   height: 2rem;
   border: 0;
   border-radius: var(--radius-md);
-  background: #f1f5f9;
-  color: #0f172a;
+  background: var(--app-panel-background);
+  color: var(--app-heading-color);
   font-size: 1.4rem;
   line-height: 1;
   cursor: pointer;
@@ -552,15 +578,17 @@
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
-  color: #334155;
+  color: var(--app-heading-color);
   font-weight: 600;
 }
 
 .project-modal__field input {
   width: 100%;
   padding: 0.75rem 0.85rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--app-border-color);
   border-radius: 8px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
   font: inherit;
 }
 

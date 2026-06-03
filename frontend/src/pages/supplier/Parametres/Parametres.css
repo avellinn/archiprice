@@ -2,8 +2,8 @@
 .supplier-settings-page {
   min-height: calc(100vh - 64px);
   padding: 1.6rem 1.6rem 3.5rem;
-  background: #F1F1F1;
-  color: #202124;
+  background: var(--dashboard-page-background);
+  color: var(--app-text-color);
 }
 
 .supplier-settings-header {
@@ -16,7 +16,7 @@
   align-items: center;
   gap: 0.35rem;
   margin: 0;
-  color: #202124;
+  color: var(--app-heading-color);
   font-size: 1.15rem;
   line-height: 1.25;
 }
@@ -25,31 +25,31 @@
   width: min(100%, 1040px);
   margin: 0 auto 1.15rem;
   padding: 1.25rem;
-  border: 1px solid #d6d6d6;
+  border: 1px solid var(--app-border-color);
   border-radius: 10px;
-  background: #ffffff;
+  background: var(--app-card-background);
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1);
 }
 
 .supplier-settings-card h2 {
   margin: 0 0 1.15rem;
-  color: #202124;
+  color: var(--app-heading-color);
   font-size: 0.96rem;
   line-height: 1.2;
 }
 
 .supplier-settings-card p {
   margin: -0.55rem 0 0.9rem;
-  color: #4b5563;
+  color: var(--app-muted-color);
   font-size: 0.9rem;
 }
 
 .supplier-settings-list,
 .supplier-settings-return-box {
   overflow: hidden;
-  border: 1px solid #dcdcdc;
+  border: 1px solid var(--app-border-color);
   border-radius: 7px;
-  background: #ffffff;
+  background: var(--app-card-background);
 }
 
 .supplier-settings-list article {
@@ -59,7 +59,7 @@
   gap: 0.9rem;
   min-height: 48px;
   padding: 0.75rem 0.85rem;
-  border-bottom: 1px solid #dcdcdc;
+  border-bottom: 1px solid var(--app-border-color);
 }
 
 .supplier-settings-row-button {
@@ -71,7 +71,7 @@
   min-height: 86px;
   padding: 1.05rem 1rem;
   border: 0;
-  border-bottom: 1px solid #dcdcdc;
+  border-bottom: 1px solid var(--app-border-color);
   background: transparent;
   color: inherit;
   font: inherit;
@@ -85,7 +85,7 @@
 
 .supplier-settings-row-button:hover,
 .supplier-settings-row-button:focus-visible {
-  background: #f8fafc;
+  background: var(--app-panel-background);
   outline: 0;
 }
 
@@ -94,10 +94,10 @@
   min-height: 2.25rem;
   margin-top: 0.42rem;
   padding: 0.38rem 0.65rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--app-border-color);
   border-radius: 7px;
-  background: #ffffff;
-  color: #202124;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
   font: inherit;
   cursor: pointer;
 }
@@ -112,14 +112,14 @@
 }
 
 .supplier-settings-list article.is-muted {
-  background: #f5f5f5;
+  background: var(--app-panel-background);
 }
 
 .supplier-settings-list strong,
 .supplier-settings-return-header strong,
 .supplier-settings-return-box label span {
   display: block;
-  color: #202124;
+  color: var(--app-heading-color);
   font-size: 0.9rem;
   font-weight: 800;
 }
@@ -127,7 +127,7 @@
 .supplier-settings-list span {
   display: block;
   margin-top: 0.25rem;
-  color: #4b5563;
+  color: var(--app-muted-color);
   font-size: 0.87rem;
 }
 

@@ -2,8 +2,8 @@
 .supplier-product-editor-page {
   min-height: calc(100vh - 64px);
   padding: 0.5rem 1rem 2.5rem;
-  background: #F1F1F1;
-  color: #303030;
+  background: var(--dashboard-page-background);
+  color: var(--app-text-color);
 }
 
 .supplier-product-editor-header,

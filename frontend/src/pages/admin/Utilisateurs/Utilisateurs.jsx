@@ -55,6 +55,13 @@ export default function Utilisateurs() {
   const [typeFilter, setTypeFilter] = useState('Tous');
   const [roleFilter, setRoleFilter] = useState('Tous');
   const [selectedUserId, setSelectedUserId] = useState('');
+  const [editingUser, setEditingUser] = useState(null);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    status: 'Actif',
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -189,29 +196,44 @@ export default function Utilisateurs() {
     }
   }
 
-  function editUser(user) {
-    const nextName = window.prompt('Nom', user.name || '');
-    if (nextName === null) return;
-
-    const nextEmail = window.prompt('Email', user.email || '');
-    if (nextEmail === null) return;
-
-    const nextPhone = window.prompt('Téléphone', user.phone || '');
-    if (nextPhone === null) return;
-
-    const nextStatus = window.prompt('Statut: Actif, Inactif ou Bloqué', user.status || 'Actif');
-    if (nextStatus === null) return;
-
-    const normalizedStatus = ['Actif', 'Inactif', 'Bloqué'].includes(nextStatus.trim())
-      ? nextStatus.trim()
-      : user.status;
-
-    updateUser(user.id, {
-      name: nextName.trim() || user.name,
-      email: nextEmail.trim() || user.email,
-      phone: nextPhone.trim(),
-      status: normalizedStatus,
+  function openEditUser(user) {
+    setEditingUser(user);
+    setEditForm({
+      name: user.name || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      status: user.status || 'Actif',
     });
+  }
+
+  function closeEditUser() {
+    setEditingUser(null);
+    setEditForm({
+      name: '',
+      email: '',
+      phone: '',
+      status: 'Actif',
+    });
+  }
+
+  function updateEditForm(field, value) {
+    setEditForm((currentForm) => ({
+      ...currentForm,
+      [field]: value,
+    }));
+  }
+
+  async function submitEditUser(event) {
+    event.preventDefault();
+    if (!editingUser) return;
+
+    await updateUser(editingUser.id, {
+      name: editForm.name.trim() || editingUser.name,
+      email: editForm.email.trim() || editingUser.email,
+      phone: editForm.phone.trim(),
+      status: editForm.status,
+    });
+    closeEditUser();
   }
 
   return (
@@ -232,7 +254,7 @@ export default function Utilisateurs() {
           <section className="admin-user-detail__card">
             <div className="admin-user-detail__card-header">
               <h2>Propriétaire de la boutique</h2>
-              <button type="button" title="Modifier l'utilisateur" onClick={() => editUser(selectedUser)}>
+              <button type="button" title="Modifier l'utilisateur" onClick={() => openEditUser(selectedUser)}>
                 <Icon name="Edit" size="sm" />
               </button>
             </div>
@@ -390,7 +412,7 @@ export default function Utilisateurs() {
                           aria-label={`Modifier ${user.name}`}
                           onClick={(event) => {
                             event.stopPropagation();
-                            editUser(user);
+                            openEditUser(user);
                           }}
                         >
                           <Icon name="Edit" size="sm" />
@@ -450,6 +472,47 @@ export default function Utilisateurs() {
         </footer>
       </section>
       </>
+      )}
+      {editingUser && (
+        <div className="admin-user-edit-backdrop" role="presentation">
+          <form className="admin-user-edit-modal" role="dialog" aria-modal="true" onSubmit={submitEditUser}>
+            <header>
+              <div>
+                <span>Compte utilisateur</span>
+                <h2>Modifier {editingUser.name || editingUser.email}</h2>
+              </div>
+              <button type="button" aria-label="Fermer" onClick={closeEditUser}>
+                <Icon name="Close" size="sm" />
+              </button>
+            </header>
+            <div className="admin-user-edit-grid">
+              <label>
+                <span>Nom</span>
+                <input value={editForm.name} onChange={(event) => updateEditForm('name', event.target.value)} />
+              </label>
+              <label>
+                <span>Email</span>
+                <input type="email" value={editForm.email} onChange={(event) => updateEditForm('email', event.target.value)} />
+              </label>
+              <label>
+                <span>Téléphone</span>
+                <input value={editForm.phone} onChange={(event) => updateEditForm('phone', event.target.value)} />
+              </label>
+              <label>
+                <span>Statut</span>
+                <select value={editForm.status} onChange={(event) => updateEditForm('status', event.target.value)}>
+                  <option value="Actif">Actif</option>
+                  <option value="Inactif">Inactif</option>
+                  <option value="Bloqué">Bloqué</option>
+                </select>
+              </label>
+            </div>
+            <footer>
+              <button type="button" onClick={closeEditUser}>Annuler</button>
+              <button type="submit">Enregistrer</button>
+            </footer>
+          </form>
+        </div>
       )}
     </div>
   );

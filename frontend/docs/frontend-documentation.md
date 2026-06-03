@@ -97,6 +97,8 @@ Routes supplier :
 - `/supplier/content/files` : fichiers
 - `/supplier/settings` : paramètres
 
+La page catalogue fournisseur historique a été retirée. Les catalogues/produits fournisseur sont maintenant gérés par `Produits`, `AjouterProduit`, `MaBoutique` et `Fichiers`.
+
 Les routes supplier passent par `SupplierRoute`, puis sont rendues dans `SupplierShell`.
 
 ## Pages
@@ -219,9 +221,9 @@ Fonctions principales :
 
 Fichiers :
 
-- `src/pages/user/Login.jsx`
-- `src/pages/user/Register.jsx`
-- `src/pages/user/Logout.jsx`
+- `src/pages/user/Login/Login.jsx`
+- `src/pages/user/Register/Register.jsx`
+- `src/pages/user/Logout/Logout.jsx`
 
 Les pages login/register utilisent `AuthLayout`, `PasswordInput`, `react-hook-form` et `AuthContext`.
 
@@ -235,17 +237,22 @@ Les pages login/register utilisent `AuthLayout`, `PasswordInput`, `react-hook-fo
 - `Sidebar.jsx` : navigation latérale. Styles isolés dans `Sidebar.css`.
 - `Header.jsx` : barre supérieure, recherche, thème, utilisateur.
 - `Avatar.jsx` : avatar utilisateur dynamique.
+- `components/ui/Alert.jsx` : messages d'information, succès, avertissement et erreur. Les interfaces ne doivent pas utiliser les alertes navigateur pour les messages applicatifs.
 - `components/ui/Button.jsx` : bouton générique avec variantes `primary`, `secondary`, `success`, `danger`, `outline`, `ghost`.
 - `components/ui/Icon.jsx` : registre central des icônes SVG via le design system.
+- `components/ui/Table.jsx` : table adaptable aux pages métier.
+- `components/ui/ServerError.jsx` : écran d'erreur serveur.
 - `DonutChart.jsx` : chart donut basé sur Recharts.
 - `WorkspaceMiniGrid.jsx` : cards miniatures du workspace.
 - `espacepro.jsx` : layout détaillé des projets dans le workspace.
+- `modalBoutique.jsx` : modal "Où acheter" alimentée exclusivement par la liste des fournisseurs validés côté admin.
+- `recap.jsx` : récapitulatif d'estimation.
 - `ModalCreateProject.jsx` : modale de création de projet.
 - `Text.jsx` : composant typographique.
 
 ### Sidebar Partagée
 
-`Sidebar.jsx` est utilisée par l'interface user et admin.
+`Sidebar.jsx` est utilisée par les interfaces user, admin et supplier.
 
 Elle supporte :
 
@@ -257,7 +264,33 @@ Elle supporte :
 - état actif basé sur la route courante ;
 - variante minimale de rôle via `variant`.
 
-Le style de base reste uniforme entre admin et user.
+Le style de base reste uniforme entre user, admin et supplier. Le titre du sidebar supplier n'est pas affiché ; seuls le logo et les liens structurent la navigation.
+
+### Header, Recherche Et Dark Mode
+
+`Header.jsx` est partagé par les trois shells. Il gère :
+
+- recherche indexée par page via le paramètre `q` ;
+- icône de recherche adaptée au contexte de page ;
+- menu utilisateur ;
+- notifications ;
+- toggle dark mode.
+
+Le dark mode est appliqué au root `.dashboard-shell.is-theme-dark`. Les variables CSS transversales dans `App.css` pilotent désormais l'ensemble du workspace :
+
+```css
+--app-shell-background
+--app-content-background
+--dashboard-page-background
+--app-panel-background
+--app-card-background
+--app-text-color
+--app-muted-color
+--app-heading-color
+--app-border-color
+```
+
+Les composants et pages doivent utiliser ces variables plutôt que des fonds fixes. Le header, le sidebar, les pages user/admin/supplier, les modals et les cartes principales sont branchés sur ces variables.
 
 ## Services API
 
@@ -268,6 +301,8 @@ Tous les appels API passent par `src/services/api.js`.
 - `projects.js` : CRUD projets.
 - `products.js` : CRUD produits liés à un projet.
 - `supplier.js` : workspace fournisseur, CRUD produits supplier et upload d'images.
+- `realtime.js` : connexion Server-Sent Events à `/api/realtime`.
+- `exportedDocuments.js` : documents PDF exportés côté user.
 
 Les routes API sont centralisées dans `src/constants/api.js`.
 
@@ -384,6 +419,8 @@ Il contient :
 
 La sidebar admin a des menus spécifiques, mais réutilise les mêmes styles que la sidebar user.
 
+Les pages admin utilisent `Alert.jsx` pour les erreurs, confirmations et messages métier. Les anciennes alertes navigateur (`alert`, `confirm`, `prompt`) ne doivent plus être utilisées côté admin.
+
 ### Supplier
 
 Le layout fournisseur est `SupplierShell.jsx`.
@@ -419,6 +456,7 @@ Modifier le catalogue :
 2. rendu user : `src/pages/user/Catalogue/Catalogue.jsx`
 3. rendu des cards : `src/components/cardarticle.jsx` et `src/components/cardarticle.css`
 4. layout et style : `src/pages/user/Catalogue/Catalogue.css`
+5. données visibles : uniquement les articles validés par l'admin.
 
 Modifier le parcours fournisseur :
 
@@ -433,6 +471,8 @@ Modifier le workspace :
 1. orchestration : `src/pages/user/Workspace/Workspace.jsx`
 2. cards miniatures : `WorkspaceMiniGrid.jsx` et `WorkspaceMiniGrid.css`
 3. espace projet : `espacepro.jsx` et `espacepro.css`
+4. modal "Où acheter" : `modalBoutique.jsx` et `modalBoutique.css`
+5. fournisseurs proposés : liste synchronisée depuis `pages/admin/Fournisseurs/`.
 
 Modifier le dashboard :
 
@@ -452,6 +492,8 @@ Le script supprime :
 - `frontend/dist`
 - caches Vite : `.vite`, `.vite-temp`, `.tmp`
 - cache backend éventuel : `backend/node_modules/.cache`
+
+Important : le script `clean` existe à la racine du monorepo, pas dans `frontend/package.json`.
 
 Ne pas commiter :
 

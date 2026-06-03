@@ -1,7 +1,7 @@
 import './NouvellesDemandes.css';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Badge, Button, Icon } from '../../../components/ui';
+import { Alert, Badge, Button, Icon } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
 import {
   approveSupplierRequest,
@@ -15,6 +15,8 @@ export default function NouvellesDemandes() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [rejectingRequest, setRejectingRequest] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -60,11 +62,15 @@ export default function NouvellesDemandes() {
     }
   }
 
-  async function rejectRequest(requestId) {
-    const reason = window.prompt('Motif du refus', '');
+  async function rejectRequest(event) {
+    event.preventDefault();
+    if (!rejectingRequest) return;
+
     try {
-      await rejectSupplierRequest(requestId, reason || '');
-      setRequests((currentRequests) => currentRequests.filter((request) => request.id !== requestId));
+      await rejectSupplierRequest(rejectingRequest.id, rejectionReason.trim());
+      setRequests((currentRequests) => currentRequests.filter((request) => request.id !== rejectingRequest.id));
+      setRejectingRequest(null);
+      setRejectionReason('');
       setError('');
     } catch (apiError) {
       setError(getApiErrorMessage(apiError, 'Impossible de refuser la demande fournisseur.'));
@@ -97,7 +103,11 @@ export default function NouvellesDemandes() {
             
         </div>
 
-        {error && <p className="admin-products-empty">{error}</p>}
+        {error && (
+          <Alert variant="danger" className="admin-suppliers-alert" onClose={() => setError('')}>
+            {error}
+          </Alert>
+        )}
 
         {isLoading ? (
           <p className="admin-products-empty">Chargement des demandes...</p>
@@ -116,7 +126,16 @@ export default function NouvellesDemandes() {
                   <Button type="button" variant="success" size="sm" icon={<Icon name="Check" size="sm" />} onClick={() => approveRequest(request.id)}>
                     Valider
                   </Button>
-                  <Button type="button" variant="danger" size="sm" icon={<Icon name="Close" size="sm" />} onClick={() => rejectRequest(request.id)}>
+                  <Button
+                    type="button"
+                    variant="danger"
+                    size="sm"
+                    icon={<Icon name="Close" size="sm" />}
+                    onClick={() => {
+                      setRejectingRequest(request);
+                      setRejectionReason('');
+                    }}
+                  >
                     Refuser
                   </Button>
                 </div>
@@ -125,6 +144,39 @@ export default function NouvellesDemandes() {
           </div>
         )}
       </section>
+
+      {rejectingRequest && (
+        <div className="admin-supplier-modal-backdrop" role="presentation">
+          <form className="admin-supplier-modal" role="dialog" aria-modal="true" onSubmit={rejectRequest}>
+            <header>
+              <div>
+                <span>Demande fournisseur</span>
+                <h2>Justifier le refus</h2>
+              </div>
+              <button type="button" aria-label="Fermer" onClick={() => setRejectingRequest(null)}>
+                <Icon name="Close" size="sm" />
+              </button>
+            </header>
+            <label>
+              <span>Motif envoyé à {rejectingRequest.companyName}</span>
+              <textarea
+                value={rejectionReason}
+                onChange={(event) => setRejectionReason(event.target.value)}
+                placeholder="Expliquez brièvement pourquoi la demande est refusée."
+                rows={5}
+              />
+            </label>
+            <footer>
+              <Button type="button" variant="outline" onClick={() => setRejectingRequest(null)}>
+                Annuler
+              </Button>
+              <Button type="submit" variant="danger">
+                Envoyer
+              </Button>
+            </footer>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

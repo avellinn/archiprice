@@ -5,6 +5,10 @@ function formatSupplierZone(supplier) {
   return supplier.region || supplier.zone || supplier.city || 'Zone non renseignée';
 }
 
+function formatSupplierName(supplier) {
+  return supplier.companyName || supplier.name || supplier.shopName || 'Boutique sans nom';
+}
+
 function formatSupplierCategories(supplier) {
   if (Array.isArray(supplier.categories) && supplier.categories.length > 0) {
     return supplier.categories.join(', ');
@@ -25,8 +29,10 @@ export default function ModalBoutique({
 }) {
   if (!isOpen) return null;
 
-  const activeShops = shops.filter((shop) => String(shop.status || 'Actif').toLowerCase() !== 'inactif');
-  const selectedShop = activeShops.find((shop) => shop.name === selectedShopName) || activeShops[0];
+  const activeShops = shops
+    .filter((shop) => String(shop.status || 'Actif').toLowerCase() !== 'inactif')
+    .filter((shop) => formatSupplierName(shop) !== 'Boutique sans nom');
+  const selectedShop = activeShops.find((shop) => formatSupplierName(shop) === selectedShopName) || activeShops[0];
 
   return (
     <div className="modal-boutique__backdrop" role="presentation">
@@ -61,12 +67,13 @@ export default function ModalBoutique({
         ) : (
           <div className="modal-boutique__grid" role="listbox" aria-label="Liste des boutiques recommandées">
             {activeShops.map((shop, index) => {
-              const isSelected = selectedShop?.name === shop.name;
+              const shopName = formatSupplierName(shop);
+              const isSelected = selectedShop && formatSupplierName(selectedShop) === shopName;
 
               return (
                 <button
                   type="button"
-                  key={`${shop.id || shop.name}-${index}`}
+                  key={`${shop.id || shopName}-${index}`}
                   className={[
                     'modal-boutique__shop',
                     isSelected ? 'modal-boutique__shop--selected' : '',
@@ -79,7 +86,7 @@ export default function ModalBoutique({
                     <Icon name="Workspaces" size="sm" />
                   </span>
                   <span>
-                    <strong>{shop.name}</strong>
+                    <strong>{shopName}</strong>
                     <small>{formatSupplierZone(shop)}</small>
                     <em>{formatSupplierCategories(shop)}</em>
                   </span>

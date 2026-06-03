@@ -45,6 +45,7 @@ export default function Fichiers() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [deletingFileId, setDeletingFileId] = useState('');
+  const [pendingImageDelete, setPendingImageDelete] = useState(null);
 
   function loadWorkspace() {
     let cancelled = false;
@@ -110,14 +111,13 @@ export default function Fichiers() {
     setFiles((currentFiles) => currentFiles.filter((file, index) => `local-${file.name}-${index}` !== fileId));
   }
 
-  async function removeProductImage(file) {
+  async function confirmProductImageDelete() {
+    const file = pendingImageDelete;
     if (!file.productId || !file.publicId) return;
-
-    const shouldDelete = window.confirm(`Supprimer l'image "${file.name}" ?`);
-    if (!shouldDelete) return;
 
     setDeletingFileId(file.id);
     setError('');
+    setPendingImageDelete(null);
 
     try {
       const updatedProduct = await deleteSupplierProductImage(file.productId, file.publicId);
@@ -133,6 +133,10 @@ export default function Fichiers() {
     } finally {
       setDeletingFileId('');
     }
+  }
+
+  function removeProductImage(file) {
+    setPendingImageDelete(file);
   }
 
   return (
@@ -165,6 +169,20 @@ export default function Fichiers() {
         {error && (
           <Alert variant="danger" className="supplier-files-status" onClose={() => setError('')}>
             {error}
+          </Alert>
+        )}
+        {pendingImageDelete && (
+          <Alert
+            variant="warning"
+            className="supplier-files-status supplier-files-confirm-alert"
+            title="Supprimer l'image"
+            onClose={() => setPendingImageDelete(null)}
+          >
+            <span>Supprimer l'image "{pendingImageDelete.name}" ?</span>
+            <span className="supplier-files-confirm-alert__actions">
+              <button type="button" onClick={() => setPendingImageDelete(null)}>Annuler</button>
+              <button type="button" onClick={confirmProductImageDelete}>Supprimer</button>
+            </span>
           </Alert>
         )}
 

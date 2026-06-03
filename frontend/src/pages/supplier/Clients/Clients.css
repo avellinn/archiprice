@@ -4,11 +4,16 @@
   max-width: none;
   min-height: calc(100vh - 64px);
   padding: 1.35rem 1rem 3rem;
-  background: #F1F1F1;
+  background: var(--dashboard-page-background);
+  color: var(--app-text-color);
 }
 
 .supplier-clients-page .workspace-heading {
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .supplier-clients-table {
@@ -78,4 +83,183 @@
   color: var(--app-muted-color);
   font-size: 0.78rem;
   font-weight: 700;
+}
+
+.supplier-clients-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.supplier-clients-actions button,
+.supplier-client-modal header button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 7px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  cursor: pointer;
+}
+
+.supplier-clients-actions button:hover,
+.supplier-clients-actions button:focus-visible,
+.supplier-client-modal header button:hover,
+.supplier-client-modal header button:focus-visible {
+  border-color: #224b73;
+  outline: 0;
+}
+
+.supplier-clients-alert {
+  margin: 0 0 1rem;
+}
+
+.supplier-clients-alert__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.65rem;
+}
+
+.supplier-clients-alert__actions button {
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 7px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.supplier-clients-alert__actions button:last-child {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: #fff;
+}
+
+.supplier-client-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(15 23 42 / 0.38);
+}
+
+.supplier-client-modal {
+  width: min(100%, 760px);
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  border: 1px solid var(--app-border-color);
+  border-radius: 14px;
+  background: var(--app-card-background);
+  box-shadow: var(--shadow-lg);
+}
+
+.supplier-client-modal header,
+.supplier-client-modal footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--app-border-color);
+}
+
+.supplier-client-modal footer {
+  justify-content: flex-end;
+  border-top: 1px solid var(--app-border-color);
+  border-bottom: 0;
+}
+
+.supplier-client-modal h2 {
+  margin: 0;
+  color: var(--app-heading-color);
+  font-size: 1.1rem;
+}
+
+.supplier-client-modal .alert {
+  margin: 1rem 1rem 0;
+}
+
+.supplier-client-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.supplier-client-detail-grid article {
+  display: grid;
+  gap: 0.35rem;
+  min-height: 76px;
+  padding: 0.85rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 10px;
+  background: var(--app-panel-background);
+}
+
+.supplier-client-detail-grid span,
+.supplier-client-detail-images p {
+  color: var(--app-muted-color);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.supplier-client-detail-grid strong {
+  color: var(--app-heading-color);
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+.supplier-client-detail-images {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0 1rem 1rem;
+}
+
+.supplier-client-detail-images h3 {
+  margin: 0;
+  color: var(--app-heading-color);
+  font-size: 0.95rem;
+}
+
+.supplier-client-detail-images p {
+  margin: 0;
+}
+
+.supplier-client-close,
+.supplier-client-delete {
+  min-height: 2.1rem;
+  padding: 0 0.85rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 7px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.supplier-client-delete {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: #fff;
+}
+
+@media (max-width: 720px) {
+  .supplier-clients-page .workspace-heading,
+  .supplier-client-modal header,
+  .supplier-client-modal footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .supplier-client-detail-grid {
+    grid-template-columns: 1fr;
+  }
 }

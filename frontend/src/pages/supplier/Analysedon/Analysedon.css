@@ -1,11 +1,11 @@
 @import '../../user/Dashboard/Dashboard.css';
 
 .supplier-dashboard-page {
-  background: #f1f1f1;
+  background: var(--dashboard-page-background);
 }
 
 .supplier-dashboard-page .dashboard-grid {
-  background: #f1f1f1;
+  background: var(--dashboard-page-background);
 }
 
 .supplier-dashboard-page .dashboard-new-project .btn {

@@ -547,3 +547,107 @@
   background: rgb(100 116 139 / 0.14);
   color: var(--app-muted-color);
 }
+
+.admin-user-edit-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1700;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(15 23 42 / 0.42);
+}
+
+.admin-user-edit-modal {
+  width: min(620px, 100%);
+  overflow: hidden;
+  border: 1px solid var(--app-border-color);
+  border-radius: 14px;
+  background: var(--app-card-background);
+  color: var(--app-text-color);
+  box-shadow: 0 28px 70px rgb(15 23 42 / 0.24);
+}
+
+.admin-user-edit-modal header,
+.admin-user-edit-modal footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--app-border-color);
+}
+
+.admin-user-edit-modal footer {
+  justify-content: flex-end;
+  border-top: 1px solid var(--app-border-color);
+  border-bottom: 0;
+}
+
+.admin-user-edit-modal header span,
+.admin-user-edit-grid span {
+  color: var(--app-muted-color);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.admin-user-edit-modal h2 {
+  margin: 0.25rem 0 0;
+  color: var(--app-heading-color);
+  font-size: 1.1rem;
+}
+
+.admin-user-edit-modal header button,
+.admin-user-edit-modal footer button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0 0.8rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 7px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-user-edit-modal header button {
+  width: 2rem;
+  padding: 0;
+}
+
+.admin-user-edit-modal footer button[type='submit'] {
+  border-color: #224b73;
+  background: #224b73;
+  color: #fff4f4;
+}
+
+.admin-user-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.admin-user-edit-grid label {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.admin-user-edit-grid input,
+.admin-user-edit-grid select {
+  width: 100%;
+  min-height: 2.35rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 9px;
+  background: var(--app-panel-background);
+  color: var(--app-heading-color);
+}
+
+@media (max-width: 640px) {
+  .admin-user-edit-grid {
+    grid-template-columns: 1fr;
+  }
+}
