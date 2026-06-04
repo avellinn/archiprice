@@ -108,6 +108,7 @@ export default function EspacePro({
   onProjectDelete,
   deletingProjectId,
   onProductsChange,
+  onArticleShopOpen,
 }) {
   const { user } = useAuth();
   const effectiveSelectedProjectId = selectedProjectId || projects[0]?.id || '';
@@ -215,6 +216,16 @@ export default function EspacePro({
     if (visibleProjectProducts.length <= 1) return;
     setActiveImageIndex(0);
     setActiveArticleIndex((currentIndex) => (currentIndex + 1) % visibleProjectProducts.length);
+  }
+
+  function handleArticleCardClick() {
+    onArticleShopOpen?.(activeArticle);
+  }
+
+  function handleArticleCardKeyDown(event) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    handleArticleCardClick();
   }
 
   async function handleDownloadRecap() {
@@ -331,7 +342,13 @@ export default function EspacePro({
           <p className="espacepro__empty">Aucun article choisi pour ce projet.</p>
         )}
         {!visibleIsProductsLoading && !productsError && activeArticle && (
-          <article className="espacepro__article-card espacepro__article-card--featured">
+          <article
+            className="espacepro__article-card espacepro__article-card--featured"
+            role="button"
+            tabIndex={0}
+            onClick={handleArticleCardClick}
+            onKeyDown={handleArticleCardKeyDown}
+          >
             <button
               type="button"
               className={[
@@ -340,7 +357,10 @@ export default function EspacePro({
                 `espacepro__article-image--${activeArticleIndex % 3}`,
               ].filter(Boolean).join(' ')}
               aria-label={`Afficher l'article suivant après ${activeArticle.name}`}
-              onClick={handleArticleImageClick}
+              onClick={(event) => {
+                event.stopPropagation();
+                handleArticleImageClick();
+              }}
             >
               {!activeArticleImage && <span>{activeArticle.name.slice(0, 2).toUpperCase()}</span>}
               <small>
@@ -366,6 +386,7 @@ export default function EspacePro({
                     className="espacepro__recap-link"
                     href={getProjectRecapHref(selectedProject)}
                     onClick={(event) => {
+                      event.stopPropagation();
                       event.preventDefault();
                       handleDownloadRecap();
                     }}
@@ -376,7 +397,10 @@ export default function EspacePro({
                     type="button"
                     className="espacepro__recap-open"
                     aria-label="Afficher le récapitulatif"
-                    onClick={() => setIsRecapOpen(true)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setIsRecapOpen(true);
+                    }}
                   >
                     <Icon name="ReceiptLong" size="sm" />
                   </button>

@@ -2,80 +2,55 @@
   margin: 0 0 1rem;
 }
 
-.admin-supplier-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1700;
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-  background: rgb(15 23 42 / 0.42);
+.admin-supplier-requests-list {
+  width: 100%;
 }
 
-.admin-supplier-modal {
-  width: min(520px, 100%);
-  overflow: hidden;
-  border: 1px solid var(--app-border-color);
-  border-radius: 14px;
-  background: var(--app-card-background);
-  color: var(--app-text-color);
-  box-shadow: 0 28px 70px rgb(15 23 42 / 0.24);
+.admin-supplier-requests-list .ui-table-wrap,
+.admin-supplier-requests-list .ui-data-table {
+  width: 100%;
 }
 
-.admin-supplier-modal header,
-.admin-supplier-modal footer {
-  display: flex;
+.admin-supplier-requests-actions {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem;
-  border-bottom: 1px solid var(--app-border-color);
+  gap: 0.7rem;
 }
 
-.admin-supplier-modal footer {
-  justify-content: flex-end;
-  border-top: 1px solid var(--app-border-color);
-  border-bottom: 0;
-}
-
-.admin-supplier-modal header span,
-.admin-supplier-modal label span {
-  color: var(--app-muted-color);
-  font-size: 0.78rem;
-  font-weight: 900;
-}
-
-.admin-supplier-modal h2 {
-  margin: 0.25rem 0 0;
-  color: var(--app-heading-color);
-  font-size: 1.1rem;
-}
-
-.admin-supplier-modal header button {
-  display: inline-grid;
+.admin-supplier-requests-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 2rem;
   height: 2rem;
-  place-items: center;
   border: 1px solid var(--app-border-color);
   border-radius: 7px;
   background: var(--app-card-background);
   color: var(--app-heading-color);
   cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
 }
 
-.admin-supplier-modal label {
-  display: grid;
-  gap: 0.5rem;
-  padding: 1rem;
+.admin-supplier-requests-actions button:hover,
+.admin-supplier-requests-actions button:focus-visible {
+  border-color: #224b73;
+  color: #224b73;
+  outline: 0;
 }
 
-.admin-supplier-modal textarea {
-  width: 100%;
-  resize: vertical;
-  min-height: 130px;
-  padding: 0.75rem;
-  border: 1px solid var(--app-border-color);
-  border-radius: 10px;
-  background: var(--app-panel-background);
-  color: var(--app-heading-color);
+.admin-supplier-requests-actions .is-danger {
+  color: #ef4444;
+}
+
+.admin-supplier-requests-actions .is-danger:hover,
+.admin-supplier-requests-actions .is-danger:focus-visible {
+  background: #fff1f2;
+  color: #dc2626;
+}
+
+@media (max-width: 760px) {
+  .admin-supplier-requests-actions {
+    justify-content: flex-end;
+    width: 100%;
+  }
 }

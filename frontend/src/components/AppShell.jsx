@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Header from './Header';
 import Icon from './Icon';
@@ -6,17 +6,20 @@ import Sidebar from './Sidebar';
 import useAuth from '../context/useAuth';
 import { syncAdminDataFromRemote } from '../services/adminData';
 import { connectRealtime } from '../services/realtime';
+import { fetchMySupportItems } from '../services/support';
 import { getUserTranslations, normalizeUserLanguage } from '../utils/userLanguage';
 import { getAvatarColor, getDisplayName, getUserInitials } from '../utils/userDisplay';
 import siteLogo from '../assets/images/log.png';
 
 const USER_PROFILE_KEY = 'archiprice_user_profile_preferences';
 const USER_PROFILE_EVENT = 'archiprice:user-profile-change';
+const USER_DISMISSED_NOTIFICATIONS_KEY = 'archiprice:user-dismissed-notifications';
 const USER_SEARCH_ICONS = {
   '/dashboard': 'Dashboard',
   '/catalogue': 'Explore',
   '/workspace': 'Workspaces',
   '/factures': 'ReceiptLong',
+  '/support': 'Chat',
   '/parametres': 'AccountCircle',
   '/deconnexion': 'Logout',
 };
@@ -27,6 +30,14 @@ function readUserLanguage() {
     return normalizeUserLanguage(profile.language);
   } catch {
     return 'fr';
+  }
+}
+
+function readDismissedNotificationKeys() {
+  try {
+    return JSON.parse(window.localStorage.getItem(USER_DISMISSED_NOTIFICATIONS_KEY) || '[]');
+  } catch {
+    return [];
   }
 }
 
@@ -41,7 +52,17 @@ export default function AppShell() {
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [searchMessage, setSearchMessage] = useState('');
   const [userLanguage, setUserLanguage] = useState(readUserLanguage);
+  const [supportItems, setSupportItems] = useState([]);
+  const [dismissedNotificationKeys, setDismissedNotificationKeys] = useState(readDismissedNotificationKeys);
   const userText = getUserTranslations(userLanguage);
+
+  const refreshSupportNotifications = useCallback(async () => {
+    try {
+      setSupportItems(await fetchMySupportItems());
+    } catch {
+      setSupportItems([]);
+    }
+  }, []);
 
   useEffect(() => {
     function handleProfileChange(event) {
@@ -58,12 +79,20 @@ export default function AppShell() {
     };
   }, []);
 
+  useEffect(() => {
+    const refreshTimer = window.setTimeout(refreshSupportNotifications, 0);
+    return () => {
+      window.clearTimeout(refreshTimer);
+    };
+  }, [refreshSupportNotifications, location.pathname]);
+
   useEffect(() => connectRealtime({
     onEvent: (event) => {
       if (event?.type === 'connected') return;
       syncAdminDataFromRemote().catch(() => {});
+      refreshSupportNotifications();
     },
-  }), []);
+  }), [refreshSupportNotifications]);
 
   const sidebarSections = useMemo(
     () => [
@@ -93,6 +122,12 @@ export default function AppShell() {
             label: userText.sidebar.invoices,
             path: '/factures',
             icon: <Icon name="ReceiptLong" />,
+          },
+          {
+            id: 'support',
+            label: userText.sidebar.support,
+            path: '/support',
+            icon: <Icon name="Chat" />,
           },
           {
             id: 'parametres',
@@ -137,6 +172,23 @@ export default function AppShell() {
     navigate('/deconnexion');
   }
 
+  const replyNotifications = useMemo(() => (
+    supportItems
+      .filter((item) => item.reply && !dismissedNotificationKeys.includes(`support-reply-${item.id}`))
+      .sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0))
+  ), [dismissedNotificationKeys, supportItems]);
+
+  function dismissSupportNotifications() {
+    const nextKeys = [
+      ...dismissedNotificationKeys,
+      ...replyNotifications.map((item) => `support-reply-${item.id}`),
+    ];
+    const uniqueKeys = [...new Set(nextKeys)];
+    setDismissedNotificationKeys(uniqueKeys);
+    window.localStorage.setItem(USER_DISMISSED_NOTIFICATIONS_KEY, JSON.stringify(uniqueKeys));
+    setIsNotificationsOpen(false);
+  }
+
   const currentPage = userText.pageTitles[location.pathname] || userText.pageTitles.fallback;
   const searchValue = searchParams.get('q') || '';
   const searchIcon = USER_SEARCH_ICONS[location.pathname] || 'Search';
@@ -175,6 +227,7 @@ export default function AppShell() {
           searchValue={searchValue}
           searchIcon={searchIcon}
           searchPlaceholder={searchPlaceholder}
+          notificationCount={replyNotifications.length}
           onAccountClick={() => {
             setIsAccountOpen((open) => !open);
             setIsNotificationsOpen(false);
@@ -194,11 +247,33 @@ export default function AppShell() {
           <div className="dashboard-floating-panel notification-panel">
             <div className="notification-panel__header">
               <strong>{userText.notifications.title}</strong>
-              <button type="button" aria-label={userText.notifications.close} onClick={() => setIsNotificationsOpen(false)}>
+              <button type="button" aria-label={userText.notifications.close} onClick={dismissSupportNotifications}>
                 <Icon name="Close" size="sm" />
               </button>
             </div>
-            <span>{userText.notifications.empty}</span>
+            {replyNotifications.length === 0 ? (
+              <span>{userText.notifications.empty}</span>
+            ) : (
+              <div className="notification-panel__list">
+                {replyNotifications.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className="notification-panel__item"
+                    onClick={() => {
+                      setIsNotificationsOpen(false);
+                      navigate('/support');
+                    }}
+                  >
+                    <Icon name="Chat" size="sm" />
+                    <span>
+                      Réponse admin : <b>{item.subject}</b>
+                      <small>{item.reply}</small>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

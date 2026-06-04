@@ -317,7 +317,7 @@
   display: grid;
   place-items: center;
   padding: 1rem;
-  background: rgba(15, 23, 42, 0.24);
+  background: rgba(237, 237, 239, 0.24);
 }
 
 .supplier-settings-modal {
@@ -327,7 +327,7 @@
   border: 1px solid #d6d6d6;
   border-radius: 12px;
   background: #f1f1f1;
-  color: #202124;
+  color: #fbfbfc;
   box-shadow: 0 18px 45px rgba(15, 23, 42, 0.22);
 }
 
@@ -338,11 +338,13 @@
   gap: 0.45rem;
   min-height: 38px;
   padding: 0 1rem;
-  border-bottom: 1px solid #d6d6d6;
+  border-bottom: 1px solid #ffffff;
 }
 
 .supplier-settings-modal__header {
   justify-content: space-between;
+  background: #f1f1f1;
+
 }
 
 .supplier-policy-header-title {

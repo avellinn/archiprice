@@ -1,8 +1,26 @@
 import './Home.css';
 import { Link, Navigate } from 'react-router-dom';
-import Header from '../../../components/Header';
-import { Text } from '../../../components/ui';
+import { Icon } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
+
+const roleOptions = [
+  {
+    id: 'user',
+    title: 'Client ou porteur de projet',
+    description: 'Créer un compte pour simuler et suivre mes projets',
+    icon: 'AccountCircle',
+    to: '/register?accountType=user',
+    cta: 'Continuer',
+  },
+  {
+    id: 'supplier',
+    title: 'Fournisseur ou boutique partenaire',
+    description: 'Créer une demande de partenariat fournisseur',
+    icon: 'Workspaces',
+    to: '/register?accountType=supplier',
+    cta: 'Continuer',
+  },
+];
 
 export default function Home() {
   const { isAuthenticated, loading } = useAuth();
@@ -12,21 +30,48 @@ export default function Home() {
   }
 
   return (
-    <>
-      <Header />
-      <main className="page">
-        <h1>ArchiPrice</h1>
-        <Text size="lg">Estimation et chiffrage pour projets d&apos;architecture.</Text>
-        <Text className="muted">
-          Créez un compte pour accéder à votre espace de travail et simuler vos devis.
-        </Text>
-        <Text as="div" className="actions">
-          <Link to="/register" className="btn btn--primary btn--md">
-            Créer un compte
+    <main className="home-role-page">
+      <section className="home-role-panel" aria-labelledby="home-role-title">
+        <h1 id="home-role-title">Bienvenue sur ArchiPrice</h1>
+
+        <div className="home-role-content">
+          <h2>Sélectionnez votre rôle</h2>
+
+          <div className="home-role-list">
+            {roleOptions.map((role) => (
+              <article key={role.id} className="home-role-card">
+                <span className="home-role-card__icon" aria-hidden="true">
+                  <Icon name={role.icon} size="lg" />
+                </span>
+                <div>
+                  <h3>{role.title}</h3>
+                  <p>{role.description}</p>
+                </div>
+                <Link to={role.to} className="home-role-card__button">
+                  {role.cta}
+                </Link>
+              </article>
+            ))}
+          </div>
+
+          <div className="home-role-separator">
+            <span>OU</span>
+          </div>
+
+          <Link to="/login" className="home-role-admin">
+            <span className="home-role-admin__mark" aria-hidden="true">A</span>
+            <div>
+              <h3>Administrateur ArchiPrice</h3>
+              <p>Accéder à l’espace de gestion de la plateforme</p>
+            </div>
+            <Icon name="ChevronRight" size="sm" />
           </Link>
-          <Link to="/login">Connexion</Link>
-        </Text>
-      </main>
-    </>
+
+          <p className="home-role-login">
+            Vous avez déjà un compte ? <Link to="/login">Connectez-vous</Link>
+          </p>
+        </div>
+      </section>
+    </main>
   );
 }

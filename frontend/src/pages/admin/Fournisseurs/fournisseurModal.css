@@ -1,0 +1,287 @@
+.fournisseur-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 68;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(239, 239, 239, 0.38);
+}
+
+.fournisseur-modal {
+  width: min(100%, 820px);
+  max-height: calc(100vh - 2rem);
+  overflow: hidden auto;
+  border: 1px solid var(--app-border-color);
+  border-radius: 14px;
+  background: var(--app-card-background);
+  box-shadow: var(--shadow-lg);
+}
+
+.fournisseur-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--app-border-color);
+  color: var(--app-heading-color);
+}
+
+.fournisseur-modal__title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.fournisseur-modal__title > div {
+  min-width: 0;
+}
+
+.fournisseur-modal__title span {
+  color: var(--app-muted-color);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.fournisseur-modal__header h2 {
+  margin: 0;
+  color: var(--app-heading-color);
+  font-size: 1.2rem;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.fournisseur-modal__close,
+.fournisseur-modal__actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 7px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  cursor: pointer;
+}
+
+.fournisseur-modal__close:hover,
+.fournisseur-modal__close:focus-visible,
+.fournisseur-modal__actions button:hover,
+.fournisseur-modal__actions button:focus-visible {
+  border-color: #224b73;
+  color: #224b73;
+  outline: 0;
+}
+
+.fournisseur-modal__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.fournisseur-modal__actions .is-danger {
+  color: #ef4444;
+}
+
+.fournisseur-modal__actions .is-danger:hover {
+  background: #fff1f2;
+  color: #dc2626;
+}
+
+.fournisseur-modal__card {
+  margin: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 12px;
+  background: var(--app-card-background);
+  box-shadow: 0 14px 32px rgb(15 23 42 / 0.045);
+}
+
+.fournisseur-modal__card h3 {
+  margin: 0 0 0.9rem;
+  color: var(--app-heading-color);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.fournisseur-modal__card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.fournisseur-modal__card-header h3 {
+  margin: 0;
+}
+
+.fournisseur-modal__owner {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.fournisseur-modal__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9px;
+  background: #4ade80;
+  color: #073b1d;
+}
+
+.fournisseur-modal__owner strong,
+.fournisseur-modal__owner small {
+  display: block;
+}
+
+.fournisseur-modal__owner strong {
+  color: var(--app-heading-color);
+  font-weight: 900;
+}
+
+.fournisseur-modal__owner small {
+  margin-top: 0.2rem;
+  color: var(--app-muted-color);
+  font-weight: 700;
+}
+
+.fournisseur-modal__form-grid,
+.fournisseur-modal__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.fournisseur-modal__form-grid label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--app-heading-color);
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.fournisseur-modal__form-grid input,
+.fournisseur-modal__form-grid select {
+  min-width: 0;
+  height: 2.5rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 8px;
+  background: var(--app-card-background);
+  color: var(--app-text-color);
+  font-weight: 400;
+}
+
+.fournisseur-modal__grid article {
+  display: grid;
+  gap: 0.35rem;
+  min-height: 76px;
+  padding: 0.85rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 10px;
+  background: var(--app-panel-background);
+}
+
+.fournisseur-modal__grid span {
+  color: var(--app-muted-color);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.fournisseur-modal__grid strong {
+  color: var(--app-heading-color);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.fournisseur-modal__footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  padding: 1rem;
+  border-top: 1px solid var(--app-border-color);
+  background: var(--app-card-background);
+}
+
+.fournisseur-modal__footer button {
+  min-height: 2.25rem;
+  padding: 0 0.9rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 8px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.fournisseur-modal__footer button[type='submit'] {
+  border-color: #c1ceda;
+  background: #224b73;
+  color: #fff;
+  transition: all 0.3s ease;
+}
+
+.fournisseur-modal__footer button[type='submit']:hover {
+  border-color: #224b73;   
+  background: #1a3a59;    
+  color: #fff;             
+  cursor: pointer;         
+}
+
+.fournisseur-modal__footer button[type='button']{
+  border-color: #c1ceda;
+  background: #224b73;
+  color: #fff;
+  transition: all 0.3s ease;
+}
+
+.fournisseur-modal__footer button[type='button']:hover {
+  border-color: #224b73;   
+  background: #b10b10;    
+  color: #fff;             
+  cursor: pointer;         
+}
+
+.fournisseur-modal__footer{
+  border-color: #224b73;
+  background: #224b73;
+  color: #fff;
+}
+
+.dashboard-shell.is-theme-dark .fournisseur-modal__header,
+.dashboard-shell.is-theme-dark .fournisseur-modal__footer,
+.dashboard-shell.is-theme-dark .fournisseur-modal__card,
+.dashboard-shell.is-theme-dark .fournisseur-modal__grid article,
+.dashboard-shell.is-theme-dark .fournisseur-modal__form-grid input,
+.dashboard-shell.is-theme-dark .fournisseur-modal__form-grid select {
+  border-color: var(--app-border-color);
+}
+
+.dashboard-shell.is-theme-dark .fournisseur-modal__form-grid input,
+.dashboard-shell.is-theme-dark .fournisseur-modal__form-grid select {
+  background: var(--app-card-background);
+  color: var(--app-text-color);
+}
+
+@media (max-width: 860px) {
+  .fournisseur-modal__card-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .fournisseur-modal__form-grid,
+  .fournisseur-modal__grid {
+    grid-template-columns: 1fr;
+  }
+}

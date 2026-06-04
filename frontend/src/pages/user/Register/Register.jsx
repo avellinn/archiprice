@@ -1,6 +1,5 @@
-import './Register.css';
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import '../../../styles/authForm.css';
 import AuthLayout from '../../../components/AuthLayout';
@@ -11,9 +10,12 @@ import { getApiErrorMessage } from '../../../services/api';
 
 export default function Register() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { register: registerUser } = useAuth();
   const [apiError, setApiError] = useState(null);
-  const [accountType, setAccountType] = useState('user');
+  const [accountType, setAccountType] = useState(() => (
+    searchParams.get('accountType') === 'supplier' ? 'supplier' : 'user'
+  ));
 
   const {
     register,

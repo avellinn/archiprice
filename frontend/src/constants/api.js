@@ -21,6 +21,10 @@ export const API_ROUTES = {
     product: (id) => `/api/supplier/products/${id}`,
     productImages: (id) => `/api/supplier/products/${id}/images`,
   },
+  support: {
+    listMine: '/api/support-items/me',
+    create: '/api/support-items',
+  },
   admin: {
     users: '/api/admin/users',
     user: (id) => `/api/admin/users/${id}`,

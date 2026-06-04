@@ -41,13 +41,34 @@ html {
   min-height: 100%;
 }
 
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+:where(
+  .dashboard-shell,
+  .dashboard-content,
+  .admin-shell,
+  .admin-shell__content,
+  .supplier-shell,
+  .supplier-shell__content,
+  [class$="-page"],
+  [class*="-page "]
+) {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
   background: #6f4747;
   font-family: var(--font-primary);
-  overflow-x: hidden;
 }
 
 h1,
@@ -75,9 +96,15 @@ a {
 }
 
 img,
-svg,
+picture,
 video,
-canvas {
+canvas,
+iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+svg {
   max-width: 100%;
 }
 

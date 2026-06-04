@@ -1,8 +1,12 @@
 /* Page styles migrated from App.css */
 .admin-simulations-page {
+  width: 100%;
+  max-width: none;
   min-height: calc(100vh - 64px);
   padding: 1.45rem 1.55rem 2rem;
   background: var(--dashboard-page-background);
+  color: var(--app-text-color);
+  overflow-x: hidden;
 }
 
 .admin-simulations-header h1 {
@@ -97,26 +101,31 @@
   font-weight: 900;
 }
 
-.admin-simulations-layout {
-  display: grid;
-  grid-template-columns: minmax(620px, 1fr) minmax(330px, 390px);
-  gap: 1.35rem;
-  align-items: start;
-}
-
-.admin-simulations-card,
-.admin-simulation-detail {
+.admin-simulations-card {
+  width: 100%;
   border: 1px solid #e7edf5;
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--app-card-background);
   box-shadow: 0 16px 42px rgb(15 23 42 / 0.045);
 }
 
 .admin-simulations-card {
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
-  min-height: 540px;
   overflow: hidden;
+}
+
+.admin-simulations-list {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+}
+
+.admin-simulations-list .ui-table-wrap,
+.admin-simulations-list .ui-data-table {
+  width: 100%;
+}
+
+.admin-simulations-list .ui-data-table {
+  min-width: 980px;
 }
 
 .admin-simulations-table-wrap {
@@ -251,134 +260,10 @@
   font-weight: 900;
 }
 
-.admin-simulation-detail {
-  min-height: 540px;
-  padding: 1.2rem 1.25rem;
-}
-
-.admin-simulation-detail__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.4rem;
-}
-
-.admin-simulation-detail__header h2 {
-  margin: 0;
-  color: var(--app-heading-color);
-  font-size: 1.08rem;
-  font-weight: 900;
-}
-
-.admin-simulation-detail__header button {
-  display: inline-grid;
-  width: 30px;
-  height: 30px;
-  place-items: center;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: #98a2b3;
-  cursor: pointer;
-}
-
-.admin-simulation-detail__header button:hover {
-  background: #f1f5f9;
-  color: #344054;
-}
-
-.admin-simulation-detail__meta {
-  display: grid;
-  gap: 0.95rem;
-  margin: 0 0 1.35rem;
-}
-
-.admin-simulation-detail__meta div {
-  display: grid;
-  grid-template-columns: 104px minmax(0, 1fr);
-  gap: 1rem;
-}
-
-.admin-simulation-detail__meta dt {
-  color: #98a2b3;
-  font-size: 0.8rem;
-  font-weight: 900;
-}
-
-.admin-simulation-detail__meta dd {
-  margin: 0;
-  color: #344054;
-  font-size: 0.82rem;
-  font-weight: 850;
-}
-
-.admin-simulation-detail__meta dd span,
-.admin-simulation-detail__meta dd strong {
-  display: block;
-}
-
-.admin-simulation-detail__meta dd strong {
-  margin-top: 0.25rem;
-  color: #344054;
-}
-
-.admin-simulation-products h3 {
-  margin: 0 0 0.75rem;
-  color: #344054;
-  font-size: 0.9rem;
-  font-weight: 900;
-}
-
-.admin-simulation-products table {
-  width: 100%;
-  border-collapse: collapse;
-  color: #475467;
-  font-size: 0.76rem;
-  font-weight: 850;
-}
-
-.admin-simulation-products th,
-.admin-simulation-products td {
-  padding: 0.55rem 0.35rem;
-  border-bottom: 1px solid #eef2f7;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.admin-simulation-products th {
-  color: #344054;
-  font-size: 0.72rem;
-  font-weight: 900;
-}
-
-.admin-simulation-products th:first-child,
-.admin-simulation-products td:first-child {
-  white-space: normal;
-}
-
-.admin-simulation-detail__total {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #eef2f7;
-  color: #344054;
-  font-weight: 900;
-}
-
-.admin-simulation-detail__total strong {
-  color: #111827;
-  font-size: 1.05rem;
-}
-
 .dashboard-shell.is-theme-dark .admin-simulations-date,
 .dashboard-shell.is-theme-dark .admin-simulations-search,
 .dashboard-shell.is-theme-dark .admin-simulations-status,
 .dashboard-shell.is-theme-dark .admin-simulations-card,
-.dashboard-shell.is-theme-dark .admin-simulation-detail,
 .dashboard-shell.is-theme-dark .admin-simulations-count select {
   border-color: var(--app-border-color);
   background: var(--app-card-background);
@@ -386,43 +271,24 @@
 
 .dashboard-shell.is-theme-dark .admin-simulations-table,
 .dashboard-shell.is-theme-dark .admin-simulations-date input,
-.dashboard-shell.is-theme-dark .admin-simulations-count select,
-.dashboard-shell.is-theme-dark .admin-simulation-products table {
+.dashboard-shell.is-theme-dark .admin-simulations-count select {
   color: var(--app-text-color);
 }
 
 .dashboard-shell.is-theme-dark .admin-simulations-status span,
 .dashboard-shell.is-theme-dark .admin-simulations-table th,
 .dashboard-shell.is-theme-dark .admin-simulations-user strong,
-.dashboard-shell.is-theme-dark .admin-simulation-detail__meta dt,
-.dashboard-shell.is-theme-dark .admin-simulation-detail__meta dd,
-.dashboard-shell.is-theme-dark .admin-simulation-detail__meta dd strong,
-.dashboard-shell.is-theme-dark .admin-simulation-products h3,
-.dashboard-shell.is-theme-dark .admin-simulation-products th,
-.dashboard-shell.is-theme-dark .admin-simulation-detail__total,
-.dashboard-shell.is-theme-dark .admin-simulation-detail__total strong {
+.dashboard-shell.is-theme-dark .admin-simulations-user small {
   color: var(--app-heading-color);
 }
 
 .dashboard-shell.is-theme-dark .admin-simulations-table th,
 .dashboard-shell.is-theme-dark .admin-simulations-table td,
-.dashboard-shell.is-theme-dark .admin-simulations-pagination,
-.dashboard-shell.is-theme-dark .admin-simulation-products th,
-.dashboard-shell.is-theme-dark .admin-simulation-products td,
-.dashboard-shell.is-theme-dark .admin-simulation-detail__total {
+.dashboard-shell.is-theme-dark .admin-simulations-pagination {
   border-color: var(--app-border-color);
 }
 
 .dashboard-shell.is-theme-dark .admin-simulations-table tbody tr:hover,
-.dashboard-shell.is-theme-dark .admin-simulations-table tbody tr.is-selected,
-.dashboard-shell.is-theme-dark .admin-simulation-detail__header button:hover {
+.dashboard-shell.is-theme-dark .admin-simulations-table tbody tr.is-selected {
   background: #1f2937;
-}
-
-.admin-simulations-layout {
-  overflow: hidden;
-}
-
-.admin-simulation-detail {
-  max-height: 100%;
 }

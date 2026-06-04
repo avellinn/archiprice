@@ -406,6 +406,13 @@ router.put('/suppliers/:id', async (req, res) => {
     runValidators: true,
   });
   if (!supplier) return res.status(404).json({ error: 'Fournisseur non trouvé' });
+
+  if (supplier.user && req.body.status) {
+    await User.findByIdAndUpdate(supplier.user, {
+      status: req.body.status === 'Supprimé' ? 'Bloqué' : req.body.status,
+    });
+  }
+
   publishCrudEvent('suppliers', 'updated', { supplierId: String(supplier._id) }, {
     roles: ['admin', 'supplier'],
     userIds: [supplier.user].filter(Boolean),
@@ -414,13 +421,19 @@ router.put('/suppliers/:id', async (req, res) => {
 });
 
 router.delete('/suppliers/:id', async (req, res) => {
-  const supplier = await Supplier.findByIdAndDelete(req.params.id);
+  const supplier = await Supplier.findByIdAndUpdate(req.params.id, { status: 'Supprimé' }, {
+    new: true,
+    runValidators: true,
+  });
   if (!supplier) return res.status(404).json({ error: 'Fournisseur non trouvé' });
+  if (supplier.user) {
+    await User.findByIdAndUpdate(supplier.user, { status: 'Bloqué' });
+  }
   publishCrudEvent('suppliers', 'deleted', { supplierId: String(supplier._id) }, {
     roles: ['admin', 'supplier'],
     userIds: [supplier.user].filter(Boolean),
   });
-  return res.json({ message: 'Fournisseur supprimé' });
+  return res.json({ message: 'Fournisseur masqué', supplier: formatAdminSupplier(supplier) });
 });
 
 router.get('/simulations', async (_req, res) => {
@@ -463,6 +476,13 @@ router.patch('/support-items/:id', async (req, res) => {
   if (!supportItem) return res.status(404).json({ error: 'Demande support non trouvée' });
   publishCrudEvent('support-items', 'updated', { supportItemId: String(supportItem._id) }, { roles: ['admin'] });
   return res.json({ supportItem: formatDocument(supportItem) });
+});
+
+router.delete('/support-items/:id', async (req, res) => {
+  const supportItem = await SupportItem.findByIdAndDelete(req.params.id);
+  if (!supportItem) return res.status(404).json({ error: 'Demande support non trouvée' });
+  publishCrudEvent('support-items', 'deleted', { supportItemId: String(supportItem._id) }, { roles: ['admin'] });
+  return res.json({ success: true });
 });
 
 

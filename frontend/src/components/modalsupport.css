@@ -1,0 +1,95 @@
+.modal-support-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.28);
+}
+
+.modal-support {
+  width: min(100%, 520px);
+  overflow: hidden;
+  border: 1px solid var(--app-border-color);
+  border-radius: 14px;
+  background: var(--app-card-background);
+  color: var(--app-text-color);
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-support__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--app-border-color);
+}
+
+.modal-support__header span {
+  display: block;
+  color: var(--app-muted-color);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.modal-support__header h2 {
+  margin: 0.2rem 0 0;
+  color: var(--app-heading-color);
+  font-size: 1.12rem;
+  font-weight: 900;
+}
+
+.modal-support__header button {
+  display: inline-grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid var(--app-border-color);
+  border-radius: 7px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  cursor: pointer;
+}
+
+.modal-support__header button:hover,
+.modal-support__header button:focus-visible {
+  border-color: #224b73;
+  color: #224b73;
+  outline: 0;
+}
+
+.modal-support__field {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1rem;
+  color: var(--app-heading-color);
+  font-weight: 850;
+}
+
+.modal-support__field textarea {
+  width: 100%;
+  min-height: 10rem;
+  padding: 0.8rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 10px;
+  background: var(--app-card-background);
+  color: var(--app-text-color);
+  font: inherit;
+  resize: vertical;
+}
+
+.modal-support__field textarea:focus {
+  border-color: #224b73;
+  outline: 2px solid rgba(34, 75, 115, 0.18);
+}
+
+.modal-support__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  padding: 1rem;
+  border-top: 1px solid var(--app-border-color);
+}

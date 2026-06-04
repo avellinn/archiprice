@@ -1,4 +1,3 @@
-import './Pending.css';
 import { Link } from 'react-router-dom';
 import AuthLayout from '../../../components/AuthLayout';
 import { Text } from '../../../components/ui';

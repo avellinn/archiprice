@@ -28,6 +28,14 @@ async function protect(req, res, next) {
       return res.status(401).json({ error: 'Utilisateur introuvable' });
     }
 
+    if (req.user.status !== 'Actif') {
+      return res.status(403).json({
+        error: req.user.status === 'Bloqué'
+          ? 'Compte bloqué — accès API interdit'
+          : 'Compte désactivé — accès API interdit',
+      });
+    }
+
     next();
   } catch {
     return res.status(401).json({ error: 'Token invalide ou expiré' });

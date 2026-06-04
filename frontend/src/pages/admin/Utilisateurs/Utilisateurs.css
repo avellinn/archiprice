@@ -82,17 +82,18 @@
   padding: 0 0.9rem;
   border: 0;
   border-radius: 7px;
-  background: #1d73f8;
+  background: #224b73;
   color: #ffffff;
   font: inherit;
   font-size: 0.84rem;
   font-weight: 900;
   cursor: pointer;
   box-shadow: 0 10px 22px rgb(29 115 248 / 0.2);
+  transition: all 0.3s ease;
 }
 
 .admin-users-management__add:hover {
-  background: #155fd0;
+  background: #69d890;
 }
 
 .admin-users-management__notice {
@@ -111,7 +112,16 @@
 }
 
 .admin-users-management__alert {
-  margin: 1rem 1rem 0;
+  margin: 0 0 1rem;
+}
+
+.admin-users-management__list {
+  width: 100%;
+}
+
+.admin-users-management__list .ui-table-wrap,
+.admin-users-management__list .ui-data-table {
+  width: 100%;
 }
 
 .admin-users-management__table-wrap {
@@ -170,10 +180,24 @@
 .admin-users-management__actions {
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.7rem;
 }
 
-.admin-users-management__actions button,
+.admin-users-management__actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--app-border-color);
+  border-radius: 7px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
 .admin-users-management__pagination button {
   display: inline-grid;
   width: 30px;
@@ -188,6 +212,12 @@
 }
 
 .admin-users-management__actions button:hover,
+.admin-users-management__actions button:focus-visible {
+  border-color: #224b73;
+  color: #224b73;
+  outline: 0;
+}
+
 .admin-users-management__pagination button:hover {
   background: #f1f5f9;
   color: #1d73f8;

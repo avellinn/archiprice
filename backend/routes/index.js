@@ -8,6 +8,7 @@ import catalogueConfigRouter from './catalogueConfig.js';
 import uploadsRouter from './uploads.js';
 import supplierRouter from './supplier.js';
 import realtimeRouter from './realtime.js';
+import supportItemsRouter from './supportItems.js';
 
 const router = express.Router();
 
@@ -20,5 +21,6 @@ router.use('/projects', projectsRouter);
 router.use('/projects/:projectId/products', productsRouter);
 router.use('/admin', adminRouter);
 router.use('/supplier', supplierRouter);
+router.use('/support-items', supportItemsRouter);
 
 export default router;

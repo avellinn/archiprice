@@ -4,23 +4,12 @@ import Header from './Header';
 import Icon from './Icon';
 import Sidebar from './Sidebar';
 import useAuth from '../context/useAuth';
-import { fetchAdminUsers, fetchSupplierRequests } from '../services/adminMongo';
+import { fetchAdminSupportItems, fetchAdminUsers, fetchSupplierRequests } from '../services/adminMongo';
 import { syncAdminDataFromRemote, useAdminData } from '../services/adminData';
 import { connectRealtime } from '../services/realtime';
+import { getAdminTranslations } from '../utils/adminLanguage';
 import { getAvatarColor, getDisplayName, getUserInitials } from '../utils/userDisplay';
 import siteLogo from '../assets/images/log.png';
-
-const ADMIN_PAGE_TITLES = {
-  '/admin/dashboard': 'Tableau de bord admin',
-  '/admin/catalogue/products': 'Articles',
-  '/admin/catalogue/filters': 'Catégories & filtres',
-  '/admin/suppliers': 'Fournisseurs',
-  '/admin/suppliers/requests': 'Nouvelles demandes',
-  '/admin/users': 'Administration utilisateurs',
-  '/admin/simulations': 'Simulations',
-  '/admin/support': 'Support',
-  '/admin/settings': 'Paramètres',
-};
 const ADMIN_SEARCH_ICONS = {
   '/admin/dashboard': 'Dashboard',
   '/admin/catalogue/products': 'Tag',
@@ -58,7 +47,9 @@ export default function AdminShell() {
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [searchMessage, setSearchMessage] = useState('');
   const [adminData] = useAdminData();
+  const adminText = getAdminTranslations(adminData);
   const [pendingSupplierRequests, setPendingSupplierRequests] = useState([]);
+  const [recentFeedbacks, setRecentFeedbacks] = useState([]);
   const [recentUsers, setRecentUsers] = useState([]);
   const [lastSeenUsersAt, setLastSeenUsersAt] = useState(() => (
     Number(window.localStorage.getItem('archiprice:admin-notifications-seen-at') || 0)
@@ -69,9 +60,10 @@ export default function AdminShell() {
 
   const refreshNotifications = useCallback(async () => {
     try {
-      const [requests, users] = await Promise.all([
+      const [requests, users, supportItems] = await Promise.all([
         fetchSupplierRequests(),
         fetchAdminUsers(),
+        fetchAdminSupportItems(),
       ]);
 
       setPendingSupplierRequests(requests.filter((request) => request.status === 'pending'));
@@ -81,9 +73,16 @@ export default function AdminShell() {
           .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
           .slice(0, 5),
       );
+      setRecentFeedbacks(
+        supportItems
+          .filter((item) => item.tab === 'feedback')
+          .sort((a, b) => new Date(b.createdAt || b.updatedAt || 0) - new Date(a.createdAt || a.updatedAt || 0))
+          .slice(0, 8),
+      );
     } catch {
       setPendingSupplierRequests([]);
       setRecentUsers([]);
+      setRecentFeedbacks([]);
     }
   }, []);
 
@@ -110,8 +109,8 @@ export default function AdminShell() {
     [lastSeenUsersAt, recentUsers],
   );
   const pendingPublications = useMemo(() => (
-    (adminData.products || []).filter((product) => product.publicationStatus === 'En attente')
-  ), [adminData.products]);
+    (adminData?.products || []).filter((product) => product.publicationStatus === 'En attente')
+  ), [adminData?.products]);
   const visibleSupplierRequests = useMemo(() => (
     pendingSupplierRequests.filter((request) => !dismissedNotificationKeys.includes(`supplier-request-${request.id}`))
   ), [dismissedNotificationKeys, pendingSupplierRequests]);
@@ -124,57 +123,71 @@ export default function AdminShell() {
   const visibleUnseenRecentUsers = useMemo(() => (
     unseenRecentUsers.filter((item) => !dismissedNotificationKeys.includes(`user-${item.id}`))
   ), [dismissedNotificationKeys, unseenRecentUsers]);
+  const allFeedbackNotifications = useMemo(() => {
+    const byId = new Map();
+    [...(adminData?.supportItems || []), ...recentFeedbacks].forEach((item) => {
+      if (item?.id && item.tab === 'feedback') byId.set(item.id, item);
+    });
+    return [...byId.values()]
+      .sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0))
+      .slice(0, 8);
+  }, [adminData?.supportItems, recentFeedbacks]);
+  const visibleFeedbacks = useMemo(() => (
+    allFeedbackNotifications.filter((item) => !dismissedNotificationKeys.includes(`feedback-${item.id}`))
+  ), [allFeedbackNotifications, dismissedNotificationKeys]);
   const visibleNotificationKeys = useMemo(() => [
     ...visibleSupplierRequests.map((request) => `supplier-request-${request.id}`),
     ...visiblePublications.map((product) => `publication-${product.id}`),
     ...visibleRecentUsers.map((item) => `user-${item.id}`),
-  ], [visiblePublications, visibleRecentUsers, visibleSupplierRequests]);
-  const notificationCount = visibleSupplierRequests.length + visibleUnseenRecentUsers.length + visiblePublications.length;
-  const visiblePanelNotificationCount = visibleSupplierRequests.length + visibleRecentUsers.length + visiblePublications.length;
+    ...visibleFeedbacks.map((item) => `feedback-${item.id}`),
+  ], [visibleFeedbacks, visiblePublications, visibleRecentUsers, visibleSupplierRequests]);
+  const notificationCount = visibleSupplierRequests.length + visibleUnseenRecentUsers.length + visiblePublications.length + visibleFeedbacks.length;
+  const visiblePanelNotificationCount = visibleSupplierRequests.length + visibleRecentUsers.length + visiblePublications.length + visibleFeedbacks.length;
 
   const sidebarSections = useMemo(
     () => [
       {
-        title: 'Administration',
+        title: adminText.sidebar.section,
         items: [
           {
             id: 'admin-dashboard',
-            label: 'Tableau de bord',
+            label: adminText.sidebar.dashboard,
             path: '/admin/dashboard',
             icon: <Icon name="Dashboard" />,
           },
           {
             id: 'admin-catalogue',
-            label: 'Catalogue',
+            label: adminText.sidebar.catalogue,
             icon: <Icon name="Explore" />,
             defaultOpen: true,
             children: [
               {
                 id: 'admin-products',
-                label: 'Articles',
+                label: adminText.sidebar.articles,
                 path: '/admin/catalogue/products',
               },
               {
                 id: 'admin-catalogue-filters',
-                label: 'Catégories & filtres',
+                label: adminText.sidebar.filters,
                 path: '/admin/catalogue/filters',
               },
             ],
           },
           {
             id: 'admin-suppliers',
-            label: 'Fournisseurs',
+            label: adminText.sidebar.suppliers,
             icon: <Icon name="Workspaces" />,
             defaultOpen: true,
             children: [
               {
                 id: 'admin-suppliers-list',
-                label: 'Liste fournisseurs',
+                label: adminText.sidebar.suppliersList,
                 path: '/admin/suppliers',
+                exact: true,
               },
               {
                 id: 'admin-supplier-requests',
-                label: 'Nouvelles demandes',
+                label: adminText.sidebar.requests,
                 path: '/admin/suppliers/requests',
                 badge: pendingSupplierRequests.length || undefined,
               },
@@ -182,44 +195,45 @@ export default function AdminShell() {
           },
           {
             id: 'admin-users',
-            label: 'Utilisateurs',
+            label: adminText.sidebar.users,
             path: '/admin/users',
             icon: <Icon name="Workspaces" />,
           },
           {
             id: 'admin-simulations',
-            label: 'Simulations',
+            label: adminText.sidebar.simulations,
             path: '/admin/simulations',
             icon: <Icon name="ReceiptLong" />,
           },
           {
             id: 'admin-support',
-            label: 'Support',
+            label: adminText.sidebar.support,
             path: '/admin/support',
             icon: <Icon name="Chat" />,
           },
           {
             id: 'admin-settings',
-            label: 'Paramètres',
+            label: adminText.sidebar.settings,
             path: '/admin/settings',
             icon: <Icon name="Dashboard" />,
           },
           {
             id: 'logout',
-            label: 'Déconnexion',
+            label: adminText.sidebar.logout,
             path: '/deconnexion',
             icon: <Icon name="Logout" />,
           },
         ],
       },
     ],
-    [pendingSupplierRequests.length],
+    [adminText, pendingSupplierRequests.length],
   );
 
   function handleSearchSubmit(payload = {}) {
     const query = payload.query ?? searchValue.trim();
     const indexedCount = Array.isArray(payload.matches) ? payload.matches.length : 0;
-    setSearchMessage(query ? `Recherche admin : ${query} · ${indexedCount} résultat(s) indexé(s)` : 'Saisissez un mot-clé pour rechercher.');
+    const suffix = query ? ` · ${indexedCount} résultat(s) indexé(s)` : '';
+    setSearchMessage(`${adminText.search.message(query)}${suffix}`);
   }
 
   function handleSearchChange(value) {
@@ -260,10 +274,10 @@ export default function AdminShell() {
     setIsNotificationsOpen(false);
   }
 
-  const currentPage = ADMIN_PAGE_TITLES[location.pathname] || 'Administration';
+  const currentPage = adminText.pageTitles[location.pathname] || adminText.pageTitles.fallback;
   const searchValue = searchParams.get('q') || '';
   const searchIcon = ADMIN_SEARCH_ICONS[location.pathname] || 'Search';
-  const searchPlaceholder = `Rechercher dans ${currentPage.toLowerCase()}`;
+  const searchPlaceholder = adminText.search.placeholder(currentPage);
 
   return (
     <main
@@ -319,20 +333,20 @@ export default function AdminShell() {
         {isNotificationsOpen && (
           <div className="dashboard-floating-panel notification-panel">
             <div className="notification-panel__header">
-              <strong>Notifications admin</strong>
-              <button type="button" aria-label="Fermer les notifications" onClick={dismissVisibleNotifications}>
+              <strong>{adminText.notifications.title}</strong>
+              <button type="button" aria-label={adminText.notifications.close} onClick={dismissVisibleNotifications}>
                 <Icon name="Close" size="sm" />
               </button>
             </div>
             {visiblePanelNotificationCount === 0 ? (
-              <span>Aucune nouvelle notification backoffice.</span>
+              <span>{adminText.notifications.empty}</span>
             ) : (
               <div className="notification-panel__list">
                 {visibleSupplierRequests.map((request) => (
                   <Link key={request.id} to="/admin/suppliers/requests" className="notification-panel__item">
                     <Icon name="Workspaces" size="sm" />
                     <span>
-                      Demande fournisseur : <b>{request.companyName}</b>
+                      {adminText.notifications.supplierRequest} : <b>{request.companyName}</b>
                     </span>
                   </Link>
                 ))}
@@ -340,7 +354,7 @@ export default function AdminShell() {
                   <Link key={product.id} to="/admin/catalogue/products" className="notification-panel__item">
                     <Icon name="Tag" size="sm" />
                     <span>
-                      Publication fournisseur : <b>{product.name}</b>
+                      {adminText.notifications.publication} : <b>{product.name}</b>
                     </span>
                   </Link>
                 ))}
@@ -348,7 +362,16 @@ export default function AdminShell() {
                   <Link key={item.id} to="/admin/users" className="notification-panel__item">
                     <Icon name="AccountCircle" size="sm" />
                     <span>
-                      Nouvelle inscription user : <b>{item.name || item.email}</b>
+                      {adminText.notifications.newUser} : <b>{item.name || item.email}</b>
+                    </span>
+                  </Link>
+                ))}
+                {visibleFeedbacks.map((item) => (
+                  <Link key={item.id} to="/admin/support" className="notification-panel__item">
+                    <Icon name="Chat" size="sm" />
+                    <span>
+                      {adminText.notifications.newFeedback(item.sourceRole)} : <b>{item.subject}</b>
+                      <small>{item.user || item.email}</small>
                     </span>
                   </Link>
                 ))}

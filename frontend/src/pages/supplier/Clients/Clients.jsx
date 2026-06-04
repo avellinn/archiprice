@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { Alert, Badge, Icon, Table, Text } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
 import { useAdminData } from '../../../services/adminData';
+import ClientModal from './clientModal';
 
 function normalizeKey(value) {
   return String(value || '').trim().toLowerCase();
@@ -208,88 +209,14 @@ export default function Clients() {
       />
 
       {selectedClient && (
-        <div className="supplier-client-modal-backdrop" role="presentation">
-          <section className="supplier-client-modal" role="dialog" aria-modal="true" aria-labelledby="supplier-client-detail-title">
-            <header>
-              <h2 id="supplier-client-detail-title">Informations du client</h2>
-              <button type="button" aria-label="Fermer" onClick={() => setSelectedClient(null)}>
-                <Icon name="Close" size="sm" />
-              </button>
-            </header>
-
-            <div className="supplier-client-detail-grid">
-              <article>
-                <span>Nom</span>
-                <strong>{selectedClient.clientName || 'Non renseigné'}</strong>
-              </article>
-              <article>
-                <span>Profession</span>
-                <strong>{selectedClient.clientProfession || 'Non renseignée'}</strong>
-              </article>
-              <article>
-                <span>Email</span>
-                <strong>{selectedClient.clientEmail || 'Non renseigné'}</strong>
-              </article>
-              <article>
-                <span>Numéro</span>
-                <strong>{selectedClient.clientPhone || 'Non renseigné'}</strong>
-              </article>
-              <article>
-                <span>Projet</span>
-                <strong>{selectedClient.projectName || 'Projet non renseigné'}</strong>
-              </article>
-              <article>
-                <span>Simulation</span>
-                <strong>{selectedClient.simulationTotalLabel || 'Simulation non renseignée'}</strong>
-              </article>
-              <article>
-                <span>Date</span>
-                <strong>{selectedClient.createdAtLabel || formatDateTime(selectedClient.createdAt)}</strong>
-              </article>
-              <article>
-                <span>Statut</span>
-                <strong>{selectedClient.status || 'Nouveau'}</strong>
-              </article>
-            </div>
-
-            <section className="supplier-client-detail-images">
-              <h3>Images des articles choisis</h3>
-              {selectedClient.articleImages?.length ? (
-                <div className="supplier-clients-images">
-                  {selectedClient.articleImages.map((image, index) => (
-                    <a
-                      key={`${image.secure_url}-${index}`}
-                      href={image.secure_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      title={image.name}
-                    >
-                      Image {index + 1}
-                    </a>
-                  ))}
-                </div>
-              ) : (
-                <p>Aucune image Cloudinary liée à ce client.</p>
-              )}
-            </section>
-
-            <footer>
-              <button type="button" className="supplier-client-close" onClick={() => setSelectedClient(null)}>
-                Fermer
-              </button>
-              <button
-                type="button"
-                className="supplier-client-delete"
-                onClick={() => {
-                  setPendingClientDelete(selectedClient);
-                  setSelectedClient(null);
-                }}
-              >
-                Supprimer
-              </button>
-            </footer>
-          </section>
-        </div>
+        <ClientModal
+          client={selectedClient}
+          onClose={() => setSelectedClient(null)}
+          onDelete={(client) => {
+            setPendingClientDelete(client);
+            setSelectedClient(null);
+          }}
+        />
       )}
     </div>
   );

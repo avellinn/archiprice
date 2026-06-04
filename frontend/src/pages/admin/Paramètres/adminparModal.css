@@ -1,0 +1,378 @@
+.admin-param-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(237, 237, 239, 0.24);
+}
+
+.admin-param-modal {
+  width: min(100%, 720px);
+  max-height: calc(100vh - 2rem);
+  overflow: hidden auto;
+  border: 1px solid var(--app-border-color);
+  border-radius: 13px;
+  background: var(--app-card-background);
+  color: var(--app-text-color);
+  box-shadow: var(--shadow-lg);
+}
+
+.admin-param-modal--policy {
+  width: min(100%, 820px);
+}
+
+.admin-param-modal__header,
+.admin-param-modal__titlebar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--app-border-color);
+  color: var(--app-heading-color);
+}
+
+.admin-param-modal__header {
+  justify-content: space-between;
+}
+
+.admin-param-modal__header h2,
+.admin-param-modal__titlebar h2 {
+  margin: 0;
+  color: var(--app-heading-color);
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.admin-param-modal__header > button,
+.admin-policy-back,
+.admin-policy-row__actions span {
+  display: inline-grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid var(--app-border-color);
+  border-radius: 7px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  cursor: pointer;
+}
+
+.admin-param-modal__header > button:hover,
+.admin-param-modal__header > button:focus-visible,
+.admin-policy-back:hover,
+.admin-policy-back:focus-visible,
+.admin-policy-row__actions span:hover,
+.admin-policy-row__actions span:focus-visible {
+  border-color: #224b73;
+  color: #224b73;
+  outline: 0;
+}
+
+.admin-param-modal-card {
+  display: grid;
+  gap: 0.9rem;
+  margin: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 10px;
+  background: var(--app-card-background);
+}
+
+.admin-param-modal-card h3,
+.admin-policy-page h3 {
+  margin: 0;
+  color: var(--app-heading-color);
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
+.admin-param-modal-card label,
+.admin-location-form label,
+.admin-policy-form label {
+  display: grid;
+  gap: 0.45rem;
+  color: var(--app-heading-color);
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.admin-param-modal-card input,
+.admin-location-form input,
+.admin-location-form select,
+.admin-policy-form input,
+.admin-policy-form textarea {
+  width: 100%;
+  min-height: 2.45rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 8px;
+  background: var(--app-card-background);
+  color: var(--app-text-color);
+  font: inherit;
+}
+
+.admin-policy-form textarea {
+  min-height: 9rem;
+  padding: 0.75rem;
+  resize: vertical;
+}
+
+.admin-param-modal-card input:focus,
+.admin-location-form input:focus,
+.admin-location-form select:focus,
+.admin-policy-form input:focus,
+.admin-policy-form textarea:focus {
+  border-color: #224b73;
+  outline: 2px solid rgba(34, 75, 115, 0.18);
+}
+
+.admin-param-modal-card small {
+  color: var(--app-muted-color);
+  font-size: 0.78rem;
+}
+
+.admin-param-modal__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.admin-param-modal__grid article {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.85rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 9px;
+  background: var(--app-panel-background);
+}
+
+.admin-param-modal__grid span {
+  color: var(--app-muted-color);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.admin-param-modal__grid strong {
+  color: var(--app-heading-color);
+  font-size: 0.86rem;
+}
+
+.admin-location-form,
+.admin-policy-form {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.admin-policy-header-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.admin-policy-list {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1rem;
+}
+
+.admin-policy-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  justify-self: start;
+  min-height: 2.25rem;
+  padding: 0 0.85rem;
+  border: 1px solid #224b73;
+  border-radius: 8px;
+  background: #224b73;
+  color: #fff;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.admin-policy-row {
+  display: grid;
+  grid-template-columns: 1.4rem minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 72px;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 9px;
+  background: var(--app-card-background);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-policy-row:hover,
+.admin-policy-row:focus-visible {
+  background: var(--app-panel-background);
+  outline: 0;
+}
+
+.admin-policy-row strong,
+.admin-policy-row small {
+  display: block;
+}
+
+.admin-policy-row strong {
+  color: var(--app-heading-color);
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+
+.admin-policy-row small {
+  margin-top: 0.2rem;
+  color: var(--app-muted-color);
+  font-size: 0.8rem;
+}
+
+.admin-policy-row__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.admin-policy-row:hover .admin-policy-row__actions,
+.admin-policy-row:focus-visible .admin-policy-row__actions,
+.admin-policy-row__actions:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.admin-policy-row__actions .is-danger {
+  color: #ef4444;
+}
+
+.admin-policy-row__actions .is-danger:hover,
+.admin-policy-row__actions .is-danger:focus-visible {
+  border-color: #ef4444;
+  background: #fff1f2;
+  color: #dc2626;
+}
+
+.admin-policy-page {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.admin-policy-page > p,
+.admin-policy-empty {
+  margin: 0;
+  color: var(--app-muted-color);
+  font-size: 0.9rem;
+}
+
+.admin-policy-page article {
+  display: grid;
+  gap: 0.55rem;
+  padding: 1rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 10px;
+  background: var(--app-panel-background);
+}
+
+.admin-policy-page article p {
+  margin: 0;
+  color: var(--app-text-color);
+  line-height: 1.6;
+}
+
+.admin-policy-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.admin-policy-form__actions button,
+.admin-param-modal__footer button {
+  min-height: 2.25rem;
+  padding: 0 0.9rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 8px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.admin-policy-form__actions button[type='submit'],
+.admin-param-modal__footer .is-primary {
+  border-color: #224b73;
+  background: #224b73;
+  color: #fff;
+}
+
+.admin-policy-form__actions button:hover,
+.admin-policy-form__actions button:focus-visible,
+.admin-param-modal__footer button:hover,
+.admin-param-modal__footer button:focus-visible {
+  border-color: #224b73;
+  outline: 0;
+}
+
+.admin-param-modal__footer .is-primary:hover,
+.admin-param-modal__footer .is-primary:focus-visible {
+  background: #1a3a59;
+}
+
+.admin-param-modal__footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  padding: 1rem;
+  border-top: 1px solid var(--app-border-color);
+  background: var(--app-card-background);
+}
+
+.admin-param-modal__footer button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.dashboard-shell.is-theme-dark .admin-param-modal,
+.dashboard-shell.is-theme-dark .admin-param-modal-card,
+.dashboard-shell.is-theme-dark .admin-policy-row,
+.dashboard-shell.is-theme-dark .admin-policy-page article,
+.dashboard-shell.is-theme-dark .admin-param-modal-card input,
+.dashboard-shell.is-theme-dark .admin-location-form input,
+.dashboard-shell.is-theme-dark .admin-location-form select,
+.dashboard-shell.is-theme-dark .admin-policy-form input,
+.dashboard-shell.is-theme-dark .admin-policy-form textarea {
+  border-color: var(--app-border-color);
+  background: var(--app-card-background);
+}
+
+@media (max-width: 720px) {
+  .admin-policy-row {
+    grid-template-columns: 1.4rem minmax(0, 1fr);
+  }
+
+  .admin-policy-row > svg:last-child {
+    display: none;
+  }
+
+  .admin-policy-row__actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .admin-param-modal__grid {
+    grid-template-columns: 1fr;
+  }
+}

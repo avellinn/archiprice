@@ -45,6 +45,8 @@ export default function Header({
   const effectiveSearchIcon = searchQuery
     ? (searchMatches.length > 0 ? 'CheckCircle' : 'Info')
     : searchIcon;
+  const safeNotificationCount = Math.max(Number(notificationCount) || 0, 0);
+  const hasNotifications = safeNotificationCount > 0;
   const searchDatalistId = `header-search-index-${String(currentPage).toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'page'}`;
 
   useEffect(() => {
@@ -151,13 +153,21 @@ export default function Header({
             </button>
             <button
               type="button"
-              className="header__icon-btn header__icon-btn--notifications"
-              aria-label="Notifications"
+              className={[
+                'header__icon-btn',
+                'header__icon-btn--notifications',
+                hasNotifications ? 'has-notifications' : '',
+              ].filter(Boolean).join(' ')}
+              aria-label={hasNotifications ? `${safeNotificationCount} notification(s)` : 'Notifications'}
               aria-expanded={isNotificationsOpen}
               onClick={onNotificationsClick}
             >
               <Icon name="Notifications" />
-              <span className="header__notification-badge">{notificationCount}</span>
+              {hasNotifications && (
+                <span className="header__notification-badge">
+                  {safeNotificationCount > 99 ? '99+' : safeNotificationCount}
+                </span>
+              )}
             </button>
           </div>
 

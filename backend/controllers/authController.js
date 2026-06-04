@@ -144,6 +144,14 @@ async function login(req, res) {
     return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
   }
 
+  if (user.status !== 'Actif') {
+    return res.status(403).json({
+      error: user.status === 'Bloqué'
+        ? 'Votre compte est bloqué. Contactez le support ArchiPrice.'
+        : 'Votre compte est désactivé. Contactez le support ArchiPrice.',
+    });
+  }
+
   if (user.type === 'Fournisseur' && user.role !== 'supplier') {
     return res.status(403).json({ error: 'Votre demande fournisseur est en attente de validation admin.' });
   }

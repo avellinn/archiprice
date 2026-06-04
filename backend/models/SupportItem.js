@@ -15,6 +15,12 @@ const supportItemSchema = new mongoose.Schema(
       maxlength: 220,
     },
     user: { type: String, required: true, trim: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    sourceRole: {
+      type: String,
+      enum: ['user', 'supplier', 'admin'],
+      default: 'user',
+    },
     email: { type: String, lowercase: true, trim: true },
     status: {
       type: String,

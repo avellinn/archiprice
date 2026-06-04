@@ -1,6 +1,6 @@
 {
-  "__version": 193,
-  "__updatedAt": 1780512085692,
+  "__version": 511,
+  "__updatedAt": 1780602972424,
   "users": [
     {
       "id": "6a102521e9a37f1239d69fc8",
@@ -17,20 +17,6 @@
       "updatedAt": "2026-06-01T07:52:43.587Z"
     },
     {
-      "id": "6a20610a317e76a6de8c593f",
-      "name": "Miione",
-      "email": "avellinadjai@gmail.com",
-      "phone": "019745651784",
-      "role": "supplier",
-      "type": "Fournisseur",
-      "simulations": "-",
-      "inscription": "03/06/2026",
-      "status": "Inactif",
-      "subscription": "-",
-      "createdAt": "2026-06-03T17:14:50.008Z",
-      "updatedAt": "2026-06-03T17:21:54.762Z"
-    },
-    {
       "id": "6a2063890914362592ebe587",
       "name": "test@gmail.com",
       "email": "test@gmail.com",
@@ -43,21 +29,31 @@
       "subscription": "Essai",
       "createdAt": "2026-06-03T17:25:29.917Z",
       "updatedAt": "2026-06-03T17:25:29.917Z"
+    },
+    {
+      "id": "6a218a723836162a85468e67",
+      "name": "Lookthis",
+      "email": "avellinadjai@gmail.com",
+      "phone": "97456511",
+      "role": "supplier",
+      "type": "Fournisseur",
+      "simulations": "-",
+      "inscription": "04/06/2026",
+      "status": "Actif",
+      "subscription": "-",
+      "createdAt": "2026-06-04T14:23:46.015Z",
+      "updatedAt": "2026-06-04T14:24:44.174Z"
     }
   ],
   "products": [
     {
-      "id": "supplier-product-6a1f1f6230c50def1529d92f",
-      "sourceSupplierProductId": "6a1f1f6230c50def1529d92f",
-      "supplierUserId": "6a1d7a91f44246ee96fd3f4d",
-      "name": "kjdbkjbf",
-      "description": "kjdbif",
-      "price": 54540000000,
-      "image": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/uoszhhi4idkj1vzgexvv?_a=BAMAPqhK0",
+      "id": "prod-1780602339861-6c3bf4",
+      "visual": "sofa",
+      "image": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kbziwhsgzfqs1s7evldy?_a=BAMAPqhK0",
       "images": [
         {
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/uoszhhi4idkj1vzgexvv?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/uoszhhi4idkj1vzgexvv",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kbziwhsgzfqs1s7evldy?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/kbziwhsgzfqs1s7evldy",
           "metadata": {
             "originalName": "pexels-pok-rie-1603821.jpg",
             "mimeType": "image/jpeg",
@@ -70,78 +66,25 @@
           }
         }
       ],
-      "category": "Revêtement",
-      "room": "Chambre",
+      "name": "dehjd",
+      "description": "iibiz",
+      "price": "500 FCFA",
+      "vat": "5%",
+      "category": "Mobilier",
+      "room": "Salon",
       "range": "Confort",
-      "supplier": "Ma boutique",
-      "vat": "20%",
-      "visual": "sofa",
-      "city": "Cotonou",
-      "neighborhood": "",
+      "supplier": "Miione",
       "availability": "Disponible",
-      "publicationStatus": "Validé",
-      "publicationSource": "supplier",
-      "submittedAt": "2026-06-02T18:25:06.542Z",
-      "approvedAt": "2026-06-03T07:30:29.774Z"
-    },
-    {
-      "id": "supplier-product-6a1ecd3f30c50def1529d92c",
-      "sourceSupplierProductId": "6a1ecd3f30c50def1529d92c",
-      "supplierUserId": "6a1d7a91f44246ee96fd3f4d",
-      "name": "gjvh",
-      "description": "gyuyu",
-      "price": 2000000,
-      "image": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/pjyp1flmqq3x2ripsm3v?_a=BAMAPqhK0",
-      "images": [
-        {
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/pjyp1flmqq3x2ripsm3v?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/pjyp1flmqq3x2ripsm3v",
-          "metadata": {
-            "originalName": "Capture dâÃ©cran du 2026-05-28 15-56-22.png",
-            "mimeType": "image/png",
-            "bytes": 96376,
-            "width": 881,
-            "height": 968,
-            "format": "png",
-            "provider": "cloudinary",
-            "folder": "archiprice/products"
-          }
-        }
-      ],
-      "category": "Luminaire",
-      "room": "Chambre",
-      "range": "Essentiel",
-      "supplier": "Ma boutique",
-      "vat": "20%",
-      "visual": "sofa",
       "city": "Cotonou",
-      "neighborhood": "",
-      "availability": "Disponible",
-      "publicationStatus": "Validé",
-      "publicationSource": "supplier",
-      "submittedAt": "2026-06-02T12:31:59.582Z",
-      "approvedAt": "2026-06-02T17:20:35.863Z"
+      "neighborhood": "Fidjrossè"
     }
   ],
   "suppliers": [
     {
-      "id": "6a20754a0914362592ebe58a",
-      "userId": "",
-      "name": "Nouveau fournisseur modifié modifié",
-      "companyName": "Nouveau fournisseur modifié modifié",
-      "contact": "contact@fournisseur.bj",
-      "email": "",
-      "phone": "",
-      "region": "Cotonou",
-      "status": "Actif",
-      "products": 0,
-      "categories": []
-    },
-    {
-      "id": "6a204cd5ec86c80211763cb4",
-      "userId": "6a20610a317e76a6de8c593f",
+      "id": "6a218aac3836162a85468e69",
+      "userId": "6a218a723836162a85468e67",
       "name": "Miione",
-      "companyName": "Miione",
+      "companyName": "Lookthis",
       "contact": "avellinadjai@gmail.com",
       "email": "avellinadjai@gmail.com",
       "phone": "97456512",
@@ -393,134 +336,43 @@
   "taxonomies": {
     "categories": [
       {
-        "id": "cat-1",
-        "name": "Mobilier",
-        "count": 56
-      },
-      {
-        "id": "cat-2",
-        "name": "Luminaire",
-        "count": 34
-      },
-      {
-        "id": "cat-3",
-        "name": "Revêtement",
-        "count": 22
-      },
-      {
-        "id": "cat-4",
-        "name": "Sanitaire",
-        "count": 9
-      },
-      {
-        "id": "cat-5",
-        "name": "Décoration",
-        "count": 7
-      },
-      {
-        "id": "cat-6",
-        "name": "Éclairage",
-        "count": 0
-      },
-      {
-        "id": "cat-7",
-        "name": "Textiles",
-        "count": 0
-      },
-      {
-        "id": "cat-8",
-        "name": "Objets décoratifs",
-        "count": 0
-      },
-      {
-        "id": "cat-9",
-        "name": "Miroirs",
-        "count": 0
-      },
-      {
-        "id": "cat-10",
-        "name": "Rangements",
-        "count": 0
-      },
-      {
-        "id": "cat-11",
-        "name": "Plantes & Pots",
+        "id": "categories-1780602005940-598e2a",
+        "name": "Mooon",
         "count": 0
       }
     ],
     "rooms": [
       {
-        "id": "room-1",
+        "id": "rooms-1780602021414-042007",
         "name": "Salon",
-        "count": 41
-      },
-      {
-        "id": "room-2",
-        "name": "Chambre",
-        "count": 24
-      },
-      {
-        "id": "room-3",
-        "name": "Bureau",
-        "count": 18
-      },
-      {
-        "id": "room-4",
-        "name": "Douche",
-        "count": 12
-      },
-      {
-        "id": "room-5",
-        "name": "Cuisine",
-        "count": 0
-      },
-      {
-        "id": "room-6",
-        "name": "Appartement",
-        "count": 0
-      },
-      {
-        "id": "room-7",
-        "name": "Espace externe",
         "count": 0
       }
     ],
     "ranges": [
       {
-        "id": "range-1",
-        "name": "Essentiel",
-        "count": 39
-      },
-      {
-        "id": "range-2",
+        "id": "ranges-1780602047935-4b3f0b",
         "name": "Confort",
-        "count": 52
-      },
-      {
-        "id": "range-3",
-        "name": "Premium",
-        "count": 37
+        "count": 0
       }
     ],
     "availability": [
       {
-        "id": "availability-1",
+        "id": "availability-1780602062307-fd9c7c",
         "name": "Disponible",
         "count": 0
-      },
+      }
+    ],
+    "cities": [
       {
-        "id": "availability-2",
-        "name": "Sur commande",
+        "id": "cities-1780602072187-aee632",
+        "name": "Cotonou",
         "count": 0
-      },
+      }
+    ],
+    "neighborhoods": [
       {
-        "id": "availability-3",
-        "name": "Rupture",
-        "count": 0
-      },
-      {
-        "id": "availability-4",
-        "name": "Non disponible",
+        "id": "neighborhoods-1780602081965-2ea085",
+        "name": "Cadjehoun",
         "count": 0
       }
     ]
@@ -589,6 +441,38 @@
   ],
   "supportItems": [
     {
+      "tab": "feedback",
+      "subject": "Feedback boutique Miione",
+      "user": "Lookthis",
+      "userId": "6a218a723836162a85468e67",
+      "sourceRole": "supplier",
+      "email": "avellinadjai@gmail.com",
+      "status": "Ouvert",
+      "type": "Feedback",
+      "date": "04/06/2026",
+      "description": "Hello",
+      "reply": "",
+      "createdAt": "2026-06-04T19:08:45.113Z",
+      "updatedAt": "2026-06-04T19:08:45.113Z",
+      "id": "6a21cd3d89e2f1b1d8ed5c1f"
+    },
+    {
+      "tab": "feedback",
+      "subject": "Feedback boutique Miione",
+      "user": "Lookthis",
+      "userId": "6a218a723836162a85468e67",
+      "sourceRole": "supplier",
+      "email": "avellinadjai@gmail.com",
+      "status": "Ouvert",
+      "type": "Feedback",
+      "date": "04/06/2026",
+      "description": "Hello",
+      "reply": "",
+      "createdAt": "2026-06-04T19:08:45.113Z",
+      "updatedAt": "2026-06-04T19:08:45.113Z",
+      "id": "6a21cd3d89e2f1b1d8ed5c1f"
+    },
+    {
       "id": "ticket-export",
       "tab": "tickets",
       "subject": "Impossible d'exporter une simulation",
@@ -613,18 +497,6 @@
       "reply": ""
     },
     {
-      "id": "feedback-navigation",
-      "tab": "feedback",
-      "subject": "Navigation plus fluide",
-      "user": "Jean Dupont",
-      "email": "jean.dupont@mail.com",
-      "status": "Ouvert",
-      "type": "Suggestion",
-      "date": "08/05/2024",
-      "description": "Ajouter un raccourci vers le catalogue depuis la page workspace rendrait le parcours plus rapide.",
-      "reply": ""
-    },
-    {
       "id": "price-report-oslo",
       "tab": "priceReports",
       "subject": "Canapé Oslo trop élevé",
@@ -643,23 +515,7 @@
     "rounding": "Au centime près",
     "currency": "EUR"
   },
-  "regionalCoefficients": [
-    {
-      "id": "city-1",
-      "city": "jbjCotonou",
-      "coefficient": "1,00jkb"
-    },
-    {
-      "id": "city-2",
-      "city": "Abomey - calavi",
-      "coefficient": "1,00"
-    },
-    {
-      "id": "city-3",
-      "city": "Porto-novo",
-      "coefficient": "1,00"
-    }
-  ],
+  "regionalCoefficients": [],
   "supplierPublicationNotices": [
     {
       "id": "supplier-notice-1780471842201-89d6bb",
@@ -730,6 +586,53 @@
       "timezone": "(GMT +01:00) Afrique centrale et de l’Ouest",
       "language": "Français"
     },
-    "savedAt": "2026-06-03T18:13:49.199Z"
+    "savedAt": "2026-06-04T18:46:37.749Z"
+  },
+  "adminSettings": {
+    "profile": {
+      "name": "Admin Principal",
+      "email": "hospiceavell@gmail.com",
+      "phone": "Aucun numéro de téléphone"
+    },
+    "settings": {
+      "location": "Bénin",
+      "companyName": "",
+      "address": "",
+      "neighborhood": "",
+      "city": "Cotonou",
+      "timezone": "(GMT +01:00) Afrique centrale et de l’Ouest",
+      "language": "Français"
+    },
+    "savedAt": "2026-06-04T19:16:24.690Z",
+    "policies": [
+      {
+        "id": "admin-policy-cgu",
+        "icon": "ReceiptLong",
+        "title": "CONDITIONS GÉNÉRALES D'UTILISATION (CGU)",
+        "summary": "Cadre d’utilisation de la plateforme ArchiPrice par les comptes user, supplier et admin.",
+        "content": "Les utilisateurs accèdent aux services ArchiPrice selon leur rôle. Les actions sensibles sont journalisées et les données métier restent protégées."
+      },
+      {
+        "id": "admin-policy-privacy",
+        "icon": "Info",
+        "title": "POLITIQUE DE CONFIDENTIALITÉ",
+        "summary": "Traitement et protection des données des comptes, projets, simulations, fournisseurs et catalogues.",
+        "content": "Les données sont exploitées pour fournir les fonctionnalités de simulation, de validation fournisseur, de catalogue et de support."
+      },
+      {
+        "id": "admin-policy-suppliers",
+        "icon": "Workspaces",
+        "title": "CONDITIONS FOURNISSEURS",
+        "summary": "Règles de validation, publication, refus et retrait des articles proposés par les fournisseurs.",
+        "content": "Les fournisseurs soumettent leurs articles à validation. L’admin peut approuver, refuser ou masquer les contenus non conformes."
+      },
+      {
+        "id": "admin-policy-legal",
+        "icon": "Folder",
+        "title": "MENTIONS LÉGALES",
+        "summary": "Informations légales et responsabilité opérationnelle de la plateforme ArchiPrice.",
+        "content": "ArchiPrice conserve les informations nécessaires à la traçabilité des actions, aux audits et à la continuité des services."
+      }
+    ]
   }
 }

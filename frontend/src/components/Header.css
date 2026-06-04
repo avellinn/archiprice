@@ -228,6 +228,15 @@
   fill: none;
 }
 
+.header__icon-btn--notifications.has-notifications {
+  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+  color: var(--color-danger);
+}
+
+.header__icon-btn--notifications.has-notifications svg {
+  color: var(--color-danger);
+}
+
 .header__notification-badge {
   position: absolute;
   top: 0.25rem;

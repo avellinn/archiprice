@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import './Sidebar.css';
 import Icon from './Icon';
 
@@ -31,6 +31,7 @@ export default function Sidebar({
   isMobile = false,
 }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const visibleSections = sections.filter((section) => section?.items?.length);
   const [openSubmenus, setOpenSubmenus] = useState(() => {
     const initialState = {};
@@ -51,6 +52,8 @@ export default function Sidebar({
       'explorer-catalogue': '/catalogue',
       workspace: '/workspace',
       invoices: '/factures',
+      support: '/support',
+      'supplier-support': '/supplier/support',
       logout: '/deconnexion',
       demandes: '/demandes',
       lettre: '/lettre',
@@ -77,6 +80,10 @@ export default function Sidebar({
       }
 
       const itemPath = getItemPath(item);
+      if (item.exact) {
+        return location.pathname === itemPath;
+      }
+
       return location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
     },
     [activeItemId, getItemPath, location.pathname],
@@ -107,6 +114,10 @@ export default function Sidebar({
   const handleSubmenuMouseEnter = useCallback((item) => {
     if (item.children?.length) {
       setHoveredSubmenuId(item.id);
+      setOpenSubmenus((currentState) => ({
+        ...currentState,
+        [item.id]: true,
+      }));
     }
   }, []);
 
@@ -133,7 +144,9 @@ export default function Sidebar({
       onItemClick?.(item.id);
 
       const itemPath = getItemPath(item);
-      const isActive = location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
+      const isActive = item.exact
+        ? location.pathname === itemPath
+        : location.pathname === itemPath || location.pathname.startsWith(`${itemPath}/`);
 
       if (isMobile && !isActive && onClose) {
         onClose();
@@ -141,9 +154,13 @@ export default function Sidebar({
 
       if (isActive) {
         event.preventDefault();
+        return;
       }
+
+      event.preventDefault();
+      navigate(itemPath);
     },
-    [getItemPath, isMobile, location.pathname, onClose, onItemClick],
+    [getItemPath, isMobile, location.pathname, navigate, onClose, onItemClick],
   );
 
   return (

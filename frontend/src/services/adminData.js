@@ -107,6 +107,25 @@ export const DEFAULT_ADMIN_DATA = {
       { id: 'availability-3', name: 'Rupture', count: 0 },
       { id: 'availability-4', name: 'Non disponible', count: 0 },
     ],
+    cities: [
+      { id: 'city-taxonomy-1', name: 'Cotonou', count: 0 },
+      { id: 'city-taxonomy-2', name: 'Abomey - calavi', count: 0 },
+      { id: 'city-taxonomy-3', name: 'Porto-novo', count: 0 },
+    ],
+    neighborhoods: [
+      { id: 'neighborhood-1', name: 'Fidjrossè', count: 0 },
+      { id: 'neighborhood-2', name: 'Akpakpa', count: 0 },
+      { id: 'neighborhood-3', name: 'Ganhi', count: 0 },
+      { id: 'neighborhood-4', name: 'Zongo', count: 0 },
+      { id: 'neighborhood-5', name: 'Godomey', count: 0 },
+      { id: 'neighborhood-6', name: 'Akassato', count: 0 },
+      { id: 'neighborhood-7', name: 'Glo-Djigbé', count: 0 },
+      { id: 'neighborhood-8', name: 'Zinvié', count: 0 },
+      { id: 'neighborhood-9', name: 'Tokpota', count: 0 },
+      { id: 'neighborhood-10', name: 'Ouando', count: 0 },
+      { id: 'neighborhood-11', name: 'Dowa', count: 0 },
+      { id: 'neighborhood-12', name: 'Hounli', count: 0 },
+    ],
   },
   simulations: [
     { id: 'sim-1', user: 'Jean Dupont', email: 'jean.dupont@mail.com', date: '12/05/2024 14:30', total: '12 450,00 €', products: 28, status: 'Succès', city: 'Cotonou', coefficient: '1,00', avatar: 'JD' },
@@ -159,24 +178,15 @@ function parseAdminDataSnapshot(snapshot) {
 }
 
 function mergeTaxonomyList(defaultItems = [], savedItems = []) {
-  const savedByName = new Map(savedItems.map((item) => [item.name, item]));
-  const mergedItems = defaultItems.map((item) => ({
-    ...item,
-    ...(savedByName.get(item.name) || {}),
-  }));
-  const defaultNames = new Set(defaultItems.map((item) => item.name));
-  const customItems = savedItems.filter((item) => !defaultNames.has(item.name));
+  const seededIds = new Set(defaultItems.map((item) => item.id).filter(Boolean));
 
-  return [...mergedItems, ...customItems];
+  return savedItems.filter((item) => item && !seededIds.has(item.id));
 }
 
 function mergeTaxonomies(savedTaxonomies = {}) {
   return Object.keys(DEFAULT_ADMIN_DATA.taxonomies).reduce((taxonomies, key) => ({
     ...taxonomies,
-    [key]: mergeTaxonomyList(
-      DEFAULT_ADMIN_DATA.taxonomies[key],
-      savedTaxonomies[key] || [],
-    ),
+    [key]: mergeTaxonomyList(DEFAULT_ADMIN_DATA.taxonomies[key], savedTaxonomies[key] || []),
   }), {});
 }
 

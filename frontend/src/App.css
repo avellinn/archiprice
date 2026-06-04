@@ -112,9 +112,12 @@
   --color-grey: var(--app-muted-color);
   --color-grey-dark: var(--app-heading-color);
   --color-grey-light: #f1f5f9;
+  width: 100%;
+  max-width: 100%;
   min-height: 100vh;
   background: var(--app-shell-background);
   color: var(--app-text-color);
+  overflow-x: hidden;
 }
 
 .dashboard-shell.is-theme-dark {
@@ -146,6 +149,7 @@
   border-left: 0;
   border-radius: 0 28px 28px 0;
   background: var(--app-content-background);
+  overflow-x: hidden;
   overflow-y: auto;
   transition: margin-left 0.3s ease;
 }

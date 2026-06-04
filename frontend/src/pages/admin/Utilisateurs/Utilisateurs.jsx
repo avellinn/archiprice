@@ -1,7 +1,7 @@
 import './Utilisateurs.css';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Alert, Badge, Icon } from '../../../components/ui';
+import { Alert, Badge, Icon, Table } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
 import {
@@ -10,11 +10,24 @@ import {
   fetchAdminUsers,
   updateAdminUser,
 } from '../../../services/adminMongo';
+import UtilisateurModal from './utilisateurModal';
 
 const ROLE_LABELS = {
   admin: 'Admin',
-  supplier: 'Supplier',
-  user: 'User',
+  supplier: 'Fournisseur',
+  user: 'Utilisateur',
+};
+
+const EMPTY_USER = {
+  id: '',
+  name: '',
+  email: '',
+  phone: '',
+  role: 'user',
+  type: 'Architecte',
+  status: 'Actif',
+  subscription: 'Essai',
+  simulations: 0,
 };
 
 function getUserRole(user) {
@@ -51,15 +64,16 @@ export default function Utilisateurs() {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState('Tous');
+  const [searchTerm] = useState('');
+  const [typeFilter] = useState('Tous');
   const [roleFilter, setRoleFilter] = useState('Tous');
   const [selectedUserId, setSelectedUserId] = useState('');
-  const [editingUser, setEditingUser] = useState(null);
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
   const [editForm, setEditForm] = useState({
     name: '',
     email: '',
     phone: '',
+    role: 'user',
     status: 'Actif',
   });
 
@@ -89,10 +103,6 @@ export default function Utilisateurs() {
     };
   }, [updateAdminData]);
 
-  const userTypes = useMemo(() => (
-    ['Tous', ...new Set(users.map((user) => user.type).filter(Boolean))]
-  ), [users]);
-
   const userRoles = useMemo(() => (
     ['Tous', ...new Set(users.map((user) => getUserRole(user)))]
   ), [users]);
@@ -117,9 +127,19 @@ export default function Utilisateurs() {
       return matchesSearch && matchesType && matchesRole;
     });
   }, [roleFilter, searchParams, searchTerm, typeFilter, users]);
+
   const selectedUser = useMemo(() => (
     users.find((user) => user.id === selectedUserId) || null
   ), [selectedUserId, users]);
+  const modalUser = isCreatingUser ? {
+    ...EMPTY_USER,
+    name: editForm.name || 'Nouvel utilisateur',
+    email: editForm.email,
+    phone: editForm.phone,
+    role: editForm.role || 'user',
+    type: ROLE_LABELS[editForm.role] || 'Utilisateur',
+    status: editForm.status || 'Actif',
+  } : selectedUser;
 
   async function updateUser(userId, patch) {
     const previousUsers = users;
@@ -152,14 +172,16 @@ export default function Utilisateurs() {
     }
   }
 
-  async function addDemoUser() {
+  async function createUserFromForm() {
     try {
       const user = await createAdminUser({
-        name: 'Nouvel utilisateur',
-        email: `user${Date.now()}@archiprice.com`,
-        type: 'Architecte',
-        status: 'Actif',
-        subscription: 'Essai',
+        name: editForm.name.trim(),
+        email: editForm.email.trim(),
+        phone: editForm.phone.trim(),
+        role: editForm.role || 'user',
+        type: editForm.role === 'admin' ? 'Admin' : 'Architecte',
+        status: editForm.status,
+        subscription: editForm.role === 'user' ? 'Essai' : '-',
       });
       setUsers((currentUsers) => {
         const nextUsers = [user, ...currentUsers];
@@ -170,6 +192,7 @@ export default function Utilisateurs() {
         return nextUsers;
       });
       setError('');
+      closeUserDetail();
     } catch (apiError) {
       setError(getApiErrorMessage(apiError, "La création de l'utilisateur a échoué."));
     }
@@ -179,6 +202,7 @@ export default function Utilisateurs() {
     const previousUsers = users;
     const nextUsers = users.filter((user) => user.id !== userId);
     setUsers(nextUsers);
+    if (selectedUserId === userId) closeUserDetail();
     updateAdminData((currentData) => ({
       ...currentData,
       users: nextUsers.map(normalizeUserForWorkspace),
@@ -196,22 +220,42 @@ export default function Utilisateurs() {
     }
   }
 
-  function openEditUser(user) {
-    setEditingUser(user);
+  function fillUserForm(user) {
     setEditForm({
       name: user.name || '',
       email: user.email || '',
       phone: user.phone || '',
+      role: getUserRole(user),
       status: user.status || 'Actif',
     });
   }
 
-  function closeEditUser() {
-    setEditingUser(null);
+  function openUserDetail(user) {
+    setIsCreatingUser(false);
+    setSelectedUserId(user.id);
+    fillUserForm(user);
+  }
+
+  function openCreateUser() {
+    setSelectedUserId('');
+    setIsCreatingUser(true);
     setEditForm({
       name: '',
       email: '',
       phone: '',
+      role: 'user',
+      status: 'Actif',
+    });
+  }
+
+  function closeUserDetail() {
+    setSelectedUserId('');
+    setIsCreatingUser(false);
+    setEditForm({
+      name: '',
+      email: '',
+      phone: '',
+      role: 'user',
       status: 'Actif',
     });
   }
@@ -223,98 +267,158 @@ export default function Utilisateurs() {
     }));
   }
 
-  async function submitEditUser(event) {
+  async function submitUserDetail(event) {
     event.preventDefault();
-    if (!editingUser) return;
 
-    await updateUser(editingUser.id, {
-      name: editForm.name.trim() || editingUser.name,
-      email: editForm.email.trim() || editingUser.email,
+    if (isCreatingUser) {
+      await createUserFromForm();
+      return;
+    }
+
+    if (!selectedUser) return;
+
+    await updateUser(selectedUser.id, {
+      name: editForm.name.trim() || selectedUser.name,
+      email: editForm.email.trim() || selectedUser.email,
       phone: editForm.phone.trim(),
       status: editForm.status,
     });
-    closeEditUser();
   }
+
+  function toggleUserStatus(user) {
+    const nextStatus = user.status === 'Actif' ? 'Inactif' : 'Actif';
+    if (selectedUserId === user.id) {
+      updateEditForm('status', nextStatus);
+    }
+    updateUser(user.id, { status: nextStatus });
+  }
+
+  function blockUser(user) {
+    if (selectedUserId === user.id) {
+      updateEditForm('status', 'Bloqué');
+    }
+    updateUser(user.id, { status: 'Bloqué' });
+  }
+
+  function renderUserActions(user) {
+    const userName = user.name || user.email || 'Utilisateur';
+
+    return (
+      <span className="admin-users-management__actions">
+        <button
+          type="button"
+          title="Modifier nom, email, téléphone et statut"
+          aria-label={`Modifier ${userName}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            openUserDetail(user);
+          }}
+        >
+          <Icon name="Edit" size="sm" />
+        </button>
+        <button
+          type="button"
+          title={user.status === 'Actif' ? 'Désactiver' : 'Activer'}
+          aria-label={user.status === 'Actif' ? `Désactiver ${userName}` : `Activer ${userName}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            toggleUserStatus(user);
+          }}
+        >
+          <Icon name="Visibility" size="sm" />
+        </button>
+        <button
+          type="button"
+          title="Bloquer"
+          aria-label={`Bloquer ${userName}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            blockUser(user);
+          }}
+        >
+          <Icon name="VisibilityOff" size="sm" />
+        </button>
+        <button
+          type="button"
+          className="is-danger"
+          title="Supprimer"
+          aria-label={`Supprimer ${userName}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            deleteUser(user.id);
+          }}
+        >
+          <Icon name="Delete" size="sm" />
+        </button>
+      </span>
+    );
+  }
+
+  const userColumns = [
+    {
+      key: 'name',
+      label: 'Nom',
+      render: (name, user) => name || user.email || '-',
+    },
+    {
+      key: 'email',
+      label: 'Email',
+      render: (email) => email || '-',
+    },
+    {
+      key: 'phone',
+      label: 'Téléphone',
+      render: (phone) => phone || '-',
+    },
+    {
+      key: 'type',
+      label: 'Type',
+      render: (type) => type || '-',
+    },
+    {
+      key: 'role',
+      label: 'Rôle',
+      render: (_value, user) => (
+        <Badge tone={getUserRole(user) === 'admin' ? 'warning' : 'neutral'}>
+          {ROLE_LABELS[getUserRole(user)]}
+        </Badge>
+      ),
+    },
+    {
+      key: 'simulations',
+      label: 'Simulations',
+      render: (_value, user) => getSimulationCount(user),
+    },
+    {
+      key: 'status',
+      label: 'Statut',
+      render: (status) => (
+        <Badge tone={status === 'Actif' ? 'success' : status === 'Bloqué' ? 'warning' : 'danger'}>
+          {status || 'Actif'}
+        </Badge>
+      ),
+    },
+    {
+      key: 'subscription',
+      label: 'Abonnement',
+      render: (subscription) => (
+        <span className={subscription === 'Premium' ? 'admin-users-management__premium' : ''}>
+          {subscription || '-'}
+        </span>
+      ),
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      render: (_value, user) => renderUserActions(user),
+    },
+  ];
 
   return (
     <div className="admin-users-management">
-      {selectedUser ? (
-        <section className="admin-user-detail" aria-label="Détail utilisateur">
-          <header className="admin-user-detail__header">
-            <button type="button" className="admin-user-detail__back" onClick={() => setSelectedUserId('')} aria-label="Retour aux utilisateurs">
-              <Icon name="ChevronLeft" size="sm" />
-            </button>
-            <Icon name="Workspaces" size="sm" />
-            <h1>{selectedUser.email}</h1>
-            <Badge tone={selectedUser.status === 'Actif' ? 'success' : selectedUser.status === 'Bloqué' ? 'warning' : 'danger'}>
-              {selectedUser.status}
-            </Badge>
-          </header>
-
-          <section className="admin-user-detail__card">
-            <div className="admin-user-detail__card-header">
-              <h2>Propriétaire de la boutique</h2>
-              <button type="button" title="Modifier l'utilisateur" onClick={() => openEditUser(selectedUser)}>
-                <Icon name="Edit" size="sm" />
-              </button>
-            </div>
-            <div className="admin-user-detail__owner">
-              <span className="admin-user-detail__avatar">
-                <Icon name="Workspaces" size="sm" />
-              </span>
-              <div>
-                <strong>{selectedUser.email}</strong>
-                <small>{selectedUser.name || 'Nom non renseigné'} · {selectedUser.phone || 'Aucun téléphone'}</small>
-              </div>
-            </div>
-          </section>
-
-          <section className="admin-user-detail__card">
-            <h2>Rôles</h2>
-            <p>Attribuez des rôles pour octroyer des autorisations.</p>
-            <div className="admin-user-detail__roles">
-              <article>
-                <div>
-                  <strong>Propriétaire de l’organisation</strong>
-                  <span>Organisation</span>
-                </div>
-              </article>
-              <article>
-                <div>
-                  <strong>{getUserRole(selectedUser) === 'supplier' ? 'Propriétaire de la boutique' : ROLE_LABELS[getUserRole(selectedUser)]}</strong>
-                  <span>{getUserRole(selectedUser) === 'supplier' ? 'Boutique' : 'Compte'}</span>
-                </div>
-                <button type="button" title="Options du rôle">
-                  •••
-                </button>
-              </article>
-            </div>
-          </section>
-        </section>
-      ) : (
-        <>
       <header className="admin-users-management__header">
-        <h1>Utilisateurs</h1>
+       
 
-        <label className="admin-users-management__search">
-          <Icon name="Search" size="sm" />
-          <span className="visually-hidden">Rechercher un utilisateur</span>
-          <input
-            type="search"
-            placeholder="Rechercher un nom, un email..."
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-          />
-        </label>
-
-        <label className="admin-users-management__filter">
-          <span>Type :</span>
-          <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
-            {userTypes.map((type, index) => (
-              <option key={`${type}-${index}`} value={type}>{type}</option>
-            ))}
-          </select>
-        </label>
 
         <label className="admin-users-management__filter">
           <span>Rôle :</span>
@@ -327,192 +431,39 @@ export default function Utilisateurs() {
           </select>
         </label>
 
-        <button type="button" className="admin-users-management__add" onClick={addDemoUser}>
+        <button type="button" className="admin-users-management__add" onClick={openCreateUser}>
           <Icon name="Add" size="sm" />
           Ajouter
         </button>
       </header>
 
-      <section className="admin-users-management__card" aria-label="Liste des utilisateurs">
-        {error && (
-          <Alert variant="danger" className="admin-users-management__alert" onClose={() => setError('')}>
-            {error}
-          </Alert>
-        )}
-        <div className="admin-users-management__table-wrap">
-          <table className="admin-users-management__table">
-            <thead>
-              <tr>
-                <th>Nom</th>
-                <th>Email</th>
-                <th>Téléphone</th>
-                <th>Type</th>
-                <th>Rôle</th>
-                <th>Simulations</th>
-                <th>Inscription</th>
-                <th>Statut</th>
-                <th>Abonnement</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td colSpan="10" className="admin-users-management__state">
-                    Chargement des utilisateurs Mongo...
-                  </td>
-                </tr>
-              ) : filteredUsers.length === 0 ? (
-                <tr>
-                  <td colSpan="10" className="admin-users-management__state">
-                    Aucun utilisateur trouvé.
-                  </td>
-                </tr>
-              ) : (
-                filteredUsers.map((user, index) => (
-                  <tr
-                    key={`${user.id || user.email}-${index}`}
-                    className="admin-users-management__row"
-                    tabIndex={0}
-                    role="button"
-                    onClick={() => setSelectedUserId(user.id)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        setSelectedUserId(user.id);
-                      }
-                    }}
-                  >
-                    <td>{user.name}</td>
-                    <td>{user.email}</td>
-                    <td>{user.phone || '-'}</td>
-                    <td>{user.type}</td>
-                    <td>
-                      <Badge tone={getUserRole(user) === 'admin' ? 'warning' : 'neutral'}>
-                        {ROLE_LABELS[getUserRole(user)]}
-                      </Badge>
-                    </td>
-                    <td>{getSimulationCount(user)}</td>
-                    <td>{user.inscription}</td>
-                    <td>
-                      <Badge tone={user.status === 'Actif' ? 'success' : user.status === 'Bloqué' ? 'warning' : 'danger'}>
-                        {user.status}
-                      </Badge>
-                    </td>
-                    <td>
-                      <span className={user.subscription === 'Premium' ? 'admin-users-management__premium' : ''}>
-                        {user.subscription}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="admin-users-management__actions">
-                        <button
-                          type="button"
-                          title="Modifier nom, email, téléphone et statut"
-                          aria-label={`Modifier ${user.name}`}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            openEditUser(user);
-                          }}
-                        >
-                          <Icon name="Edit" size="sm" />
-                        </button>
-                        <button
-                          type="button"
-                          title={user.status === 'Actif' ? 'Désactiver' : 'Activer'}
-                          aria-label={user.status === 'Actif' ? `Désactiver ${user.name}` : `Activer ${user.name}`}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            updateUser(user.id, { status: user.status === 'Actif' ? 'Inactif' : 'Actif' });
-                          }}
-                        >
-                          <Icon name="Visibility" size="sm" />
-                        </button>
-                        <button
-                          type="button"
-                          title="Bloquer"
-                          aria-label={`Bloquer ${user.name}`}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            updateUser(user.id, { status: 'Bloqué' });
-                          }}
-                        >
-                          <Icon name="VisibilityOff" size="sm" />
-                        </button>
-                        <button
-                          type="button"
-                          className="is-danger"
-                          title="Supprimer"
-                          aria-label={`Supprimer ${user.name}`}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            deleteUser(user.id);
-                          }}
-                        >
-                          <Icon name="Delete" size="sm" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <footer className="admin-users-management__pagination" aria-label="Pagination utilisateurs">
-          <button type="button" aria-label="Page précédente">
-            <Icon name="ChevronLeft" size="sm" />
-          </button>
-          <button type="button" className="is-active">1</button>
-          <button type="button">2</button>
-          <button type="button" aria-label="Page suivante">
-            <Icon name="ChevronRight" size="sm" />
-          </button>
-        </footer>
-      </section>
-      </>
+      {error && (
+        <Alert variant="danger" className="admin-users-management__alert" onClose={() => setError('')}>
+          {error}
+        </Alert>
       )}
-      {editingUser && (
-        <div className="admin-user-edit-backdrop" role="presentation">
-          <form className="admin-user-edit-modal" role="dialog" aria-modal="true" onSubmit={submitEditUser}>
-            <header>
-              <div>
-                <span>Compte utilisateur</span>
-                <h2>Modifier {editingUser.name || editingUser.email}</h2>
-              </div>
-              <button type="button" aria-label="Fermer" onClick={closeEditUser}>
-                <Icon name="Close" size="sm" />
-              </button>
-            </header>
-            <div className="admin-user-edit-grid">
-              <label>
-                <span>Nom</span>
-                <input value={editForm.name} onChange={(event) => updateEditForm('name', event.target.value)} />
-              </label>
-              <label>
-                <span>Email</span>
-                <input type="email" value={editForm.email} onChange={(event) => updateEditForm('email', event.target.value)} />
-              </label>
-              <label>
-                <span>Téléphone</span>
-                <input value={editForm.phone} onChange={(event) => updateEditForm('phone', event.target.value)} />
-              </label>
-              <label>
-                <span>Statut</span>
-                <select value={editForm.status} onChange={(event) => updateEditForm('status', event.target.value)}>
-                  <option value="Actif">Actif</option>
-                  <option value="Inactif">Inactif</option>
-                  <option value="Bloqué">Bloqué</option>
-                </select>
-              </label>
-            </div>
-            <footer>
-              <button type="button" onClick={closeEditUser}>Annuler</button>
-              <button type="submit">Enregistrer</button>
-            </footer>
-          </form>
-        </div>
+
+      <Table
+        className="admin-users-management__list"
+        columns={userColumns}
+        data={isLoading ? [] : filteredUsers}
+        getRowId={(user, index) => user.id || `${user.email || 'user'}-${index}`}
+        onRowClick={openUserDetail}
+        emptyLabel={isLoading ? 'Chargement des utilisateurs Archiprice...' : 'Aucun utilisateur trouvé.'}
+      />
+
+      {modalUser && (
+        <UtilisateurModal
+          user={modalUser}
+          form={editForm}
+          isCreating={isCreatingUser}
+          onChange={updateEditForm}
+          onClose={closeUserDetail}
+          onSubmit={submitUserDetail}
+          onToggleStatus={toggleUserStatus}
+          onBlock={blockUser}
+          onDelete={deleteUser}
+        />
       )}
     </div>
   );

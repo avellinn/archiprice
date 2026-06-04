@@ -1,21 +1,22 @@
 import './NouvellesDemandes.css';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Alert, Badge, Button, Icon } from '../../../components/ui';
+import { Alert, Badge, Icon, Table } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
 import {
   approveSupplierRequest,
   fetchSupplierRequests,
   rejectSupplierRequest,
 } from '../../../services/adminMongo';
+import NouvelleDemandeModal from './nouveldemande';
 
 export default function NouvellesDemandes() {
   const [searchParams] = useSearchParams();
   const [requests, setRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [rejectingRequest, setRejectingRequest] = useState(null);
+  const [searchTerm] = useState('');
+  const [selectedRequest, setSelectedRequest] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
 
   useEffect(() => {
@@ -56,20 +57,24 @@ export default function NouvellesDemandes() {
     try {
       await approveSupplierRequest(requestId);
       setRequests((currentRequests) => currentRequests.filter((request) => request.id !== requestId));
+      if (selectedRequest?.id === requestId) {
+        setSelectedRequest(null);
+        setRejectionReason('');
+      }
       setError('');
     } catch (apiError) {
       setError(getApiErrorMessage(apiError, 'Impossible de valider la demande fournisseur.'));
     }
   }
 
-  async function rejectRequest(event) {
-    event.preventDefault();
-    if (!rejectingRequest) return;
+  async function rejectRequest(requestId) {
+    const requestToReject = requests.find((request) => request.id === requestId) || selectedRequest;
+    if (!requestToReject) return;
 
     try {
-      await rejectSupplierRequest(rejectingRequest.id, rejectionReason.trim());
-      setRequests((currentRequests) => currentRequests.filter((request) => request.id !== rejectingRequest.id));
-      setRejectingRequest(null);
+      await rejectSupplierRequest(requestToReject.id, rejectionReason.trim());
+      setRequests((currentRequests) => currentRequests.filter((request) => request.id !== requestToReject.id));
+      setSelectedRequest(null);
       setRejectionReason('');
       setError('');
     } catch (apiError) {
@@ -77,105 +82,111 @@ export default function NouvellesDemandes() {
     }
   }
 
+  function openRequest(request) {
+    setSelectedRequest(request);
+    setRejectionReason('');
+  }
+
+  const requestColumns = [
+    {
+      key: 'companyName',
+      label: 'Boutique',
+      render: (companyName) => companyName || 'Boutique sans nom',
+    },
+    {
+      key: 'email',
+      label: 'Email',
+      render: (email) => email || 'Non renseigné',
+    },
+    {
+      key: 'phone',
+      label: 'Téléphone',
+      render: (phone) => phone || 'Non renseigné',
+    },
+    {
+      key: 'categories',
+      label: 'Catégories',
+      render: (categories) => (categories?.length ? categories.join(', ') : 'Non renseignées'),
+    },
+    {
+      key: 'status',
+      label: 'Statut',
+      render: () => <Badge tone="warning">En attente</Badge>,
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      render: (_value, request) => (
+        <span className="admin-supplier-requests-actions">
+          <button
+            type="button"
+            title="Voir la demande"
+            aria-label={`Voir ${request.companyName || 'la demande'}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              openRequest(request);
+            }}
+          >
+            <Icon name="Visibility" size="sm" />
+          </button>
+          <button
+            type="button"
+            title="Valider"
+            aria-label={`Valider ${request.companyName || 'la demande'}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              approveRequest(request.id);
+            }}
+          >
+            <Icon name="Check" size="sm" />
+          </button>
+          <button
+            type="button"
+            className="is-danger"
+            title="Refuser"
+            aria-label={`Refuser ${request.companyName || 'la demande'}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              openRequest(request);
+            }}
+          >
+            <Icon name="Close" size="sm" />
+          </button>
+        </span>
+      ),
+    },
+  ];
+
   return (
     <div className="admin-suppliers-page">
-      <header className="admin-suppliers-header">
-        <h1>Nouvelles demandes</h1>
+      
+      {error && (
+        <Alert variant="danger" className="admin-suppliers-alert" onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
 
-        <label className="admin-products-search admin-suppliers-search">
-          <span className="visually-hidden">Rechercher une demande fournisseur</span>
-          <input
-            type="search"
-            placeholder="Rechercher une boutique, un email..."
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-          />
-          <Icon name="Search" size="sm" />
-        </label>
+      <Table
+        className="admin-supplier-requests-list"
+        columns={requestColumns}
+        data={isLoading ? [] : filteredRequests}
+        getRowId={(request, index) => request.id || `${request.email || 'request'}-${index}`}
+        onRowClick={openRequest}
+        emptyLabel={isLoading ? 'Chargement des demandes...' : 'Aucune nouvelle demande fournisseur.'}
+      />
 
-        <Badge tone={filteredRequests.length > 0 ? 'warning' : 'success'}>
-          {filteredRequests.length} en attente
-        </Badge>
-      </header>
-
-      <section className="admin-suppliers-card admin-suppliers-requests" aria-label="Nouvelles demandes fournisseurs">
-        <div className="admin-suppliers-requests__header">
-            
-        </div>
-
-        {error && (
-          <Alert variant="danger" className="admin-suppliers-alert" onClose={() => setError('')}>
-            {error}
-          </Alert>
-        )}
-
-        {isLoading ? (
-          <p className="admin-products-empty">Chargement des demandes...</p>
-        ) : filteredRequests.length === 0 ? (
-          <p className="admin-products-empty">Aucune nouvelle demande fournisseur.</p>
-        ) : (
-          <div className="admin-suppliers-requests__list">
-            {filteredRequests.map((request) => (
-              <article key={request.id} className="admin-suppliers-requests__item">
-                <div>
-                  <strong>{request.companyName}</strong>
-                  <span>{request.email} · {request.phone || 'Téléphone non renseigné'}</span>
-                  {request.categories?.length > 0 && <small>{request.categories.join(', ')}</small>}
-                </div>
-                <div className="admin-suppliers-requests__actions">
-                  <Button type="button" variant="success" size="sm" icon={<Icon name="Check" size="sm" />} onClick={() => approveRequest(request.id)}>
-                    Valider
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="danger"
-                    size="sm"
-                    icon={<Icon name="Close" size="sm" />}
-                    onClick={() => {
-                      setRejectingRequest(request);
-                      setRejectionReason('');
-                    }}
-                  >
-                    Refuser
-                  </Button>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {rejectingRequest && (
-        <div className="admin-supplier-modal-backdrop" role="presentation">
-          <form className="admin-supplier-modal" role="dialog" aria-modal="true" onSubmit={rejectRequest}>
-            <header>
-              <div>
-                <span>Demande fournisseur</span>
-                <h2>Justifier le refus</h2>
-              </div>
-              <button type="button" aria-label="Fermer" onClick={() => setRejectingRequest(null)}>
-                <Icon name="Close" size="sm" />
-              </button>
-            </header>
-            <label>
-              <span>Motif envoyé à {rejectingRequest.companyName}</span>
-              <textarea
-                value={rejectionReason}
-                onChange={(event) => setRejectionReason(event.target.value)}
-                placeholder="Expliquez brièvement pourquoi la demande est refusée."
-                rows={5}
-              />
-            </label>
-            <footer>
-              <Button type="button" variant="outline" onClick={() => setRejectingRequest(null)}>
-                Annuler
-              </Button>
-              <Button type="submit" variant="danger">
-                Envoyer
-              </Button>
-            </footer>
-          </form>
-        </div>
+      {selectedRequest && (
+        <NouvelleDemandeModal
+          request={selectedRequest}
+          rejectionReason={rejectionReason}
+          onRejectionReasonChange={setRejectionReason}
+          onClose={() => {
+            setSelectedRequest(null);
+            setRejectionReason('');
+          }}
+          onApprove={approveRequest}
+          onReject={rejectRequest}
+        />
       )}
     </div>
   );

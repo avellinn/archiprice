@@ -60,6 +60,16 @@ const productSchema = new mongoose.Schema(
       trim: true,
       maxlength: 100,
     },
+    city: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
+    neighborhood: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
     unit: {
       type: String,
       enum: ['u', 'm2', 'ml', 'm3', 'h', 'forfait'],

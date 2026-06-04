@@ -1,4 +1,5 @@
 import { API_ROUTES } from '../constants/api';
+import { MAX_FILES_PER_UPLOAD } from '../constants/uploads';
 import api from './api';
 
 export const SUPPLIER_WORKSPACE_EVENT = 'archiprice:supplier-workspace-change';
@@ -66,7 +67,7 @@ export async function createSupplierProduct(payload, files = []) {
     }
   });
 
-  files.forEach((file) => {
+  files.slice(0, MAX_FILES_PER_UPLOAD).forEach((file) => {
     formData.append('image', file);
   });
 
@@ -87,7 +88,7 @@ export async function updateSupplierProduct(productId, payload, files = []) {
     }
   });
 
-  files.forEach((file) => {
+  files.slice(0, MAX_FILES_PER_UPLOAD).forEach((file) => {
     formData.append('image', file);
   });
 

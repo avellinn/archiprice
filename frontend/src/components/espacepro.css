@@ -243,6 +243,12 @@
   border: 1px solid var(--app-border-color);
   border-radius: 12px;
   background: var(--app-card-background);
+  cursor: pointer;
+}
+
+.espacepro__article-card:focus-visible {
+  outline: 2px solid #224b73;
+  outline-offset: 3px;
 }
 
 .espacepro__article-card--featured {

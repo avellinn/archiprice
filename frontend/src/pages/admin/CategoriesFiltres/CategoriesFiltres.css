@@ -12,73 +12,185 @@
   font-weight: 900;
 }
 
-.admin-taxonomy-layout {
-  display: grid;
-  grid-template-columns: minmax(440px, 1fr) 360px;
-  gap: 1.65rem;
-  align-items: start;
-}
-
 .admin-taxonomy-tabs {
   display: flex;
   align-items: center;
-  gap: 1.65rem;
-  margin-bottom: 1.1rem;
-  border-bottom: 1px solid #edf2f7;
+  flex: 1 1 auto;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 0;
+  overflow-x: auto;
 }
 
 .admin-taxonomy-tabs button {
-  position: relative;
-  min-width: 90px;
-  padding: 0 0 0.9rem;
-  border: 0;
-  background: transparent;
-  color: #344054;
+  flex: 0 0 auto;
+  min-width: max-content;
+  min-height: 2.35rem;
+  padding: 0 0.85rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 7px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
   font: inherit;
-  font-size: 0.88rem;
-  font-weight: 900;
+  font-size: 0.84rem;
+  font-weight: 250;
   cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.admin-taxonomy-tabs button:hover,
+.admin-taxonomy-tabs button:focus-visible {
+  border-color: #224b73;
+  color: #224b73;
+  outline: 0;
 }
 
 .admin-taxonomy-tabs button.is-active {
-  color: #2f7df6;
+  border-color: #224b73;
+  background: #224b73;
+  color: #fff;
 }
 
-.admin-taxonomy-tabs button.is-active::after {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 3px;
-  border-radius: 999px 999px 0 0;
-  background: #2f7df6;
-  content: '';
+.admin-taxonomy-table-card {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
-.admin-taxonomy-table-card,
-.admin-taxonomy-form-card,
-.admin-taxonomy-danger-card {
-  border: 1px solid #e5ebf3;
-  border-radius: 10px;
-  background: var(--app-card-background);
-  box-shadow: 0 16px 42px rgb(15 23 42 / 0.045);
+.admin-taxonomy-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+  padding: 0;
+  border-bottom: 0;
 }
 
 .admin-taxonomy-table-actions {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
-  padding: 1rem 1.1rem 0.65rem;
+  gap: 0.65rem;
+  flex: 0 0 auto;
+}
+
+.admin-taxonomy-list {
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.admin-taxonomy-list .ui-table-wrap,
+.admin-taxonomy-list .ui-data-table {
+  width: 100%;
+}
+
+.admin-taxonomy-list .ui-data-table {
+  min-width: 0;
+}
+
+.admin-taxonomy-list .ui-data-table th,
+.admin-taxonomy-list .ui-data-table td {
+  padding-inline: 1.15rem;
+}
+
+.admin-taxonomy-list .ui-data-table tbody tr {
+  position: relative;
+}
+
+.admin-taxonomy-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 2.6rem;
+  width: 100%;
+}
+
+.admin-taxonomy-row__name {
+  min-width: 0;
+  color: var(--app-heading-color);
+  font-weight: 450;
+  overflow-wrap: anywhere;
+}
+
+.admin-taxonomy-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(0.25rem);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.admin-taxonomy-list .ui-data-table tbody tr:hover .admin-taxonomy-row-actions,
+.admin-taxonomy-list .ui-data-table tbody tr:focus-within .admin-taxonomy-row-actions {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+
+.admin-taxonomy-row-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 7px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  cursor: pointer;
+}
+
+.admin-taxonomy-row-actions button:hover,
+.admin-taxonomy-row-actions button:focus-visible {
+  border-color: #224b73;
+  color: #224b73;
+  outline: 0;
+}
+
+.admin-taxonomy-row-actions .is-danger {
+  color: #ef4444;
+}
+
+.admin-taxonomy-row-actions .is-danger:hover,
+.admin-taxonomy-row-actions .is-danger:focus-visible {
+  border-color: #ef4444;
+  background: #fff1f2;
+  color: #dc2626;
 }
 
 .admin-taxonomy-table-actions .btn {
-  border-color: #dce7fb;
-  color: #2f7df6;
+  min-height: 2.35rem;
+  padding-inline: 0.9rem;
+  border-color: #d9e2ec;
+  border-radius: 7px;
+  background: #fff;
+  color: #224b73;
   font-weight: 900;
 }
 
 .admin-taxonomy-table-actions .btn:hover:not(:disabled) {
-  background: #eff6ff;
-  color: #2563eb;
+  border-color: #224b73;
+  background: #f8fbff;
+  color: #224b73;
+}
+
+.admin-taxonomy-table-actions .btn--primary {
+  border-color: #224b73;
+  background: #224b73;
+  color: #fff;
+}
+
+.admin-taxonomy-table-actions .btn--primary:hover:not(:disabled) {
+  background: #1a3a59;
+  color: #fff;
 }
 
 .admin-taxonomy-table {
@@ -110,157 +222,13 @@
   border-bottom: 0;
 }
 
-.admin-taxonomy-side {
-  display: grid;
-  gap: 1rem;
-}
-
-.admin-taxonomy-form-card,
-.admin-taxonomy-danger-card {
-  padding: 1.25rem;
-}
-
-.admin-taxonomy-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.2rem;
-}
-
-.admin-taxonomy-card-header h2 {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin: 0;
-  color: var(--app-heading-color);
-  font-size: 1.12rem;
-  font-weight: 900;
-}
-
-.admin-taxonomy-card-header button {
-  display: inline-grid;
-  width: 30px;
-  height: 30px;
-  place-items: center;
-  padding: 0;
-  border: 0;
-  border-radius: 7px;
+.dashboard-shell.is-theme-dark .admin-taxonomy-table-card {
   background: transparent;
-  color: #667085;
-  cursor: pointer;
-}
-
-.admin-taxonomy-card-header button:hover {
-  background: #f1f5f9;
-  color: #1f2937;
-}
-
-.admin-taxonomy-field {
-  display: grid;
-  gap: 0.55rem;
-  color: #344054;
-  font-size: 0.88rem;
-  font-weight: 900;
-}
-
-.admin-taxonomy-field b {
-  color: #ef4444;
-}
-
-.admin-taxonomy-field input {
-  width: 100%;
-  height: 42px;
-  padding: 0.65rem 0.85rem;
-  border: 1px solid #dfe6ef;
-  border-radius: 7px;
-  background: #ffffff;
-  color: #344054;
-  font: inherit;
-  font-size: 0.9rem;
-  font-weight: 800;
-  outline: none;
-}
-
-.admin-taxonomy-field input:focus {
-  border-color: #93c5fd;
-  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.12);
-}
-
-.admin-taxonomy-form-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.9rem;
-  margin-top: 1.7rem;
-}
-
-.admin-taxonomy-form-actions .btn,
-.admin-taxonomy-danger-actions .btn {
-  min-height: 40px;
-  border-radius: 7px;
-  font-weight: 900;
-}
-
-.admin-taxonomy-form-actions .btn--outline,
-.admin-taxonomy-danger-actions .btn--outline {
-  border-color: #dfe6ef;
-  color: #344054;
-}
-
-.admin-taxonomy-form-actions .btn--primary {
-  background: #1d73f8;
-}
-
-.admin-taxonomy-form-actions .btn--primary:hover:not(:disabled) {
-  background: #155fd0;
-}
-
-.admin-taxonomy-danger-card {
-  border-color: #fed7aa;
-  background: #fffaf0;
-}
-
-.admin-taxonomy-danger-card h2 {
-  color: #ef4444;
-  font-size: 0.98rem;
-}
-
-.admin-taxonomy-danger-card p {
-  margin: 0 0 0.8rem;
-  color: #475467;
-  font-size: 0.9rem;
-  font-weight: 800;
-  line-height: 1.5;
-}
-
-.admin-taxonomy-danger-actions {
-  display: grid;
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-
-.admin-taxonomy-danger-actions .btn--danger {
-  border: 1px solid #fecaca;
-  background: #ffffff;
-  color: #ef4444;
-}
-
-.admin-taxonomy-danger-actions .btn--danger:hover:not(:disabled) {
-  background: #fff1f2;
-  color: #dc2626;
-}
-
-.dashboard-shell.is-theme-dark .admin-taxonomy-table-card,
-.dashboard-shell.is-theme-dark .admin-taxonomy-form-card,
-.dashboard-shell.is-theme-dark .admin-taxonomy-field input {
-  border-color: var(--app-border-color);
-  background: var(--app-card-background);
 }
 
 .dashboard-shell.is-theme-dark .admin-taxonomy-table,
-.dashboard-shell.is-theme-dark .admin-taxonomy-field,
-.dashboard-shell.is-theme-dark .admin-taxonomy-field input,
 .dashboard-shell.is-theme-dark .admin-taxonomy-tabs button,
+.dashboard-shell.is-theme-dark .admin-taxonomy-row-actions button,
 .dashboard-shell.is-theme-dark .admin-taxonomy-table th,
 .dashboard-shell.is-theme-dark .admin-taxonomy-table td {
   color: var(--app-text-color);
@@ -272,21 +240,31 @@
   border-color: var(--app-border-color);
 }
 
-.dashboard-shell.is-theme-dark .admin-taxonomy-danger-card {
-  border-color: #92400e;
-  background: #2b1b0d;
+.dashboard-shell.is-theme-dark .admin-taxonomy-toolbar {
+  border-color: var(--app-border-color);
 }
 
-.dashboard-shell.is-theme-dark .admin-taxonomy-danger-card p {
-  color: var(--app-muted-color);
+.dashboard-shell.is-theme-dark .admin-taxonomy-tabs button.is-active {
+  border-color: #224b73;
+  background: #224b73;
+  color: #fff;
 }
 
-.admin-taxonomy-layout {
-  overflow: hidden;
-}
+@media (max-width: 980px) {
+  .admin-taxonomy-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 0 1rem 1rem;
+  }
 
-.admin-taxonomy-main,
-.admin-taxonomy-side {
-  min-height: 0;
-  max-height: 100%;
+  .admin-taxonomy-table-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .admin-taxonomy-row-actions {
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+  }
 }

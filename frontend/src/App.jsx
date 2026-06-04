@@ -24,6 +24,7 @@ import Invoices from './pages/user/Invoices/Invoices';
 import Logout from './pages/user/Logout/Logout';
 import Workspace from './pages/user/Workspace/Workspace';
 import UserParametres from './pages/user/Parametres/Parametres';
+import UserSupport from './pages/user/Support/Support';
 import SupplierAnalysedon from './pages/supplier/Analysedon/Analysedon';
 import SupplierClients from './pages/supplier/Clients/Clients';
 import SupplierFichiers from './pages/supplier/Fichiers/Fichiers';
@@ -32,6 +33,7 @@ import SupplierParametres from './pages/supplier/Parametres/Parametres';
 import SupplierPending from './pages/supplier/Pending/Pending';
 import SupplierAjouterProduit from './pages/supplier/AjouterProduit/AjouterProduit';
 import SupplierProduits from './pages/supplier/Produits/Produits';
+import SupplierSupport from './pages/supplier/Support/Support';
 import './App.css';
 
 function App() {
@@ -93,6 +95,7 @@ function App() {
           <Route path="/supplier/products/new" element={<SupplierAjouterProduit />} />
           <Route path="/supplier/clients" element={<SupplierClients />} />
           <Route path="/supplier/content/files" element={<SupplierFichiers />} />
+          <Route path="/supplier/support" element={<SupplierSupport />} />
           <Route path="/supplier/settings" element={<SupplierParametres />} />
         </Route>
         <Route
@@ -106,6 +109,7 @@ function App() {
           <Route path="/catalogue" element={<Catalogue />} />
           <Route path="/workspace" element={<Workspace />} />
           <Route path="/factures" element={<Invoices />} />
+          <Route path="/support" element={<UserSupport />} />
           <Route path="/parametres" element={<UserParametres />} />
           <Route path="/deconnexion" element={<Logout />} />
         </Route>

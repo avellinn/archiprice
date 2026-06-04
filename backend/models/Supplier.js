@@ -63,7 +63,7 @@ const supplierSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Actif', 'Inactif'],
+      enum: ['Actif', 'Inactif', 'Bloqué', 'Supprimé'],
       default: 'Actif',
     },
     products: {

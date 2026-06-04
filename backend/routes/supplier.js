@@ -34,6 +34,8 @@ function formatProduct(product) {
     room: product.room,
     range: product.range,
     availability: product.availability,
+    city: product.city,
+    neighborhood: product.neighborhood,
     unit: product.unit,
     unitPrice: product.unitPrice,
     images: product.images || [],
@@ -124,7 +126,7 @@ router.get('/products', asyncHandler(async (req, res) => {
 
 router.post(
   '/products',
-  upload.array('image', 12),
+  upload.array('image', MAX_IMAGE_COUNT),
   handleMulterError,
   asyncHandler(async (req, res) => {
     const supplier = await findOrCreateSupplierProfile(req.user);
@@ -152,6 +154,8 @@ router.post(
         room: req.body.room,
         range: req.body.range,
         availability: req.body.availability,
+        city: req.body.city,
+        neighborhood: req.body.neighborhood,
         unit: req.body.unit || 'u',
         unitPrice,
         supplier: supplier._id,
@@ -185,7 +189,7 @@ router.post(
 
 router.put(
   '/products/:productId',
-  upload.array('image', 12),
+  upload.array('image', MAX_IMAGE_COUNT),
   handleMulterError,
   asyncHandler(async (req, res) => {
     const supplier = await findOrCreateSupplierProfile(req.user);
@@ -219,7 +223,7 @@ router.put(
       : [];
 
     try {
-      ['name', 'description', 'category', 'room', 'range', 'availability', 'unit'].forEach((field) => {
+      ['name', 'description', 'category', 'room', 'range', 'availability', 'city', 'neighborhood', 'unit'].forEach((field) => {
         if (req.body[field] !== undefined) product[field] = req.body[field];
       });
       product.unitPrice = nextUnitPrice;

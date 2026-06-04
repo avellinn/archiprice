@@ -1,180 +1,244 @@
 import './Paramètres.css';
 import { useState } from 'react';
-import { Button, Icon } from '../../../components/ui';
-import { createAdminId, useAdminData } from '../../../services/adminData';
+import { Icon } from '../../../components/ui';
+import useAuth from '../../../context/useAuth';
+import { useAdminData } from '../../../services/adminData';
+import { getAdminTranslations } from '../../../utils/adminLanguage';
+import { AdminLocationModal, AdminPolicyModal, AdminProfileModal } from './adminparModal';
+
+const TIMEZONES = [
+  '(GMT +01:00) Afrique centrale et de l’Ouest',
+  '(GMT +00:00) Greenwich',
+  '(GMT +02:00) Afrique australe',
+];
+const LANGUAGES = ['Français', 'Anglais'];
+const CITY_OPTIONS = ['Cotonou', 'Abomey - calavi', 'Porto-novo'];
+const NEIGHBORHOOD_OPTIONS = [
+  'Fidjrossè',
+  'Akpakpa',
+  'Ganhi',
+  'Zongo',
+  'Godomey',
+  'akassato',
+  'Glo-Djigbé',
+  'Zinvié',
+  'Tokpota',
+  'Ouando',
+  'Dowa',
+  'Hounli',
+];
+const DEFAULT_ADMIN_POLICIES = [
+  {
+    id: 'admin-policy-cgu',
+    icon: 'ReceiptLong',
+    title: "CONDITIONS GÉNÉRALES D'UTILISATION (CGU)",
+    summary: 'Cadre d’utilisation de la plateforme ArchiPrice par les comptes user, supplier et admin.',
+    content: 'Les utilisateurs accèdent aux services ArchiPrice selon leur rôle. Les actions sensibles sont journalisées et les données métier restent protégées.',
+  },
+  {
+    id: 'admin-policy-privacy',
+    icon: 'Info',
+    title: 'POLITIQUE DE CONFIDENTIALITÉ',
+    summary: 'Traitement et protection des données des comptes, projets, simulations, fournisseurs et catalogues.',
+    content: 'Les données sont exploitées pour fournir les fonctionnalités de simulation, de validation fournisseur, de catalogue et de support.',
+  },
+  {
+    id: 'admin-policy-suppliers',
+    icon: 'Workspaces',
+    title: 'CONDITIONS FOURNISSEURS',
+    summary: 'Règles de validation, publication, refus et retrait des articles proposés par les fournisseurs.',
+    content: 'Les fournisseurs soumettent leurs articles à validation. L’admin peut approuver, refuser ou masquer les contenus non conformes.',
+  },
+  {
+    id: 'admin-policy-legal',
+    icon: 'Folder',
+    title: 'MENTIONS LÉGALES',
+    summary: 'Informations légales et responsabilité opérationnelle de la plateforme ArchiPrice.',
+    content: 'ArchiPrice conserve les informations nécessaires à la traçabilité des actions, aux audits et à la continuité des services.',
+  },
+];
+
+function getUniqueValues(values) {
+  return [...new Set(values.map((value) => String(value || '').trim()).filter(Boolean))];
+}
 
 export default function Paramètres() {
-  const [adminData, setAdminData] = useAdminData();
-  const [activeCity, setActiveCity] = useState(adminData.regionalCoefficients[0]);
-  const [simulationConfig, setSimulationConfig] = useState(adminData.settings);
+  const { user } = useAuth();
+  const [adminData, updateAdminData] = useAdminData();
+  const savedAdminSettings = adminData.adminSettings || {};
+  const adminText = getAdminTranslations(adminData);
+  const [adminProfile, setAdminProfile] = useState({
+    name: savedAdminSettings.profile?.name || user?.name || 'Admin Principal',
+    email: savedAdminSettings.profile?.email || user?.email || 'admin@archiprice.com',
+    phone: savedAdminSettings.profile?.phone || user?.phone || 'Aucun numéro de téléphone',
+  });
+  const [settings, setSettings] = useState({
+    location: savedAdminSettings.settings?.location || 'Bénin',
+    companyName: savedAdminSettings.settings?.companyName || '',
+    address: savedAdminSettings.settings?.address || '',
+    neighborhood: savedAdminSettings.settings?.neighborhood || '',
+    city: savedAdminSettings.settings?.city || CITY_OPTIONS[0],
+    timezone: savedAdminSettings.settings?.timezone || TIMEZONES[0],
+    language: savedAdminSettings.settings?.language || LANGUAGES[0],
+  });
+  const [policies, setPolicies] = useState(
+    Array.isArray(savedAdminSettings.policies) && savedAdminSettings.policies.length
+      ? savedAdminSettings.policies
+      : DEFAULT_ADMIN_POLICIES,
+  );
+  const [activeModal, setActiveModal] = useState(null);
 
-  function handleConfigChange(field, value) {
-    setSimulationConfig((currentConfig) => ({
-      ...currentConfig,
+  const cityOptions = getUniqueValues([
+    ...CITY_OPTIONS,
+    ...(adminData.regionalCoefficients || []).map((item) => item.city),
+  ]);
+  const neighborhoodOptions = getUniqueValues([
+    ...NEIGHBORHOOD_OPTIONS,
+    ...(adminData.products || []).map((product) => product.neighborhood),
+  ]);
+
+  function updateAdminProfile(field, value) {
+    setAdminProfile((currentProfile) => ({
+      ...currentProfile,
       [field]: value,
     }));
   }
 
-  function saveSettings() {
-    setAdminData((currentData) => ({
-      ...currentData,
-      settings: simulationConfig,
+  function updateSetting(field, value) {
+    setSettings((currentSettings) => ({
+      ...currentSettings,
+      [field]: value,
     }));
   }
 
-  function saveCity() {
-    setAdminData((currentData) => {
-      const city = {
-        ...activeCity,
-        id: activeCity.id || createAdminId('city'),
-      };
-      const exists = currentData.regionalCoefficients.some((item) => item.id === city.id);
-
-      return {
-        ...currentData,
-        regionalCoefficients: exists
-          ? currentData.regionalCoefficients.map((item) => (item.id === city.id ? city : item))
-          : [city, ...currentData.regionalCoefficients],
-      };
-    });
+  function persistAdminSettings(nextProfile = adminProfile, nextSettings = settings, nextPolicies = policies) {
+    updateAdminData((currentData) => ({
+      ...currentData,
+      adminSettings: {
+        ...(currentData.adminSettings || {}),
+        profile: nextProfile,
+        settings: nextSettings,
+        policies: nextPolicies,
+        savedAt: new Date().toISOString(),
+      },
+    }));
   }
 
-  function deleteCity(cityId) {
-    setAdminData((currentData) => ({
-      ...currentData,
-      regionalCoefficients: currentData.regionalCoefficients.filter((item) => item.id !== cityId),
-    }));
+  function updateLanguage(value) {
+    const nextSettings = {
+      ...settings,
+      language: value,
+    };
+
+    setSettings(nextSettings);
+    persistAdminSettings(adminProfile, nextSettings, policies);
+  }
+
+  function closeModal() {
+    setActiveModal(null);
+  }
+
+  function saveAdminSettings() {
+    persistAdminSettings(adminProfile, settings);
+    closeModal();
   }
 
   return (
     <div className="admin-settings-page">
-      <section className="admin-settings-config-card">
-        <span className="admin-settings-eyebrow">Réglages</span>
-        <h1>Configuration simulations</h1>
+      <header className="admin-settings-header">
+        <h1>
+          <Icon name="Dashboard" size="sm" />
+          {adminText.settings.title}
+        </h1>
+      </header>
 
-        <form className="admin-settings-form">
-          <label>
-            <span>Marge par défaut (%)</span>
-            <input
-              type="number"
-              value={simulationConfig.margin}
-              onChange={(event) => handleConfigChange('margin', event.target.value)}
-            />
-          </label>
+      <section className="admin-settings-card">
+        <h2>{adminText.settings.section}</h2>
 
-          <label>
-            <span>TVA (%)</span>
-            <input
-              type="number"
-              value={simulationConfig.vat}
-              onChange={(event) => handleConfigChange('vat', event.target.value)}
-            />
-          </label>
-
-          <label>
-            <span>Arrondi</span>
-            <select
-              value={simulationConfig.rounding}
-              onChange={(event) => handleConfigChange('rounding', event.target.value)}
-            >
-              <option>Au centime près</option>
-              <option>À l'euro près</option>
-              <option>Sans arrondi</option>
-            </select>
-          </label>
-
-          <label>
-            <span>Devise</span>
-            <select
-              value={simulationConfig.currency}
-              onChange={(event) => handleConfigChange('currency', event.target.value)}
-            >
-              <option>FCFA</option>
-              <option>EUR</option>
-              <option>USD</option>
-            </select>
-          </label>
-
-          <Button type="button" fullWidth onClick={saveSettings}>
-            Enregistrer
-          </Button>
-
-          <small>Ces paramètres s'appliquent uniquement aux nouvelles simulations.</small>
-        </form>
-      </section>
-
-      <section className="admin-settings-coefficients">
-        <div className="admin-settings-coefficients__table-card">
-          <h2>Coefficients régionaux</h2>
-
-          <table className="admin-settings-coefficients__table">
-            <thead>
-              <tr>
-                <th>Ville</th>
-                <th>Coefficient</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {adminData.regionalCoefficients.map((item, index) => (
-                <tr key={`${item.id || item.city}-${index}`} className={activeCity.city === item.city ? 'is-selected' : ''}>
-                  <td>{item.city}</td>
-                  <td>{item.coefficient}</td>
-                  <td>
-                    <div className="admin-settings-coefficients__actions">
-                      <button type="button" aria-label={`Modifier ${item.city}`} onClick={() => setActiveCity(item)}>
-                        <Icon name="Edit" size="sm" />
-                      </button>
-                      <button type="button" className="is-danger" aria-label={`Supprimer ${item.city}`} onClick={() => deleteCity(item.id)}>
-                        <Icon name="Delete" size="sm" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <aside className="admin-settings-city-card">
-          <div className="admin-settings-city-card__header">
-            <h2>Ajouter / Modifier une ville</h2>
-            <button type="button" aria-label="Fermer le formulaire">
-              <Icon name="Close" size="sm" />
-            </button>
-          </div>
-
-          <form className="admin-settings-city-form">
-            <label>
-              <span>Ville <b>*</b></span>
-              <input type="text" value={activeCity.city} onChange={(event) => setActiveCity({
-                ...activeCity,
-                city: event.target.value,
-              })}
-              />
-            </label>
-
-            <label>
-              <span>Coefficient <b>*</b></span>
-              <input type="text" value={activeCity.coefficient} onChange={(event) => setActiveCity({
-                ...activeCity,
-                coefficient: event.target.value,
-              })}
-              />
-              <small>Entre 0,50 et 3,00</small>
-            </label>
-
-            <div className="admin-settings-city-form__actions">
-              <Button type="button" variant="outline">
-                Annuler
-              </Button>
-              <Button type="button" onClick={saveCity}>
-                Enregistrer
-              </Button>
+        <div className="admin-settings-list admin-settings-list--clickable">
+          <button type="button" className="admin-settings-row-button" onClick={() => setActiveModal('profile')}>
+            <Icon name="Workspaces" size="sm" />
+            <div>
+              <strong>{adminProfile.name}</strong>
+              <span>{adminProfile.email} · {adminProfile.phone}</span>
             </div>
-          </form>
-        </aside>
+            <Icon name="ChevronRight" size="sm" />
+          </button>
+
+          <button type="button" className="admin-settings-row-button" onClick={() => setActiveModal('location')}>
+            <Icon name="Explore" size="sm" />
+            <div>
+              <strong>{adminText.settings.locations}</strong>
+              <span>{settings.neighborhood || settings.city || settings.address || settings.location}</span>
+            </div>
+            <Icon name="ChevronRight" size="sm" />
+          </button>
+
+          <label className="admin-settings-row-button admin-settings-row-button--field">
+            <Icon name="History" size="sm" />
+            <div>
+              <strong>{adminText.settings.timezone}</strong>
+              <select value={settings.timezone} onChange={(event) => updateSetting('timezone', event.target.value)}>
+                {TIMEZONES.map((timezone) => (
+                  <option key={timezone} value={timezone}>{timezone}</option>
+                ))}
+              </select>
+            </div>
+            <Icon name="ChevronRight" size="sm" />
+          </label>
+
+          <label className="admin-settings-row-button admin-settings-row-button--field">
+            <Icon name="Chat" size="sm" />
+            <div>
+              <strong>{adminText.settings.language}</strong>
+              <select value={settings.language} onChange={(event) => updateLanguage(event.target.value)}>
+                {LANGUAGES.map((language) => (
+                  <option key={language} value={language}>{language}</option>
+                ))}
+              </select>
+            </div>
+            <Icon name="ChevronRight" size="sm" />
+          </label>
+
+          <button type="button" className="admin-settings-row-button" onClick={() => setActiveModal('policy')}>
+            <Icon name="ReceiptLong" size="sm" />
+            <div>
+              <strong>{adminText.settings.policy}</strong>
+              <span>{adminText.settings.policyDescription}</span>
+            </div>
+            <Icon name="ChevronRight" size="sm" />
+          </button>
+        </div>
       </section>
+
+      {activeModal === 'policy' && (
+        <AdminPolicyModal
+          policies={policies}
+          onPoliciesChange={setPolicies}
+          onClose={closeModal}
+          onSave={saveAdminSettings}
+        />
+      )}
+
+      {activeModal === 'profile' && (
+        <AdminProfileModal
+          adminProfile={adminProfile}
+          onChange={updateAdminProfile}
+          onClose={closeModal}
+          onSave={saveAdminSettings}
+        />
+      )}
+
+      {activeModal === 'location' && (
+        <AdminLocationModal
+          settings={settings}
+          cityOptions={cityOptions}
+          neighborhoodOptions={neighborhoodOptions}
+          onChange={updateSetting}
+          onClose={closeModal}
+          onSave={saveAdminSettings}
+        />
+      )}
     </div>
   );
 }

@@ -4,8 +4,10 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import CardArticle, { ArticleFullscreen } from '../../../components/cardarticle';
 import Recap from '../../../components/recap';
 import { Alert, Button, Icon } from '../../../components/ui';
+import useAuth from '../../../context/useAuth';
 import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
+import { addExportedDocument } from '../../../services/exportedDocuments';
 import { createProduct } from '../../../services/products';
 import { createProject, fetchProjects, updateProject } from '../../../services/projects';
 
@@ -96,6 +98,17 @@ function buildCatalogueProduct(product, adminData) {
   };
 }
 
+function isSupplierVisibleForCatalogue(product, adminData) {
+  const supplier = (adminData.suppliers || []).find((item) => (
+    item.name === product.supplier
+    || item.companyName === product.supplier
+    || item.email === product.supplier
+  ));
+
+  if (!supplier) return true;
+  return !['Bloqué', 'Supprimé'].includes(supplier.status);
+}
+
 function buildProjectDescription({ selectedProducts, budgetTarget, budgetSummary }) {
   const rooms = [...new Set(selectedProducts.map((product) => product.room))].join(', ');
   const shops = [...new Set(selectedProducts.map((product) => product.shop))].join(', ');
@@ -132,6 +145,7 @@ function isPublishedCatalogueProduct(product) {
 }
 
 export default function Catalogue() {
+  const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -139,6 +153,7 @@ export default function Catalogue() {
   const [selectedCategory, setSelectedCategory] = useState('Tout');
   const [selectedRoom, setSelectedRoom] = useState('Toutes');
   const [selectedRange, setSelectedRange] = useState('Toutes');
+  const [selectedCity, setSelectedCity] = useState('Toutes');
   const [selectedNeighborhood, setSelectedNeighborhood] = useState('Tous');
   const [budgetTarget, setBudgetTarget] = useState('');
   const [selectedProductIds, setSelectedProductIds] = useState([]);
@@ -176,6 +191,7 @@ export default function Catalogue() {
   const products = useMemo(() => (
     (Array.isArray(adminData.products) ? adminData.products : [])
       .filter(isPublishedCatalogueProduct)
+      .filter((product) => isSupplierVisibleForCatalogue(product, adminData))
       .map((product) => buildCatalogueProduct(product, adminData))
   ), [adminData]);
 
@@ -183,23 +199,34 @@ export default function Catalogue() {
     categories: ['Tout', ...adminData.taxonomies.categories.map((category) => category.name)],
     rooms: ['Toutes', ...adminData.taxonomies.rooms.map((room) => room.name)],
     ranges: ['Toutes', ...adminData.taxonomies.ranges.map((range) => range.name)],
+    cities: [
+      'Toutes',
+      ...new Set([
+        ...(adminData.taxonomies.cities || []).map((city) => city.name),
+        ...(Array.isArray(adminData.products) ? adminData.products : [])
+          .filter(isPublishedCatalogueProduct)
+          .filter((product) => isSupplierVisibleForCatalogue(product, adminData))
+          .map((product) => product.city)
+          .filter(Boolean),
+      ]),
+    ],
     neighborhoods: [
       'Tous',
-      ...new Set((Array.isArray(adminData.products) ? adminData.products : [])
-        .filter(isPublishedCatalogueProduct)
-        .map((product) => product.neighborhood)
-        .filter(Boolean)),
+      ...new Set([
+        ...(adminData.taxonomies.neighborhoods || []).map((neighborhood) => neighborhood.name),
+        ...(Array.isArray(adminData.products) ? adminData.products : [])
+          .filter(isPublishedCatalogueProduct)
+          .filter((product) => isSupplierVisibleForCatalogue(product, adminData))
+          .map((product) => product.neighborhood)
+          .filter(Boolean),
+      ]),
     ],
-  }), [
-    adminData.products,
-    adminData.taxonomies.categories,
-    adminData.taxonomies.ranges,
-    adminData.taxonomies.rooms,
-  ]);
+  }), [adminData]);
 
   const activeCategory = filters.categories.includes(selectedCategory) ? selectedCategory : 'Tout';
   const activeRoom = filters.rooms.includes(selectedRoom) ? selectedRoom : 'Toutes';
   const activeRange = filters.ranges.includes(selectedRange) ? selectedRange : 'Toutes';
+  const activeCity = filters.cities.includes(selectedCity) ? selectedCity : 'Toutes';
   const activeNeighborhood = filters.neighborhoods.includes(selectedNeighborhood) ? selectedNeighborhood : 'Tous';
 
   const catalogueSearchTerm = searchParams.get('q')?.trim().toLowerCase() || '';
@@ -209,15 +236,16 @@ export default function Catalogue() {
         (activeCategory === 'Tout' || product.category === activeCategory)
         && (activeRoom === 'Toutes' || product.room === activeRoom)
         && (activeRange === 'Toutes' || product.range === activeRange)
+        && (activeCity === 'Toutes' || product.city === activeCity)
         && (activeNeighborhood === 'Tous' || product.neighborhood === activeNeighborhood)
       );
       const matchesSearch = !catalogueSearchTerm
-        || [product.name, product.category, product.room, product.range, product.shop, product.shopZone, product.neighborhood]
+        || [product.name, product.category, product.room, product.range, product.shop, product.shopZone, product.city, product.neighborhood]
           .some((value) => String(value || '').toLowerCase().includes(catalogueSearchTerm));
 
       return matchesFilters && matchesSearch;
     }),
-    [activeCategory, activeNeighborhood, activeRange, activeRoom, catalogueSearchTerm, products],
+    [activeCategory, activeCity, activeNeighborhood, activeRange, activeRoom, catalogueSearchTerm, products],
   );
 
   const selectedProducts = useMemo(
@@ -248,6 +276,10 @@ export default function Catalogue() {
   const fullscreenProduct = products.find((product) => product.id === fullscreenProductId);
   const fullscreenImage = fullscreenProduct?.images?.[fullscreenImageIndex] || fullscreenProduct?.image || '';
   const hasCatalogueProducts = products.length > 0;
+  const hasCatalogueFilters = Object.values(adminData?.taxonomies || {}).some((items) => (
+    Array.isArray(items) && items.length > 0
+  ));
+  const shouldShowFilterPanel = hasCatalogueProducts && hasCatalogueFilters;
 
   function toggleProduct(productId) {
     setValidationError('');
@@ -343,6 +375,32 @@ export default function Catalogue() {
         images: product.imageDocuments || [],
       })));
 
+      addExportedDocument({
+        projectId: project.id,
+        projectName: project.name,
+        userName: user?.name || user?.fullName || user?.email || 'Utilisateur ArchiPrice',
+        userEmail: user?.email || '',
+        reference: `SIM-${project.id}`,
+        amount: budgetSummary.max,
+        itemCount: selectedProducts.length,
+        status: 'Succès',
+        city: [...new Set(selectedProducts.map((product) => product.city).filter(Boolean))].join(', ') || project.name,
+        coefficient: '1,00',
+        items: selectedProducts.map((product) => ({
+          id: product.id,
+          name: product.name,
+          category: product.category,
+          quantity: 1,
+          price: formatFCFA(product.maxPrice),
+          total: formatFCFA(product.maxPrice),
+          rawPrice: product.maxPrice,
+          imageUrl: product.image,
+          images: (product.imageDocuments || []).length > 0
+            ? product.imageDocuments
+            : (product.images || []).map((image) => ({ secure_url: image, name: product.name })),
+        })),
+      });
+
       navigate(`/workspace?mode=projects&projectId=${project.id}`, { replace: true });
     } catch (error) {
       setValidationError(getApiErrorMessage(error, 'Impossible de confirmer la validation'));
@@ -352,8 +410,16 @@ export default function Catalogue() {
   }
 
   return (
-    <div className={`catalogue-page catalogue-page--products ${hasCatalogueProducts ? '' : 'catalogue-page--empty'}`}>
-      {hasCatalogueProducts && (
+    <div
+      className={[
+        'catalogue-page',
+        'catalogue-page--products',
+        hasCatalogueProducts ? '' : 'catalogue-page--empty',
+        shouldShowFilterPanel ? 'catalogue-page--with-filters' : 'catalogue-page--without-filters',
+        isBudgetVisible && selectedProducts.length > 0 ? 'catalogue-page--with-budget' : 'catalogue-page--without-budget',
+      ].filter(Boolean).join(' ')}
+    >
+      {shouldShowFilterPanel && (
       <aside className="catalogue-filter-panel" aria-label="Filtres du catalogue">
         <div>
           <button
@@ -410,6 +476,22 @@ export default function Catalogue() {
                 onClick={() => setSelectedRange(range)}
               >
                 {range}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="catalogue-filter-group">
+          <h2>Ville</h2>
+          <div>
+            {filters.cities.map((city, index) => (
+              <button
+                type="button"
+                className={activeCity === city ? 'is-active' : ''}
+                key={`${city}-${index}`}
+                onClick={() => setSelectedCity(city)}
+              >
+                {city}
               </button>
             ))}
           </div>

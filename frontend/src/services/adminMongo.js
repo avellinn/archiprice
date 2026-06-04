@@ -61,6 +61,11 @@ export async function updateAdminSupportItem(itemId, payload) {
   return data.supportItem;
 }
 
+export async function deleteAdminSupportItem(itemId) {
+  const { data } = await api.delete(API_ROUTES.admin.supportItem(itemId));
+  return data;
+}
+
 export async function fetchSupplierRequests() {
   const { data } = await api.get(API_ROUTES.admin.supplierRequests);
   return data.requests || [];

@@ -1,9 +1,10 @@
 import api from './api';
+import { MAX_FILES_PER_UPLOAD } from '../constants/uploads';
 
 export async function uploadCatalogueImages(files) {
   const formData = new FormData();
 
-  files.forEach((file) => {
+  files.slice(0, MAX_FILES_PER_UPLOAD).forEach((file) => {
     formData.append('image', file);
   });
 

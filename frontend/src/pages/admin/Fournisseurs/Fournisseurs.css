@@ -1,13 +1,17 @@
 /* Page styles migrated from App.css */
 .admin-suppliers-page {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
   min-height: calc(100vh - 64px);
-  padding: 1.55rem;
+  padding: 1.55rem 1.55rem 5.5rem;
   background: var(--dashboard-page-background);
+  overflow-x: hidden;
 }
 
 .admin-suppliers-header {
   display: grid;
-  grid-template-columns: auto minmax(280px, 520px) auto;
+  grid-template-columns: minmax(180px, auto) minmax(280px, 520px) auto;
   align-items: center;
   gap: 1.6rem;
   margin-bottom: 1.45rem;
@@ -18,6 +22,28 @@
   color: var(--app-heading-color);
   font-size: 1.65rem;
   font-weight: 900;
+}
+
+.admin-suppliers-header .admin-products-add,
+.admin-suppliers-header .admin-products-add.btn {
+  position: absolute;
+  bottom: 1.55rem;
+  right: 1.55rem;
+  left: auto;
+  border-color: #224b73 !important;
+  background: #224b73 !important;
+  background-color: #224b73 !important;
+  color: #fff !important;
+}
+
+.admin-suppliers-header .admin-products-add:hover,
+.admin-suppliers-header .admin-products-add:focus-visible,
+.admin-suppliers-header .admin-products-add.btn:hover,
+.admin-suppliers-header .admin-products-add.btn:focus-visible {
+  border-color: #1a3a59 !important;
+  background: #1a3a59 !important;
+  background-color: #1a3a59 !important;
+  color: #fff !important;
 }
 
 .admin-suppliers-search {
@@ -111,12 +137,15 @@
   padding: 0.55rem 0.75rem;
   border: 1px solid var(--app-border-color);
   border-radius: 8px;
-  background: var(--app-card-background);
+  background: #224b73;
   color: var(--app-heading-color);
   font: inherit;
   font-weight: 800;
   cursor: pointer;
 }
+
+
+
 
 .admin-suppliers-requests__actions button:hover {
   border-color: #1d73f8;
@@ -168,8 +197,29 @@
   gap: 0.7rem;
 }
 
+.admin-suppliers-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 7px;
+  background: #224b73;
+  color: var(--app-heading-color);
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.admin-suppliers-actions button:hover,
+.admin-suppliers-actions button:focus-visible {
+  border-color: #224b73;
+  color: #224b73;
+  outline: 0;
+}
+
 .admin-suppliers-actions .is-link {
-  color: #2f7df6;
+  color: #405f8e;
 }
 
 .admin-suppliers-actions .is-danger {
@@ -190,6 +240,15 @@
   border-top: 1px solid #eef2f7;
 }
 
+.admin-suppliers-list {
+  width: 100%;
+}
+
+.admin-suppliers-list .ui-table-wrap,
+.admin-suppliers-list .ui-data-table {
+  width: 100%;
+}
+
 .dashboard-shell.is-theme-dark .admin-suppliers-table,
 .dashboard-shell.is-theme-dark .admin-suppliers-search input {
   color: var(--app-text-color);
@@ -204,4 +263,20 @@
 .dashboard-shell.is-theme-dark .admin-suppliers-table td,
 .dashboard-shell.is-theme-dark .admin-suppliers-pagination {
   border-color: var(--app-border-color);
+}
+
+@media (max-width: 860px) {
+  .admin-suppliers-header {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .admin-suppliers-search {
+    max-width: none;
+  }
+
+  .admin-suppliers-pagination {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }

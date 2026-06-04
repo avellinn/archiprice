@@ -1,6 +1,7 @@
 import './Fichiers.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Button, Icon } from '../../../components/ui';
+import { MAX_FILES_PER_UPLOAD } from '../../../constants/uploads';
 import { getApiErrorMessage } from '../../../services/api';
 import { deleteSupplierProductImage, fetchSupplierWorkspace, subscribeSupplierWorkspaceChange } from '../../../services/supplier';
 
@@ -46,6 +47,7 @@ export default function Fichiers() {
   const [isLoading, setIsLoading] = useState(true);
   const [deletingFileId, setDeletingFileId] = useState('');
   const [pendingImageDelete, setPendingImageDelete] = useState(null);
+  const [uploadLimitMessage, setUploadLimitMessage] = useState('');
 
   function loadWorkspace() {
     let cancelled = false;
@@ -103,7 +105,15 @@ export default function Fichiers() {
 
   function handleFilesChange(event) {
     const selectedFiles = Array.from(event.target.files || []);
-    setFiles((currentFiles) => [...currentFiles, ...selectedFiles]);
+    const acceptedFiles = selectedFiles.slice(0, MAX_FILES_PER_UPLOAD);
+
+    if (selectedFiles.length > MAX_FILES_PER_UPLOAD) {
+      setUploadLimitMessage(`Maximum ${MAX_FILES_PER_UPLOAD} fichiers par import. Les ${MAX_FILES_PER_UPLOAD} premiers fichiers ont été ajoutés.`);
+    } else {
+      setUploadLimitMessage('');
+    }
+
+    setFiles((currentFiles) => [...currentFiles, ...acceptedFiles]);
     event.target.value = '';
   }
 
@@ -185,6 +195,11 @@ export default function Fichiers() {
             </span>
           </Alert>
         )}
+        {uploadLimitMessage && (
+          <Alert variant="warning" className="supplier-files-status" onClose={() => setUploadLimitMessage('')}>
+            {uploadLimitMessage}
+          </Alert>
+        )}
 
         {!isLoading && !error && visibleFiles.length === 0 && (
           <div className="supplier-files-empty">
@@ -253,7 +268,7 @@ export default function Fichiers() {
               Charger des fichiers
             </Button>
             {files.length > 0 && (
-              <small>{files.length} fichier(s) sélectionné(s)</small>
+              <small>{files.length} fichier(s) sélectionné(s). {MAX_FILES_PER_UPLOAD} maximum par import.</small>
             )}
           </div>
         )}

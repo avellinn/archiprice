@@ -1,0 +1,268 @@
+.admin-user-detail-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 68;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(239, 239, 239, 0.38);
+}
+
+.admin-user-detail-modal {
+  width: min(100%, 820px);
+  max-height: calc(100vh - 2rem);
+  overflow: hidden auto;
+  border: 1px solid var(--app-border-color);
+  border-radius: 14px;
+  background: var(--app-card-background);
+  box-shadow: var(--shadow-lg);
+}
+
+.admin-user-detail-modal .admin-user-detail__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--app-border-color);
+  color: var(--app-heading-color);
+}
+
+.admin-user-detail__title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.admin-user-detail__title > div {
+  min-width: 0;
+}
+
+.admin-user-detail__title span {
+  color: var(--app-muted-color);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.admin-user-detail__header h2 {
+  margin: 0;
+  color: var(--app-heading-color);
+  font-size: 1.2rem;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.admin-user-detail__close,
+.admin-user-detail__actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 7px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  cursor: pointer;
+}
+
+.admin-user-detail__close:hover,
+.admin-user-detail__close:focus-visible,
+.admin-user-detail__actions button:hover,
+.admin-user-detail__actions button:focus-visible {
+  border-color: #224b73;
+  color: #224b73;
+  outline: 0;
+}
+
+.admin-user-detail__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.admin-user-detail__actions .is-danger {
+  color: #ef4444;
+}
+
+.admin-user-detail__actions .is-danger:hover {
+  background: #fff1f2;
+  color: #dc2626;
+}
+
+.admin-user-detail-modal .admin-user-detail__card {
+  margin: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 12px;
+  background: var(--app-card-background);
+  box-shadow: 0 14px 32px rgb(15 23 42 / 0.045);
+}
+
+.admin-user-detail__card h3 {
+  margin: 0 0 0.9rem;
+  color: var(--app-heading-color);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.admin-user-detail-modal .admin-user-detail__card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.admin-user-detail-modal .admin-user-detail__card-header h3 {
+  margin: 0;
+}
+
+.admin-user-detail-modal .admin-user-detail__owner {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.admin-user-detail-modal .admin-user-detail__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9px;
+  background: #4ade80;
+  color: #073b1d;
+}
+
+.admin-user-detail-modal .admin-user-detail__owner strong,
+.admin-user-detail-modal .admin-user-detail__owner small {
+  display: block;
+}
+
+.admin-user-detail-modal .admin-user-detail__owner strong {
+  color: var(--app-heading-color);
+  font-weight: 900;
+}
+
+.admin-user-detail-modal .admin-user-detail__owner small {
+  margin-top: 0.2rem;
+  color: var(--app-muted-color);
+  font-weight: 700;
+}
+
+.admin-user-detail__form-grid,
+.admin-user-detail__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.admin-user-detail__form-grid label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--app-heading-color);
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.admin-user-detail__form-grid input,
+.admin-user-detail__form-grid select {
+  min-width: 0;
+  height: 2.5rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 8px;
+  background: var(--app-card-background);
+  color: var(--app-text-color);
+  font-weight: 400;
+}
+
+.admin-user-detail__grid article {
+  display: grid;
+  gap: 0.35rem;
+  min-height: 76px;
+  padding: 0.85rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 10px;
+  background: var(--app-panel-background);
+}
+
+.admin-user-detail__grid span {
+  color: var(--app-muted-color);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.admin-user-detail__grid strong {
+  color: var(--app-heading-color);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.admin-user-detail__footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  padding: 1rem;
+  border-top: 1px solid #224b73;
+  background: #224b73;
+  color: #fff;
+}
+
+.admin-user-detail__footer button {
+  min-height: 2.25rem;
+  padding: 0 0.9rem;
+  border: 1px solid #c1ceda;
+  border-radius: 8px;
+  background: #224b73;
+  color: #fff;
+  font-weight: 850;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.admin-user-detail__footer button:hover,
+.admin-user-detail__footer button:focus-visible {
+  border-color: #224b73;
+  background: #1a3a59;
+  color: #fff;
+  outline: 0;
+}
+
+.admin-user-detail__footer button[type='button']:hover,
+.admin-user-detail__footer button[type='button']:focus-visible {
+  background: #b10b10;
+}
+
+.dashboard-shell.is-theme-dark .admin-user-detail__header,
+.dashboard-shell.is-theme-dark .admin-user-detail__footer,
+.dashboard-shell.is-theme-dark .admin-user-detail__card,
+.dashboard-shell.is-theme-dark .admin-user-detail__grid article,
+.dashboard-shell.is-theme-dark .admin-user-detail__form-grid input,
+.dashboard-shell.is-theme-dark .admin-user-detail__form-grid select {
+  border-color: var(--app-border-color);
+}
+
+.dashboard-shell.is-theme-dark .admin-user-detail__form-grid input,
+.dashboard-shell.is-theme-dark .admin-user-detail__form-grid select {
+  background: var(--app-card-background);
+  color: var(--app-text-color);
+}
+
+@media (max-width: 860px) {
+  .admin-user-detail-modal .admin-user-detail__card-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-user-detail__form-grid,
+  .admin-user-detail__grid {
+    grid-template-columns: 1fr;
+  }
+}

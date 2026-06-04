@@ -43,10 +43,12 @@ export default function Parametres() {
   });
   const [photoRemoved, setPhotoRemoved] = useState(false);
   const [removedAvatarColor, setRemovedAvatarColor] = useState(() => getRandomAvatarColor(getAvatarColor(user)));
+  const [editingField, setEditingField] = useState(null);
+  const [editDraft, setEditDraft] = useState('');
   const profileText = getUserTranslations(profile.language).profile;
 
-  const avatarInitials = getUserInitials({ ...user, name: profile.name });
-  const removedAvatarInitial = avatarInitials.slice(0, 1) || getUserInitials(user).slice(0, 1) || 'U';
+  const avatarInitials = getUserInitials({ ...user, name: profile.name }).toUpperCase();
+  const removedAvatarInitial = (avatarInitials.slice(0, 1) || getUserInitials(user).slice(0, 1) || 'U').toUpperCase();
   const avatarColor = getAvatarColor(user);
 
   function updateProfile(field, value) {
@@ -58,10 +60,25 @@ export default function Parametres() {
     writeStoredProfile(nextProfile);
   }
 
-  function editField(field, label) {
-    const nextValue = window.prompt(label, profile[field]);
-    if (nextValue === null) return;
-    updateProfile(field, nextValue.trim() || profile[field]);
+  function openEditModal(field, label) {
+    setEditingField({ field, label });
+    setEditDraft(profile[field] || '');
+  }
+
+  function closeEditModal() {
+    setEditingField(null);
+    setEditDraft('');
+  }
+
+  function saveEditModal(event) {
+    event.preventDefault();
+    if (!editingField) return;
+
+    const nextValue = editDraft.trim();
+    if (!nextValue) return;
+
+    updateProfile(editingField.field, nextValue);
+    closeEditModal();
   }
 
   function handlePhotoUpload(event) {
@@ -140,7 +157,7 @@ export default function Parametres() {
             className="user-profile-mini-button"
             aria-label={profileText.name}
             title={profileText.name}
-            onClick={() => editField('name', profileText.name)}
+            onClick={() => openEditModal('name', profileText.name)}
           >
             <Icon name="Edit" size="sm" />
           </button>
@@ -156,7 +173,7 @@ export default function Parametres() {
             className="user-profile-mini-button"
             aria-label={profileText.email}
             title={profileText.email}
-            onClick={() => editField('email', profileText.email)}
+            onClick={() => openEditModal('email', profileText.email)}
           >
             <Icon name="Edit" size="sm" />
           </button>
@@ -196,6 +213,40 @@ export default function Parametres() {
           </article>
         </section>
       </section>
+
+      {editingField && (
+        <div className="user-profile-modal-backdrop" role="presentation">
+          <form className="user-profile-modal" role="dialog" aria-modal="true" aria-labelledby="user-profile-modal-title" onSubmit={saveEditModal}>
+            <header className="user-profile-modal__header">
+              <div>
+                <span>Profil</span>
+                <h2 id="user-profile-modal-title">Modifier {editingField.label.toLowerCase()}</h2>
+              </div>
+              <button type="button" aria-label="Fermer" onClick={closeEditModal}>
+                <Icon name="Close" size="sm" />
+              </button>
+            </header>
+
+            <div className="user-profile-modal__body">
+              <label>
+                <span>{editingField.label}</span>
+                <input
+                  type={editingField.field === 'email' ? 'email' : 'text'}
+                  value={editDraft}
+                  onChange={(event) => setEditDraft(event.target.value)}
+                  required
+                  autoFocus
+                />
+              </label>
+            </div>
+
+            <footer className="user-profile-modal__footer">
+              <button type="button" onClick={closeEditModal}>Annuler</button>
+              <button type="submit">Sauvegarder</button>
+            </footer>
+          </form>
+        </div>
+      )}
     </main>
   );
 }

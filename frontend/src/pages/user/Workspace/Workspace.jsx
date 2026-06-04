@@ -695,6 +695,7 @@ export default function Workspace() {
               onProjectDelete={handleProjectDelete}
               deletingProjectId={deletingProjectId}
               onProductsChange={handleProductsChange}
+              onArticleShopOpen={() => setIsShopSelectorOpen(true)}
             />
 
             <div className="workspace-shop-cta">

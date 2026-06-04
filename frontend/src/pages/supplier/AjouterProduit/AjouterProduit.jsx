@@ -2,6 +2,7 @@ import './AjouterProduit.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Alert, Button, Icon, ServerError } from '../../../components/ui';
+import { MAX_FILES_PER_UPLOAD } from '../../../constants/uploads';
 import useAuth from '../../../context/useAuth';
 import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
@@ -13,7 +14,7 @@ import {
 } from '../../../services/supplier';
 import { getSupplierTranslations } from '../../../utils/supplierLanguage';
 
-const MAX_PRODUCT_FILES = 12;
+const MAX_PRODUCT_FILES = MAX_FILES_PER_UPLOAD;
 const INITIAL_PRODUCT_FORM = {
   name: '',
   description: '',
@@ -23,6 +24,8 @@ const INITIAL_PRODUCT_FORM = {
   type: '',
   range: '',
   supplier: 'Ma boutique',
+  city: '',
+  neighborhood: '',
   collections: '',
   tags: '',
 };
@@ -92,11 +95,15 @@ export default function AjouterProduit() {
     rooms: getTaxonomyNames(adminData.taxonomies?.rooms),
     ranges: getTaxonomyNames(adminData.taxonomies?.ranges),
     availability: getTaxonomyNames(adminData.taxonomies?.availability),
+    cities: getTaxonomyNames(adminData.taxonomies?.cities),
+    neighborhoods: getTaxonomyNames(adminData.taxonomies?.neighborhoods),
   }), [adminData.taxonomies]);
   const selectedCategory = getSyncedOptionValue(productForm.category, taxonomyOptions.categories);
   const selectedRoom = getSyncedOptionValue(productForm.type, taxonomyOptions.rooms);
   const selectedRange = getSyncedOptionValue(productForm.range, taxonomyOptions.ranges);
   const selectedAvailability = getSyncedOptionValue(productForm.availability, taxonomyOptions.availability);
+  const selectedCity = getSyncedOptionValue(productForm.city, taxonomyOptions.cities);
+  const selectedNeighborhood = getSyncedOptionValue(productForm.neighborhood, taxonomyOptions.neighborhoods);
 
   const previews = useMemo(() => files.map((file) => ({
     name: file.name,
@@ -140,6 +147,8 @@ export default function AjouterProduit() {
           type: product.room || '',
           range: product.range || '',
           supplier: product.supplierName || product.supplierLabel || product.supplier || shopName,
+          city: product.city || '',
+          neighborhood: product.neighborhood || '',
         });
         setExistingImages(product.images || []);
       })
@@ -300,8 +309,8 @@ export default function AjouterProduit() {
         supplier: effectiveSupplierName,
         vat: '20%',
         visual: 'sofa',
-        city: 'Cotonou',
-        neighborhood: '',
+        city: selectedCity || taxonomyOptions.cities[0] || 'Cotonou',
+        neighborhood: selectedNeighborhood,
         availability: product.availability || 'Disponible',
         publicationStatus: 'En attente',
         publicationSource: 'supplier',
@@ -329,6 +338,8 @@ export default function AjouterProduit() {
       || !selectedRoom
       || !selectedRange
       || !selectedAvailability
+      || !selectedCity
+      || !selectedNeighborhood
       || !effectiveSupplierName
       || productForm.price === ''
       || (files.length === 0 && existingImages.length === 0)) {
@@ -346,6 +357,8 @@ export default function AjouterProduit() {
         room: selectedRoom,
         range: selectedRange,
         availability: selectedAvailability,
+        city: selectedCity,
+        neighborhood: selectedNeighborhood,
         unitPrice: productForm.price,
         unit: 'u',
       };
@@ -563,6 +576,24 @@ export default function AjouterProduit() {
                 <option value="">{productText.rangePlaceholder}</option>
                 {taxonomyOptions.ranges.map((range) => (
                   <option key={range} value={range}>{range}</option>
+                ))}
+              </select>
+            </label>
+            <label className="supplier-product-field">
+              <span>Ville</span>
+              <select required value={selectedCity} onChange={(event) => updateProductForm('city', event.target.value)}>
+                <option value="">Choisir une ville</option>
+                {taxonomyOptions.cities.map((city) => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
+            </label>
+            <label className="supplier-product-field">
+              <span>Quartier</span>
+              <select required value={selectedNeighborhood} onChange={(event) => updateProductForm('neighborhood', event.target.value)}>
+                <option value="">Choisir un quartier</option>
+                {taxonomyOptions.neighborhoods.map((neighborhood) => (
+                  <option key={neighborhood} value={neighborhood}>{neighborhood}</option>
                 ))}
               </select>
             </label>
