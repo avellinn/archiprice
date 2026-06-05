@@ -55,6 +55,7 @@ npm run env:migrate
 ```
 
 Voir la progression détaillée : [`docs/ROADMAP.md`](docs/ROADMAP.md).
+Cahier des charges complet : [`docs/CAHIER_DES_CHARGES.md`](docs/CAHIER_DES_CHARGES.md).
 Documentation API : [`docs/API.md`](docs/API.md).
 Documentation frontend : [`frontend/docs/frontend-documentation.md`](frontend/docs/frontend-documentation.md).
 Design system : [`frontend/docs/design-system.md`](frontend/docs/design-system.md).

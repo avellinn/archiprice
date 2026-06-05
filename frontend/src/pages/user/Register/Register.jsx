@@ -1,33 +1,40 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import '../../../styles/authForm.css';
-import AuthLayout from '../../../components/AuthLayout';
-import PasswordInput from '../../../components/PasswordInput';
-import { Alert, Text } from '../../../components/ui';
+import './Register.css';
+import { Alert } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
 import { getApiErrorMessage } from '../../../services/api';
+
+function getDefaultName(email) {
+  return String(email || '').split('@')[0]?.trim() || 'Utilisateur';
+}
 
 export default function Register() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { register: registerUser } = useAuth();
   const [apiError, setApiError] = useState(null);
-  const [accountType, setAccountType] = useState(() => (
-    searchParams.get('accountType') === 'supplier' ? 'supplier' : 'user'
-  ));
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const accountType = searchParams.get('accountType') === 'supplier' ? 'supplier' : 'user';
 
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm();
 
   const onSubmit = async (data) => {
     setApiError(null);
+    const defaultName = getDefaultName(data.email);
+
     try {
-      await registerUser({ ...data, accountType });
+      await registerUser({
+        ...data,
+        name: defaultName,
+        accountType,
+        companyName: accountType === 'supplier' ? defaultName : undefined,
+      });
       navigate(accountType === 'supplier' ? '/supplier/pending' : '/dashboard', { replace: true });
     } catch (err) {
       setApiError(getApiErrorMessage(err, 'Inscription impossible'));
@@ -35,114 +42,75 @@ export default function Register() {
   };
 
   return (
-    <AuthLayout
-      title="Créer un compte"
-      subtitle="Veuillez remplir le formulaire"
-      footer={
-        <>
-          Vous avez déjà un compte ?{' '}
-          <Link to="/login" className="auth-link">
-            Se connecter
-          </Link>
-        </>
-      }
-    >
-      <form className="auth-form" onSubmit={handleSubmit(onSubmit)} noValidate>
-        <div className="auth-field">
-          <label className="auth-label" htmlFor="register-account-type">
-            Type de compte
-          </label>
-          <select
-            id="register-account-type"
-            className="auth-input"
-            value={accountType}
-            onChange={(event) => {
-              setAccountType(event.target.value);
-              setValue('accountType', event.target.value);
-            }}
-          >
-            <option value="user">Utilisateur</option>
-            <option value="supplier">Fournisseur</option>
-          </select>
-        </div>
+    <main className="register-page">
+      <h1>Inscrivez-vous sur ArchiPrice, c&apos;est gratuit.</h1>
 
-        <div className="auth-field">
-          <label className="auth-label" htmlFor="register-email">
-            Adresse email
+      <section className="register-card" aria-label="Formulaire d'inscription">
+        <form className="register-form" onSubmit={handleSubmit(onSubmit)} noValidate>
+          <label className="register-field" htmlFor="register-email">
+            <span>E-mail</span>
+            <input
+              id="register-email"
+              type="email"
+              autoComplete="email"
+              aria-invalid={Boolean(errors.email)}
+              {...register('email', { required: 'Email requis' })}
+            />
           </label>
-          <input
-            id="register-email"
-            type="email"
-            className="auth-input"
-            placeholder="Entrez votre Adresse email"
-            autoComplete="email"
-            {...register('email', { required: 'Email requis' })}
-          />
-          {errors.email && (
-            <Text as="span" size="sm" className="auth-field-error">
-              {errors.email.message}
-            </Text>
-          )}
-        </div>
+          {errors.email && <small className="register-field-error">{errors.email.message}</small>}
 
-        {accountType === 'supplier' && (
-          <>
-            <div className="auth-field">
-              <label className="auth-label" htmlFor="register-company">
-                Nom de la boutique
-              </label>
+          <label className="register-field" htmlFor="register-password">
+            <span>Mot de passe</span>
+            <span className="register-password-control">
               <input
-                id="register-company"
-                type="text"
-                className="auth-input"
-                placeholder="Ex: Meubles Plus"
-                {...register('companyName', {
-                  required: accountType === 'supplier' ? 'Nom de boutique requis' : false,
+                id="register-password"
+                type={isPasswordVisible ? 'text' : 'password'}
+                autoComplete="new-password"
+                aria-invalid={Boolean(errors.password)}
+                {...register('password', {
+                  required: 'Mot de passe requis',
+                  minLength: { value: 6, message: 'Minimum 6 caractères' },
                 })}
               />
-              {errors.companyName && (
-                <Text as="span" size="sm" className="auth-field-error">
-                  {errors.companyName.message}
-                </Text>
-              )}
-            </div>
+              <button
+                type="button"
+                onClick={() => setIsPasswordVisible((isVisible) => !isVisible)}
+              >
+                {isPasswordVisible ? 'Masquer' : 'Afficher'}
+              </button>
+            </span>
+          </label>
+          {errors.password && <small className="register-field-error">{errors.password.message}</small>}
 
-            <div className="auth-field">
-              <label className="auth-label" htmlFor="register-phone">
-                Téléphone
-              </label>
-              <input
-                id="register-phone"
-                type="tel"
-                className="auth-input"
-                placeholder="Votre numéro de téléphone"
-                {...register('phone')}
-              />
-            </div>
-          </>
-        )}
+          <label className="register-remember">
+          
+            
+          </label>
 
-        <PasswordInput
-          id="register-password"
-          placeholder="Entrez votre mot de passe"
-          autoComplete="new-password"
-          error={errors.password?.message}
-          {...register('password', {
-            required: 'Mot de passe requis',
-            minLength: { value: 6, message: 'Minimum 6 caractères' },
-          })}
-        />
+          
+          {apiError && (
+            <Alert variant="danger" title="Inscription impossible" onClose={() => setApiError(null)}>
+              {apiError}
+            </Alert>
+          )}
 
-        {apiError && (
-          <Alert variant="danger" title="Inscription impossible" onClose={() => setApiError(null)}>
-            {apiError}
-          </Alert>
-        )}
+          <button type="submit" className="register-submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Inscription...' : 'Suivant'}
+          </button>
+        </form>
 
-        <button type="submit" className="auth-submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Inscription…' : 'Créer un compte'}
-        </button>
-      </form>
-    </AuthLayout>
+        <div className="register-separator">
+          <span />
+          <strong>ou</strong>
+          <span />
+        </div>
+
+        
+
+        <p className="register-login-link">
+          Déjà inscrit(e) ? <Link to="/login">S&apos;identifier</Link>
+        </p>
+      </section>
+    </main>
   );
 }

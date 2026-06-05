@@ -54,18 +54,7 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="home-role-separator">
-            <span>OU</span>
-          </div>
-
-          <Link to="/login" className="home-role-admin">
-            <span className="home-role-admin__mark" aria-hidden="true">A</span>
-            <div>
-              <h3>Administrateur ArchiPrice</h3>
-              <p>Accéder à l’espace de gestion de la plateforme</p>
-            </div>
-            <Icon name="ChevronRight" size="sm" />
-          </Link>
+          
 
           <p className="home-role-login">
             Vous avez déjà un compte ? <Link to="/login">Connectez-vous</Link>
