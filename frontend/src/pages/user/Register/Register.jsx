@@ -6,10 +6,6 @@ import { Alert } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
 import { getApiErrorMessage } from '../../../services/api';
 
-function getDefaultName(email) {
-  return String(email || '').split('@')[0]?.trim() || 'Utilisateur';
-}
-
 export default function Register() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -26,14 +22,13 @@ export default function Register() {
 
   const onSubmit = async (data) => {
     setApiError(null);
-    const defaultName = getDefaultName(data.email);
 
     try {
       await registerUser({
         ...data,
-        name: defaultName,
+        name: data.name,
         accountType,
-        companyName: accountType === 'supplier' ? defaultName : undefined,
+        companyName: accountType === 'supplier' ? data.companyName : undefined,
       });
       navigate(accountType === 'supplier' ? '/supplier/pending' : '/dashboard', { replace: true });
     } catch (err) {
@@ -47,6 +42,18 @@ export default function Register() {
 
       <section className="register-card" aria-label="Formulaire d'inscription">
         <form className="register-form" onSubmit={handleSubmit(onSubmit)} noValidate>
+          <label className="register-field" htmlFor="register-name">
+            <span>Nom complet</span>
+            <input
+              id="register-name"
+              type="text"
+              autoComplete="name"
+              aria-invalid={Boolean(errors.name)}
+              {...register('name', { required: 'Nom complet requis' })}
+            />
+          </label>
+          {errors.name && <small className="register-field-error">{errors.name.message}</small>}
+
           <label className="register-field" htmlFor="register-email">
             <span>E-mail</span>
             <input
@@ -82,10 +89,35 @@ export default function Register() {
           </label>
           {errors.password && <small className="register-field-error">{errors.password.message}</small>}
 
-          <label className="register-remember">
-          
-            
-          </label>
+          {accountType === 'supplier' && (
+            <>
+              <label className="register-field" htmlFor="register-company">
+                <span>Nom de la boutique</span>
+                <input
+                  id="register-company"
+                  type="text"
+                  autoComplete="organization"
+                  aria-invalid={Boolean(errors.companyName)}
+                  {...register('companyName', {
+                    required: 'Nom de la boutique requis',
+                  })}
+                />
+              </label>
+              {errors.companyName && <small className="register-field-error">{errors.companyName.message}</small>}
+
+              <label className="register-field" htmlFor="register-phone">
+                <span>Téléphone</span>
+                <input
+                  id="register-phone"
+                  type="tel"
+                  autoComplete="tel"
+                  aria-invalid={Boolean(errors.phone)}
+                  {...register('phone', { required: 'Téléphone requis' })}
+                />
+              </label>
+              {errors.phone && <small className="register-field-error">{errors.phone.message}</small>}
+            </>
+          )}
 
           
           {apiError && (

@@ -36,7 +36,7 @@ export function AdminProfileModal({ adminProfile, onChange, onClose, onSave }) {
           </label>
           <label>
             <span>Téléphone</span>
-            <input value={adminProfile.phone === 'Aucun numéro de téléphone' ? '' : adminProfile.phone} onChange={(event) => onChange('phone', event.target.value || 'Aucun numéro de téléphone')} />
+            <input value={adminProfile.phone || ''} onChange={(event) => onChange('phone', event.target.value)} />
           </label>
         </div>
 

@@ -59,7 +59,7 @@ const supplierSchema = new mongoose.Schema(
       type: String,
       trim: true,
       maxlength: 120,
-      default: 'Cotonou',
+      default: '',
     },
     status: {
       type: String,

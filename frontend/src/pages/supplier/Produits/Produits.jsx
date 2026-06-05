@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ProduitAjouteSup from '../../../components/ProduitAjouteSup';
 import { Button, Icon } from '../../../components/ui';
+import useAuth from '../../../context/useAuth';
 import { getApiErrorMessage } from '../../../services/api';
 import { createAdminId, useAdminData } from '../../../services/adminData';
 import { deleteSupplierProduct, fetchSupplierWorkspace, subscribeSupplierWorkspaceChange } from '../../../services/supplier';
@@ -16,6 +17,7 @@ function getProductImage(product) {
 }
 
 export default function Produits() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [adminData, setAdminData] = useAdminData();
@@ -23,6 +25,14 @@ export default function Produits() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [deletingProductId, setDeletingProductId] = useState('');
+  const savedSupplierSettings = adminData.supplierSettings || {};
+  const shopName = savedSupplierSettings.shopProfile?.name
+    || user?.shopName
+    || user?.companyName
+    || user?.storeLabel
+    || user?.name
+    || user?.email
+    || '';
 
   function loadProducts() {
     let cancelled = false;
@@ -89,12 +99,12 @@ export default function Produits() {
         category: product.category,
         room: product.room,
         range: product.range,
-        supplier: 'Ma boutique',
+        supplier: product.supplierName || product.supplierLabel || product.supplier || shopName,
         vat: '20%',
         visual: 'sofa',
-        city: 'Cotonou',
-        neighborhood: '',
-        availability: product.availability || 'Disponible',
+        city: product.city || '',
+        neighborhood: product.neighborhood || '',
+        availability: product.availability || '',
         publicationStatus: 'En attente',
         publicationSource: 'supplier',
         submittedAt: existingProduct?.submittedAt || new Date().toISOString(),

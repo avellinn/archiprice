@@ -4,9 +4,11 @@ import { setUnauthorizedHandler } from '../services/api';
 import {
   fetchMe,
   getStoredToken,
+  changePassword as changePasswordRequest,
   login as loginRequest,
   register as registerRequest,
   setStoredToken,
+  updateMe as updateMeRequest,
 } from '../services/auth';
 import { getRandomAvatarColor } from '../utils/userDisplay';
 
@@ -114,6 +116,24 @@ export function AuthProvider({ children }) {
     [applySession],
   );
 
+  const updateProfile = useCallback(
+    async (payload) => {
+      const userData = await updateMeRequest(payload);
+      setUser((currentUser) => withSessionAvatarColor({
+        ...(currentUser || {}),
+        ...userData,
+        avatarColor: currentUser?.avatarColor,
+      }));
+      return userData;
+    },
+    [],
+  );
+
+  const changePassword = useCallback(
+    async (payload) => changePasswordRequest(payload),
+    [],
+  );
+
   const logout = useCallback(() => {
     clearSession();
   }, [clearSession]);
@@ -125,9 +145,11 @@ export function AuthProvider({ children }) {
       isAuthenticated: Boolean(user),
       login,
       register,
+      updateProfile,
+      changePassword,
       logout,
     }),
-    [user, loading, login, register, logout],
+    [user, loading, login, register, updateProfile, changePassword, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,8 +1,9 @@
 import './Parametres.css';
 import { useMemo, useState } from 'react';
-import { Icon } from '../../../components/ui';
-import { SupplierLocationModal, SupplierPolicyModal, SupplierShopModal } from '../../../components/ui/modals';
+import { Alert, Icon } from '../../../components/ui';
+import { PasswordSettingsModal, SupplierLocationModal, SupplierPolicyModal, SupplierShopModal } from '../../../components/ui/modals';
 import useAuth from '../../../context/useAuth';
+import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
 import { notifySupplierWorkspaceChange, updateSupplierProfile } from '../../../services/supplier';
 import { getSupplierTranslations, SUPPLIER_LANGUAGE_LABELS } from '../../../utils/supplierLanguage';
@@ -13,21 +14,6 @@ const TIMEZONES = [
   '(GMT +02:00) Afrique australe',
 ];
 const LANGUAGES = Object.values(SUPPLIER_LANGUAGE_LABELS);
-const FALLBACK_CITY_OPTIONS = ['Cotonou', 'Abomey - calavi', 'Porto-novo'];
-const FALLBACK_NEIGHBORHOOD_OPTIONS = [
-  'Fidjrossè',
-  'Akpakpa',
-  'Ganhi',
-  'Zongo',
-  'Godomey',
-  'akassato',
-  'Glo-Djigbé',
-  'Zinvié',
-  'Tokpota',
-  'Ouando',
-  'Dowa',
-  'Hounli',
-];
 
 function getUniqueValues(values) {
   return [...new Set(values.map((value) => String(value || '').trim()).filter(Boolean))];
@@ -48,36 +34,37 @@ function normalizeSupplierForWorkspace(supplier) {
 }
 
 export default function Parametres() {
-  const { user } = useAuth();
+  const { user, updateProfile: updateAccountProfile, changePassword } = useAuth();
   const [adminData, updateAdminData] = useAdminData();
   const savedSupplierSettings = adminData.supplierSettings || {};
   const [shopProfile, setShopProfile] = useState({
-    name: savedSupplierSettings.shopProfile?.name || user?.shopName || user?.companyName || user?.name || 'arcpri',
-    email: savedSupplierSettings.shopProfile?.email || user?.email || 'hospiceavell@gmail.com',
-    phone: savedSupplierSettings.shopProfile?.phone || user?.phone || 'Aucun numéro de téléphone',
+    name: savedSupplierSettings.shopProfile?.name || user?.shopName || user?.companyName || user?.name || '',
+    email: savedSupplierSettings.shopProfile?.email || user?.email || '',
+    phone: savedSupplierSettings.shopProfile?.phone || user?.phone || '',
   });
   const [settings, setSettings] = useState({
     location: savedSupplierSettings.settings?.location || 'Bénin',
     companyName: savedSupplierSettings.settings?.companyName || '',
     address: savedSupplierSettings.settings?.address || '',
     neighborhood: savedSupplierSettings.settings?.neighborhood || '',
-    city: savedSupplierSettings.settings?.city || FALLBACK_CITY_OPTIONS[0],
+    city: savedSupplierSettings.settings?.city || '',
     timezone: savedSupplierSettings.settings?.timezone || '(GMT +01:00) Afrique centrale et de l’Ouest',
     language: savedSupplierSettings.settings?.language || 'Français',
   });
   const [activeModal, setActiveModal] = useState(null);
+  const [settingsAlert, setSettingsAlert] = useState(null);
   const supplierText = getSupplierTranslations(settings.language);
 
   const cityOptions = useMemo(() => getUniqueValues([
-    ...FALLBACK_CITY_OPTIONS,
+    ...(adminData.taxonomies?.cities || []).map((item) => item.name),
     ...(adminData.regionalCoefficients || []).map((item) => item.city),
     ...(adminData.products || []).map((product) => product.city),
-  ]), [adminData.products, adminData.regionalCoefficients]);
+  ]), [adminData.products, adminData.regionalCoefficients, adminData.taxonomies?.cities]);
 
   const neighborhoodOptions = useMemo(() => getUniqueValues([
-    ...FALLBACK_NEIGHBORHOOD_OPTIONS,
+    ...(adminData.taxonomies?.neighborhoods || []).map((item) => item.name),
     ...(adminData.products || []).map((product) => product.neighborhood),
-  ]), [adminData.products]);
+  ]), [adminData.products, adminData.taxonomies?.neighborhoods]);
 
   function updateShopProfile(field, value) {
     setShopProfile((currentProfile) => ({
@@ -108,7 +95,7 @@ export default function Parametres() {
       name: nextShopProfile.name,
       companyName: nextShopProfile.name,
       email: nextShopProfile.email,
-      phone: nextShopProfile.phone === 'Aucun numéro de téléphone' ? '' : nextShopProfile.phone,
+      phone: nextShopProfile.phone,
       contact: nextShopProfile.email,
       region: nextSettings.city || nextSettings.location,
     })
@@ -141,6 +128,17 @@ export default function Parametres() {
       .catch(() => {
         // Le profil local reste à jour; la prochaine sauvegarde retentera la synchronisation Mongo.
       });
+
+    updateAccountProfile({
+      name: nextShopProfile.name,
+      email: nextShopProfile.email,
+      phone: nextShopProfile.phone,
+    }).catch((apiError) => {
+      setSettingsAlert({
+        variant: 'danger',
+        message: getApiErrorMessage(apiError, 'La boutique est enregistrée localement, mais le profil utilisateur n’a pas pu être synchronisé.'),
+      });
+    });
 
     notifySupplierWorkspaceChange({ action: 'update-supplier-settings' });
   }
@@ -175,6 +173,11 @@ export default function Parametres() {
 
       <section className="supplier-settings-card">
         <h2>{supplierText.settings.section}</h2>
+        {settingsAlert && (
+          <Alert variant={settingsAlert.variant} onClose={() => setSettingsAlert(null)}>
+            {settingsAlert.message}
+          </Alert>
+        )}
 
         <div className="supplier-settings-list supplier-settings-list--clickable">
           <button type="button" className="supplier-settings-row-button" onClick={() => setActiveModal('shop')}>
@@ -229,6 +232,15 @@ export default function Parametres() {
             </div>
             <Icon name="ChevronRight" size="sm" />
           </button>
+
+          <button type="button" className="supplier-settings-row-button" onClick={() => setActiveModal('password')}>
+            <Icon name="Visibility" size="sm" />
+            <div>
+              <strong>Mot de passe</strong>
+              <span>Modifier le mot de passe de connexion</span>
+            </div>
+            <Icon name="ChevronRight" size="sm" />
+          </button>
         </div>
       </section>
 
@@ -253,6 +265,16 @@ export default function Parametres() {
           onChange={updateSetting}
           onClose={closeModal}
           onSave={saveSupplierSettings}
+        />
+      )}
+
+      {activeModal === 'password' && (
+        <PasswordSettingsModal
+          onClose={closeModal}
+          onSubmit={async (payload) => {
+            await changePassword(payload);
+            setSettingsAlert({ variant: 'success', message: 'Mot de passe mis à jour.' });
+          }}
         />
       )}
     </div>

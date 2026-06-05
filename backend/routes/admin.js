@@ -86,7 +86,7 @@ function formatAdminSupplier(supplier, productCount) {
     email: plain.email || user?.email || '',
     contact: plain.contact || plain.email || user?.email || '',
     phone: plain.phone || user?.phone || '',
-    region: plain.region || 'Cotonou',
+    region: plain.region || '',
     status: plain.status || 'Actif',
     products: productCount ?? plain.products ?? 0,
   };

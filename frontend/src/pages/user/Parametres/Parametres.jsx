@@ -1,8 +1,10 @@
 import './Parametres.css';
 import { useRef, useMemo, useState } from 'react';
 import Avatar from '../../../components/Avatar';
-import { Button, Icon } from '../../../components/ui';
+import { Alert, Button, Icon } from '../../../components/ui';
+import { PasswordSettingsModal } from '../../../components/ui/modals';
 import useAuth from '../../../context/useAuth';
+import { getApiErrorMessage } from '../../../services/api';
 import { getUserTranslations, USER_LANGUAGE_LABELS } from '../../../utils/userLanguage';
 import { getAvatarColor, getDisplayName, getRandomAvatarColor, getUserInitials } from '../../../utils/userDisplay';
 
@@ -29,7 +31,7 @@ function writeStoredProfile(profile) {
 }
 
 export default function Parametres() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateProfile: updateAccountProfile, changePassword } = useAuth();
   const fileInputRef = useRef(null);
   const storedProfile = useMemo(() => readStoredProfile(), []);
   const [profile, setProfile] = useState({
@@ -45,6 +47,8 @@ export default function Parametres() {
   const [removedAvatarColor, setRemovedAvatarColor] = useState(() => getRandomAvatarColor(getAvatarColor(user)));
   const [editingField, setEditingField] = useState(null);
   const [editDraft, setEditDraft] = useState('');
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [profileAlert, setProfileAlert] = useState(null);
   const profileText = getUserTranslations(profile.language).profile;
 
   const avatarInitials = getUserInitials({ ...user, name: profile.name }).toUpperCase();
@@ -60,6 +64,16 @@ export default function Parametres() {
     writeStoredProfile(nextProfile);
   }
 
+  function applyOfficialProfile(updatedUser) {
+    const nextProfile = {
+      ...profile,
+      name: updatedUser.name || profile.name,
+      email: updatedUser.email || profile.email,
+    };
+    setProfile(nextProfile);
+    writeStoredProfile(nextProfile);
+  }
+
   function openEditModal(field, label) {
     setEditingField({ field, label });
     setEditDraft(profile[field] || '');
@@ -70,15 +84,24 @@ export default function Parametres() {
     setEditDraft('');
   }
 
-  function saveEditModal(event) {
+  async function saveEditModal(event) {
     event.preventDefault();
     if (!editingField) return;
 
     const nextValue = editDraft.trim();
     if (!nextValue) return;
 
-    updateProfile(editingField.field, nextValue);
-    closeEditModal();
+    try {
+      const updatedUser = await updateAccountProfile({ [editingField.field]: nextValue });
+      applyOfficialProfile(updatedUser);
+      setProfileAlert({ variant: 'success', message: 'Profil mis à jour.' });
+      closeEditModal();
+    } catch (apiError) {
+      setProfileAlert({
+        variant: 'danger',
+        message: getApiErrorMessage(apiError, 'Impossible de mettre à jour le profil.'),
+      });
+    }
   }
 
   function handlePhotoUpload(event) {
@@ -103,6 +126,11 @@ export default function Parametres() {
     <main className="user-profile-page">
       <section className="user-profile-panel" aria-label="Votre profil">
         <h1>{profileText.title}</h1>
+        {profileAlert && (
+          <Alert variant={profileAlert.variant} onClose={() => setProfileAlert(null)}>
+            {profileAlert.message}
+          </Alert>
+        )}
 
         <div className="user-profile-row user-profile-row--photo">
           <div className="user-profile-row__content">
@@ -197,6 +225,22 @@ export default function Parametres() {
           </select>
         </label>
 
+        <div className="user-profile-row">
+          <div className="user-profile-row__content">
+            <strong>Mot de passe</strong>
+            <span>Modifier le mot de passe de connexion</span>
+          </div>
+          <button
+            type="button"
+            className="user-profile-mini-button"
+            aria-label="Modifier le mot de passe"
+            title="Modifier le mot de passe"
+            onClick={() => setIsPasswordModalOpen(true)}
+          >
+            <Icon name="Edit" size="sm" />
+          </button>
+        </div>
+
         <section className="user-profile-social" aria-label="Comptes de réseaux sociaux associés">
           <h2>{profileText.socialTitle}</h2>
           <p>{profileText.socialDescription}</p>
@@ -246,6 +290,16 @@ export default function Parametres() {
             </footer>
           </form>
         </div>
+      )}
+
+      {isPasswordModalOpen && (
+        <PasswordSettingsModal
+          onClose={() => setIsPasswordModalOpen(false)}
+          onSubmit={async (payload) => {
+            await changePassword(payload);
+            setProfileAlert({ variant: 'success', message: 'Mot de passe mis à jour.' });
+          }}
+        />
       )}
     </main>
   );

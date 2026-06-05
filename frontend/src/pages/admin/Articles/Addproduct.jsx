@@ -32,9 +32,14 @@ export default function Addproduct({
   function renderOptions(options, currentValue) {
     const normalizedOptions = [...new Set([currentValue, ...options].filter(Boolean))];
 
-    return normalizedOptions.map((option) => (
-      <option key={option} value={option}>{option}</option>
-    ));
+    return (
+      <>
+        <option value="" disabled>À configurer</option>
+        {normalizedOptions.map((option) => (
+          <option key={option} value={option}>{option}</option>
+        ))}
+      </>
+    );
   }
 
   return (

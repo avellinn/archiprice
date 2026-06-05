@@ -14,6 +14,8 @@ function formatUser(user) {
   return {
     id: user._id,
     name: user.name,
+    firstName: user.firstName || '',
+    lastName: user.lastName || '',
     email: user.email,
     role: user.role,
     type: user.type,
@@ -131,6 +133,96 @@ async function register(req, res) {
   sendAuthResponse(res, user, 201);
 }
 
+async function updateMe(req, res) {
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    return res.status(404).json({ error: 'Utilisateur introuvable' });
+  }
+
+  const nextEmail = req.body.email !== undefined
+    ? String(req.body.email || '').toLowerCase().trim()
+    : user.email;
+  const nextName = req.body.name !== undefined
+    ? String(req.body.name || '').trim()
+    : user.name;
+
+  if (!nextEmail) {
+    return res.status(400).json({ error: 'Email requis' });
+  }
+
+  if (nextEmail !== user.email) {
+    const existingUser = await User.findOne({ email: nextEmail, _id: { $ne: user._id } });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Un compte existe déjà avec cet email' });
+    }
+  }
+
+  user.name = nextName || user.name;
+  user.email = nextEmail;
+  if (req.body.phone !== undefined) user.phone = String(req.body.phone || '').trim();
+  if (req.body.firstName !== undefined) user.firstName = String(req.body.firstName || '').trim();
+  if (req.body.lastName !== undefined) user.lastName = String(req.body.lastName || '').trim();
+  await user.save();
+
+  if (user.role === 'supplier') {
+    const supplier = await Supplier.findOne({
+      $or: [
+        { user: user._id },
+        { email: user.email },
+      ],
+    });
+
+    if (supplier) {
+      supplier.user = supplier.user || user._id;
+      supplier.email = user.email;
+      supplier.phone = user.phone || supplier.phone;
+      supplier.contact = user.phone || user.email;
+      if (user.name) {
+        supplier.name = supplier.name || user.name;
+        supplier.companyName = supplier.companyName || user.name;
+      }
+      await supplier.save();
+    }
+  }
+
+  publishCrudEvent('users', 'updated', { userId: String(user._id), role: user.role }, {
+    roles: ['admin'],
+    userIds: [user._id],
+  });
+
+  return res.json({ user: formatUser(user) });
+}
+
+async function changePassword(req, res) {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'Mot de passe actuel et nouveau mot de passe requis' });
+  }
+
+  if (String(newPassword).length < 6) {
+    return res.status(400).json({ error: 'Le nouveau mot de passe doit contenir au moins 6 caractères' });
+  }
+
+  const user = await User.findById(req.user._id).select('+password');
+  if (!user) {
+    return res.status(404).json({ error: 'Utilisateur introuvable' });
+  }
+
+  if (!(await user.matchPassword(currentPassword))) {
+    return res.status(401).json({ error: 'Mot de passe actuel incorrect' });
+  }
+
+  user.password = newPassword;
+  await user.save();
+
+  publishCrudEvent('users', 'password-updated', { userId: String(user._id), role: user.role }, {
+    userIds: [user._id],
+  });
+
+  return res.json({ message: 'Mot de passe mis à jour' });
+}
+
 async function login(req, res) {
   const { email, password } = req.body;
 
@@ -164,4 +256,4 @@ async function getMe(req, res) {
   res.json({ user: formatUser(req.user) });
 }
 
-export { register, login, getMe };
+export { register, login, getMe, updateMe, changePassword };

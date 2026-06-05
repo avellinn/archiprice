@@ -23,7 +23,7 @@ const INITIAL_PRODUCT_FORM = {
   availability: '',
   type: '',
   range: '',
-  supplier: 'Ma boutique',
+  supplier: '',
   city: '',
   neighborhood: '',
   collections: '',
@@ -85,8 +85,9 @@ export default function AjouterProduit() {
     || user?.companyName
     || user?.storeLabel
     || user?.name
-    || 'Ma boutique';
-  const effectiveSupplierName = productForm.supplier && productForm.supplier !== 'Ma boutique'
+    || user?.email
+    || '';
+  const effectiveSupplierName = productForm.supplier && productForm.supplier !== shopName
     ? productForm.supplier
     : shopName;
 
@@ -146,7 +147,7 @@ export default function AjouterProduit() {
           availability: product.availability || '',
           type: product.room || '',
           range: product.range || '',
-          supplier: product.supplierName || product.supplierLabel || product.supplier || shopName,
+        supplier: product.supplierName || product.supplierLabel || product.supplier || shopName,
           city: product.city || '',
           neighborhood: product.neighborhood || '',
         });
@@ -309,9 +310,9 @@ export default function AjouterProduit() {
         supplier: effectiveSupplierName,
         vat: '20%',
         visual: 'sofa',
-        city: selectedCity || taxonomyOptions.cities[0] || 'Cotonou',
+        city: selectedCity,
         neighborhood: selectedNeighborhood,
-        availability: product.availability || 'Disponible',
+        availability: product.availability || selectedAvailability,
         publicationStatus: 'En attente',
         publicationSource: 'supplier',
         submittedAt: new Date().toISOString(),
@@ -567,7 +568,8 @@ export default function AjouterProduit() {
             <label className="supplier-product-field">
               <span>{productText.supplier}</span>
               <select required value={effectiveSupplierName} onChange={(event) => updateProductForm('supplier', event.target.value)}>
-                <option value={shopName}>{shopName}</option>
+                <option value="" disabled>Configurer le nom de boutique</option>
+                {shopName && <option value={shopName}>{shopName}</option>}
               </select>
             </label>
             <label className="supplier-product-field">

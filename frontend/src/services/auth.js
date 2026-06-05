@@ -43,3 +43,13 @@ export async function fetchMe() {
   const { data } = await api.get(API_ROUTES.auth.me);
   return data.user;
 }
+
+export async function updateMe(payload) {
+  const { data } = await api.patch(API_ROUTES.auth.updateMe, payload);
+  return data.user;
+}
+
+export async function changePassword(payload) {
+  const { data } = await api.patch(API_ROUTES.auth.changePassword, payload);
+  return data;
+}

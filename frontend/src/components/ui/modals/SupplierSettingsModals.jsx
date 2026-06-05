@@ -169,7 +169,7 @@ export function SupplierShopModal({ shopProfile, onChange, onClose, onSave }) {
           </label>
           <label>
             <span>Téléphone de la boutique</span>
-            <input value={shopProfile.phone === 'Aucun numéro de téléphone' ? '' : shopProfile.phone} onChange={(event) => onChange('phone', event.target.value || 'Aucun numéro de téléphone')} />
+            <input value={shopProfile.phone || ''} onChange={(event) => onChange('phone', event.target.value)} />
           </label>
         </div>
 

@@ -19,7 +19,7 @@ const EMPTY_SUPPLIER = {
   contact: '',
   email: '',
   phone: '',
-  region: 'Cotonou',
+  region: '',
   status: 'Actif',
   products: 0,
 };
@@ -114,7 +114,7 @@ export default function Fournisseurs() {
     contact: editForm.email || '',
     email: editForm.email || '',
     phone: editForm.phone || '',
-    region: editForm.region || 'Cotonou',
+    region: editForm.region || '',
     status: editForm.status || 'Actif',
   } : selectedSupplier;
 
@@ -223,7 +223,7 @@ export default function Fournisseurs() {
       name: '',
       email: '',
       phone: '',
-      region: 'Cotonou',
+      region: '',
       status: 'Actif',
     });
   }
@@ -259,7 +259,7 @@ export default function Fournisseurs() {
         contact: email || undefined,
         email: email || undefined,
         phone: editForm.phone.trim(),
-        region: editForm.region.trim() || 'Cotonou',
+        region: editForm.region.trim(),
         status: editForm.status,
         products: 0,
       });

@@ -152,8 +152,14 @@
 }
 
 .home-role-login a {
-  color: #3044ff;
-  font-weight: 900;
+  color: #747478;
+  font-weight: 800;
+}
+
+.home-role-login a:hover {
+  color: #224b73;        
+  text-decoration: underline; 
+  cursor: pointer;       
 }
 
 @media (max-width: 620px) {

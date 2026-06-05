@@ -453,6 +453,36 @@ La sélection est limitée à 12 fichiers par import côté frontend. Les fichie
 6. `AuthContext` conserve l'utilisateur courant.
 7. Le frontend redirige selon le rôle.
 
+### Seed Super Admin
+
+Au premier démarrage du backend avec MongoDB connecté, le serveur exécute `backend/seeds/superAdmin.js`.
+
+Objectif :
+
+- éviter une plateforme sans accès admin quand la collection `users` est vide ;
+- créer un compte administrateur initial configurable par variables d'environnement.
+
+Variables :
+
+```env
+SUPER_ADMIN_EMAIL=admin@archiprice.com
+SUPER_ADMIN_PASSWORD=Admin123!
+SUPER_ADMIN_FIRSTNAME=Super
+SUPER_ADMIN_LASTNAME=Admin
+```
+
+Implémentation actuelle :
+
+- le compte est créé avec `role: "admin"` pour rester compatible avec les guards admin existants ;
+- le champ `type` vaut `"Super Admin"` ;
+- le statut vaut `"Actif"` ;
+- le mot de passe est hashé par le hook Mongoose du modèle `User`.
+
+Le seed est idempotent :
+
+- si un utilisateur `role: "admin"` existe déjà, aucun compte n'est recréé ;
+- si MongoDB n'est pas connecté, le seed est ignoré.
+
 ### Inscription Supplier
 
 1. Le visiteur choisit le type fournisseur.
@@ -862,4 +892,3 @@ MongoDB doit retourner un état connecté.
 - Ne pas ajouter de rôle sans mettre à jour backend, frontend, guards, docs et permissions.
 - Ne pas casser le canal temps réel : toute mutation partagée doit publier un événement.
 - Préserver les données utilisateur et fournisseur lors des actions de blocage/masquage.
-

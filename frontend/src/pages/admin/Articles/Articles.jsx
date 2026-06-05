@@ -17,30 +17,14 @@ const EMPTY_PRODUCT_FORM = {
   description: '',
   price: '',
   vat: '20%',
-  category: 'Mobilier',
-  room: 'Salon',
-  range: 'Confort',
-  supplier: 'Meubles Plus',
-  availability: 'Disponible',
-  city: 'Cotonou',
-  neighborhood: 'Fidjrossè',
+  category: '',
+  room: '',
+  range: '',
+  supplier: '',
+  availability: '',
+  city: '',
+  neighborhood: '',
 };
-
-const CITY_OPTIONS = ['Cotonou', 'Abomey - calavi', 'Porto-novo'];
-const NEIGHBORHOOD_OPTIONS = [
-  'Fidjrossè',
-  'Akpakpa',
-  'Ganhi',
-  'Zongo',
-  'Godomey',
-  'akassato',
-  'Glo-Djigbé',
-  'Zinvié',
-  'Tokpota',
-  'Ouando',
-  'Dowa',
-  'Hounli',
-];
 const CUSTOM_NEIGHBORHOOD_VALUE = '__custom_neighborhood__';
 const MAX_PRODUCT_IMAGE_COUNT = MAX_FILES_PER_UPLOAD;
 
@@ -74,7 +58,7 @@ function getAvailabilityTone(value) {
   return 'success';
 }
 
-function getNeighborhoodSelectValue(neighborhood, options = NEIGHBORHOOD_OPTIONS) {
+function getNeighborhoodSelectValue(neighborhood, options = []) {
   return options.includes(neighborhood) ? neighborhood : CUSTOM_NEIGHBORHOOD_VALUE;
 }
 
@@ -142,9 +126,9 @@ export default function Articles() {
     ...adminData.suppliers.map((supplier) => supplier.name),
     ...products.map((product) => product.supplier),
   ]);
-  const cityOptions = taxonomyOptions.city.length > 0 ? taxonomyOptions.city : CITY_OPTIONS;
+  const cityOptions = taxonomyOptions.city;
   const neighborhoodOptions = getUniqueValues([
-    ...(taxonomyOptions.neighborhood.length > 0 ? taxonomyOptions.neighborhood : NEIGHBORHOOD_OPTIONS),
+    ...taxonomyOptions.neighborhood,
     ...products.map((product) => product.neighborhood),
   ]);
   const filters = [
@@ -187,7 +171,7 @@ export default function Articles() {
       range: product.range || taxonomyOptions.range[0] || EMPTY_PRODUCT_FORM.range,
       supplier: product.supplier || supplierOptions[0] || EMPTY_PRODUCT_FORM.supplier,
       availability: product.availability || taxonomyOptions.availability[0] || EMPTY_PRODUCT_FORM.availability,
-      city: cityOptions.includes(product.city) ? product.city : cityOptions[0],
+      city: cityOptions.includes(product.city) ? product.city : cityOptions[0] || EMPTY_PRODUCT_FORM.city,
       neighborhood: product.neighborhood || EMPTY_PRODUCT_FORM.neighborhood,
     });
     setImageUploadError('');

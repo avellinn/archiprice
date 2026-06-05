@@ -1,6 +1,6 @@
 {
-  "__version": 511,
-  "__updatedAt": 1780602972424,
+  "__version": 526,
+  "__updatedAt": 1780671523098,
   "users": [
     {
       "id": "6a102521e9a37f1239d69fc8",
@@ -45,40 +45,7 @@
       "updatedAt": "2026-06-04T14:24:44.174Z"
     }
   ],
-  "products": [
-    {
-      "id": "prod-1780602339861-6c3bf4",
-      "visual": "sofa",
-      "image": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kbziwhsgzfqs1s7evldy?_a=BAMAPqhK0",
-      "images": [
-        {
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kbziwhsgzfqs1s7evldy?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/kbziwhsgzfqs1s7evldy",
-          "metadata": {
-            "originalName": "pexels-pok-rie-1603821.jpg",
-            "mimeType": "image/jpeg",
-            "bytes": 2746439,
-            "width": 3616,
-            "height": 2598,
-            "format": "jpg",
-            "provider": "cloudinary",
-            "folder": "archiprice/products"
-          }
-        }
-      ],
-      "name": "dehjd",
-      "description": "iibiz",
-      "price": "500 FCFA",
-      "vat": "5%",
-      "category": "Mobilier",
-      "room": "Salon",
-      "range": "Confort",
-      "supplier": "Miione",
-      "availability": "Disponible",
-      "city": "Cotonou",
-      "neighborhood": "Fidjrossè"
-    }
-  ],
+  "products": [],
   "suppliers": [
     {
       "id": "6a218aac3836162a85468e69",
@@ -95,115 +62,6 @@
     }
   ],
   "supplierClientNotifications": [
-    {
-      "id": "supplier-client-6a204cd5ec86c80211763cb4-6a2063890914362592ebe587-1780511860191",
-      "supplierId": "6a204cd5ec86c80211763cb4",
-      "supplierName": "Mior",
-      "supplierContact": "avellinadjai@gmail.com",
-      "clientId": "6a2063890914362592ebe587",
-      "clientName": "test@gmail.com",
-      "clientProfession": "Architecte",
-      "clientEmail": "test@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a2068c10914362592ebe588",
-      "projectName": "Projet catalogue 03/06/2026",
-      "simulationTotal": 2552000,
-      "simulationTotalLabel": "2 552 000 FCFA",
-      "articleCount": 1,
-      "categories": [
-        "Luminaire"
-      ],
-      "articleImages": [
-        {
-          "name": "gjvh",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/pjyp1flmqq3x2ripsm3v?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/pjyp1flmqq3x2ripsm3v"
-        }
-      ],
-      "selectedArticles": [
-        {
-          "id": "6a2068c20914362592ebe589",
-          "name": "gjvh",
-          "category": "Luminaire",
-          "unitPrice": 2552000,
-          "images": [
-            {
-              "name": "gjvh",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/pjyp1flmqq3x2ripsm3v?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/pjyp1flmqq3x2ripsm3v"
-            }
-          ]
-        }
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-03T18:37:40.191Z"
-    },
-    {
-      "id": "supplier-client-Ma boutique-6a1d8556f44246ee96fd3f50-1780505322536",
-      "supplierId": "",
-      "supplierName": "Ma boutique",
-      "supplierContact": "",
-      "clientId": "6a1d8556f44246ee96fd3f50",
-      "clientName": "test@gmail.com",
-      "clientProfession": "Architecte",
-      "clientEmail": "test@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a205ab2ec86c80211763cb8",
-      "projectName": "Projet catalogue 03/06/2026",
-      "simulationTotal": 69602100876,
-      "simulationTotalLabel": "69 602 100 876 FCFA",
-      "articleCount": 3,
-      "categories": [
-        "Revêtement",
-        "Luminaire"
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-03T16:48:42.536Z"
-    },
-    {
-      "id": "supplier-client-Ma boutique-6a1d8556f44246ee96fd3f50-1780505313268",
-      "supplierId": "",
-      "supplierName": "Ma boutique",
-      "supplierContact": "",
-      "clientId": "6a1d8556f44246ee96fd3f50",
-      "clientName": "test@gmail.com",
-      "clientProfession": "Architecte",
-      "clientEmail": "test@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a205ab2ec86c80211763cb8",
-      "projectName": "Projet catalogue 03/06/2026",
-      "simulationTotal": 69602100876,
-      "simulationTotalLabel": "69 602 100 876 FCFA",
-      "articleCount": 3,
-      "categories": [
-        "Revêtement",
-        "Luminaire"
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-03T16:48:33.268Z"
-    },
-    {
-      "id": "supplier-client-Ma boutique-6a1d8556f44246ee96fd3f50-1780505301189",
-      "supplierId": "",
-      "supplierName": "Ma boutique",
-      "supplierContact": "",
-      "clientId": "6a1d8556f44246ee96fd3f50",
-      "clientName": "test@gmail.com",
-      "clientProfession": "Architecte",
-      "clientEmail": "test@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a205ab2ec86c80211763cb8",
-      "projectName": "Projet catalogue 03/06/2026",
-      "simulationTotal": 69602100876,
-      "simulationTotalLabel": "69 602 100 876 FCFA",
-      "articleCount": 3,
-      "categories": [
-        "Revêtement",
-        "Luminaire"
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-03T16:48:21.189Z"
-    },
     {
       "id": "supplier-client-Lookable-6a1d8556f44246ee96fd3f50-1780505298454",
       "supplierId": "",
@@ -247,90 +105,6 @@
       ],
       "status": "Nouveau",
       "createdAt": "2026-06-03T16:48:15.593Z"
-    },
-    {
-      "id": "supplier-client-Ma boutique-6a1d8556f44246ee96fd3f50-1780499001919",
-      "supplierId": "",
-      "supplierName": "Ma boutique",
-      "supplierContact": "",
-      "clientId": "6a1d8556f44246ee96fd3f50",
-      "clientName": "test@gmail.com",
-      "clientProfession": "Architecte",
-      "clientEmail": "test@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a20200839c923b5e93a1782",
-      "projectName": "Projet catalogue 03/06/2026",
-      "simulationTotal": 69593040000,
-      "simulationTotalLabel": "69 593 040 000 FCFA",
-      "articleCount": 1,
-      "categories": [
-        "Revêtement"
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-03T15:03:21.919Z"
-    },
-    {
-      "id": "supplier-client-Ma boutique-6a1d8556f44246ee96fd3f50-1780496844516",
-      "supplierId": "",
-      "supplierName": "Ma boutique",
-      "supplierContact": "",
-      "clientId": "6a1d8556f44246ee96fd3f50",
-      "clientName": "test@gmail.com",
-      "clientProfession": "Architecte",
-      "clientEmail": "test@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a201bc339c923b5e93a1780",
-      "projectName": "Projet catalogue 03/06/2026",
-      "simulationTotal": 2552000,
-      "simulationTotalLabel": "2 552 000 FCFA",
-      "articleCount": 1,
-      "categories": [
-        "Luminaire"
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-03T14:27:24.516Z"
-    },
-    {
-      "id": "supplier-client-Ma boutique-6a1d8556f44246ee96fd3f50-1780496838503",
-      "supplierId": "",
-      "supplierName": "Ma boutique",
-      "supplierContact": "",
-      "clientId": "6a1d8556f44246ee96fd3f50",
-      "clientName": "test@gmail.com",
-      "clientProfession": "Architecte",
-      "clientEmail": "test@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a201bc339c923b5e93a1780",
-      "projectName": "Projet catalogue 03/06/2026",
-      "simulationTotal": 2552000,
-      "simulationTotalLabel": "2 552 000 FCFA",
-      "articleCount": 1,
-      "categories": [
-        "Luminaire"
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-03T14:27:18.503Z"
-    },
-    {
-      "id": "supplier-client-Ma boutique-6a1d8556f44246ee96fd3f50-1780496836212",
-      "supplierId": "",
-      "supplierName": "Ma boutique",
-      "supplierContact": "",
-      "clientId": "6a1d8556f44246ee96fd3f50",
-      "clientName": "test@gmail.com",
-      "clientProfession": "Architecte",
-      "clientEmail": "test@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a201bc339c923b5e93a1780",
-      "projectName": "Projet catalogue 03/06/2026",
-      "simulationTotal": 2552000,
-      "simulationTotalLabel": "2 552 000 FCFA",
-      "articleCount": 1,
-      "categories": [
-        "Luminaire"
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-03T14:27:16.212Z"
     }
   ],
   "taxonomies": {
@@ -377,136 +151,39 @@
       }
     ]
   },
-  "simulations": [
-    {
-      "id": "sim-1",
-      "user": "Jean Dupont",
-      "email": "jean.dupont@mail.com",
-      "date": "12/05/2024 14:30",
-      "total": "12 450,00 €",
-      "products": 28,
-      "status": "Succès",
-      "city": "Cotonou",
-      "coefficient": "1,00",
-      "avatar": "JD"
-    },
-    {
-      "id": "sim-2",
-      "user": "Sophia Martin",
-      "email": "sophia.martin@mail.com",
-      "date": "11/05/2024 10:12",
-      "total": "8 920,00 €",
-      "products": 16,
-      "status": "Succès",
-      "city": "Abidjan",
-      "coefficient": "1,08",
-      "avatar": "SM"
-    },
-    {
-      "id": "sim-3",
-      "user": "Agence Créa",
-      "email": "contact@agencenova.bj",
-      "date": "10/05/2024 16:45",
-      "total": "21 350,00 €",
-      "products": 42,
-      "status": "Succès",
-      "city": "Cotonou",
-      "coefficient": "1,00",
-      "avatar": "AC"
-    },
-    {
-      "id": "sim-4",
-      "user": "Jean Dupont",
-      "email": "jean.dupont@mail.com",
-      "date": "09/05/2024 09:15",
-      "total": "-",
-      "products": "-",
-      "status": "Échec",
-      "city": "Cotonou",
-      "coefficient": "1,00",
-      "avatar": "JD"
-    },
-    {
-      "id": "sim-5",
-      "user": "Marc Koffi",
-      "email": "marc.koffi@mail.com",
-      "date": "08/05/2024 11:00",
-      "total": "6 230,00 €",
-      "products": 12,
-      "status": "Succès",
-      "city": "Parakou",
-      "coefficient": "0,96",
-      "avatar": "MK"
-    }
-  ],
+  "simulations": [],
   "supportItems": [
     {
       "tab": "feedback",
       "subject": "Feedback boutique Miione",
-      "user": "Lookthis",
-      "userId": "6a218a723836162a85468e67",
+      "user": "june",
+      "userId": "6a22d7d6d1172c55fd37d089",
       "sourceRole": "supplier",
-      "email": "avellinadjai@gmail.com",
+      "email": "june@gmail.com",
       "status": "Ouvert",
       "type": "Feedback",
-      "date": "04/06/2026",
-      "description": "Hello",
+      "date": "05/06/2026",
+      "description": "okay",
       "reply": "",
-      "createdAt": "2026-06-04T19:08:45.113Z",
-      "updatedAt": "2026-06-04T19:08:45.113Z",
-      "id": "6a21cd3d89e2f1b1d8ed5c1f"
+      "createdAt": "2026-06-05T14:49:33.747Z",
+      "updatedAt": "2026-06-05T14:49:33.747Z",
+      "id": "6a22e1fd89e48169c10b1c8b"
     },
     {
       "tab": "feedback",
       "subject": "Feedback boutique Miione",
-      "user": "Lookthis",
-      "userId": "6a218a723836162a85468e67",
+      "user": "june",
+      "userId": "6a22d7d6d1172c55fd37d089",
       "sourceRole": "supplier",
-      "email": "avellinadjai@gmail.com",
+      "email": "june@gmail.com",
       "status": "Ouvert",
       "type": "Feedback",
-      "date": "04/06/2026",
-      "description": "Hello",
+      "date": "05/06/2026",
+      "description": "okay",
       "reply": "",
-      "createdAt": "2026-06-04T19:08:45.113Z",
-      "updatedAt": "2026-06-04T19:08:45.113Z",
-      "id": "6a21cd3d89e2f1b1d8ed5c1f"
-    },
-    {
-      "id": "ticket-export",
-      "tab": "tickets",
-      "subject": "Impossible d'exporter une simulation",
-      "user": "Jean Dupont",
-      "email": "jean.dupont@mail.com",
-      "status": "Ouvert",
-      "type": "Bug",
-      "date": "12/05/2024",
-      "description": "Lorsque j'essaie d'exporter la simulation, le fichier ne se télécharge pas.",
-      "reply": ""
-    },
-    {
-      "id": "ticket-cartilage",
-      "tab": "tickets",
-      "subject": "Prix incorrect sur carrelage",
-      "user": "Sophia Martin",
-      "email": "sophia.martin@mail.com",
-      "status": "En cours",
-      "type": "Prix",
-      "date": "11/05/2024",
-      "description": "Le prix affiché dans la simulation ne correspond pas au prix fournisseur.",
-      "reply": ""
-    },
-    {
-      "id": "price-report-oslo",
-      "tab": "priceReports",
-      "subject": "Canapé Oslo trop élevé",
-      "user": "Agence Créa",
-      "email": "contact@agencecrea.bj",
-      "status": "En cours",
-      "type": "Signalement prix",
-      "date": "06/05/2024",
-      "description": "Le prix du Canapé 3 places Oslo semble supérieur à celui observé chez le fournisseur.",
-      "reply": ""
+      "createdAt": "2026-06-05T14:49:33.747Z",
+      "updatedAt": "2026-06-05T14:49:33.747Z",
+      "id": "6a22e1fd89e48169c10b1c8b"
     }
   ],
   "settings": {
@@ -582,24 +259,25 @@
       "companyName": "lookthis",
       "address": "littoral",
       "neighborhood": "",
-      "city": "Cotonou",
+      "city": "",
       "timezone": "(GMT +01:00) Afrique centrale et de l’Ouest",
       "language": "Français"
     },
-    "savedAt": "2026-06-04T18:46:37.749Z"
+    "savedAt": "2026-06-04T18:46:37.749Z",
+    "profile": {}
   },
   "adminSettings": {
     "profile": {
-      "name": "Admin Principal",
-      "email": "hospiceavell@gmail.com",
-      "phone": "Aucun numéro de téléphone"
+      "name": "",
+      "email": "",
+      "phone": ""
     },
     "settings": {
       "location": "Bénin",
       "companyName": "",
       "address": "",
       "neighborhood": "",
-      "city": "Cotonou",
+      "city": "",
       "timezone": "(GMT +01:00) Afrique centrale et de l’Ouest",
       "language": "Français"
     },
@@ -633,6 +311,7 @@
         "summary": "Informations légales et responsabilité opérationnelle de la plateforme ArchiPrice.",
         "content": "ArchiPrice conserve les informations nécessaires à la traçabilité des actions, aux audits et à la continuité des services."
       }
-    ]
+    ],
+    "shopProfile": {}
   }
 }

@@ -11,147 +11,43 @@ const ADMIN_DATA_REMOTE_ROUTE = '/api/catalogue-config';
 export const DEFAULT_ADMIN_DATA = {
   __version: 1,
   __updatedAt: 0,
-  users: [
-    {
-      id: 'user-jean-dupont',
-      name: 'Jean Dupont',
-      email: 'jean.dupont@mail.com',
-      type: 'Architecte',
-      simulations: 24,
-      inscription: '12/03/2024',
-      status: 'Actif',
-      subscription: 'Essai',
-    },
-    {
-      id: 'user-sophia-martin',
-      name: 'Sophia Martin',
-      email: 'sophia.martin@mail.com',
-      type: 'Décorateur',
-      simulations: 18,
-      inscription: '20/03/2024',
-      status: 'Actif',
-      subscription: 'Basique',
-    },
-    {
-      id: 'user-agence-crea',
-      name: 'Agence Créa',
-      email: 'contact@agencecrea.bj',
-      type: 'Agence',
-      simulations: 56,
-      inscription: '05/02/2024',
-      status: 'Actif',
-      subscription: 'Premium',
-    },
-    {
-      id: 'user-marc-koffi',
-      name: 'Marc Koffi',
-      email: 'marc.koffi@mail.com',
-      type: 'Architecte',
-      simulations: 12,
-      inscription: '01/04/2024',
-      status: 'Inactif',
-      subscription: 'Essai',
-    },
-    {
-      id: 'user-admin-principal',
-      name: 'Admin Principal',
-      email: 'admin@archiprice.com',
-      type: 'Admin',
-      simulations: '-',
-      inscription: '01/01/2024',
-      status: 'Actif',
-      subscription: '-',
-    },
-  ],
+  users: [],
   products: [],
-  suppliers: [
-    { id: 'sup-1', name: 'Meubles Plus', contact: 'contact@meublesplus.bj', region: 'Cotonou', status: 'Actif', products: 56 },
-    { id: 'sup-2', name: 'Design House', contact: 'info@designhouse.bj', region: 'Cotonou', status: 'Actif', products: 28 },
-    { id: 'sup-3', name: 'Lumière & Co', contact: 'contact@lumiereco.bj', region: 'Abidjan', status: 'Actif', products: 34 },
-    { id: 'sup-4', name: 'Carrelages Bénin', contact: 'contact@carrelagesbj.bj', region: 'Cotonou', status: 'Actif', products: 22 },
-    { id: 'sup-5', name: 'BatiPro', contact: 'contact@batipro.bj', region: 'Parakou', status: 'Inactif', products: 10 },
-    { id: 'sup-6', name: 'BureauPro', contact: 'info@bureaupro.bj', region: 'Cotonou', status: 'Actif', products: 15 },
-  ],
+  suppliers: [],
   supplierClientNotifications: [],
   taxonomies: {
-    categories: [
-      { id: 'cat-1', name: 'Mobilier', count: 56 },
-      { id: 'cat-2', name: 'Luminaire', count: 34 },
-      { id: 'cat-3', name: 'Revêtement', count: 22 },
-      { id: 'cat-4', name: 'Sanitaire', count: 9 },
-      { id: 'cat-5', name: 'Décoration', count: 7 },
-      { id: 'cat-6', name: 'Éclairage', count: 0 },
-      { id: 'cat-7', name: 'Textiles', count: 0 },
-      { id: 'cat-8', name: 'Objets décoratifs', count: 0 },
-      { id: 'cat-9', name: 'Miroirs', count: 0 },
-      { id: 'cat-10', name: 'Rangements', count: 0 },
-      { id: 'cat-11', name: 'Plantes & Pots', count: 0 },
-    ],
-    rooms: [
-      { id: 'room-1', name: 'Salon', count: 41 },
-      { id: 'room-2', name: 'Chambre', count: 24 },
-      { id: 'room-3', name: 'Bureau', count: 18 },
-      { id: 'room-4', name: 'Douche', count: 12 },
-      { id: 'room-5', name: 'Cuisine', count: 0 },
-      { id: 'room-6', name: 'Appartement', count: 0 },
-      { id: 'room-7', name: 'Espace externe', count: 0 },
-    ],
-    ranges: [
-      { id: 'range-1', name: 'Essentiel', count: 39 },
-      { id: 'range-2', name: 'Confort', count: 52 },
-      { id: 'range-3', name: 'Premium', count: 37 },
-    ],
-    availability: [
-      { id: 'availability-1', name: 'Disponible', count: 0 },
-      { id: 'availability-2', name: 'Sur commande', count: 0 },
-      { id: 'availability-3', name: 'Rupture', count: 0 },
-      { id: 'availability-4', name: 'Non disponible', count: 0 },
-    ],
-    cities: [
-      { id: 'city-taxonomy-1', name: 'Cotonou', count: 0 },
-      { id: 'city-taxonomy-2', name: 'Abomey - calavi', count: 0 },
-      { id: 'city-taxonomy-3', name: 'Porto-novo', count: 0 },
-    ],
-    neighborhoods: [
-      { id: 'neighborhood-1', name: 'Fidjrossè', count: 0 },
-      { id: 'neighborhood-2', name: 'Akpakpa', count: 0 },
-      { id: 'neighborhood-3', name: 'Ganhi', count: 0 },
-      { id: 'neighborhood-4', name: 'Zongo', count: 0 },
-      { id: 'neighborhood-5', name: 'Godomey', count: 0 },
-      { id: 'neighborhood-6', name: 'Akassato', count: 0 },
-      { id: 'neighborhood-7', name: 'Glo-Djigbé', count: 0 },
-      { id: 'neighborhood-8', name: 'Zinvié', count: 0 },
-      { id: 'neighborhood-9', name: 'Tokpota', count: 0 },
-      { id: 'neighborhood-10', name: 'Ouando', count: 0 },
-      { id: 'neighborhood-11', name: 'Dowa', count: 0 },
-      { id: 'neighborhood-12', name: 'Hounli', count: 0 },
-    ],
+    categories: [],
+    rooms: [],
+    ranges: [],
+    availability: [],
+    cities: [],
+    neighborhoods: [],
   },
-  simulations: [
-    { id: 'sim-1', user: 'Jean Dupont', email: 'jean.dupont@mail.com', date: '12/05/2024 14:30', total: '12 450,00 €', products: 28, status: 'Succès', city: 'Cotonou', coefficient: '1,00', avatar: 'JD' },
-    { id: 'sim-2', user: 'Sophia Martin', email: 'sophia.martin@mail.com', date: '11/05/2024 10:12', total: '8 920,00 €', products: 16, status: 'Succès', city: 'Abidjan', coefficient: '1,08', avatar: 'SM' },
-    { id: 'sim-3', user: 'Agence Créa', email: 'contact@agencenova.bj', date: '10/05/2024 16:45', total: '21 350,00 €', products: 42, status: 'Succès', city: 'Cotonou', coefficient: '1,00', avatar: 'AC' },
-    { id: 'sim-4', user: 'Jean Dupont', email: 'jean.dupont@mail.com', date: '09/05/2024 09:15', total: '-', products: '-', status: 'Échec', city: 'Cotonou', coefficient: '1,00', avatar: 'JD' },
-    { id: 'sim-5', user: 'Marc Koffi', email: 'marc.koffi@mail.com', date: '08/05/2024 11:00', total: '6 230,00 €', products: 12, status: 'Succès', city: 'Parakou', coefficient: '0,96', avatar: 'MK' },
-  ],
-  supportItems: [
-    { id: 'ticket-export', tab: 'tickets', subject: "Impossible d'exporter une simulation", user: 'Jean Dupont', email: 'jean.dupont@mail.com', status: 'Ouvert', type: 'Bug', date: '12/05/2024', description: "Lorsque j'essaie d'exporter la simulation, le fichier ne se télécharge pas.", reply: '' },
-    { id: 'ticket-cartilage', tab: 'tickets', subject: 'Prix incorrect sur carrelage', user: 'Sophia Martin', email: 'sophia.martin@mail.com', status: 'En cours', type: 'Prix', date: '11/05/2024', description: 'Le prix affiché dans la simulation ne correspond pas au prix fournisseur.', reply: '' },
-    { id: 'feedback-navigation', tab: 'feedback', subject: 'Navigation plus fluide', user: 'Jean Dupont', email: 'jean.dupont@mail.com', status: 'Ouvert', type: 'Suggestion', date: '08/05/2024', description: 'Ajouter un raccourci vers le catalogue depuis la page workspace rendrait le parcours plus rapide.', reply: '' },
-    { id: 'price-report-oslo', tab: 'priceReports', subject: 'Canapé Oslo trop élevé', user: 'Agence Créa', email: 'contact@agencecrea.bj', status: 'En cours', type: 'Signalement prix', date: '06/05/2024', description: 'Le prix du Canapé 3 places Oslo semble supérieur à celui observé chez le fournisseur.', reply: '' },
-  ],
+  simulations: [],
+  supportItems: [],
   settings: {
     margin: '10',
     vat: '20',
     rounding: 'Au centime près',
     currency: 'FCFA',
   },
-  regionalCoefficients: [
-    { id: 'city-1', city: 'Cotonou', coefficient: '1,00' },
-    { id: 'city-2', city: 'Abomey - calavi', coefficient: '1,00' },
-    { id: 'city-3', city: 'Porto-novo', coefficient: '1,00' },
-  ],
+  regionalCoefficients: [],
 };
+
+const LEGACY_STATIC_ID_PATTERNS = [
+  /^user-(jean-dupont|sophia-martin|agence-crea|marc-koffi|admin-principal)$/,
+  /^sup-\d+$/,
+  /^sim-\d+$/,
+  /^(ticket|feedback|price-report)-/,
+  /^cat-\d+$/,
+  /^room-\d+$/,
+  /^range-\d+$/,
+  /^availability-\d+$/,
+  /^city-taxonomy-\d+$/,
+  /^neighborhood-\d+$/,
+  /^city-\d+$/,
+  /^supplier-client-Ma boutique-/,
+];
 
 function canUseBrowserStorage() {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
@@ -183,10 +79,60 @@ function mergeTaxonomyList(defaultItems = [], savedItems = []) {
   return savedItems.filter((item) => item && !seededIds.has(item.id));
 }
 
+function isLegacyStaticItem(item) {
+  const id = String(item?.id || item?._id || '');
+
+  return LEGACY_STATIC_ID_PATTERNS.some((pattern) => pattern.test(id));
+}
+
+function stripLegacyStaticItems(items = []) {
+  return Array.isArray(items) ? items.filter((item) => item && !isLegacyStaticItem(item)) : [];
+}
+
+function stripLegacyProfile(profile = {}) {
+  if (!profile || typeof profile !== 'object') return {};
+
+  return {
+    ...profile,
+    name: profile.name === 'Admin Principal' ? '' : profile.name,
+    email: profile.email === 'admin@archiprice.com' || profile.email === 'hospiceavell@gmail.com' ? '' : profile.email,
+    phone: profile.phone === 'Aucun numéro de téléphone' ? '' : profile.phone,
+  };
+}
+
+function stripLegacySettings(settings = {}) {
+  if (!settings || typeof settings !== 'object') return {};
+
+  return {
+    ...settings,
+    city: settings.city === 'Cotonou' ? '' : settings.city,
+  };
+}
+
+function stripLegacyAccountSettings(accountSettings = {}) {
+  if (!accountSettings || typeof accountSettings !== 'object') return {};
+
+  return {
+    ...accountSettings,
+    profile: stripLegacyProfile(accountSettings.profile),
+    shopProfile: stripLegacyProfile(accountSettings.shopProfile),
+    settings: stripLegacySettings(accountSettings.settings),
+  };
+}
+
+function stripLegacyTaxonomies(taxonomies = {}) {
+  return Object.keys(DEFAULT_ADMIN_DATA.taxonomies).reduce((nextTaxonomies, key) => ({
+    ...nextTaxonomies,
+    [key]: stripLegacyStaticItems(taxonomies[key] || []),
+  }), {});
+}
+
 function mergeTaxonomies(savedTaxonomies = {}) {
+  const dynamicTaxonomies = stripLegacyTaxonomies(savedTaxonomies);
+
   return Object.keys(DEFAULT_ADMIN_DATA.taxonomies).reduce((taxonomies, key) => ({
     ...taxonomies,
-    [key]: mergeTaxonomyList(DEFAULT_ADMIN_DATA.taxonomies[key], savedTaxonomies[key] || []),
+    [key]: mergeTaxonomyList(DEFAULT_ADMIN_DATA.taxonomies[key], dynamicTaxonomies[key] || []),
   }), {});
 }
 
@@ -244,16 +190,27 @@ function hasLegacyProductImages(data) {
 }
 
 function mergeAdminData(savedData) {
+  const dynamicData = savedData || {};
+
   return {
     ...DEFAULT_ADMIN_DATA,
-    ...(savedData || {}),
-    __version: savedData?.__version || DEFAULT_ADMIN_DATA.__version,
-    __updatedAt: savedData?.__updatedAt || DEFAULT_ADMIN_DATA.__updatedAt,
-    taxonomies: mergeTaxonomies(savedData?.taxonomies),
-    products: normalizeProducts(savedData?.products || DEFAULT_ADMIN_DATA.products),
+    ...dynamicData,
+    __version: dynamicData?.__version || DEFAULT_ADMIN_DATA.__version,
+    __updatedAt: dynamicData?.__updatedAt || DEFAULT_ADMIN_DATA.__updatedAt,
+    users: stripLegacyStaticItems(dynamicData?.users || DEFAULT_ADMIN_DATA.users),
+    suppliers: stripLegacyStaticItems(dynamicData?.suppliers || DEFAULT_ADMIN_DATA.suppliers),
+    simulations: stripLegacyStaticItems(dynamicData?.simulations || DEFAULT_ADMIN_DATA.simulations),
+    supportItems: stripLegacyStaticItems(dynamicData?.supportItems || DEFAULT_ADMIN_DATA.supportItems),
+    regionalCoefficients: stripLegacyStaticItems(dynamicData?.regionalCoefficients || DEFAULT_ADMIN_DATA.regionalCoefficients),
+    supplierClientNotifications: stripLegacyStaticItems(dynamicData?.supplierClientNotifications || DEFAULT_ADMIN_DATA.supplierClientNotifications),
+    supplierPublicationNotices: stripLegacyStaticItems(dynamicData?.supplierPublicationNotices || []),
+    supplierSettings: stripLegacyAccountSettings(dynamicData?.supplierSettings),
+    adminSettings: stripLegacyAccountSettings(dynamicData?.adminSettings),
+    taxonomies: mergeTaxonomies(dynamicData?.taxonomies),
+    products: normalizeProducts(dynamicData?.products || DEFAULT_ADMIN_DATA.products),
     settings: {
       ...DEFAULT_ADMIN_DATA.settings,
-      ...(savedData?.settings || {}),
+      ...(dynamicData?.settings || {}),
     },
   };
 }

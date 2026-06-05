@@ -22,7 +22,7 @@ const simulationSchema = new mongoose.Schema(
       enum: ['Succès', 'Échec'],
       default: 'Succès',
     },
-    city: { type: String, trim: true, default: 'Cotonou' },
+    city: { type: String, trim: true, default: '' },
     coefficient: { type: String, trim: true, default: '1,00' },
     avatar: { type: String, trim: true },
     items: {

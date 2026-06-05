@@ -2,6 +2,7 @@ import './config/env.js';
 
 import app from './app.js';
 import { connectDB, disconnectDB } from './config/db.js';
+import seedSuperAdmin from './seeds/superAdmin.js';
 
 const PORT = process.env.PORT || 5000;
 
@@ -22,6 +23,7 @@ async function start() {
   console.log(`[server] PORT=${PORT}`);
 
   await connectDB();
+  await seedSuperAdmin();
 
   server = app.listen(PORT, () => {
     console.log('[server] ─────────────────────────────────────');
