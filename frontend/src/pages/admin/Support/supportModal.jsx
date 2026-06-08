@@ -1,6 +1,7 @@
 import './supportModal.css';
 import { useState } from 'react';
-import { Badge, Button, Icon } from '../../../components/ui';
+import { Alert, Badge, Button, Icon } from '../../../components/ui';
+import { isNumericOnly } from '../../../utils/formInput';
 
 function getStatusTone(status) {
   if (status === 'Ouvert') return 'danger';
@@ -14,13 +15,26 @@ export default function SupportModal({
   onReplyChange,
   onClose,
   onUpdate,
+  canReply = true,
 }) {
   const [isReplying, setIsReplying] = useState(false);
+  const [replyError, setReplyError] = useState('');
+  const [actionMessage, setActionMessage] = useState('');
 
   if (!item) return null;
 
   function sendReply() {
+    if (!String(replyDraft || '').trim()) {
+      setReplyError('Réponse requise.');
+      return;
+    }
+    if (isNumericOnly(replyDraft)) {
+      setReplyError('La réponse doit contenir du texte.');
+      return;
+    }
     onUpdate({ reply: replyDraft, status: 'En cours' });
+    setReplyError('');
+    setActionMessage('Réponse envoyée.');
     setIsReplying(false);
   }
 
@@ -76,6 +90,14 @@ export default function SupportModal({
           </section>
         )}
 
+        {actionMessage && (
+          <section className="support-modal__card">
+            <Alert variant="success" onClose={() => setActionMessage('')}>
+              {actionMessage}
+            </Alert>
+          </section>
+        )}
+
         {isReplying && (
           <section className="support-modal__card">
             <label className="support-modal__reply">
@@ -87,11 +109,16 @@ export default function SupportModal({
                 autoFocus
               />
             </label>
+            {replyError && <Alert variant="danger">{replyError}</Alert>}
           </section>
         )}
 
         <footer>
-          {isReplying ? (
+          {!canReply ? (
+            <Button type="button" variant="outline" size="sm" onClick={onClose}>
+              Fermer
+            </Button>
+          ) : isReplying ? (
             <>
               <Button type="button" variant="outline" size="sm" onClick={() => setIsReplying(false)}>
                 Annuler

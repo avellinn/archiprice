@@ -1,12 +1,22 @@
 .invoices-page {
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 1rem;
   min-height: calc(100vh - 64px);
+  padding-inline: 1rem;
   overflow: auto;
+}
+
+.invoices-page > .workspace-heading,
+.invoices-page > .invoices-empty,
+.invoices-page > .invoices-list {
+  width: min(100%, 980px);
 }
 
 .invoices-list {
   display: grid;
   gap: 0.75rem;
-  width: min(100%, 980px);
 }
 
 .invoices-list__item {
@@ -70,24 +80,35 @@
   white-space: nowrap;
 }
 
-.invoices-list__item button {
+.invoices-list__item > button {
   display: grid;
   width: 2rem;
   height: 2rem;
   place-items: center;
-  border: 0;
+  border: 1px solid var(--app-border-color);
   border-radius: 8px;
-  background: transparent;
+  background: var(--app-card-background);
   color: var(--app-muted-color);
   cursor: pointer;
+  opacity: 0;
+  transform: translateY(-3px);
+  transition: opacity 0.18s ease, transform 0.18s ease, color 0.18s ease, border-color 0.18s ease;
 }
 
-.invoices-list__item button:hover,
-.invoices-list__item button:focus-visible {
-  background: var(--app-panel-background);
-  color: var(--app-heading-color);
+.invoices-list__item:hover > button,
+.invoices-list__item:focus-within > button {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.invoices-list__item > button:hover,
+.invoices-list__item > button:focus-visible {
+  border-color: #dc2626;
+  color: #dc2626;
   outline: 0;
 }
+
+
 
 .invoices-detail-modal {
   position: fixed;
@@ -213,6 +234,50 @@
 
 .invoices-detail-list article b {
   color: var(--app-heading-color);
+}
+
+.archives-delete-alert {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 2000;
+  width: min(380px, calc(100vw - 2rem));
+  box-shadow: var(--app-card-shadow);
+}
+
+.archives-delete-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(15 23 42 / 0.42);
+  backdrop-filter: blur(2px);
+}
+
+.archives-delete-card {
+  display: grid;
+  gap: 1rem;
+  width: min(460px, 100%);
+  padding: 1rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 12px;
+  background: var(--app-card-background);
+  box-shadow: 0 24px 70px rgb(15 23 42 / 0.24);
+}
+
+.archives-delete-card p {
+  margin: 0;
+  color: var(--app-heading-color);
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.archives-delete-card footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
 }
 
 @media (max-width: 760px) {

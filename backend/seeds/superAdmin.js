@@ -36,7 +36,6 @@ export default async function seedSuperAdmin() {
     existingUserWithEmail.role = 'admin';
     existingUserWithEmail.type = 'Super Admin';
     existingUserWithEmail.status = 'Actif';
-    existingUserWithEmail.subscription = 'Interne';
     await existingUserWithEmail.save();
     console.log(`[seed] Super Admin synchronisé : ${config.email}`);
     return;
@@ -51,7 +50,6 @@ export default async function seedSuperAdmin() {
     role: 'admin',
     type: 'Super Admin',
     status: 'Actif',
-    subscription: 'Interne',
   });
 
   console.log(`[seed] Super Admin créé : ${config.email}`);

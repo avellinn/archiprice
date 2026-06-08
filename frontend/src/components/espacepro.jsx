@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Icon from './Icon';
-import { Alert } from './ui';
+import { Alert, Button } from './ui';
 import useAuth from '../context/useAuth';
 import { getApiErrorMessage } from '../services/api';
 import { addExportedDocument } from '../services/exportedDocuments';
@@ -61,7 +61,7 @@ function getProductImages(product) {
     ? product.images.map(getImageUrl).filter(Boolean)
     : [];
 
-  if (images.length > 0) return images.slice(0, 12);
+  if (images.length > 0) return images;
 
   const singleImage = getImageUrl(product?.image);
   return singleImage ? [singleImage] : [];
@@ -376,10 +376,16 @@ export default function EspacePro({
                 }}
               />
             </button>
-            <div className="espacepro__article-body">
+            <div
+              className="espacepro__article-body"
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}
+            >
               <h3>{activeArticle.name}</h3>
               <p>{activeArticle.category || 'Catégorie non renseignée'}</p>
               <strong>{formatCurrency(activeArticle.unitPrice)}</strong>
+            </div>
+            <footer className="espacepro__article-footer">
               {canShowRecapLink && (
                 <div className="espacepro__recap-actions">
                   <a
@@ -406,7 +412,20 @@ export default function EspacePro({
                   </button>
                 </div>
               )}
-            </div>
+              <div className="workspace-shop-cta">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  icon={<Icon name="Storefront" />}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onArticleShopOpen?.(activeArticle);
+                  }}
+                >
+                  Où acheter
+                </Button>
+              </div>
+            </footer>
           </article>
         )}
       </section>
@@ -427,25 +446,17 @@ export default function EspacePro({
               <div>
                 <dt>Budget</dt>
                 <dd>{formatOptionalCurrency(projectMetadata.budget)}</dd>
-              </div>
-              <div>
-                <dt>Articles</dt>
-                <dd>{articleSimulation.count}</dd>
-              </div>
-              <div>
-                <dt>Simulation achat</dt>
-                <dd>{formatCurrency(articleSimulation.total)}</dd>
-              </div>
-              <div>
-                <dt>Dépassement</dt>
-                <dd>{articleSimulation.overage > 0 ? formatCurrency(articleSimulation.overage) : 'Aucun'}</dd>
-              </div>
+              </div>   
+                      
             </dl>
+            
           ) : (
             <p>Aucun projet sélectionné.</p>
           )}
         </section>
-
+ <footer className="espacepro__rer">
+              
+                </footer>
       </aside>
 
       {isRecapOpen && (

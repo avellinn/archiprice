@@ -1,5 +1,5 @@
 import './Fournisseurs.css';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Alert, Badge, Button, Icon, Table } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
@@ -37,14 +37,14 @@ function normalizeSupplierForWorkspace(supplier) {
     status: supplier.status || 'Actif',
     products: supplier.products || 0,
     categories: supplier.categories || [],
+    isRecommended: Boolean(supplier.isRecommended),
   };
 }
 
 export default function Fournisseurs() {
   const [searchParams] = useSearchParams();
-  const [adminData, updateAdminData] = useAdminData();
-  const cachedSuppliersRef = useRef(adminData.suppliers || []);
-  const [suppliers, setSuppliers] = useState(() => adminData.suppliers || []);
+  const [, updateAdminData] = useAdminData();
+  const [suppliers, setSuppliers] = useState([]);
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
   const [isCreatingSupplier, setIsCreatingSupplier] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -59,26 +59,27 @@ export default function Fournisseurs() {
   const [searchTerm] = useState('');
 
   useEffect(() => {
-    cachedSuppliersRef.current = adminData.suppliers || [];
-  }, [adminData.suppliers]);
-
-  useEffect(() => {
     let cancelled = false;
 
     fetchAdminSuppliers()
       .then((list) => {
         if (!cancelled) {
-          setSuppliers(list);
+          const activeSuppliers = list.filter((supplier) => supplier.status !== 'Supprimé');
+          setSuppliers(activeSuppliers);
           updateAdminData((currentData) => ({
             ...currentData,
-            suppliers: list.map(normalizeSupplierForWorkspace),
+            suppliers: activeSuppliers.map(normalizeSupplierForWorkspace),
           }));
           setError('');
         }
       })
       .catch((apiError) => {
         if (!cancelled) {
-          setSuppliers(cachedSuppliersRef.current);
+          setSuppliers([]);
+          updateAdminData((currentData) => ({
+            ...currentData,
+            suppliers: [],
+          }));
           setError(getApiErrorMessage(apiError, 'Impossible de charger les fournisseurs Mongo.'));
         }
       })
@@ -167,6 +168,13 @@ export default function Fournisseurs() {
     upsertSupplier({
       ...supplier,
       status: 'Bloqué',
+    });
+  }
+
+  function toggleRecommendedSupplier(supplier) {
+    upsertSupplier({
+      ...supplier,
+      isRecommended: !supplier.isRecommended,
     });
   }
 
@@ -318,6 +326,18 @@ export default function Fournisseurs() {
           }}
         >
           <Icon name="VisibilityOff" size="sm" />
+        </button>
+        <button
+          type="button"
+          className={supplier.isRecommended ? 'is-recommended' : ''}
+          title={supplier.isRecommended ? 'Retirer des boutiques recommandées' : 'Recommander'}
+          aria-label={supplier.isRecommended ? `Retirer ${supplierName} des recommandations` : `Recommander ${supplierName}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            toggleRecommendedSupplier(supplier);
+          }}
+        >
+          <Icon name="Check" size="sm" />
         </button>
         <button
           type="button"

@@ -1,6 +1,7 @@
 import './modalsupport.css';
 import { useState } from 'react';
-import { Button, Icon } from './ui';
+import { Alert, Button, Icon } from './ui';
+import { isNumericOnly } from '../utils/formInput';
 
 export default function ModalSupport({
   title = 'Laisser un commentaire',
@@ -9,14 +10,22 @@ export default function ModalSupport({
   onSubmit,
 }) {
   const [comment, setComment] = useState('');
+  const [error, setError] = useState('');
+  const [actionMessage, setActionMessage] = useState('');
 
   function submitComment(event) {
     event.preventDefault();
     const value = comment.trim();
     if (!value) return;
+    if (isNumericOnly(value)) {
+      setError('Le message doit contenir du texte.');
+      return;
+    }
 
+    setActionMessage('Message envoyé.');
     onSubmit(value);
     setComment('');
+    setError('');
   }
 
   return (
@@ -43,6 +52,17 @@ export default function ModalSupport({
             autoFocus
           />
         </label>
+
+        {error && (
+          <Alert variant="danger" className="modal-support__error" onClose={() => setError('')}>
+            {error}
+          </Alert>
+        )}
+        {actionMessage && (
+          <Alert variant="success" className="modal-support__error" onClose={() => setActionMessage('')}>
+            {actionMessage}
+          </Alert>
+        )}
 
         <footer className="modal-support__footer">
           <Button type="button" variant="outline" onClick={onCancel}>

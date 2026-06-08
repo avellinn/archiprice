@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import Icon from './Icon';
 import './Alert.css';
 
@@ -15,9 +16,20 @@ export default function Alert({
   icon,
   onClose,
   className = '',
+  autoCloseMs = 4000,
 }) {
   const classes = ['alert', `alert--${variant}`, className].filter(Boolean).join(' ');
   const displayIcon = icon || <Icon name={DEFAULT_ICONS[variant] || DEFAULT_ICONS.info} size={24} />;
+
+  useEffect(() => {
+    if (!onClose || !autoCloseMs) return undefined;
+
+    const timer = window.setTimeout(() => {
+      onClose();
+    }, autoCloseMs);
+
+    return () => window.clearTimeout(timer);
+  }, [autoCloseMs, onClose]);
 
   return (
     <div className={classes} role="alert">

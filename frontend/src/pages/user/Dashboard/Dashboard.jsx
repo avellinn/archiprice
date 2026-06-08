@@ -10,17 +10,6 @@ import {
 } from '../../../services/exportedDocuments';
 import { fetchProjects } from '../../../services/projects';
 
-const MONTH_ACTIVITY = [
-  { label: 'Jan', value: 18 },
-  { label: 'Fév', value: 30 },
-  { label: 'Mar', value: 22 },
-  { label: 'Avr', value: 47 },
-  { label: 'Mai', value: 38 },
-  { label: 'Juin', value: 62 },
-  { label: 'Juil', value: 55 },
-  { label: 'Août', value: 76 },
-];
-
 const STATUS_COPY = {
   draft: 'Brouillon',
   active: 'En cours',
@@ -51,6 +40,23 @@ function getPercent(value, total) {
 function getDonutDisplayValue(value, total) {
   if (!total) return 0;
   return value > 0 ? value : Math.max(total * 0.04, 0.08);
+}
+
+function buildMonthActivity(items = []) {
+  const monthFormatter = new Intl.DateTimeFormat('fr-FR', { month: 'short' });
+  const months = [...new Set(items
+    .map((item) => item.createdAt || item.updatedAt || item.date)
+    .map((value) => new Date(value))
+    .filter((date) => !Number.isNaN(date.getTime()))
+    .map((date) => monthFormatter.format(date).replace('.', '')))];
+
+  if (months.length > 0) return months.slice(-8).map((label) => ({ label }));
+
+  return Array.from({ length: 8 }, (_, index) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - (7 - index));
+    return { label: monthFormatter.format(date).replace('.', '') };
+  });
 }
 
 function getProjectExportedEstimateCount(project) {
@@ -123,6 +129,7 @@ export default function Dashboard() {
       || String(project.status || '').toLowerCase().includes(dashboardSearchTerm)
     ))
     .slice(0, 4);
+  const monthActivity = buildMonthActivity([...projects, ...exportedDocuments]);
   const repartitionData = [
     {
       name: 'Projets en cours',
@@ -153,12 +160,12 @@ export default function Dashboard() {
       color: '#1d0870',
     },
     {
-      name: 'Estimations exportées',
+      name: 'Archives',
       value: stats.exportedEstimates,
       chartValue: stats.exportedEstimates,
       percent: getPercent(stats.exportedEstimates, Math.max(stats.total, stats.exportedEstimates)),
       color: '#c0893f',
-      unit: 'estimation',
+      unit: 'archive',
     },
   ];
 
@@ -219,7 +226,7 @@ export default function Dashboard() {
           <div className="panel-heading">
             <h1>Activité des projets</h1>
             <Text as="span" variant="bold" size="sm">
-              Chiffrage vs validation
+              Simulation 
             </Text>
           </div>
           <div className="line-chart" aria-label="Graphique d'activité mensuelle">
@@ -242,15 +249,15 @@ export default function Dashboard() {
               <circle cx="329" cy="42" r="5" />
             </svg>
             <div className="chart-axis">
-              {MONTH_ACTIVITY.map((item, index) => (
+              {monthActivity.map((item, index) => (
                 <Text as="span" size="sm" key={`${item.label}-${index}`}>
                   {item.label}
                 </Text>
               ))}
             </div>
             <div className="chart-legend">
-              <Text as="span" variant="bold" size="sm"><i className="legend-blue" /> Chiffrage</Text>
-              <Text as="span" variant="bold" size="sm"><i className="legend-orange" /> Validation</Text>
+              
+              <Text as="span" variant="bold" size="sm"><i className="legend-orange" /> simulation</Text>
             </div>
           </div>
         </section>

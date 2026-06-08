@@ -1,5 +1,6 @@
 import './fournisseurModal.css';
-import { Badge, Icon } from '../../../components/ui';
+import { useState } from 'react';
+import { Alert, Badge, Icon } from '../../../components/ui';
 
 function getSupplierName(supplier) {
   return supplier?.companyName || supplier?.name || 'Fournisseur';
@@ -20,14 +21,26 @@ export default function FournisseurModal({
   onBlock,
   onDelete,
 }) {
+  const [actionMessage, setActionMessage] = useState('');
+
   if (!supplier) return null;
 
   const supplierStatus = supplier.status || 'Actif';
   const statusTone = supplierStatus === 'Actif' ? 'success' : supplierStatus === 'Bloqué' ? 'warning' : 'danger';
 
+  function submitSupplier(event) {
+    setActionMessage(isCreating ? 'Création du fournisseur en cours.' : 'Sauvegarde du fournisseur en cours.');
+    onSubmit(event);
+  }
+
+  function runAction(message, callback) {
+    setActionMessage(message);
+    callback?.();
+  }
+
   return (
     <div className="fournisseur-modal-backdrop" role="presentation">
-      <form className="fournisseur-modal" role="dialog" aria-modal="true" aria-labelledby="fournisseur-modal-title" onSubmit={onSubmit}>
+      <form className="fournisseur-modal" role="dialog" aria-modal="true" aria-labelledby="fournisseur-modal-title" onSubmit={submitSupplier}>
         <header className="fournisseur-modal__header">
           <div className="fournisseur-modal__title">
             <Icon name="Workspaces" size="sm" />
@@ -47,13 +60,13 @@ export default function FournisseurModal({
             <h3>Profil fournisseur</h3>
             {!isCreating && (
               <div className="fournisseur-modal__actions">
-                <button type="button" title={supplierStatus === 'Actif' ? 'Désactiver' : 'Activer'} onClick={() => onToggleStatus(supplier)}>
+                <button type="button" title={supplierStatus === 'Actif' ? 'Désactiver' : 'Activer'} onClick={() => runAction('Statut fournisseur mis à jour.', () => onToggleStatus(supplier))}>
                   <Icon name="Visibility" size="sm" />
                 </button>
-                <button type="button" title="Bloquer" onClick={() => onBlock(supplier)}>
+                <button type="button" title="Bloquer" onClick={() => runAction('Fournisseur bloqué.', () => onBlock(supplier))}>
                   <Icon name="VisibilityOff" size="sm" />
                 </button>
-                <button type="button" className="is-danger" title="Supprimer" onClick={() => onDelete(supplier.id)}>
+                <button type="button" className="is-danger" title="Supprimer" onClick={() => runAction('Suppression du fournisseur lancée.', () => onDelete(supplier.id))}>
                   <Icon name="Delete" size="sm" />
                 </button>
               </div>
@@ -123,6 +136,14 @@ export default function FournisseurModal({
             </article>
           </div>
         </section>
+
+        {actionMessage && (
+          <section className="fournisseur-modal__card">
+            <Alert variant="success" onClose={() => setActionMessage('')}>
+              {actionMessage}
+            </Alert>
+          </section>
+        )}
 
         <footer className="fournisseur-modal__footer">
           <button type="button" onClick={onClose}>Annuler</button>

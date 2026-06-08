@@ -24,7 +24,7 @@ function assertCloudinaryConfig() {
 
   if (missing.length > 0) {
     const error = new Error(`Configuration Cloudinary manquante : ${missing.join(', ')}`);
-    error.statusCode = 500;
+    error.statusCode = 400;
     error.expose = true;
     throw error;
   }

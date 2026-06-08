@@ -1,6 +1,6 @@
 import './adminparModal.css';
 import { useState } from 'react';
-import { Icon } from '../../../components/ui';
+import { Alert, Icon } from '../../../components/ui';
 
 function makePolicyId() {
   return `admin-policy-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -15,6 +15,13 @@ const EMPTY_POLICY = {
 };
 
 export function AdminProfileModal({ adminProfile, onChange, onClose, onSave }) {
+  const [actionMessage, setActionMessage] = useState('');
+
+  function saveProfile() {
+    setActionMessage('Profil administrateur sauvegardé.');
+    window.setTimeout(onSave, 350);
+  }
+
   return (
     <div className="admin-param-modal-backdrop" role="presentation">
       <section className="admin-param-modal admin-param-modal--profile" role="dialog" aria-modal="true" aria-labelledby="admin-profile-modal-title">
@@ -54,9 +61,15 @@ export function AdminProfileModal({ adminProfile, onChange, onClose, onSave }) {
           </div>
         </div>
 
+        {actionMessage && (
+          <Alert variant="success" onClose={() => setActionMessage('')}>
+            {actionMessage}
+          </Alert>
+        )}
+
         <footer className="admin-param-modal__footer">
           <button type="button" onClick={onClose}>Annuler</button>
-          <button type="button" className="is-primary" onClick={onSave}>Sauvegarder</button>
+          <button type="button" className="is-primary" onClick={saveProfile}>Sauvegarder</button>
         </footer>
       </section>
     </div>
@@ -72,6 +85,12 @@ export function AdminLocationModal({
   onSave,
 }) {
   const canSave = Boolean(settings.companyName.trim() || settings.address.trim() || settings.neighborhood.trim() || settings.city.trim());
+  const [actionMessage, setActionMessage] = useState('');
+
+  function saveLocation() {
+    setActionMessage('Emplacement admin sauvegardé.');
+    window.setTimeout(onSave, 350);
+  }
 
   return (
     <div className="admin-param-modal-backdrop" role="presentation">
@@ -121,9 +140,15 @@ export function AdminLocationModal({
           </label>
         </div>
 
+        {actionMessage && (
+          <Alert variant="success" onClose={() => setActionMessage('')}>
+            {actionMessage}
+          </Alert>
+        )}
+
         <footer className="admin-param-modal__footer admin-param-modal__footer--sticky">
           <button type="button" onClick={onClose}>Annuler</button>
-          <button type="button" className="is-primary" onClick={onSave} disabled={!canSave}>
+          <button type="button" className="is-primary" onClick={saveLocation} disabled={!canSave}>
             Sauvegarder
           </button>
         </footer>
@@ -135,6 +160,7 @@ export function AdminLocationModal({
 export function AdminPolicyModal({ policies, onPoliciesChange, onClose }) {
   const [activePolicyId, setActivePolicyId] = useState(null);
   const [editingPolicy, setEditingPolicy] = useState(null);
+  const [actionMessage, setActionMessage] = useState('');
   const activePolicy = policies.find((policy) => policy.id === activePolicyId);
 
   function openCreatePolicy() {
@@ -151,6 +177,7 @@ export function AdminPolicyModal({ policies, onPoliciesChange, onClose }) {
   function deletePolicy(policyId, event) {
     event.stopPropagation();
     onPoliciesChange(policies.filter((policy) => policy.id !== policyId));
+    setActionMessage('Politique supprimée.');
     if (activePolicyId === policyId) setActivePolicyId(null);
   }
 
@@ -176,6 +203,7 @@ export function AdminPolicyModal({ policies, onPoliciesChange, onClose }) {
     onPoliciesChange(exists
       ? policies.map((policy) => (policy.id === nextPolicy.id ? nextPolicy : policy))
       : [nextPolicy, ...policies]);
+    setActionMessage(exists ? 'Politique modifiée.' : 'Politique créée.');
     setEditingPolicy(null);
   }
 
@@ -258,6 +286,12 @@ export function AdminPolicyModal({ policies, onPoliciesChange, onClose }) {
               <p className="admin-policy-empty">Aucune politique configurée.</p>
             )}
           </div>
+        )}
+
+        {actionMessage && (
+          <Alert variant="success" onClose={() => setActionMessage('')}>
+            {actionMessage}
+          </Alert>
         )}
 
         

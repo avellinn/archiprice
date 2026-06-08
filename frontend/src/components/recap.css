@@ -1,13 +1,19 @@
 .catalogue-summary-panel {
   position: fixed;
-  left: 1.5rem;
-  bottom: 1rem;
   z-index: 1700;
-  width: min(520px, calc(100vw - 2rem));
-  max-height: calc(100vh - 2rem);
+  inset: 0;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  max-height: none;
+  padding: 1rem;
+  background: rgb(15 23 42 / 0.42);
+  backdrop-filter: blur(2px);
 }
 
 .catalogue-summary-card {
+  width: min(620px, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
   overflow: hidden;
   border: 1px solid var(--app-border-color);
   border-radius: 8px;
@@ -271,10 +277,7 @@
   }
 
   .catalogue-summary-panel {
-    right: auto;
-    left: 0.75rem;
-    bottom: 0.75rem;
-    width: calc(100vw - 1.5rem);
+    padding: 0.75rem;
   }
 
   .catalogue-summary-body {

@@ -4,7 +4,7 @@ import Header from './Header';
 import Icon from './Icon';
 import Sidebar from './Sidebar';
 import useAuth from '../context/useAuth';
-import { syncAdminDataFromRemote } from '../services/adminData';
+import { syncAdminDataFromRemote, useAdminData } from '../services/adminData';
 import { connectRealtime } from '../services/realtime';
 import { fetchMySupportItems } from '../services/support';
 import { getUserTranslations, normalizeUserLanguage } from '../utils/userLanguage';
@@ -18,7 +18,8 @@ const USER_SEARCH_ICONS = {
   '/dashboard': 'Dashboard',
   '/catalogue': 'Explore',
   '/workspace': 'Workspaces',
-  '/factures': 'ReceiptLong',
+  '/demande': 'Storefront',
+  '/archives': 'ReceiptLong',
   '/support': 'Chat',
   '/parametres': 'AccountCircle',
   '/deconnexion': 'Logout',
@@ -41,6 +42,23 @@ function readDismissedNotificationKeys() {
   }
 }
 
+function getLastDemandMessage(notification) {
+  if (Array.isArray(notification.messages) && notification.messages.length > 0) {
+    return notification.messages.at(-1);
+  }
+
+  if (notification.message) {
+    return {
+      id: `${notification.id}-initial`,
+      senderRole: 'user',
+      message: notification.message,
+      createdAt: notification.createdAt,
+    };
+  }
+
+  return null;
+}
+
 export default function AppShell() {
   const { user } = useAuth();
   const location = useLocation();
@@ -54,6 +72,7 @@ export default function AppShell() {
   const [userLanguage, setUserLanguage] = useState(readUserLanguage);
   const [supportItems, setSupportItems] = useState([]);
   const [dismissedNotificationKeys, setDismissedNotificationKeys] = useState(readDismissedNotificationKeys);
+  const [adminData] = useAdminData();
   const userText = getUserTranslations(userLanguage);
 
   const refreshSupportNotifications = useCallback(async () => {
@@ -118,9 +137,15 @@ export default function AppShell() {
             icon: <Icon name="Workspaces" />,
           },
           {
-            id: 'invoices',
-            label: userText.sidebar.invoices,
-            path: '/factures',
+            id: 'demande',
+            label: userText.sidebar.demande,
+            path: '/demande',
+            icon: <Icon name="Storefront" />,
+          },
+          {
+            id: 'archives',
+            label: userText.sidebar.archives,
+            path: '/archives',
             icon: <Icon name="ReceiptLong" />,
           },
           {
@@ -177,11 +202,27 @@ export default function AppShell() {
       .filter((item) => item.reply && !dismissedNotificationKeys.includes(`support-reply-${item.id}`))
       .sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0))
   ), [dismissedNotificationKeys, supportItems]);
+  const demandReplyNotifications = useMemo(() => {
+    const userEmail = user?.email || '';
+    const userId = user?.id || user?._id || '';
 
-  function dismissSupportNotifications() {
+    return (adminData.supplierClientNotifications || [])
+      .filter((notification) => notification.type === 'Demande')
+      .filter((notification) => notification.clientId === userId || notification.clientEmail === userEmail)
+      .map((notification) => ({
+        ...notification,
+        lastMessage: getLastDemandMessage(notification),
+      }))
+      .filter((notification) => notification.lastMessage?.senderRole === 'supplier')
+      .filter((notification) => !dismissedNotificationKeys.includes(`demand-reply-${notification.id}-${notification.lastMessage.id}`))
+      .sort((a, b) => new Date(b.lastMessage.createdAt || b.updatedAt || 0) - new Date(a.lastMessage.createdAt || a.updatedAt || 0));
+  }, [adminData.supplierClientNotifications, dismissedNotificationKeys, user]);
+
+  function dismissVisibleNotifications() {
     const nextKeys = [
       ...dismissedNotificationKeys,
       ...replyNotifications.map((item) => `support-reply-${item.id}`),
+      ...demandReplyNotifications.map((item) => `demand-reply-${item.id}-${item.lastMessage.id}`),
     ];
     const uniqueKeys = [...new Set(nextKeys)];
     setDismissedNotificationKeys(uniqueKeys);
@@ -227,7 +268,7 @@ export default function AppShell() {
           searchValue={searchValue}
           searchIcon={searchIcon}
           searchPlaceholder={searchPlaceholder}
-          notificationCount={replyNotifications.length}
+          notificationCount={replyNotifications.length + demandReplyNotifications.length}
           onAccountClick={() => {
             setIsAccountOpen((open) => !open);
             setIsNotificationsOpen(false);
@@ -247,14 +288,31 @@ export default function AppShell() {
           <div className="dashboard-floating-panel notification-panel">
             <div className="notification-panel__header">
               <strong>{userText.notifications.title}</strong>
-              <button type="button" aria-label={userText.notifications.close} onClick={dismissSupportNotifications}>
+              <button type="button" aria-label={userText.notifications.close} onClick={dismissVisibleNotifications}>
                 <Icon name="Close" size="sm" />
               </button>
             </div>
-            {replyNotifications.length === 0 ? (
+            {replyNotifications.length === 0 && demandReplyNotifications.length === 0 ? (
               <span>{userText.notifications.empty}</span>
             ) : (
               <div className="notification-panel__list">
+                {demandReplyNotifications.map((item) => (
+                  <button
+                    key={`${item.id}-${item.lastMessage.id}`}
+                    type="button"
+                    className="notification-panel__item"
+                    onClick={() => {
+                      setIsNotificationsOpen(false);
+                      navigate('/demande');
+                    }}
+                  >
+                    <Icon name="Storefront" size="sm" />
+                    <span>
+                      Réponse boutique : <b>{item.supplierName || 'Boutique'}</b>
+                      <small>{item.lastMessage.message}</small>
+                    </span>
+                  </button>
+                ))}
                 {replyNotifications.map((item) => (
                   <button
                     key={item.id}

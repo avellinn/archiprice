@@ -6,7 +6,12 @@ import { Button, Icon } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
 import { getApiErrorMessage } from '../../../services/api';
 import { createAdminId, useAdminData } from '../../../services/adminData';
-import { deleteSupplierProduct, fetchSupplierWorkspace, subscribeSupplierWorkspaceChange } from '../../../services/supplier';
+import {
+  deleteSupplierProduct,
+  fetchSupplierProducts,
+  fetchSupplierProfile,
+  subscribeSupplierWorkspaceChange,
+} from '../../../services/supplier';
 
 function getProductImage(product) {
   const image = Array.isArray(product.images) ? product.images[0] : product.image;
@@ -25,11 +30,14 @@ export default function Produits() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [deletingProductId, setDeletingProductId] = useState('');
-  const savedSupplierSettings = adminData.supplierSettings || {};
-  const shopName = savedSupplierSettings.shopProfile?.name
-    || user?.shopName
+  const [supplierProfile, setSupplierProfile] = useState(null);
+  const shopName = supplierProfile?.companyName
+    || supplierProfile?.shopLabel
+    || supplierProfile?.storeLabel
+    || supplierProfile?.label
+    || supplierProfile?.name
     || user?.companyName
-    || user?.storeLabel
+    || user?.shopName
     || user?.name
     || user?.email
     || '';
@@ -37,15 +45,24 @@ export default function Produits() {
   function loadProducts() {
     let cancelled = false;
 
-    fetchSupplierWorkspace()
-      .then((data) => {
-        if (!cancelled) {
-          setProducts(data.products || []);
+    Promise.allSettled([
+      fetchSupplierProducts(),
+      fetchSupplierProfile(),
+    ])
+      .then(([productsResult, profileResult]) => {
+        if (cancelled) return;
+
+        if (productsResult.status === 'fulfilled') {
+          setProducts(productsResult.value || []);
           setError('');
+        } else {
+          setProducts([]);
+          setError(getApiErrorMessage(productsResult.reason, 'Impossible de charger les produits.'));
         }
-      })
-      .catch((apiError) => {
-        if (!cancelled) setError(getApiErrorMessage(apiError, 'Impossible de charger les produits.'));
+
+        if (profileResult.status === 'fulfilled') {
+          setSupplierProfile(profileResult.value || null);
+        }
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);

@@ -222,6 +222,18 @@
   color: #405f8e;
 }
 
+.admin-suppliers-actions .is-recommended {
+  border-color: #224b73;
+  background: #224b73;
+  color: #fff;
+}
+
+.admin-suppliers-actions .is-recommended:hover,
+.admin-suppliers-actions .is-recommended:focus-visible {
+  background: #1a3a59;
+  color: #fff;
+}
+
 .admin-suppliers-actions .is-danger {
   color: #ef4444;
 }

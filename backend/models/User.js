@@ -47,15 +47,16 @@ const userSchema = new mongoose.Schema(
       trim: true,
       default: 'Architecte',
     },
+    category: {
+      type: String,
+      trim: true,
+      maxlength: 160,
+      default: '',
+    },
     status: {
       type: String,
       enum: ['Actif', 'Inactif', 'Bloqué'],
       default: 'Actif',
-    },
-    subscription: {
-      type: String,
-      trim: true,
-      default: 'Essai',
     },
     simulations: {
       type: Number,

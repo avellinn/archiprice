@@ -29,20 +29,16 @@
 }
 
 .supplier-files-header__actions .btn {
-  border-radius: 8px 0 0 8px;
-  background: #2d2d2d;
+  border-color: #224b73;
+  border-radius: 8px;
+  background: #224b73;
   color: #ffffff;
 }
 
-.supplier-files-header__actions > button:not(.btn) {
-  display: inline-grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border: 1px solid #111111;
-  border-left: 0;
-  border-radius: 0 8px 8px 0;
-  background: #2d2d2d;
+.supplier-files-header__actions .btn:hover,
+.supplier-files-header__actions .btn:focus-visible {
+  border-color: #1a3a59;
+  background: #1a3a59;
   color: #ffffff;
 }
 
@@ -106,25 +102,38 @@
 
 .supplier-files-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.1rem;
   width: 100%;
 }
 
 .supplier-file-card {
   position: relative;
+  display: grid;
+  gap: 0.7rem;
   overflow: hidden;
-  border: 1px solid #d8d8d8;
-  border-radius: 12px;
+  padding: 0.65rem;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 14px;
   background: #ffffff;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.supplier-file-card:hover,
+.supplier-file-card:focus-within {
+  border-color: rgba(34, 75, 115, 0.32);
+  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.12);
+  transform: translateY(-2px);
 }
 
 .supplier-file-card__preview {
   display: grid;
   place-items: center;
-  aspect-ratio: 16 / 10;
-  background: linear-gradient(135deg, #eef2f7, #dbe3ee);
+  aspect-ratio: 16 / 8.5;
+  overflow: hidden;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #f1f5f9, #dbe3ee);
   color: #64748b;
 }
 
@@ -137,8 +146,8 @@
 
 .supplier-file-card__body {
   display: grid;
-  gap: 0.2rem;
-  padding: 0.75rem;
+  gap: 0.28rem;
+  padding: 0 0.15rem 0.15rem;
 }
 
 .supplier-file-card__body strong,
@@ -151,7 +160,8 @@
 
 .supplier-file-card__body strong {
   color: #111827;
-  font-size: 0.9rem;
+  font-size: 0.94rem;
+  font-weight: 900;
 }
 
 .supplier-file-card__body span,
@@ -162,8 +172,8 @@
 
 .supplier-file-card__badge {
   position: absolute;
-  top: 0.55rem;
-  right: 0.55rem;
+  top: 0.95rem;
+  right: 0.95rem;
   padding: 0.2rem 0.5rem;
   border-radius: 999px;
   background: rgba(255, 152, 0, 0.92);
@@ -174,8 +184,8 @@
 
 .supplier-file-card__delete {
   position: absolute;
-  top: 0.55rem;
-  right: 0.55rem;
+  top: 0.95rem;
+  right: 0.95rem;
   display: inline-grid;
   place-items: center;
   width: 2rem;
@@ -184,6 +194,7 @@
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.92);
   color: #dc2626;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
   cursor: pointer;
   opacity: 0;
   transform: translateY(-4px);

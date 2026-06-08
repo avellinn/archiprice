@@ -1,11 +1,11 @@
 import './Parametres.css';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Icon } from '../../../components/ui';
 import { PasswordSettingsModal, SupplierLocationModal, SupplierPolicyModal, SupplierShopModal } from '../../../components/ui/modals';
 import useAuth from '../../../context/useAuth';
 import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
-import { notifySupplierWorkspaceChange, updateSupplierProfile } from '../../../services/supplier';
+import { fetchSupplierWorkspace, notifySupplierWorkspaceChange, updateSupplierProfile } from '../../../services/supplier';
 import { getSupplierTranslations, SUPPLIER_LANGUAGE_LABELS } from '../../../utils/supplierLanguage';
 
 const TIMEZONES = [
@@ -33,14 +33,26 @@ function normalizeSupplierForWorkspace(supplier) {
   };
 }
 
+function getOfficialSupplierName(user, supplier = null) {
+  return supplier?.companyName
+    || supplier?.shopLabel
+    || supplier?.storeLabel
+    || supplier?.label
+    || supplier?.name
+    || user?.companyName
+    || user?.shopName
+    || user?.name
+    || '';
+}
+
 export default function Parametres() {
   const { user, updateProfile: updateAccountProfile, changePassword } = useAuth();
   const [adminData, updateAdminData] = useAdminData();
   const savedSupplierSettings = adminData.supplierSettings || {};
   const [shopProfile, setShopProfile] = useState({
-    name: savedSupplierSettings.shopProfile?.name || user?.shopName || user?.companyName || user?.name || '',
-    email: savedSupplierSettings.shopProfile?.email || user?.email || '',
-    phone: savedSupplierSettings.shopProfile?.phone || user?.phone || '',
+    name: getOfficialSupplierName(user),
+    email: user?.email || '',
+    phone: user?.phone || '',
   });
   const [settings, setSettings] = useState({
     location: savedSupplierSettings.settings?.location || 'Bénin',
@@ -54,6 +66,28 @@ export default function Parametres() {
   const [activeModal, setActiveModal] = useState(null);
   const [settingsAlert, setSettingsAlert] = useState(null);
   const supplierText = getSupplierTranslations(settings.language);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchSupplierWorkspace()
+      .then((workspace) => {
+        if (cancelled) return;
+        const supplier = workspace?.supplier || {};
+        setShopProfile({
+          name: getOfficialSupplierName(workspace?.user || user, supplier),
+          email: supplier.email || workspace?.user?.email || user?.email || '',
+          phone: supplier.phone || workspace?.user?.phone || user?.phone || '',
+        });
+      })
+      .catch(() => {
+        // Si l'API fournisseur n'est pas encore disponible, les données du compte connecté restent utilisées.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const cityOptions = useMemo(() => getUniqueValues([
     ...(adminData.taxonomies?.cities || []).map((item) => item.name),
@@ -143,6 +177,11 @@ export default function Parametres() {
     notifySupplierWorkspaceChange({ action: 'update-supplier-settings' });
   }
 
+  function saveAndNotify(nextShopProfile = shopProfile, nextSettings = settings, message = 'Paramètres sauvegardés.') {
+    persistSupplierSettings(nextShopProfile, nextSettings);
+    setSettingsAlert({ variant: 'success', message });
+  }
+
   function updateLanguage(value) {
     const nextSettings = {
       ...settings,
@@ -150,7 +189,17 @@ export default function Parametres() {
     };
 
     setSettings(nextSettings);
-    persistSupplierSettings(shopProfile, nextSettings);
+    saveAndNotify(shopProfile, nextSettings, 'Langue sauvegardée.');
+  }
+
+  function updateTimezone(value) {
+    const nextSettings = {
+      ...settings,
+      timezone: value,
+    };
+
+    setSettings(nextSettings);
+    saveAndNotify(shopProfile, nextSettings, 'Fuseau horaire sauvegardé.');
   }
 
   function closeModal() {
@@ -158,7 +207,7 @@ export default function Parametres() {
   }
 
   function saveSupplierSettings() {
-    persistSupplierSettings(shopProfile, settings);
+    saveAndNotify(shopProfile, settings);
     closeModal();
   }
 
@@ -202,7 +251,7 @@ export default function Parametres() {
             <Icon name="History" size="sm" />
             <div>
               <strong>{supplierText.settings.timezone}</strong>
-              <select value={settings.timezone} onChange={(event) => updateSetting('timezone', event.target.value)}>
+              <select value={settings.timezone} onChange={(event) => updateTimezone(event.target.value)}>
                 {TIMEZONES.map((timezone) => (
                   <option key={timezone} value={timezone}>{timezone}</option>
                 ))}

@@ -167,8 +167,7 @@ function normalizeProducts(products = []) {
     .map((product) => {
       const images = (Array.isArray(product.images) ? product.images : [])
         .map(normalizeProductImage)
-        .filter(Boolean)
-        .slice(0, 12);
+        .filter(Boolean);
       const image = normalizeProductImage(product.image);
       const primaryImage = images[0]?.secure_url || (typeof image === 'string' ? image : image?.secure_url) || '';
 
@@ -200,7 +199,7 @@ function mergeAdminData(savedData) {
     users: stripLegacyStaticItems(dynamicData?.users || DEFAULT_ADMIN_DATA.users),
     suppliers: stripLegacyStaticItems(dynamicData?.suppliers || DEFAULT_ADMIN_DATA.suppliers),
     simulations: stripLegacyStaticItems(dynamicData?.simulations || DEFAULT_ADMIN_DATA.simulations),
-    supportItems: stripLegacyStaticItems(dynamicData?.supportItems || DEFAULT_ADMIN_DATA.supportItems),
+    supportItems: [],
     regionalCoefficients: stripLegacyStaticItems(dynamicData?.regionalCoefficients || DEFAULT_ADMIN_DATA.regionalCoefficients),
     supplierClientNotifications: stripLegacyStaticItems(dynamicData?.supplierClientNotifications || DEFAULT_ADMIN_DATA.supplierClientNotifications),
     supplierPublicationNotices: stripLegacyStaticItems(dynamicData?.supplierPublicationNotices || []),

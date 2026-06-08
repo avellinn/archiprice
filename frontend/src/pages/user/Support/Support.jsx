@@ -3,8 +3,9 @@ import { useEffect, useMemo, useState } from 'react';
 import ModalSupport from '../../../components/modalsupport';
 import { Alert, Button, Icon } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
-import { createAdminId, useAdminData } from '../../../services/adminData';
+import { getApiErrorMessage } from '../../../services/api';
 import { createSupportFeedback, fetchMySupportItems } from '../../../services/support';
+import SupportModal from '../../admin/Support/supportModal';
 
 const HIDDEN_SUPPORT_ITEMS_KEY = 'archiprice:user-support-hidden-items';
 
@@ -29,44 +30,26 @@ function writeHiddenSupportItems(itemIds) {
   }
 }
 
-function mergeSupportItems(localItems, remoteItems) {
-  const itemsById = new Map();
-
-  [...localItems, ...remoteItems].forEach((item) => {
-    if (!item?.id) return;
-    const itemId = String(item.id);
-    itemsById.set(itemId, {
-      ...(itemsById.get(itemId) || {}),
-      ...item,
-      id: itemId,
-    });
-  });
-
-  return Array.from(itemsById.values());
-}
-
 export default function UserSupport() {
   const { user } = useAuth();
-  const [adminData, updateAdminData] = useAdminData();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
   const [remoteSupportItems, setRemoteSupportItems] = useState([]);
   const [hiddenSupportItemIds, setHiddenSupportItemIds] = useState(readHiddenSupportItems);
+  const [selectedFeedback, setSelectedFeedback] = useState(null);
 
   const userEmail = user?.email || '';
   const userName = user?.name || userEmail || 'Utilisateur';
-  const supportItems = useMemo(() => (
-    mergeSupportItems(adminData?.supportItems || [], remoteSupportItems)
-  ), [adminData?.supportItems, remoteSupportItems]);
 
   const userFeedbacks = useMemo(() => (
-    supportItems.filter((item) => (
-      item.sourceRole === 'user'
+    remoteSupportItems.filter((item) => (
+      (!item.sourceRole || item.sourceRole === 'user')
       && item.tab === 'feedback'
+      && item.type !== 'Demande'
       && !hiddenSupportItemIds.includes(String(item.id))
-      && (item.email === userEmail || item.userId === user?.id || item.userId === user?._id)
     ))
-  ), [hiddenSupportItemIds, supportItems, user, userEmail]);
+  ), [hiddenSupportItemIds, remoteSupportItems]);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,30 +75,17 @@ export default function UserSupport() {
     const nextHiddenItemIds = Array.from(new Set([...hiddenSupportItemIds, String(itemId)]));
     setHiddenSupportItemIds(nextHiddenItemIds);
     writeHiddenSupportItems(nextHiddenItemIds);
+    if (selectedFeedback?.id === itemId) setSelectedFeedback(null);
+    setMessage('Feedback supprimé de votre liste.');
   }
 
   async function submitFeedback(comment) {
     const feedback = {
-      id: createAdminId('feedback-user'),
-      tab: 'feedback',
-      sourceRole: 'user',
-      userId: user?.id || user?._id || '',
       subject: `Feedback de ${userName}`,
-      user: userName,
-      email: userEmail,
-      status: 'Ouvert',
       type: 'Feedback',
       date: formatDate(new Date()),
       description: comment,
-      reply: '',
     };
-
-    updateAdminData((currentData) => ({
-      ...currentData,
-      supportItems: [feedback, ...(currentData?.supportItems || [])],
-    }));
-    setIsModalOpen(false);
-    setMessage('Merci pour votre Feedback');
 
     try {
       const remoteFeedback = await createSupportFeedback({
@@ -124,14 +94,12 @@ export default function UserSupport() {
         type: feedback.type,
         date: feedback.date,
       });
-      updateAdminData((currentData) => ({
-        ...currentData,
-        supportItems: (currentData?.supportItems || []).map((item) => (
-          item.id === feedback.id ? remoteFeedback : item
-        )),
-      }));
-    } catch {
-      // Le feedback reste synchronisé via la configuration locale/remote si l'API support est indisponible.
+      setRemoteSupportItems((currentItems) => [remoteFeedback, ...currentItems]);
+      setIsModalOpen(false);
+      setMessage('Merci pour votre Feedback');
+      setError('');
+    } catch (apiError) {
+      setError(getApiErrorMessage(apiError, "L'envoi du feedback a échoué. Vérifiez que le backend est démarré."));
     }
   }
 
@@ -153,30 +121,46 @@ export default function UserSupport() {
             {message}
           </Alert>
         )}
+        {error && (
+          <Alert variant="danger" onClose={() => setError('')}>
+            {error}
+          </Alert>
+        )}
 
         <section className="user-support-card">
           <h2>Mes feedbacks</h2>
           {userFeedbacks.length ? (
             <div className="user-support-list">
               {userFeedbacks.map((item) => (
-                <article key={item.id}>
+                <article
+                  key={item.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedFeedback(item)}
+                  onKeyDown={(event) => {
+                    if (event.key !== 'Enter' && event.key !== ' ') return;
+                    event.preventDefault();
+                    setSelectedFeedback(item);
+                  }}
+                >
                   <div>
                     <strong>{item.subject}</strong>
                     <span>{item.date}</span>
                     {item.reply && <small>Réponse admin : {item.reply}</small>}
                   </div>
                   <b>{item.status}</b>
-                  {item.reply && (
-                    <button
-                      type="button"
-                      className="user-support-list__delete"
-                      title="Supprimer de ma liste"
-                      aria-label={`Supprimer ${item.subject} de ma liste`}
-                      onClick={() => hideSupportItem(item.id)}
-                    >
-                      <Icon name="Delete" size="sm" />
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className="user-support-list__delete"
+                    title="Supprimer de ma liste"
+                    aria-label={`Supprimer ${item.subject} de ma liste`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      hideSupportItem(item.id);
+                    }}
+                  >
+                    <Icon name="Delete" size="sm" />
+                  </button>
                 </article>
               ))}
             </div>
@@ -192,6 +176,17 @@ export default function UserSupport() {
           placeholder="Partagez votre feedback sur votre expérience ArchiPrice."
           onCancel={() => setIsModalOpen(false)}
           onSubmit={submitFeedback}
+        />
+      )}
+
+      {selectedFeedback && (
+        <SupportModal
+          item={selectedFeedback}
+          replyDraft={selectedFeedback.reply || ''}
+          onReplyChange={() => {}}
+          onClose={() => setSelectedFeedback(null)}
+          onUpdate={() => {}}
+          canReply={false}
         />
       )}
     </main>

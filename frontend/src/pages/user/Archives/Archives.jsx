@@ -1,6 +1,6 @@
-import './Invoices.css';
+import './Archives.css';
 import { useEffect, useState } from 'react';
-import { Icon, Text } from '../../../components/ui';
+import { Alert, Button, Icon, Text } from '../../../components/ui';
 import {
   fetchExportedDocuments,
   removeExportedDocument,
@@ -23,16 +23,23 @@ function formatDate(value) {
   }).format(new Date(value));
 }
 
-export default function Invoices() {
+export default function Archives() {
   const [documents, setDocuments] = useState(() => fetchExportedDocuments());
   const [selectedDocumentId, setSelectedDocumentId] = useState('');
+  const [pendingDeleteDocument, setPendingDeleteDocument] = useState(null);
+  const [deleteMessage, setDeleteMessage] = useState('');
 
   useEffect(() => subscribeExportedDocumentsChange(setDocuments), []);
 
-  function deleteDocument(documentId) {
+  function confirmDeleteDocument() {
+    const documentId = pendingDeleteDocument?.id;
+    if (!documentId) return;
+
     removeExportedDocument(documentId);
     setDocuments(fetchExportedDocuments());
     if (selectedDocumentId === documentId) setSelectedDocumentId('');
+    setPendingDeleteDocument(null);
+    setDeleteMessage('Archive supprimée définitivement.');
   }
 
   const selectedDocument = documents.find((document) => document.id === selectedDocumentId);
@@ -46,24 +53,22 @@ export default function Invoices() {
     <div className="workspace-page invoices-page">
       <div className="workspace-heading">
         <div>
-          <Text as="span" size="sm" variant="bold" className="workspace-eyebrow">
-            Exports
-          </Text>
-          <h1>Estimations exportées</h1>
+          
+          <h1>Archives</h1>
         </div>
       </div>
 
       {documents.length === 0 ? (
         <section className="workspace-card invoices-empty">
           <Text as="strong" variant="bold" size="md">
-            Aucune estimation exportée disponible
+            Aucune archive disponible
           </Text>
           <Text className="muted">
-            Les estimations exportées liées aux projets validés apparaîtront ici.
+            Les archives créées après confirmation de validation apparaîtront ici.
           </Text>
         </section>
       ) : (
-        <section className="invoices-list" aria-label="Liste des estimations exportées">
+        <section className="invoices-list" aria-label="Liste des archives">
           {documents.map((document) => (
             <article
               key={document.id}
@@ -86,13 +91,13 @@ export default function Invoices() {
               <small>{document.itemCount || 0} article(s)</small>
               <button
                 type="button"
-                aria-label={`Retirer ${document.fileName}`}
+                aria-label={`Supprimer ${document.fileName}`}
                 onClick={(event) => {
                   event.stopPropagation();
-                  deleteDocument(document.id);
+                  setPendingDeleteDocument(document);
                 }}
               >
-                <Icon name="Close" size="sm" />
+                <Icon name="Delete" size="sm" />
               </button>
             </article>
           ))}
@@ -147,6 +152,31 @@ export default function Invoices() {
                 ))
               )}
             </div>
+          </section>
+        </div>
+      )}
+
+      {deleteMessage && (
+        <Alert variant="success" className="archives-delete-alert" onClose={() => setDeleteMessage('')}>
+          {deleteMessage}
+        </Alert>
+      )}
+
+      {pendingDeleteDocument && (
+        <div className="archives-delete-modal" role="presentation">
+          <section className="archives-delete-card" role="dialog" aria-modal="true" aria-labelledby="archives-delete-title">
+            <Alert variant="danger" title="Supprimer définitivement">
+              Cette action retirera l’archive de votre liste.
+            </Alert>
+            <p id="archives-delete-title">{pendingDeleteDocument.fileName}</p>
+            <footer>
+              <Button type="button" variant="outline" onClick={() => setPendingDeleteDocument(null)}>
+                Annuler
+              </Button>
+              <Button type="button" variant="danger" onClick={confirmDeleteDocument}>
+                Valider
+              </Button>
+            </footer>
           </section>
         </div>
       )}

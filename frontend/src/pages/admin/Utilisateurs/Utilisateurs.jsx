@@ -26,7 +26,6 @@ const EMPTY_USER = {
   role: 'user',
   type: 'Architecte',
   status: 'Actif',
-  subscription: 'Essai',
   simulations: 0,
 };
 
@@ -52,7 +51,6 @@ function normalizeUserForWorkspace(user) {
     simulations: user.simulations || 0,
     inscription: user.inscription || '',
     status: user.status || 'Actif',
-    subscription: user.subscription || '-',
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
@@ -136,9 +134,9 @@ export default function Utilisateurs() {
     name: editForm.name || 'Nouvel utilisateur',
     email: editForm.email,
     phone: editForm.phone,
-    role: editForm.role || 'user',
-    type: ROLE_LABELS[editForm.role] || 'Utilisateur',
-    status: editForm.status || 'Actif',
+        role: editForm.role || 'user',
+        type: ROLE_LABELS[editForm.role] || 'Utilisateur',
+        status: editForm.status || 'Actif',
   } : selectedUser;
 
   async function updateUser(userId, patch) {
@@ -181,7 +179,6 @@ export default function Utilisateurs() {
         role: editForm.role || 'user',
         type: editForm.role === 'admin' ? 'Admin' : 'Architecte',
         status: editForm.status,
-        subscription: editForm.role === 'user' ? 'Essai' : '-',
       });
       setUsers((currentUsers) => {
         const nextUsers = [user, ...currentUsers];
@@ -396,15 +393,6 @@ export default function Utilisateurs() {
         <Badge tone={status === 'Actif' ? 'success' : status === 'Bloqué' ? 'warning' : 'danger'}>
           {status || 'Actif'}
         </Badge>
-      ),
-    },
-    {
-      key: 'subscription',
-      label: 'Abonnement',
-      render: (subscription) => (
-        <span className={subscription === 'Premium' ? 'admin-users-management__premium' : ''}>
-          {subscription || '-'}
-        </span>
       ),
     },
     {

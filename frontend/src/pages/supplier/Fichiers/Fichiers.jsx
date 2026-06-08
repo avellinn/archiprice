@@ -1,7 +1,6 @@
 import './Fichiers.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Button, Icon } from '../../../components/ui';
-import { MAX_FILES_PER_UPLOAD } from '../../../constants/uploads';
 import { getApiErrorMessage } from '../../../services/api';
 import { deleteSupplierProductImage, fetchSupplierWorkspace, subscribeSupplierWorkspaceChange } from '../../../services/supplier';
 
@@ -47,7 +46,8 @@ export default function Fichiers() {
   const [isLoading, setIsLoading] = useState(true);
   const [deletingFileId, setDeletingFileId] = useState('');
   const [pendingImageDelete, setPendingImageDelete] = useState(null);
-  const [uploadLimitMessage, setUploadLimitMessage] = useState('');
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   function loadWorkspace() {
     let cancelled = false;
@@ -105,15 +105,7 @@ export default function Fichiers() {
 
   function handleFilesChange(event) {
     const selectedFiles = Array.from(event.target.files || []);
-    const acceptedFiles = selectedFiles.slice(0, MAX_FILES_PER_UPLOAD);
-
-    if (selectedFiles.length > MAX_FILES_PER_UPLOAD) {
-      setUploadLimitMessage(`Maximum ${MAX_FILES_PER_UPLOAD} fichiers par import. Les ${MAX_FILES_PER_UPLOAD} premiers fichiers ont été ajoutés.`);
-    } else {
-      setUploadLimitMessage('');
-    }
-
-    setFiles((currentFiles) => [...currentFiles, ...acceptedFiles]);
+    setFiles((currentFiles) => [...currentFiles, ...selectedFiles]);
     event.target.value = '';
   }
 
@@ -149,6 +141,29 @@ export default function Fichiers() {
     setPendingImageDelete(file);
   }
 
+  async function confirmResetFiles() {
+    const uploadedFilesToDelete = uploadedFiles.filter((file) => file.productId && file.publicId);
+
+    setDeletingFileId('all');
+    setError('');
+    setSuccessMessage('');
+    setIsResetConfirmOpen(false);
+
+    try {
+      await Promise.allSettled(uploadedFilesToDelete.map((file) => (
+        deleteSupplierProductImage(file.productId, file.publicId)
+      )));
+      setFiles([]);
+      const nextWorkspace = await fetchSupplierWorkspace();
+      setWorkspace(nextWorkspace);
+      setSuccessMessage('Tous les fichiers ont été réinitialisés.');
+    } catch (apiError) {
+      setError(getApiErrorMessage(apiError, 'Impossible de réinitialiser les fichiers.'));
+    } finally {
+      setDeletingFileId('');
+    }
+  }
+
   return (
     <div className="supplier-files-page">
       <header className="supplier-files-header">
@@ -157,12 +172,15 @@ export default function Fichiers() {
           Fichiers
         </h1>
         <div className="supplier-files-header__actions">
-          <Button type="button" size="sm" onClick={openFilePicker}>
-            Importer des fichiers
+          <Button
+            type="button"
+            size="sm"
+            icon={<Icon name="History" size="sm" />}
+            disabled={visibleFiles.length === 0 || deletingFileId === 'all'}
+            onClick={() => setIsResetConfirmOpen(true)}
+          >
+            Réinitialiser
           </Button>
-          <button type="button" aria-label="Options d'import">
-            <Icon name="ChevronDown" size="sm" />
-          </button>
         </div>
       </header>
 
@@ -195,12 +213,25 @@ export default function Fichiers() {
             </span>
           </Alert>
         )}
-        {uploadLimitMessage && (
-          <Alert variant="warning" className="supplier-files-status" onClose={() => setUploadLimitMessage('')}>
-            {uploadLimitMessage}
+        {isResetConfirmOpen && (
+          <Alert
+            variant="warning"
+            className="supplier-files-status supplier-files-confirm-alert"
+            title="Réinitialiser les fichiers"
+            onClose={() => setIsResetConfirmOpen(false)}
+          >
+            <span>Vider tous les fichiers de cette page ?</span>
+            <span className="supplier-files-confirm-alert__actions">
+              <button type="button" onClick={() => setIsResetConfirmOpen(false)}>Annuler</button>
+              <button type="button" onClick={confirmResetFiles}>Réinitialiser</button>
+            </span>
           </Alert>
         )}
-
+        {successMessage && (
+          <Alert variant="success" className="supplier-files-status" onClose={() => setSuccessMessage('')}>
+            {successMessage}
+          </Alert>
+        )}
         {!isLoading && !error && visibleFiles.length === 0 && (
           <div className="supplier-files-empty">
             <div className="supplier-files-art" aria-hidden="true">
@@ -268,7 +299,7 @@ export default function Fichiers() {
               Charger des fichiers
             </Button>
             {files.length > 0 && (
-              <small>{files.length} fichier(s) sélectionné(s). {MAX_FILES_PER_UPLOAD} maximum par import.</small>
+              <small>{files.length} fichier(s) sélectionné(s). Import illimité.</small>
             )}
           </div>
         )}

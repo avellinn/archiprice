@@ -19,6 +19,7 @@ function formatUser(user) {
     email: user.email,
     role: user.role,
     type: user.type,
+    category: user.category || user.type || '',
     phone: user.phone || '',
     status: user.status,
     redirectTo: getRedirectTo(user.role),
@@ -56,6 +57,10 @@ async function ensureSupplierProfile(user, payload = {}) {
       existingSupplier.email = email;
       changed = true;
     }
+    if (user.category && !(existingSupplier.categories || []).includes(user.category)) {
+      existingSupplier.categories = [user.category, ...(existingSupplier.categories || [])];
+      changed = true;
+    }
     if (changed) await existingSupplier.save();
     return existingSupplier;
   }
@@ -66,6 +71,11 @@ async function ensureSupplierProfile(user, payload = {}) {
     email,
     contact: payload.contact?.trim() || email,
     region: payload.region?.trim() || undefined,
+    categories: normalizeCategories([
+      user.category,
+      payload.category,
+      ...(Array.isArray(payload.categories) ? payload.categories : []),
+    ]),
   });
 }
 
@@ -85,6 +95,7 @@ async function register(req, res) {
     accountType = 'user',
     companyName,
     phone,
+    category,
     categories,
   } = req.body;
 
@@ -97,13 +108,16 @@ async function register(req, res) {
     return res.status(400).json({ error: 'Un compte existe déjà avec cet email' });
   }
 
+  const profileCategory = String(category || '').trim();
+  const officialCategory = profileCategory || (accountType === 'supplier' ? 'Fournisseur' : 'Architecte');
   const user = await User.create({
     name: name?.trim() || companyName?.trim() || undefined,
     email,
     phone: phone?.trim() || undefined,
     password,
     role: 'user',
-    type: accountType === 'supplier' ? 'Fournisseur' : 'Architecte',
+    type: accountType === 'supplier' ? 'Fournisseur' : officialCategory,
+    category: officialCategory,
   });
 
   if (accountType === 'supplier') {
@@ -117,7 +131,10 @@ async function register(req, res) {
       companyName: companyName.trim(),
       email: user.email,
       phone: phone?.trim() || undefined,
-      categories: normalizeCategories(categories),
+      categories: normalizeCategories([
+        profileCategory,
+        ...(Array.isArray(categories) ? categories : []),
+      ]),
     });
     publishCrudEvent('supplier-requests', 'created', {
       requestId: String(supplierRequest._id),
@@ -162,6 +179,10 @@ async function updateMe(req, res) {
   if (req.body.phone !== undefined) user.phone = String(req.body.phone || '').trim();
   if (req.body.firstName !== undefined) user.firstName = String(req.body.firstName || '').trim();
   if (req.body.lastName !== undefined) user.lastName = String(req.body.lastName || '').trim();
+  if (req.body.category !== undefined) {
+    user.category = String(req.body.category || '').trim();
+    if (user.role === 'user' && user.category) user.type = user.category;
+  }
   await user.save();
 
   if (user.role === 'supplier') {
@@ -180,6 +201,10 @@ async function updateMe(req, res) {
       if (user.name) {
         supplier.name = supplier.name || user.name;
         supplier.companyName = supplier.companyName || user.name;
+      }
+      if (user.category) {
+        const categories = new Set([user.category, ...(supplier.categories || [])].filter(Boolean));
+        supplier.categories = [...categories];
       }
       await supplier.save();
     }

@@ -1,5 +1,6 @@
 import './utilisateurModal.css';
-import { Badge, Icon } from '../../../components/ui';
+import { useState } from 'react';
+import { Alert, Badge, Icon } from '../../../components/ui';
 
 const ROLE_LABELS = {
   admin: 'Admin',
@@ -34,14 +35,26 @@ export default function UtilisateurModal({
   onBlock,
   onDelete,
 }) {
+  const [actionMessage, setActionMessage] = useState('');
+
   if (!user) return null;
 
   const userStatus = user.status || 'Actif';
   const userRole = getUserRole(user);
 
+  function submitUser(event) {
+    setActionMessage(isCreating ? 'Création de l’utilisateur en cours.' : 'Sauvegarde de l’utilisateur en cours.');
+    onSubmit(event);
+  }
+
+  function runAction(message, callback) {
+    setActionMessage(message);
+    callback?.();
+  }
+
   return (
     <div className="admin-user-detail-backdrop" role="presentation">
-      <form className="admin-user-detail admin-user-detail-modal" role="dialog" aria-modal="true" aria-labelledby="admin-user-detail-title" onSubmit={onSubmit}>
+      <form className="admin-user-detail admin-user-detail-modal" role="dialog" aria-modal="true" aria-labelledby="admin-user-detail-title" onSubmit={submitUser}>
         <header className="admin-user-detail__header">
           <div className="admin-user-detail__title">
             <Icon name="Workspaces" size="sm" />
@@ -61,13 +74,13 @@ export default function UtilisateurModal({
             <h3>Profil utilisateur</h3>
             {!isCreating && (
               <div className="admin-user-detail__actions">
-                <button type="button" title={userStatus === 'Actif' ? 'Désactiver' : 'Activer'} onClick={() => onToggleStatus(user)}>
+                <button type="button" title={userStatus === 'Actif' ? 'Désactiver' : 'Activer'} onClick={() => runAction('Statut utilisateur mis à jour.', () => onToggleStatus(user))}>
                   <Icon name="Visibility" size="sm" />
                 </button>
-                <button type="button" title="Bloquer" onClick={() => onBlock(user)}>
+                <button type="button" title="Bloquer" onClick={() => runAction('Utilisateur bloqué.', () => onBlock(user))}>
                   <Icon name="VisibilityOff" size="sm" />
                 </button>
-                <button type="button" className="is-danger" title="Supprimer" onClick={() => onDelete(user.id)}>
+                <button type="button" className="is-danger" title="Supprimer" onClick={() => runAction('Suppression utilisateur lancée.', () => onDelete(user.id))}>
                   <Icon name="Delete" size="sm" />
                 </button>
               </div>
@@ -137,10 +150,6 @@ export default function UtilisateurModal({
               <strong>{userRole === 'admin' ? '-' : user.simulations || 0}</strong>
             </article>
             <article>
-              <span>Abonnement</span>
-              <strong>{user.subscription || '-'}</strong>
-            </article>
-            <article>
               <span>Inscription</span>
               <strong>{user.inscription || 'Non renseignée'}</strong>
             </article>
@@ -150,6 +159,14 @@ export default function UtilisateurModal({
             </article>
           </div>
         </section>
+
+        {actionMessage && (
+          <section className="admin-user-detail__card">
+            <Alert variant="success" onClose={() => setActionMessage('')}>
+              {actionMessage}
+            </Alert>
+          </section>
+        )}
 
         <footer className="admin-user-detail__footer">
           <button type="button" onClick={onClose}>Annuler</button>

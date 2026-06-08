@@ -1,7 +1,6 @@
 import './Parametres.css';
 import { useRef, useMemo, useState } from 'react';
-import Avatar from '../../../components/Avatar';
-import { Alert, Button, Icon } from '../../../components/ui';
+import { Alert, Icon } from '../../../components/ui';
 import { PasswordSettingsModal } from '../../../components/ui/modals';
 import useAuth from '../../../context/useAuth';
 import { getApiErrorMessage } from '../../../services/api';
@@ -31,12 +30,12 @@ function writeStoredProfile(profile) {
 }
 
 export default function Parametres() {
-  const { user, logout, updateProfile: updateAccountProfile, changePassword } = useAuth();
+  const { user, updateProfile: updateAccountProfile, changePassword } = useAuth();
   const fileInputRef = useRef(null);
   const storedProfile = useMemo(() => readStoredProfile(), []);
   const [profile, setProfile] = useState({
-    name: storedProfile.name || getDisplayName(user),
-    email: storedProfile.email || user?.email || '',
+    name: getDisplayName(user) || storedProfile.name || '',
+    email: user?.email || storedProfile.email || '',
     useCase: storedProfile.useCase || USE_CASES[0],
     language: storedProfile.language || LANGUAGES[0],
     socialProvider: storedProfile.socialProvider || 'Google',
@@ -241,21 +240,7 @@ export default function Parametres() {
           </button>
         </div>
 
-        <section className="user-profile-social" aria-label="Comptes de réseaux sociaux associés">
-          <h2>{profileText.socialTitle}</h2>
-          <p>{profileText.socialDescription}</p>
-          <article>
-            <Avatar  name="Google" size="lg" color="#ffffff" className="" />
-            <div>
-              <strong>{profile.socialProvider}</strong>
-              <span>{profile.isGoogleConnected ? profile.name : profileText.disconnected}</span>
-            </div>
-            
-            <Button type="button" variant="ghost" onClick={logout}>
-              {profileText.accountLogout}
-            </Button>
-          </article>
-        </section>
+       
       </section>
 
       {editingField && (

@@ -1,110 +1,2226 @@
 {
-  "__version": 526,
-  "__updatedAt": 1780671523098,
+  "__version": 686,
+  "__updatedAt": 1780944777329,
   "users": [
     {
-      "id": "6a102521e9a37f1239d69fc8",
-      "name": "hospiceavell@gmail.com",
-      "email": "hospiceavell@gmail.com",
+      "id": "6a2671be3e7aaea935dd1117",
+      "name": "Super Admin",
+      "email": "admin@archiprice.com",
       "phone": "",
       "role": "admin",
       "type": "Admin",
       "simulations": "-",
-      "inscription": "22/05/2026",
+      "inscription": "08/06/2026",
       "status": "Actif",
-      "subscription": "-",
-      "createdAt": "2026-05-22T09:42:57.933Z",
-      "updatedAt": "2026-06-01T07:52:43.587Z"
+      "createdAt": "2026-06-08T07:39:42.774Z",
+      "updatedAt": "2026-06-08T18:09:31.133Z"
     },
     {
-      "id": "6a2063890914362592ebe587",
-      "name": "test@gmail.com",
-      "email": "test@gmail.com",
+      "id": "6a26777b461186376f847de7",
+      "name": "lookooo",
+      "email": "lookin@gmail.com",
+      "phone": "1212122221200",
+      "role": "supplier",
+      "type": "Fournisseur",
+      "simulations": "-",
+      "inscription": "08/06/2026",
+      "status": "Bloqué",
+      "createdAt": "2026-06-08T08:04:11.026Z",
+      "updatedAt": "2026-06-08T15:32:46.790Z"
+    },
+    {
+      "id": "6a2692cd461186376f847dfd",
+      "name": "led@gmail.com",
+      "email": "led@gmail.com",
       "phone": "",
       "role": "user",
       "type": "Architecte",
       "simulations": 0,
-      "inscription": "03/06/2026",
+      "inscription": "08/06/2026",
       "status": "Actif",
-      "subscription": "Essai",
-      "createdAt": "2026-06-03T17:25:29.917Z",
-      "updatedAt": "2026-06-03T17:25:29.917Z"
+      "createdAt": "2026-06-08T10:00:45.650Z",
+      "updatedAt": "2026-06-08T10:00:45.650Z"
     },
     {
-      "id": "6a218a723836162a85468e67",
-      "name": "Lookthis",
-      "email": "avellinadjai@gmail.com",
-      "phone": "97456511",
+      "id": "6a269365461186376f847dfe",
+      "name": "mooo",
+      "email": "moo@gmail.com",
+      "phone": "64554545",
       "role": "supplier",
       "type": "Fournisseur",
       "simulations": "-",
-      "inscription": "04/06/2026",
+      "inscription": "08/06/2026",
       "status": "Actif",
-      "subscription": "-",
-      "createdAt": "2026-06-04T14:23:46.015Z",
-      "updatedAt": "2026-06-04T14:24:44.174Z"
+      "createdAt": "2026-06-08T10:03:17.718Z",
+      "updatedAt": "2026-06-08T14:46:03.623Z"
+    },
+    {
+      "id": "6a26ee8ed7b80b61a598f1db",
+      "name": "lon",
+      "email": "loni@gmail.com",
+      "phone": "",
+      "role": "user",
+      "type": "BTP",
+      "simulations": 0,
+      "inscription": "08/06/2026",
+      "status": "Actif",
+      "createdAt": "2026-06-08T16:32:14.657Z",
+      "updatedAt": "2026-06-08T16:34:03.609Z"
     }
   ],
-  "products": [],
+  "products": [
+    {
+      "id": "supplier-product-6a26e5ae40275a84679b1b9e",
+      "sourceSupplierProductId": "6a26e5ae40275a84679b1b9e",
+      "supplierUserId": "6a269365461186376f847dfe",
+      "name": "dd",
+      "description": "dd",
+      "price": 45222222,
+      "image": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/j7bwygatmozt6tyqbm9e?_a=BAMAPqhK0",
+      "images": [
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/j7bwygatmozt6tyqbm9e?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/j7bwygatmozt6tyqbm9e",
+          "metadata": {
+            "originalName": "pexels-pok-rie-1603821.jpg",
+            "mimeType": "image/jpeg",
+            "bytes": 2746439,
+            "width": 3616,
+            "height": 2598,
+            "format": "jpg",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        }
+      ],
+      "category": "Mooon",
+      "room": "Salon",
+      "range": "Confort",
+      "supplier": "mooo",
+      "vat": "20%",
+      "visual": "sofa",
+      "city": "Cotonou",
+      "neighborhood": "Cadjehoun",
+      "availability": "Disponible",
+      "publicationStatus": "Validé",
+      "publicationSource": "supplier",
+      "submittedAt": "2026-06-08T15:54:23.312Z",
+      "approvedAt": "2026-06-08T18:28:39.413Z"
+    },
+    {
+      "id": "supplier-product-6a267d05461186376f847dee",
+      "sourceSupplierProductId": "6a267d05461186376f847dee",
+      "supplierUserId": "6a26777b461186376f847de7",
+      "name": "jiiinooin",
+      "description": "huhus",
+      "price": 45454500,
+      "image": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/xmoetgnub08euxasunsd?_a=BAMAPqhK0",
+      "images": [
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/xmoetgnub08euxasunsd?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/xmoetgnub08euxasunsd",
+          "metadata": {
+            "originalName": "pexels-mateusz-dach-450035 (1).jpg",
+            "mimeType": "image/jpeg",
+            "bytes": 1600979,
+            "width": 4608,
+            "height": 3072,
+            "format": "jpg",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        },
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/rhc9he6lcpa2rv0u7eiq?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/rhc9he6lcpa2rv0u7eiq",
+          "metadata": {
+            "originalName": "pexels-photo-1379640.jpeg",
+            "mimeType": "image/jpeg",
+            "bytes": 97336,
+            "width": 1125,
+            "height": 750,
+            "format": "jpg",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        },
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/q3jeyv6ejucqjypvcx0o?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/q3jeyv6ejucqjypvcx0o",
+          "metadata": {
+            "originalName": "pexels-pok-rie-1603821.jpg",
+            "mimeType": "image/jpeg",
+            "bytes": 2746439,
+            "width": 3616,
+            "height": 2598,
+            "format": "jpg",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        }
+      ],
+      "category": "Mooon",
+      "room": "Salon",
+      "range": "Confort",
+      "supplier": "lookooo",
+      "vat": "20%",
+      "visual": "sofa",
+      "city": "Cotonou",
+      "neighborhood": "Cadjehoun",
+      "availability": "Disponible",
+      "publicationStatus": "Validé",
+      "publicationSource": "supplier",
+      "submittedAt": "2026-06-08T08:27:49.791Z",
+      "approvedAt": "2026-06-08T13:56:55.591Z"
+    },
+    {
+      "id": "supplier-product-1780907045101-ee19f3",
+      "sourceSupplierProductId": "6a267bb3461186376f847dec",
+      "supplierUserId": "6a26777b461186376f847de7",
+      "name": "juste",
+      "description": "justesse",
+      "price": 5412000,
+      "image": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kq3zs0rd9weeocq4jijd?_a=BAMAPqhK0",
+      "images": [
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kq3zs0rd9weeocq4jijd?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/kq3zs0rd9weeocq4jijd",
+          "metadata": {
+            "originalName": "pexels-photo-1379640.jpeg",
+            "mimeType": "image/jpeg",
+            "bytes": 97336,
+            "width": 1125,
+            "height": 750,
+            "format": "jpg",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        },
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gjibmanscvtzo2y5wjvk?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/gjibmanscvtzo2y5wjvk",
+          "metadata": {
+            "originalName": "pexels-mateusz-dach-450035 (1).jpg",
+            "mimeType": "image/jpeg",
+            "bytes": 1600979,
+            "width": 4608,
+            "height": 3072,
+            "format": "jpg",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        },
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/coltwyeeqdcj5fxbrl6u?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/coltwyeeqdcj5fxbrl6u",
+          "metadata": {
+            "originalName": "pexels-pok-rie-1603821.jpg",
+            "mimeType": "image/jpeg",
+            "bytes": 2746439,
+            "width": 3616,
+            "height": 2598,
+            "format": "jpg",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        }
+      ],
+      "category": "Mooon",
+      "room": "Salon",
+      "range": "Confort",
+      "supplier": "lookooo",
+      "vat": "20%",
+      "visual": "sofa",
+      "city": "Cotonou",
+      "neighborhood": "Cadjehoun",
+      "availability": "Disponible",
+      "publicationStatus": "Validé",
+      "publicationSource": "supplier",
+      "submittedAt": "2026-06-08T08:24:05.101Z",
+      "approvedAt": "2026-06-08T08:24:18.250Z"
+    },
+    {
+      "id": "supplier-product-6a267bea461186376f847ded",
+      "sourceSupplierProductId": "6a267bea461186376f847ded",
+      "supplierUserId": "6a26777b461186376f847de7",
+      "name": "Just",
+      "description": "justeedd",
+      "price": 5001000,
+      "image": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/smypdgx7zk0anhnfherb?_a=BAMAPqhK0",
+      "images": [
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/smypdgx7zk0anhnfherb?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/smypdgx7zk0anhnfherb",
+          "metadata": {
+            "originalName": "pexels-mateusz-dach-450035 (1).jpg",
+            "mimeType": "image/jpeg",
+            "bytes": 1600979,
+            "width": 4608,
+            "height": 3072,
+            "format": "jpg",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        },
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hsrxut1uaqrywuzsp5rv?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/hsrxut1uaqrywuzsp5rv",
+          "metadata": {
+            "originalName": "pexels-photo-1379640.jpeg",
+            "mimeType": "image/jpeg",
+            "bytes": 97336,
+            "width": 1125,
+            "height": 750,
+            "format": "jpg",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        },
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/at1tmtj4roefjxyyt69y?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/at1tmtj4roefjxyyt69y",
+          "metadata": {
+            "originalName": "pexels-pok-rie-1603821.jpg",
+            "mimeType": "image/jpeg",
+            "bytes": 2746439,
+            "width": 3616,
+            "height": 2598,
+            "format": "jpg",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        }
+      ],
+      "category": "Mooon",
+      "room": "Salon",
+      "range": "Confort",
+      "supplier": "lookooo",
+      "vat": "20%",
+      "visual": "sofa",
+      "city": "Cotonou",
+      "neighborhood": "Cadjehoun",
+      "availability": "Disponible",
+      "publicationStatus": "Validé",
+      "publicationSource": "supplier",
+      "submittedAt": "2026-06-08T08:23:07.676Z",
+      "approvedAt": "2026-06-08T08:24:19.709Z"
+    },
+    {
+      "id": "supplier-product-1780675119794-8a74bf",
+      "sourceSupplierProductId": "6a22f18c4618175550bea42e",
+      "supplierUserId": "6a22f0de4618175550bea42b",
+      "name": "koudous",
+      "description": "hudson",
+      "price": 200000000,
+      "image": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/exoslmcik9tx0gvfu3bs?_a=BAMAPqhK0",
+      "images": [
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/exoslmcik9tx0gvfu3bs?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/exoslmcik9tx0gvfu3bs",
+          "metadata": {
+            "originalName": "pexels-mateusz-dach-450035 (1).jpg",
+            "mimeType": "image/jpeg",
+            "bytes": 1600979,
+            "width": 4608,
+            "height": 3072,
+            "format": "jpg",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        },
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gwdpem6vlq6la38i65ui?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/gwdpem6vlq6la38i65ui",
+          "metadata": {
+            "originalName": "pexels-photo-1379640.jpeg",
+            "mimeType": "image/jpeg",
+            "bytes": 97336,
+            "width": 1125,
+            "height": 750,
+            "format": "jpg",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        },
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/l5ku9jsla4rp208j8tzj?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/l5ku9jsla4rp208j8tzj",
+          "metadata": {
+            "originalName": "pexels-pok-rie-1603821.jpg",
+            "mimeType": "image/jpeg",
+            "bytes": 2746439,
+            "width": 3616,
+            "height": 2598,
+            "format": "jpg",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        }
+      ],
+      "category": "Mooon",
+      "room": "Salon",
+      "range": "Confort",
+      "supplier": "Cloock",
+      "vat": "20%",
+      "visual": "sofa",
+      "city": "Cotonou",
+      "neighborhood": "Cadjehoun",
+      "availability": "Disponible",
+      "publicationStatus": "Validé",
+      "publicationSource": "supplier",
+      "submittedAt": "2026-06-05T15:58:39.794Z",
+      "approvedAt": "2026-06-05T15:58:58.011Z"
+    },
+    {
+      "id": "supplier-product-6a22f1b24618175550bea42f",
+      "sourceSupplierProductId": "6a22f1b24618175550bea42f",
+      "supplierUserId": "6a22f0de4618175550bea42b",
+      "name": "jbjhv",
+      "description": "gvjggv",
+      "price": 6876845,
+      "image": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jgruhf1ipnnvvtcovlxr?_a=BAMAPqhK0",
+      "images": [
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jgruhf1ipnnvvtcovlxr?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/jgruhf1ipnnvvtcovlxr",
+          "metadata": {
+            "originalName": "code.png",
+            "mimeType": "image/png",
+            "bytes": 193327,
+            "width": 702,
+            "height": 1318,
+            "format": "png",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        }
+      ],
+      "category": "Mooon",
+      "room": "Salon",
+      "range": "Confort",
+      "supplier": "Cloock",
+      "vat": "20%",
+      "visual": "sofa",
+      "city": "Cotonou",
+      "neighborhood": "Cadjehoun",
+      "availability": "Disponible",
+      "publicationStatus": "Validé",
+      "publicationSource": "supplier",
+      "submittedAt": "2026-06-05T15:56:34.722Z",
+      "approvedAt": "2026-06-05T15:59:00.441Z"
+    }
+  ],
   "suppliers": [
     {
-      "id": "6a218aac3836162a85468e69",
-      "userId": "6a218a723836162a85468e67",
-      "name": "Miione",
-      "companyName": "Lookthis",
-      "contact": "avellinadjai@gmail.com",
-      "email": "avellinadjai@gmail.com",
-      "phone": "97456512",
-      "region": "Cotonou",
+      "id": "6a26e18740275a84679b1b9a",
+      "userId": "",
+      "name": "Hospice",
+      "companyName": "Hospice",
+      "contact": "hospiceavell@gmail.com",
+      "email": "hospiceavell@gmail.com",
+      "phone": "465455",
+      "region": "521000",
       "status": "Actif",
       "products": 0,
-      "categories": []
+      "categories": [],
+      "isRecommended": true
+    },
+    {
+      "id": "6a2693dd461186376f847e00",
+      "userId": "6a269365461186376f847dfe",
+      "name": "mooo",
+      "companyName": "mooo",
+      "contact": "moo@gmail.com",
+      "email": "moo@gmail.com",
+      "phone": "64554545",
+      "region": "Bénin",
+      "status": "Actif",
+      "products": 4,
+      "categories": [],
+      "isRecommended": true
+    },
+    {
+      "id": "6a26e1b140275a84679b1b9b",
+      "userId": "",
+      "name": "zed",
+      "companyName": "zed",
+      "contact": "ded@gmail.com",
+      "email": "ded@gmail.com",
+      "phone": "4587962",
+      "region": "littoral",
+      "status": "Actif",
+      "products": 0,
+      "categories": [],
+      "isRecommended": true
     }
   ],
   "supplierClientNotifications": [
     {
-      "id": "supplier-client-Lookable-6a1d8556f44246ee96fd3f50-1780505298454",
-      "supplierId": "",
-      "supplierName": "Lookable",
-      "supplierContact": "",
-      "clientId": "6a1d8556f44246ee96fd3f50",
-      "clientName": "test@gmail.com",
-      "clientProfession": "Architecte",
-      "clientEmail": "test@gmail.com",
+      "id": "supplier-client-6a2693dd461186376f847e00-6a26ee8ed7b80b61a598f1db-1780944241118",
+      "supplierId": "6a2693dd461186376f847e00",
+      "supplierName": "mooo",
+      "supplierContact": "moo@gmail.com",
+      "clientId": "6a26ee8ed7b80b61a598f1db",
+      "clientName": "lon",
+      "clientProfession": "BTP",
+      "clientEmail": "loni@gmail.com",
       "clientPhone": "Non renseigné",
-      "projectId": "6a205ab2ec86c80211763cb8",
-      "projectName": "Projet catalogue 03/06/2026",
-      "simulationTotal": 69602100876,
-      "simulationTotalLabel": "69 602 100 876 FCFA",
-      "articleCount": 3,
+      "projectId": "6a270d14bde660c9df7b283f",
+      "projectName": "lookk",
+      "simulationTotal": 57999942,
+      "simulationTotalLabel": "57 999 942 FCFA",
+      "articleCount": 1,
       "categories": [
-        "Revêtement",
-        "Luminaire"
+        "Mooon"
+      ],
+      "articleImages": [
+        {
+          "name": "jiiinooin",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/xmoetgnub08euxasunsd?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/xmoetgnub08euxasunsd"
+        },
+        {
+          "name": "jiiinooin",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/rhc9he6lcpa2rv0u7eiq?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/rhc9he6lcpa2rv0u7eiq"
+        },
+        {
+          "name": "jiiinooin",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/q3jeyv6ejucqjypvcx0o?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/q3jeyv6ejucqjypvcx0o"
+        }
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a270d2dbde660c9df7b2840",
+          "name": "jiiinooin",
+          "category": "Mooon",
+          "unitPrice": 57999942,
+          "images": [
+            {
+              "name": "jiiinooin",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/xmoetgnub08euxasunsd?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/xmoetgnub08euxasunsd"
+            },
+            {
+              "name": "jiiinooin",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/rhc9he6lcpa2rv0u7eiq?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/rhc9he6lcpa2rv0u7eiq"
+            },
+            {
+              "name": "jiiinooin",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/q3jeyv6ejucqjypvcx0o?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/q3jeyv6ejucqjypvcx0o"
+            }
+          ]
+        }
+      ],
+      "type": "Demande",
+      "message": "Bojiorno",
+      "messages": [
+        {
+          "id": "message-1780944241118",
+          "senderRole": "user",
+          "senderName": "lon",
+          "message": "Bojiorno",
+          "createdAt": "2026-06-08T18:44:01.118Z"
+        }
       ],
       "status": "Nouveau",
-      "createdAt": "2026-06-03T16:48:18.454Z"
+      "createdAt": "2026-06-08T18:44:01.118Z"
     },
     {
-      "id": "supplier-client-Lookable-6a1d8556f44246ee96fd3f50-1780505295593",
-      "supplierId": "",
-      "supplierName": "Lookable",
-      "supplierContact": "",
-      "clientId": "6a1d8556f44246ee96fd3f50",
-      "clientName": "test@gmail.com",
+      "id": "supplier-client-6a2693dd461186376f847e00-6a26ee8ed7b80b61a598f1db-1780944241118",
+      "supplierId": "6a2693dd461186376f847e00",
+      "supplierName": "mooo",
+      "supplierContact": "moo@gmail.com",
+      "clientId": "6a26ee8ed7b80b61a598f1db",
+      "clientName": "lon",
+      "clientProfession": "BTP",
+      "clientEmail": "loni@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a270d14bde660c9df7b283f",
+      "projectName": "lookk",
+      "simulationTotal": 57999942,
+      "simulationTotalLabel": "57 999 942 FCFA",
+      "articleCount": 1,
+      "categories": [
+        "Mooon"
+      ],
+      "articleImages": [
+        {
+          "name": "jiiinooin",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/xmoetgnub08euxasunsd?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/xmoetgnub08euxasunsd"
+        },
+        {
+          "name": "jiiinooin",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/rhc9he6lcpa2rv0u7eiq?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/rhc9he6lcpa2rv0u7eiq"
+        },
+        {
+          "name": "jiiinooin",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/q3jeyv6ejucqjypvcx0o?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/q3jeyv6ejucqjypvcx0o"
+        }
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a270d2dbde660c9df7b2840",
+          "name": "jiiinooin",
+          "category": "Mooon",
+          "unitPrice": 57999942,
+          "images": [
+            {
+              "name": "jiiinooin",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/xmoetgnub08euxasunsd?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/xmoetgnub08euxasunsd"
+            },
+            {
+              "name": "jiiinooin",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/rhc9he6lcpa2rv0u7eiq?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/rhc9he6lcpa2rv0u7eiq"
+            },
+            {
+              "name": "jiiinooin",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/q3jeyv6ejucqjypvcx0o?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/q3jeyv6ejucqjypvcx0o"
+            }
+          ]
+        }
+      ],
+      "type": "Demande",
+      "message": "Bojiorno",
+      "messages": [
+        {
+          "id": "message-1780944241118",
+          "senderRole": "user",
+          "senderName": "lon",
+          "message": "Bojiorno",
+          "createdAt": "2026-06-08T18:44:01.118Z"
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-08T18:44:01.118Z"
+    },
+    {
+      "id": "supplier-client-6a2693dd461186376f847e00-6a26ee8ed7b80b61a598f1db-1780944219703",
+      "supplierId": "6a2693dd461186376f847e00",
+      "supplierName": "mooo",
+      "supplierContact": "moo@gmail.com",
+      "clientId": "6a26ee8ed7b80b61a598f1db",
+      "clientName": "lon",
+      "clientProfession": "BTP",
+      "clientEmail": "loni@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a270d14bde660c9df7b283f",
+      "projectName": "lookk",
+      "simulationTotal": 57999942,
+      "simulationTotalLabel": "57 999 942 FCFA",
+      "articleCount": 1,
+      "categories": [
+        "Mooon"
+      ],
+      "articleImages": [
+        {
+          "name": "jiiinooin",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/xmoetgnub08euxasunsd?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/xmoetgnub08euxasunsd"
+        },
+        {
+          "name": "jiiinooin",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/rhc9he6lcpa2rv0u7eiq?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/rhc9he6lcpa2rv0u7eiq"
+        },
+        {
+          "name": "jiiinooin",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/q3jeyv6ejucqjypvcx0o?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/q3jeyv6ejucqjypvcx0o"
+        }
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a270d2dbde660c9df7b2840",
+          "name": "jiiinooin",
+          "category": "Mooon",
+          "unitPrice": 57999942,
+          "images": [
+            {
+              "name": "jiiinooin",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/xmoetgnub08euxasunsd?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/xmoetgnub08euxasunsd"
+            },
+            {
+              "name": "jiiinooin",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/rhc9he6lcpa2rv0u7eiq?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/rhc9he6lcpa2rv0u7eiq"
+            },
+            {
+              "name": "jiiinooin",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/q3jeyv6ejucqjypvcx0o?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/q3jeyv6ejucqjypvcx0o"
+            }
+          ]
+        }
+      ],
+      "type": "Demande",
+      "message": "Bonjour",
+      "messages": [
+        {
+          "id": "message-1780944219703",
+          "senderRole": "user",
+          "senderName": "lon",
+          "message": "Bonjour",
+          "createdAt": "2026-06-08T18:43:39.703Z"
+        },
+        {
+          "id": "message-1780944333330",
+          "senderRole": "supplier",
+          "senderName": "mooo",
+          "message": "hi",
+          "createdAt": "2026-06-08T18:45:33.325Z"
+        },
+        {
+          "id": "message-1780944518371",
+          "senderRole": "supplier",
+          "senderName": "mooo",
+          "message": "fonction",
+          "createdAt": "2026-06-08T18:48:38.366Z"
+        },
+        {
+          "id": "message-1780944761209",
+          "senderRole": "supplier",
+          "senderName": "mooo",
+          "message": "mo n",
+          "createdAt": "2026-06-08T18:52:41.203Z"
+        }
+      ],
+      "status": "Répondu",
+      "createdAt": "2026-06-08T18:43:39.703Z",
+      "updatedAt": "2026-06-08T18:52:41.203Z"
+    },
+    {
+      "id": "supplier-client-6a2693dd461186376f847e00-6a26ee8ed7b80b61a598f1db-1780938556085",
+      "supplierId": "6a2693dd461186376f847e00",
+      "supplierName": "mooo",
+      "supplierContact": "64554545",
+      "clientId": "6a26ee8ed7b80b61a598f1db",
+      "clientName": "lon",
+      "clientProfession": "BTP",
+      "clientEmail": "loni@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a26f7190475a673ff494e81",
+      "projectName": "lkokn",
+      "simulationTotal": 64905654,
+      "simulationTotalLabel": "64 905 654 FCFA",
+      "articleCount": 2,
+      "categories": [
+        "Mooon"
+      ],
+      "articleImages": [
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kq3zs0rd9weeocq4jijd?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/kq3zs0rd9weeocq4jijd"
+        },
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gjibmanscvtzo2y5wjvk?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/gjibmanscvtzo2y5wjvk"
+        },
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/coltwyeeqdcj5fxbrl6u?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/coltwyeeqdcj5fxbrl6u"
+        },
+        {
+          "name": "jiiinooin",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/xmoetgnub08euxasunsd?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/xmoetgnub08euxasunsd"
+        },
+        {
+          "name": "jiiinooin",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/rhc9he6lcpa2rv0u7eiq?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/rhc9he6lcpa2rv0u7eiq"
+        },
+        {
+          "name": "jiiinooin",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/q3jeyv6ejucqjypvcx0o?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/q3jeyv6ejucqjypvcx0o"
+        }
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a26f7240475a673ff494e82",
+          "name": "juste",
+          "category": "Mooon",
+          "unitPrice": 6905712,
+          "images": [
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kq3zs0rd9weeocq4jijd?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/kq3zs0rd9weeocq4jijd"
+            },
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gjibmanscvtzo2y5wjvk?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/gjibmanscvtzo2y5wjvk"
+            },
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/coltwyeeqdcj5fxbrl6u?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/coltwyeeqdcj5fxbrl6u"
+            }
+          ]
+        },
+        {
+          "id": "6a26f7240475a673ff494e83",
+          "name": "jiiinooin",
+          "category": "Mooon",
+          "unitPrice": 57999942,
+          "images": [
+            {
+              "name": "jiiinooin",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/xmoetgnub08euxasunsd?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/xmoetgnub08euxasunsd"
+            },
+            {
+              "name": "jiiinooin",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/rhc9he6lcpa2rv0u7eiq?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/rhc9he6lcpa2rv0u7eiq"
+            },
+            {
+              "name": "jiiinooin",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/q3jeyv6ejucqjypvcx0o?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/q3jeyv6ejucqjypvcx0o"
+            }
+          ]
+        }
+      ],
+      "type": "Demande",
+      "message": "Bonjour",
+      "messages": [
+        {
+          "id": "message-1780938556085",
+          "senderRole": "user",
+          "senderName": "lon",
+          "message": "Bonjour",
+          "createdAt": "2026-06-08T17:09:16.085Z"
+        },
+        {
+          "id": "message-1780938693218",
+          "senderRole": "user",
+          "senderName": "lon",
+          "message": "Bonjour",
+          "createdAt": "2026-06-08T17:11:33.215Z"
+        },
+        {
+          "id": "message-1780938744518",
+          "senderRole": "supplier",
+          "senderName": "mooo",
+          "message": "Bonjour Comment allez-vous ?",
+          "createdAt": "2026-06-08T17:12:24.513Z"
+        },
+        {
+          "id": "message-1780938777286",
+          "senderRole": "user",
+          "senderName": "lon",
+          "message": "Combien pour le meuble ?",
+          "createdAt": "2026-06-08T17:12:57.282Z"
+        },
+        {
+          "id": "message-1780944777267",
+          "senderRole": "user",
+          "senderName": "lon",
+          "message": "dbhd",
+          "createdAt": "2026-06-08T18:52:57.261Z"
+        }
+      ],
+      "status": "Répondu",
+      "createdAt": "2026-06-08T17:09:16.085Z",
+      "updatedAt": "2026-06-08T18:52:57.261Z"
+    },
+    {
+      "id": "supplier-client-6a2693dd461186376f847e00-6a2692cd461186376f847dfd-1780934219929",
+      "supplierId": "6a2693dd461186376f847e00",
+      "supplierName": "mooo",
+      "supplierContact": "moo@gmail.com",
+      "clientId": "6a2692cd461186376f847dfd",
+      "clientName": "led@gmail.com",
+      "clientProfession": "Architecte",
+      "clientEmail": "led@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a26a788461186376f847e0f",
+      "projectName": "kon",
+      "simulationTotal": 26573976,
+      "simulationTotalLabel": "26 573 976 FCFA",
+      "articleCount": 4,
+      "categories": [
+        "Mooon"
+      ],
+      "articleImages": [
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kq3zs0rd9weeocq4jijd?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/kq3zs0rd9weeocq4jijd"
+        },
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gjibmanscvtzo2y5wjvk?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/gjibmanscvtzo2y5wjvk"
+        },
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/coltwyeeqdcj5fxbrl6u?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/coltwyeeqdcj5fxbrl6u"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/smypdgx7zk0anhnfherb?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/smypdgx7zk0anhnfherb"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hsrxut1uaqrywuzsp5rv?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/hsrxut1uaqrywuzsp5rv"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/at1tmtj4roefjxyyt69y?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/at1tmtj4roefjxyyt69y"
+        },
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kq3zs0rd9weeocq4jijd?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/kq3zs0rd9weeocq4jijd"
+        },
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gjibmanscvtzo2y5wjvk?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/gjibmanscvtzo2y5wjvk"
+        },
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/coltwyeeqdcj5fxbrl6u?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/coltwyeeqdcj5fxbrl6u"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/smypdgx7zk0anhnfherb?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/smypdgx7zk0anhnfherb"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hsrxut1uaqrywuzsp5rv?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/hsrxut1uaqrywuzsp5rv"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/at1tmtj4roefjxyyt69y?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/at1tmtj4roefjxyyt69y"
+        }
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a26a79c461186376f847e10",
+          "name": "juste",
+          "category": "Mooon",
+          "unitPrice": 6905712,
+          "images": [
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kq3zs0rd9weeocq4jijd?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/kq3zs0rd9weeocq4jijd"
+            },
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gjibmanscvtzo2y5wjvk?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/gjibmanscvtzo2y5wjvk"
+            },
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/coltwyeeqdcj5fxbrl6u?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/coltwyeeqdcj5fxbrl6u"
+            }
+          ]
+        },
+        {
+          "id": "6a26a79c461186376f847e11",
+          "name": "Just",
+          "category": "Mooon",
+          "unitPrice": 6381276,
+          "images": [
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/smypdgx7zk0anhnfherb?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/smypdgx7zk0anhnfherb"
+            },
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hsrxut1uaqrywuzsp5rv?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/hsrxut1uaqrywuzsp5rv"
+            },
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/at1tmtj4roefjxyyt69y?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/at1tmtj4roefjxyyt69y"
+            }
+          ]
+        },
+        {
+          "id": "6a26d599c25ba095a51b9cda",
+          "name": "juste",
+          "category": "Mooon",
+          "unitPrice": 6905712,
+          "images": [
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kq3zs0rd9weeocq4jijd?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/kq3zs0rd9weeocq4jijd"
+            },
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gjibmanscvtzo2y5wjvk?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/gjibmanscvtzo2y5wjvk"
+            },
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/coltwyeeqdcj5fxbrl6u?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/coltwyeeqdcj5fxbrl6u"
+            }
+          ]
+        },
+        {
+          "id": "6a26d599c25ba095a51b9cdb",
+          "name": "Just",
+          "category": "Mooon",
+          "unitPrice": 6381276,
+          "images": [
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/smypdgx7zk0anhnfherb?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/smypdgx7zk0anhnfherb"
+            },
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hsrxut1uaqrywuzsp5rv?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/hsrxut1uaqrywuzsp5rv"
+            },
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/at1tmtj4roefjxyyt69y?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/at1tmtj4roefjxyyt69y"
+            }
+          ]
+        }
+      ],
+      "type": "Demande",
+      "message": "Avez vous des images",
+      "messages": [
+        {
+          "id": "message-1780934219929",
+          "senderRole": "user",
+          "senderName": "led@gmail.com",
+          "message": "Avez vous des images",
+          "createdAt": "2026-06-08T15:56:59.929Z"
+        },
+        {
+          "id": "message-1780934242514",
+          "senderRole": "supplier",
+          "senderName": "mooo",
+          "message": "Oui",
+          "createdAt": "2026-06-08T15:57:22.514Z"
+        },
+        {
+          "id": "message-1780934242530",
+          "senderRole": "supplier",
+          "senderName": "mooo",
+          "message": "Oui",
+          "createdAt": "2026-06-08T15:57:22.514Z"
+        },
+        {
+          "id": "message-1780934297509",
+          "senderRole": "user",
+          "senderName": "led@gmail.com",
+          "message": "combien ?",
+          "createdAt": "2026-06-08T15:58:17.509Z"
+        },
+        {
+          "id": "message-1780934297524",
+          "senderRole": "user",
+          "senderName": "led@gmail.com",
+          "message": "combien ?",
+          "createdAt": "2026-06-08T15:58:17.509Z"
+        }
+      ],
+      "status": "Répondu",
+      "createdAt": "2026-06-08T15:56:59.929Z",
+      "updatedAt": "2026-06-08T15:58:17.509Z"
+    },
+    {
+      "id": "supplier-client-6a2693dd461186376f847e00-6a2692cd461186376f847dfd-1780921535978",
+      "supplierId": "6a2693dd461186376f847e00",
+      "supplierName": "mooo",
+      "supplierContact": "64554545",
+      "clientId": "6a2692cd461186376f847dfd",
+      "clientName": "led@gmail.com",
+      "clientProfession": "Architecte",
+      "clientEmail": "led@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a26b411461186376f847e15",
+      "projectName": "452000",
+      "simulationTotal": 13286988,
+      "simulationTotalLabel": "13 286 988 FCFA",
+      "articleCount": 2,
+      "categories": [
+        "Mooon"
+      ],
+      "articleImages": [
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kq3zs0rd9weeocq4jijd?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/kq3zs0rd9weeocq4jijd"
+        },
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gjibmanscvtzo2y5wjvk?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/gjibmanscvtzo2y5wjvk"
+        },
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/coltwyeeqdcj5fxbrl6u?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/coltwyeeqdcj5fxbrl6u"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/smypdgx7zk0anhnfherb?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/smypdgx7zk0anhnfherb"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hsrxut1uaqrywuzsp5rv?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/hsrxut1uaqrywuzsp5rv"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/at1tmtj4roefjxyyt69y?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/at1tmtj4roefjxyyt69y"
+        }
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a26b428461186376f847e16",
+          "name": "juste",
+          "category": "Mooon",
+          "unitPrice": 6905712,
+          "images": [
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kq3zs0rd9weeocq4jijd?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/kq3zs0rd9weeocq4jijd"
+            },
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gjibmanscvtzo2y5wjvk?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/gjibmanscvtzo2y5wjvk"
+            },
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/coltwyeeqdcj5fxbrl6u?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/coltwyeeqdcj5fxbrl6u"
+            }
+          ]
+        },
+        {
+          "id": "6a26b428461186376f847e17",
+          "name": "Just",
+          "category": "Mooon",
+          "unitPrice": 6381276,
+          "images": [
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/smypdgx7zk0anhnfherb?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/smypdgx7zk0anhnfherb"
+            },
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hsrxut1uaqrywuzsp5rv?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/hsrxut1uaqrywuzsp5rv"
+            },
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/at1tmtj4roefjxyyt69y?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/at1tmtj4roefjxyyt69y"
+            }
+          ]
+        }
+      ],
+      "type": "Demande",
+      "message": "morning \nCombien le divan",
+      "messages": [
+        {
+          "id": "message-1780921535978",
+          "senderRole": "user",
+          "senderName": "led@gmail.com",
+          "message": "morning \nCombien le divan",
+          "createdAt": "2026-06-08T12:25:35.978Z"
+        },
+        {
+          "id": "message-1780921568741",
+          "senderRole": "supplier",
+          "senderName": "mooo",
+          "message": "oui bien sûr",
+          "createdAt": "2026-06-08T12:26:08.740Z"
+        },
+        {
+          "id": "message-1780921568748",
+          "senderRole": "supplier",
+          "senderName": "mooo",
+          "message": "oui bien sûr",
+          "createdAt": "2026-06-08T12:26:08.740Z"
+        },
+        {
+          "id": "message-1780921784558",
+          "senderRole": "user",
+          "senderName": "led@gmail.com",
+          "message": "je peux l'avoir quand ?",
+          "createdAt": "2026-06-08T12:29:44.558Z"
+        },
+        {
+          "id": "message-1780921784560",
+          "senderRole": "user",
+          "senderName": "led@gmail.com",
+          "message": "je peux l'avoir quand ?",
+          "createdAt": "2026-06-08T12:29:44.558Z"
+        },
+        {
+          "id": "message-1780921815591",
+          "senderRole": "supplier",
+          "senderName": "mooo",
+          "message": "Disponible",
+          "createdAt": "2026-06-08T12:30:15.590Z"
+        },
+        {
+          "id": "message-1780921815604",
+          "senderRole": "supplier",
+          "senderName": "mooo",
+          "message": "Disponible",
+          "createdAt": "2026-06-08T12:30:15.590Z"
+        }
+      ],
+      "status": "Répondu",
+      "createdAt": "2026-06-08T12:25:35.978Z",
+      "updatedAt": "2026-06-08T12:30:15.590Z"
+    },
+    {
+      "id": "supplier-client-6a2677b9461186376f847de9-6a2692cd461186376f847dfd-1780921463676",
+      "supplierId": "6a2677b9461186376f847de9",
+      "supplierName": "lookooo",
+      "supplierContact": "1212122221200",
+      "clientId": "6a2692cd461186376f847dfd",
+      "clientName": "led@gmail.com",
+      "clientProfession": "Architecte",
+      "clientEmail": "led@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a26b411461186376f847e15",
+      "projectName": "452000",
+      "simulationTotal": 13286988,
+      "simulationTotalLabel": "13 286 988 FCFA",
+      "articleCount": 2,
+      "categories": [
+        "Mooon"
+      ],
+      "articleImages": [
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kq3zs0rd9weeocq4jijd?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/kq3zs0rd9weeocq4jijd"
+        },
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gjibmanscvtzo2y5wjvk?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/gjibmanscvtzo2y5wjvk"
+        },
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/coltwyeeqdcj5fxbrl6u?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/coltwyeeqdcj5fxbrl6u"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/smypdgx7zk0anhnfherb?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/smypdgx7zk0anhnfherb"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hsrxut1uaqrywuzsp5rv?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/hsrxut1uaqrywuzsp5rv"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/at1tmtj4roefjxyyt69y?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/at1tmtj4roefjxyyt69y"
+        }
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a26b428461186376f847e16",
+          "name": "juste",
+          "category": "Mooon",
+          "unitPrice": 6905712,
+          "images": [
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kq3zs0rd9weeocq4jijd?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/kq3zs0rd9weeocq4jijd"
+            },
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gjibmanscvtzo2y5wjvk?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/gjibmanscvtzo2y5wjvk"
+            },
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/coltwyeeqdcj5fxbrl6u?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/coltwyeeqdcj5fxbrl6u"
+            }
+          ]
+        },
+        {
+          "id": "6a26b428461186376f847e17",
+          "name": "Just",
+          "category": "Mooon",
+          "unitPrice": 6381276,
+          "images": [
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/smypdgx7zk0anhnfherb?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/smypdgx7zk0anhnfherb"
+            },
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hsrxut1uaqrywuzsp5rv?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/hsrxut1uaqrywuzsp5rv"
+            },
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/at1tmtj4roefjxyyt69y?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/at1tmtj4roefjxyyt69y"
+            }
+          ]
+        }
+      ],
+      "type": "Demande",
+      "message": "morning",
+      "messages": [
+        {
+          "id": "message-1780921463676",
+          "senderRole": "user",
+          "senderName": "led@gmail.com",
+          "message": "morning",
+          "createdAt": "2026-06-08T12:24:23.676Z"
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-08T12:24:23.676Z"
+    },
+    {
+      "id": "supplier-client-6a2677b9461186376f847de9-6a2692cd461186376f847dfd-1780916484348",
+      "supplierId": "6a2677b9461186376f847de9",
+      "supplierName": "lookooo",
+      "supplierContact": "1212122221200",
+      "clientId": "6a2692cd461186376f847dfd",
+      "clientName": "led@gmail.com",
+      "clientProfession": "Architecte",
+      "clientEmail": "led@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a269d74461186376f847e0a",
+      "projectName": "husddd",
+      "simulationTotal": 6381276,
+      "simulationTotalLabel": "6 381 276 FCFA",
+      "articleCount": 1,
+      "categories": [
+        "Mooon"
+      ],
+      "articleImages": [
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/smypdgx7zk0anhnfherb?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/smypdgx7zk0anhnfherb"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hsrxut1uaqrywuzsp5rv?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/hsrxut1uaqrywuzsp5rv"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/at1tmtj4roefjxyyt69y?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/at1tmtj4roefjxyyt69y"
+        }
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a269d81461186376f847e0b",
+          "name": "Just",
+          "category": "Mooon",
+          "unitPrice": 6381276,
+          "images": [
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/smypdgx7zk0anhnfherb?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/smypdgx7zk0anhnfherb"
+            },
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hsrxut1uaqrywuzsp5rv?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/hsrxut1uaqrywuzsp5rv"
+            },
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/at1tmtj4roefjxyyt69y?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/at1tmtj4roefjxyyt69y"
+            }
+          ]
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-08T11:01:24.348Z"
+    },
+    {
+      "id": "supplier-client-6a2677b9461186376f847de9-6a2692cd461186376f847dfd-1780915291887",
+      "supplierId": "6a2677b9461186376f847de9",
+      "supplierName": "lookooo",
+      "supplierContact": "1212122221200",
+      "clientId": "6a2692cd461186376f847dfd",
+      "clientName": "led@gmail.com",
+      "clientProfession": "Architecte",
+      "clientEmail": "led@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a269b4b461186376f847e07",
+      "projectName": "jug",
+      "simulationTotal": 13286988,
+      "simulationTotalLabel": "13 286 988 FCFA",
+      "articleCount": 2,
+      "categories": [
+        "Mooon"
+      ],
+      "articleImages": [
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kq3zs0rd9weeocq4jijd?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/kq3zs0rd9weeocq4jijd"
+        },
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gjibmanscvtzo2y5wjvk?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/gjibmanscvtzo2y5wjvk"
+        },
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/coltwyeeqdcj5fxbrl6u?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/coltwyeeqdcj5fxbrl6u"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/smypdgx7zk0anhnfherb?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/smypdgx7zk0anhnfherb"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hsrxut1uaqrywuzsp5rv?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/hsrxut1uaqrywuzsp5rv"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/at1tmtj4roefjxyyt69y?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/at1tmtj4roefjxyyt69y"
+        }
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a269c2c461186376f847e08",
+          "name": "juste",
+          "category": "Mooon",
+          "unitPrice": 6905712,
+          "images": [
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kq3zs0rd9weeocq4jijd?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/kq3zs0rd9weeocq4jijd"
+            },
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gjibmanscvtzo2y5wjvk?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/gjibmanscvtzo2y5wjvk"
+            },
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/coltwyeeqdcj5fxbrl6u?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/coltwyeeqdcj5fxbrl6u"
+            }
+          ]
+        },
+        {
+          "id": "6a269c2c461186376f847e09",
+          "name": "Just",
+          "category": "Mooon",
+          "unitPrice": 6381276,
+          "images": [
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/smypdgx7zk0anhnfherb?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/smypdgx7zk0anhnfherb"
+            },
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hsrxut1uaqrywuzsp5rv?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/hsrxut1uaqrywuzsp5rv"
+            },
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/at1tmtj4roefjxyyt69y?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/at1tmtj4roefjxyyt69y"
+            }
+          ]
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-08T10:41:31.887Z"
+    },
+    {
+      "id": "supplier-client-6a2677b9461186376f847de9-6a267448461186376f847de0-1780912506737",
+      "supplierId": "6a2677b9461186376f847de9",
+      "supplierName": "lookooo",
+      "supplierContact": "1212122221200",
+      "clientId": "6a267448461186376f847de0",
+      "clientName": "huds",
+      "clientProfession": "Architecte",
+      "clientEmail": "hudson@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a268d49461186376f847df6",
+      "projectName": "jhuhu",
+      "simulationTotal": 268486988,
+      "simulationTotalLabel": "268 486 988 FCFA",
+      "articleCount": 3,
+      "categories": [
+        "Mooon"
+      ],
+      "articleImages": [
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/smypdgx7zk0anhnfherb?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/smypdgx7zk0anhnfherb"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hsrxut1uaqrywuzsp5rv?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/hsrxut1uaqrywuzsp5rv"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/at1tmtj4roefjxyyt69y?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/at1tmtj4roefjxyyt69y"
+        },
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kq3zs0rd9weeocq4jijd?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/kq3zs0rd9weeocq4jijd"
+        },
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gjibmanscvtzo2y5wjvk?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/gjibmanscvtzo2y5wjvk"
+        },
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/coltwyeeqdcj5fxbrl6u?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/coltwyeeqdcj5fxbrl6u"
+        },
+        {
+          "name": "koudous",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/exoslmcik9tx0gvfu3bs?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/exoslmcik9tx0gvfu3bs"
+        },
+        {
+          "name": "koudous",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gwdpem6vlq6la38i65ui?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/gwdpem6vlq6la38i65ui"
+        },
+        {
+          "name": "koudous",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/l5ku9jsla4rp208j8tzj?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/l5ku9jsla4rp208j8tzj"
+        }
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a268fab461186376f847df7",
+          "name": "Just",
+          "category": "Mooon",
+          "unitPrice": 6381276,
+          "images": [
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/smypdgx7zk0anhnfherb?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/smypdgx7zk0anhnfherb"
+            },
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hsrxut1uaqrywuzsp5rv?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/hsrxut1uaqrywuzsp5rv"
+            },
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/at1tmtj4roefjxyyt69y?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/at1tmtj4roefjxyyt69y"
+            }
+          ]
+        },
+        {
+          "id": "6a268fab461186376f847df8",
+          "name": "juste",
+          "category": "Mooon",
+          "unitPrice": 6905712,
+          "images": [
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kq3zs0rd9weeocq4jijd?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/kq3zs0rd9weeocq4jijd"
+            },
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gjibmanscvtzo2y5wjvk?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/gjibmanscvtzo2y5wjvk"
+            },
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/coltwyeeqdcj5fxbrl6u?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/coltwyeeqdcj5fxbrl6u"
+            }
+          ]
+        },
+        {
+          "id": "6a268fad461186376f847df9",
+          "name": "koudous",
+          "category": "Mooon",
+          "unitPrice": 255200000,
+          "images": [
+            {
+              "name": "koudous",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/exoslmcik9tx0gvfu3bs?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/exoslmcik9tx0gvfu3bs"
+            },
+            {
+              "name": "koudous",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gwdpem6vlq6la38i65ui?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/gwdpem6vlq6la38i65ui"
+            },
+            {
+              "name": "koudous",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/l5ku9jsla4rp208j8tzj?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/l5ku9jsla4rp208j8tzj"
+            }
+          ]
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-08T09:55:06.737Z"
+    },
+    {
+      "id": "supplier-client-6a2677b9461186376f847de9-6a267448461186376f847de0-1780907416465",
+      "supplierId": "6a2677b9461186376f847de9",
+      "supplierName": "lookooo",
+      "supplierContact": "1212122221200",
+      "clientId": "6a267448461186376f847de0",
+      "clientName": "huds",
+      "clientProfession": "Architecte",
+      "clientEmail": "hudson@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a267d83461186376f847def",
+      "projectName": "lkooo",
+      "simulationTotal": 13286988,
+      "simulationTotalLabel": "13 286 988 FCFA",
+      "articleCount": 2,
+      "categories": [
+        "Mooon"
+      ],
+      "articleImages": [
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kq3zs0rd9weeocq4jijd?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/kq3zs0rd9weeocq4jijd"
+        },
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gjibmanscvtzo2y5wjvk?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/gjibmanscvtzo2y5wjvk"
+        },
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/coltwyeeqdcj5fxbrl6u?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/coltwyeeqdcj5fxbrl6u"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/smypdgx7zk0anhnfherb?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/smypdgx7zk0anhnfherb"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hsrxut1uaqrywuzsp5rv?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/hsrxut1uaqrywuzsp5rv"
+        },
+        {
+          "name": "Just",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/at1tmtj4roefjxyyt69y?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/at1tmtj4roefjxyyt69y"
+        }
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a267d8e461186376f847df0",
+          "name": "juste",
+          "category": "Mooon",
+          "unitPrice": 6905712,
+          "images": [
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kq3zs0rd9weeocq4jijd?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/kq3zs0rd9weeocq4jijd"
+            },
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gjibmanscvtzo2y5wjvk?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/gjibmanscvtzo2y5wjvk"
+            },
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/coltwyeeqdcj5fxbrl6u?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/coltwyeeqdcj5fxbrl6u"
+            }
+          ]
+        },
+        {
+          "id": "6a267d8e461186376f847df1",
+          "name": "Just",
+          "category": "Mooon",
+          "unitPrice": 6381276,
+          "images": [
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/smypdgx7zk0anhnfherb?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/smypdgx7zk0anhnfherb"
+            },
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hsrxut1uaqrywuzsp5rv?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/hsrxut1uaqrywuzsp5rv"
+            },
+            {
+              "name": "Just",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/at1tmtj4roefjxyyt69y?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/at1tmtj4roefjxyyt69y"
+            }
+          ]
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-08T08:30:16.465Z"
+    },
+    {
+      "id": "supplier-client-6a22e5d000990be90e0b5bf1-6a267448461186376f847de0-1780905658949",
+      "supplierId": "6a22e5d000990be90e0b5bf1",
+      "supplierName": "Lupitshore",
+      "supplierContact": "97456511",
+      "clientId": "6a267448461186376f847de0",
+      "clientName": "huds",
+      "clientProfession": "Architecte",
+      "clientEmail": "hudson@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a267638461186376f847de3",
+      "projectName": "kuuud",
+      "simulationTotal": 263974854,
+      "simulationTotalLabel": "263 974 854 FCFA",
+      "articleCount": 2,
+      "categories": [
+        "Mooon"
+      ],
+      "articleImages": [
+        {
+          "name": "koudous",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/exoslmcik9tx0gvfu3bs?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/exoslmcik9tx0gvfu3bs"
+        },
+        {
+          "name": "koudous",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gwdpem6vlq6la38i65ui?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/gwdpem6vlq6la38i65ui"
+        },
+        {
+          "name": "koudous",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/l5ku9jsla4rp208j8tzj?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/l5ku9jsla4rp208j8tzj"
+        },
+        {
+          "name": "jbjhv",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jgruhf1ipnnvvtcovlxr?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/jgruhf1ipnnvvtcovlxr"
+        }
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a267674461186376f847de5",
+          "name": "koudous",
+          "category": "Mooon",
+          "unitPrice": 255200000,
+          "images": [
+            {
+              "name": "koudous",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/exoslmcik9tx0gvfu3bs?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/exoslmcik9tx0gvfu3bs"
+            },
+            {
+              "name": "koudous",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gwdpem6vlq6la38i65ui?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/gwdpem6vlq6la38i65ui"
+            },
+            {
+              "name": "koudous",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/l5ku9jsla4rp208j8tzj?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/l5ku9jsla4rp208j8tzj"
+            }
+          ]
+        },
+        {
+          "id": "6a267674461186376f847de4",
+          "name": "jbjhv",
+          "category": "Mooon",
+          "unitPrice": 8774854,
+          "images": [
+            {
+              "name": "jbjhv",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jgruhf1ipnnvvtcovlxr?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/jgruhf1ipnnvvtcovlxr"
+            }
+          ]
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-08T08:00:58.949Z"
+    },
+    {
+      "id": "supplier-client-6a22e5d000990be90e0b5bf1-6a267448461186376f847de0-1780905657583",
+      "supplierId": "6a22e5d000990be90e0b5bf1",
+      "supplierName": "Lupitshore",
+      "supplierContact": "97456511",
+      "clientId": "6a267448461186376f847de0",
+      "clientName": "huds",
+      "clientProfession": "Architecte",
+      "clientEmail": "hudson@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a267638461186376f847de3",
+      "projectName": "kuuud",
+      "simulationTotal": 263974854,
+      "simulationTotalLabel": "263 974 854 FCFA",
+      "articleCount": 2,
+      "categories": [
+        "Mooon"
+      ],
+      "articleImages": [
+        {
+          "name": "koudous",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/exoslmcik9tx0gvfu3bs?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/exoslmcik9tx0gvfu3bs"
+        },
+        {
+          "name": "koudous",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gwdpem6vlq6la38i65ui?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/gwdpem6vlq6la38i65ui"
+        },
+        {
+          "name": "koudous",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/l5ku9jsla4rp208j8tzj?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/l5ku9jsla4rp208j8tzj"
+        },
+        {
+          "name": "jbjhv",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jgruhf1ipnnvvtcovlxr?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/jgruhf1ipnnvvtcovlxr"
+        }
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a267674461186376f847de5",
+          "name": "koudous",
+          "category": "Mooon",
+          "unitPrice": 255200000,
+          "images": [
+            {
+              "name": "koudous",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/exoslmcik9tx0gvfu3bs?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/exoslmcik9tx0gvfu3bs"
+            },
+            {
+              "name": "koudous",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gwdpem6vlq6la38i65ui?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/gwdpem6vlq6la38i65ui"
+            },
+            {
+              "name": "koudous",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/l5ku9jsla4rp208j8tzj?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/l5ku9jsla4rp208j8tzj"
+            }
+          ]
+        },
+        {
+          "id": "6a267674461186376f847de4",
+          "name": "jbjhv",
+          "category": "Mooon",
+          "unitPrice": 8774854,
+          "images": [
+            {
+              "name": "jbjhv",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jgruhf1ipnnvvtcovlxr?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/jgruhf1ipnnvvtcovlxr"
+            }
+          ]
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-08T08:00:57.583Z"
+    },
+    {
+      "id": "supplier-client-6a22e5d000990be90e0b5bf1-6a267448461186376f847de0-1780905654665",
+      "supplierId": "6a22e5d000990be90e0b5bf1",
+      "supplierName": "Lupitshore",
+      "supplierContact": "97456511",
+      "clientId": "6a267448461186376f847de0",
+      "clientName": "huds",
+      "clientProfession": "Architecte",
+      "clientEmail": "hudson@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a267638461186376f847de3",
+      "projectName": "kuuud",
+      "simulationTotal": 263974854,
+      "simulationTotalLabel": "263 974 854 FCFA",
+      "articleCount": 2,
+      "categories": [
+        "Mooon"
+      ],
+      "articleImages": [
+        {
+          "name": "koudous",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/exoslmcik9tx0gvfu3bs?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/exoslmcik9tx0gvfu3bs"
+        },
+        {
+          "name": "koudous",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gwdpem6vlq6la38i65ui?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/gwdpem6vlq6la38i65ui"
+        },
+        {
+          "name": "koudous",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/l5ku9jsla4rp208j8tzj?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/l5ku9jsla4rp208j8tzj"
+        },
+        {
+          "name": "jbjhv",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jgruhf1ipnnvvtcovlxr?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/jgruhf1ipnnvvtcovlxr"
+        }
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a267674461186376f847de5",
+          "name": "koudous",
+          "category": "Mooon",
+          "unitPrice": 255200000,
+          "images": [
+            {
+              "name": "koudous",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/exoslmcik9tx0gvfu3bs?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/exoslmcik9tx0gvfu3bs"
+            },
+            {
+              "name": "koudous",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gwdpem6vlq6la38i65ui?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/gwdpem6vlq6la38i65ui"
+            },
+            {
+              "name": "koudous",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/l5ku9jsla4rp208j8tzj?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/l5ku9jsla4rp208j8tzj"
+            }
+          ]
+        },
+        {
+          "id": "6a267674461186376f847de4",
+          "name": "jbjhv",
+          "category": "Mooon",
+          "unitPrice": 8774854,
+          "images": [
+            {
+              "name": "jbjhv",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jgruhf1ipnnvvtcovlxr?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/jgruhf1ipnnvvtcovlxr"
+            }
+          ]
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-08T08:00:54.665Z"
+    },
+    {
+      "id": "supplier-client-6a22e5d000990be90e0b5bf1-6a267448461186376f847de0-1780905649678",
+      "supplierId": "6a22e5d000990be90e0b5bf1",
+      "supplierName": "Lupitshore",
+      "supplierContact": "97456511",
+      "clientId": "6a267448461186376f847de0",
+      "clientName": "huds",
+      "clientProfession": "Architecte",
+      "clientEmail": "hudson@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a267638461186376f847de3",
+      "projectName": "kuuud",
+      "simulationTotal": 263974854,
+      "simulationTotalLabel": "263 974 854 FCFA",
+      "articleCount": 2,
+      "categories": [
+        "Mooon"
+      ],
+      "articleImages": [
+        {
+          "name": "koudous",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/exoslmcik9tx0gvfu3bs?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/exoslmcik9tx0gvfu3bs"
+        },
+        {
+          "name": "koudous",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gwdpem6vlq6la38i65ui?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/gwdpem6vlq6la38i65ui"
+        },
+        {
+          "name": "koudous",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/l5ku9jsla4rp208j8tzj?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/l5ku9jsla4rp208j8tzj"
+        },
+        {
+          "name": "jbjhv",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jgruhf1ipnnvvtcovlxr?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/jgruhf1ipnnvvtcovlxr"
+        }
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a267674461186376f847de5",
+          "name": "koudous",
+          "category": "Mooon",
+          "unitPrice": 255200000,
+          "images": [
+            {
+              "name": "koudous",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/exoslmcik9tx0gvfu3bs?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/exoslmcik9tx0gvfu3bs"
+            },
+            {
+              "name": "koudous",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gwdpem6vlq6la38i65ui?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/gwdpem6vlq6la38i65ui"
+            },
+            {
+              "name": "koudous",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/l5ku9jsla4rp208j8tzj?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/l5ku9jsla4rp208j8tzj"
+            }
+          ]
+        },
+        {
+          "id": "6a267674461186376f847de4",
+          "name": "jbjhv",
+          "category": "Mooon",
+          "unitPrice": 8774854,
+          "images": [
+            {
+              "name": "jbjhv",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jgruhf1ipnnvvtcovlxr?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/jgruhf1ipnnvvtcovlxr"
+            }
+          ]
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-08T08:00:49.678Z"
+    },
+    {
+      "id": "supplier-client-6a22f1164618175550bea42d-6a22fd14d9f38bde5a0781d7-1780679165353",
+      "supplierId": "6a22f1164618175550bea42d",
+      "supplierName": "Cloock",
+      "supplierContact": "455646494616",
+      "clientId": "6a22fd14d9f38bde5a0781d7",
+      "clientName": "test",
       "clientProfession": "Architecte",
       "clientEmail": "test@gmail.com",
       "clientPhone": "Non renseigné",
-      "projectId": "6a205ab2ec86c80211763cb8",
-      "projectName": "Projet catalogue 03/06/2026",
-      "simulationTotal": 69602100876,
-      "simulationTotalLabel": "69 602 100 876 FCFA",
-      "articleCount": 3,
+      "projectId": "6a22fd6dd9f38bde5a0781d8",
+      "projectName": "Renovation bureau Data tech",
+      "simulationTotal": 8774854,
+      "simulationTotalLabel": "8 774 854 FCFA",
+      "articleCount": 1,
       "categories": [
-        "Revêtement",
-        "Luminaire"
+        "Mooon"
+      ],
+      "articleImages": [
+        {
+          "name": "jbjhv",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jgruhf1ipnnvvtcovlxr?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/jgruhf1ipnnvvtcovlxr"
+        }
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a22fe70d9f38bde5a0781d9",
+          "name": "jbjhv",
+          "category": "Mooon",
+          "unitPrice": 8774854,
+          "images": [
+            {
+              "name": "jbjhv",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jgruhf1ipnnvvtcovlxr?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/jgruhf1ipnnvvtcovlxr"
+            }
+          ]
+        }
       ],
       "status": "Nouveau",
-      "createdAt": "2026-06-03T16:48:15.593Z"
+      "createdAt": "2026-06-05T17:06:05.353Z"
+    },
+    {
+      "id": "supplier-client-6a22f1164618175550bea42d-6a22fd14d9f38bde5a0781d7-1780679062513",
+      "supplierId": "6a22f1164618175550bea42d",
+      "supplierName": "Cloock",
+      "supplierContact": "455646494616",
+      "clientId": "6a22fd14d9f38bde5a0781d7",
+      "clientName": "test",
+      "clientProfession": "Architecte",
+      "clientEmail": "test@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a22fd6dd9f38bde5a0781d8",
+      "projectName": "Renovation bureau Data tech",
+      "simulationTotal": 8774854,
+      "simulationTotalLabel": "8 774 854 FCFA",
+      "articleCount": 1,
+      "categories": [
+        "Mooon"
+      ],
+      "articleImages": [
+        {
+          "name": "jbjhv",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jgruhf1ipnnvvtcovlxr?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/jgruhf1ipnnvvtcovlxr"
+        }
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a22fe70d9f38bde5a0781d9",
+          "name": "jbjhv",
+          "category": "Mooon",
+          "unitPrice": 8774854,
+          "images": [
+            {
+              "name": "jbjhv",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jgruhf1ipnnvvtcovlxr?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/jgruhf1ipnnvvtcovlxr"
+            }
+          ]
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-05T17:04:22.513Z"
+    },
+    {
+      "id": "supplier-client-6a22f1164618175550bea42d-6a22ebda4618175550bea429-1780676759622",
+      "supplierId": "6a22f1164618175550bea42d",
+      "supplierName": "Cloock",
+      "supplierContact": "455646494616",
+      "clientId": "6a22ebda4618175550bea429",
+      "clientName": "mianiou",
+      "clientProfession": "Architecte",
+      "clientEmail": "mmonuyhud@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a22f88d0eced373c35d3c65",
+      "projectName": "Projet catalogue 05/06/2026",
+      "simulationTotal": 255200000,
+      "simulationTotalLabel": "255 200 000 FCFA",
+      "articleCount": 1,
+      "categories": [
+        "Mooon"
+      ],
+      "articleImages": [
+        {
+          "name": "koudous",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/exoslmcik9tx0gvfu3bs?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/exoslmcik9tx0gvfu3bs"
+        },
+        {
+          "name": "koudous",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gwdpem6vlq6la38i65ui?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/gwdpem6vlq6la38i65ui"
+        },
+        {
+          "name": "koudous",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/l5ku9jsla4rp208j8tzj?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/l5ku9jsla4rp208j8tzj"
+        }
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a22f88e0eced373c35d3c66",
+          "name": "koudous",
+          "category": "Mooon",
+          "unitPrice": 255200000,
+          "images": [
+            {
+              "name": "koudous",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/exoslmcik9tx0gvfu3bs?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/exoslmcik9tx0gvfu3bs"
+            },
+            {
+              "name": "koudous",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gwdpem6vlq6la38i65ui?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/gwdpem6vlq6la38i65ui"
+            },
+            {
+              "name": "koudous",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/l5ku9jsla4rp208j8tzj?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/l5ku9jsla4rp208j8tzj"
+            }
+          ]
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-05T16:25:59.622Z"
+    },
+    {
+      "id": "supplier-client-6a22f1164618175550bea42d-6a22ebda4618175550bea429-1780676632824",
+      "supplierId": "6a22f1164618175550bea42d",
+      "supplierName": "Cloock",
+      "supplierContact": "455646494616",
+      "clientId": "6a22ebda4618175550bea429",
+      "clientName": "mianiou",
+      "clientProfession": "Architecte",
+      "clientEmail": "mmonuyhud@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a22ec3c4618175550bea42a",
+      "projectName": "localmoa",
+      "simulationTotal": 0,
+      "simulationTotalLabel": "0 FCFA",
+      "articleCount": 0,
+      "categories": [],
+      "articleImages": [],
+      "selectedArticles": [],
+      "status": "Nouveau",
+      "createdAt": "2026-06-05T16:23:52.824Z"
     }
   ],
   "taxonomies": {
@@ -152,40 +2268,7 @@
     ]
   },
   "simulations": [],
-  "supportItems": [
-    {
-      "tab": "feedback",
-      "subject": "Feedback boutique Miione",
-      "user": "june",
-      "userId": "6a22d7d6d1172c55fd37d089",
-      "sourceRole": "supplier",
-      "email": "june@gmail.com",
-      "status": "Ouvert",
-      "type": "Feedback",
-      "date": "05/06/2026",
-      "description": "okay",
-      "reply": "",
-      "createdAt": "2026-06-05T14:49:33.747Z",
-      "updatedAt": "2026-06-05T14:49:33.747Z",
-      "id": "6a22e1fd89e48169c10b1c8b"
-    },
-    {
-      "tab": "feedback",
-      "subject": "Feedback boutique Miione",
-      "user": "june",
-      "userId": "6a22d7d6d1172c55fd37d089",
-      "sourceRole": "supplier",
-      "email": "june@gmail.com",
-      "status": "Ouvert",
-      "type": "Feedback",
-      "date": "05/06/2026",
-      "description": "okay",
-      "reply": "",
-      "createdAt": "2026-06-05T14:49:33.747Z",
-      "updatedAt": "2026-06-05T14:49:33.747Z",
-      "id": "6a22e1fd89e48169c10b1c8b"
-    }
-  ],
+  "supportItems": [],
   "settings": {
     "margin": "10",
     "vat": "16",
@@ -250,9 +2333,9 @@
   ],
   "supplierSettings": {
     "shopProfile": {
-      "name": "Miione",
-      "email": "avellinadjai@gmail.com",
-      "phone": "97456512"
+      "name": "mooo",
+      "email": "moo@gmail.com",
+      "phone": "64554545"
     },
     "settings": {
       "location": "Bénin",
@@ -263,12 +2346,12 @@
       "timezone": "(GMT +01:00) Afrique centrale et de l’Ouest",
       "language": "Français"
     },
-    "savedAt": "2026-06-04T18:46:37.749Z",
+    "savedAt": "2026-06-08T18:41:44.266Z",
     "profile": {}
   },
   "adminSettings": {
     "profile": {
-      "name": "",
+      "name": "Super Admin",
       "email": "",
       "phone": ""
     },
@@ -281,7 +2364,7 @@
       "timezone": "(GMT +01:00) Afrique centrale et de l’Ouest",
       "language": "Français"
     },
-    "savedAt": "2026-06-04T19:16:24.690Z",
+    "savedAt": "2026-06-08T17:22:00.920Z",
     "policies": [
       {
         "id": "admin-policy-cgu",

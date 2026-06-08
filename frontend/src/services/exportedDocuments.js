@@ -1,3 +1,5 @@
+import { getCurrentStorageScope, getScopedStorageKey } from './scopedStorage';
+
 const EXPORTED_DOCUMENTS_KEY = 'archiprice_exported_documents';
 const EXPORTED_DOCUMENTS_EVENT = 'archiprice:exported-documents-change';
 
@@ -9,7 +11,11 @@ function readDocuments() {
   if (!canUseBrowserStorage()) return [];
 
   try {
-    const documents = JSON.parse(window.localStorage.getItem(EXPORTED_DOCUMENTS_KEY) || '[]');
+    const storageScope = getCurrentStorageScope();
+    const storageKey = storageScope === 'anonymous'
+      ? EXPORTED_DOCUMENTS_KEY
+      : getScopedStorageKey(EXPORTED_DOCUMENTS_KEY);
+    const documents = JSON.parse(window.localStorage.getItem(storageKey) || '[]');
     return Array.isArray(documents) ? documents : [];
   } catch {
     return [];
@@ -19,7 +25,7 @@ function readDocuments() {
 function writeDocuments(documents) {
   if (!canUseBrowserStorage()) return;
 
-  window.localStorage.setItem(EXPORTED_DOCUMENTS_KEY, JSON.stringify(documents));
+  window.localStorage.setItem(getScopedStorageKey(EXPORTED_DOCUMENTS_KEY), JSON.stringify(documents));
   window.dispatchEvent(new CustomEvent(EXPORTED_DOCUMENTS_EVENT, { detail: documents }));
 }
 
@@ -47,7 +53,9 @@ export function subscribeExportedDocumentsChange(callback) {
   if (typeof window === 'undefined') return () => {};
 
   function handleChange(event) {
-    if (event.type === 'storage' && event.key !== EXPORTED_DOCUMENTS_KEY) return;
+    if (event.type === 'storage'
+      && event.key !== EXPORTED_DOCUMENTS_KEY
+      && event.key !== getScopedStorageKey(EXPORTED_DOCUMENTS_KEY)) return;
     callback(fetchExportedDocuments());
   }
 

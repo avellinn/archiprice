@@ -2,14 +2,16 @@ import './Catalogue.css';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import CardArticle, { ArticleFullscreen } from '../../../components/cardarticle';
+import Newproject from '../../../components/Newproject';
 import Recap from '../../../components/recap';
-import { Alert, Button, Icon } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
 import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
 import { addExportedDocument } from '../../../services/exportedDocuments';
-import { createProduct } from '../../../services/products';
+import { createProduct, fetchProducts } from '../../../services/products';
 import { createProject, fetchProjects, updateProject } from '../../../services/projects';
+import Filterpanel from './Filterpanel';
+import SimulBudget from './simulBudget';
 
 const VISUAL_TONES = {
   sofa: 'linen',
@@ -78,10 +80,10 @@ function buildCatalogueProduct(product, adminData) {
   const supplier = adminData.suppliers.find((item) => item.name === product.supplier);
   const locationLabel = [product.city, product.neighborhood].filter(Boolean).join(' · ');
   const imageDocuments = Array.isArray(product.images) && product.images.length > 0
-    ? product.images.filter(Boolean).slice(0, 12)
+    ? product.images.filter(Boolean)
     : [];
   const images = imageDocuments.length > 0
-    ? imageDocuments.map(getImageUrl).filter(Boolean).slice(0, 12)
+    ? imageDocuments.map(getImageUrl).filter(Boolean)
     : [product.image].filter(Boolean);
   const primaryImage = images[0] || '';
 
@@ -159,13 +161,13 @@ export default function Catalogue() {
   const [selectedProductIds, setSelectedProductIds] = useState([]);
   const [fullscreenProductId, setFullscreenProductId] = useState('');
   const [fullscreenImageIndex, setFullscreenImageIndex] = useState(0);
-  const [isBudgetVisible, setIsBudgetVisible] = useState(false);
   const [isRecapVisible, setIsRecapVisible] = useState(false);
   const [validationError, setValidationError] = useState('');
   const [isValidating, setIsValidating] = useState(false);
+  const activeProjectId = searchParams.get('projectId') || '';
 
   useEffect(() => {
-    const projectIdFromUrl = searchParams.get('projectId');
+    const projectIdFromUrl = activeProjectId;
     if (!projectIdFromUrl) return undefined;
 
     let cancelled = false;
@@ -186,7 +188,7 @@ export default function Catalogue() {
     return () => {
       cancelled = true;
     };
-  }, [searchParams]);
+  }, [activeProjectId]);
 
   const products = useMemo(() => (
     (Array.isArray(adminData.products) ? adminData.products : [])
@@ -194,6 +196,42 @@ export default function Catalogue() {
       .filter((product) => isSupplierVisibleForCatalogue(product, adminData))
       .map((product) => buildCatalogueProduct(product, adminData))
   ), [adminData]);
+
+  useEffect(() => {
+    if (!activeProjectId || searchParams.get('recap') !== '1' || products.length === 0) return undefined;
+
+    let cancelled = false;
+
+    fetchProducts(activeProjectId)
+      .then((projectProducts) => {
+        if (cancelled) return;
+
+        const selectedIds = products
+          .filter((catalogueProduct) => projectProducts.some((projectProduct) => (
+            String(projectProduct.name || '').trim().toLowerCase() === String(catalogueProduct.name || '').trim().toLowerCase()
+            && (
+              !projectProduct.category
+              || String(projectProduct.category || '').trim().toLowerCase() === String(catalogueProduct.category || '').trim().toLowerCase()
+            )
+          )))
+          .map((product) => product.id);
+
+        if (selectedIds.length > 0) {
+          setSelectedProductIds(selectedIds);
+          setValidationError('');
+          setIsRecapVisible(true);
+        } else {
+          setValidationError('Aucun article du projet ne correspond au catalogue actuel.');
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) setValidationError(getApiErrorMessage(error, 'Impossible de charger les articles du projet.'));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeProjectId, products, searchParams]);
 
   const filters = useMemo(() => ({
     categories: ['Tout', ...adminData.taxonomies.categories.map((category) => category.name)],
@@ -222,6 +260,13 @@ export default function Catalogue() {
       ]),
     ],
   }), [adminData]);
+  const roomOptions = useMemo(() => (
+    (adminData.taxonomies?.rooms || [])
+      .map((room) => room?.name || room?.label || room)
+      .map((name) => String(name || '').trim())
+      .filter(Boolean)
+      .map((name) => ({ value: name, label: name }))
+  ), [adminData.taxonomies.rooms]);
 
   const activeCategory = filters.categories.includes(selectedCategory) ? selectedCategory : 'Tout';
   const activeRoom = filters.rooms.includes(selectedRoom) ? selectedRoom : 'Toutes';
@@ -289,7 +334,6 @@ export default function Catalogue() {
       : [...selectedProductIds, productId];
 
     setSelectedProductIds(nextIds);
-    setIsBudgetVisible(nextIds.length > 0);
   }
 
   function openFullscreenProduct(productId) {
@@ -299,7 +343,6 @@ export default function Catalogue() {
 
   function handleModifyPurchase() {
     setIsRecapVisible(false);
-    setIsBudgetVisible(true);
     setValidationError('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     navigate(`/catalogue${searchParams.toString() ? `?${searchParams.toString()}` : ''}`, { replace: true });
@@ -333,6 +376,22 @@ export default function Catalogue() {
     navigate(projectIdFromUrl ? `/workspace?mode=projects&projectId=${projectIdFromUrl}` : '/workspace');
   }
 
+  function handleGateCancel() {
+    navigate('/workspace', { replace: true });
+  }
+
+  function handleProjectGateCreated(project) {
+    if (!project?.id) return;
+
+    const projectBudget = extractProjectBudget(project);
+    if (projectBudget) setBudgetTarget(String(projectBudget));
+
+    navigate(`/catalogue?projectId=${project.id}`, {
+      replace: true,
+      state: { from: location.state?.from || { pathname: '/workspace', search: '' } },
+    });
+  }
+
   async function handleConfirmValidation() {
     if (selectedProducts.length === 0) return;
     if (!budgetSummary.hasTarget) {
@@ -344,7 +403,7 @@ export default function Catalogue() {
     setValidationError('');
 
     try {
-      const projectIdFromUrl = searchParams.get('projectId');
+      const projectIdFromUrl = activeProjectId;
       const description = buildProjectDescription({
         selectedProducts,
         budgetTarget: budgetSummary.target,
@@ -416,109 +475,30 @@ export default function Catalogue() {
         'catalogue-page--products',
         hasCatalogueProducts ? '' : 'catalogue-page--empty',
         shouldShowFilterPanel ? 'catalogue-page--with-filters' : 'catalogue-page--without-filters',
-        isBudgetVisible && selectedProducts.length > 0 ? 'catalogue-page--with-budget' : 'catalogue-page--without-budget',
+        activeProjectId ? 'catalogue-page--with-budget' : 'catalogue-page--without-budget',
       ].filter(Boolean).join(' ')}
     >
       {shouldShowFilterPanel && (
-      <aside className="catalogue-filter-panel" aria-label="Filtres du catalogue">
-        <div>
-          <button
-            type="button"
-            className="catalogue-workspace-return"
-            onClick={handleWorkspaceReturn}
-          >
-            <Icon name="ArrowLeft" size="sm" />
-          </button>
-          <span className="catalogue-eyebrow">Explorer Catalogue</span>
-          <h1>Filtres</h1>
-        </div>
-
-        <section className="catalogue-filter-group">
-          <h2>Catégorie</h2>
-          <div>
-            {filters.categories.map((category, index) => (
-              <button
-                type="button"
-                className={activeCategory === category ? 'is-active' : ''}
-                key={`${category}-${index}`}
-                onClick={() => setSelectedCategory(category)}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="catalogue-filter-group">
-          <h2>Pièce</h2>
-          <div>
-            {filters.rooms.map((room, index) => (
-              <button
-                type="button"
-                className={activeRoom === room ? 'is-active' : ''}
-                key={`${room}-${index}`}
-                onClick={() => setSelectedRoom(room)}
-              >
-                {room}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="catalogue-filter-group">
-          <h2>Gamme</h2>
-          <div>
-            {filters.ranges.map((range, index) => (
-              <button
-                type="button"
-                className={activeRange === range ? 'is-active' : ''}
-                key={`${range}-${index}`}
-                onClick={() => setSelectedRange(range)}
-              >
-                {range}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="catalogue-filter-group">
-          <h2>Ville</h2>
-          <div>
-            {filters.cities.map((city, index) => (
-              <button
-                type="button"
-                className={activeCity === city ? 'is-active' : ''}
-                key={`${city}-${index}`}
-                onClick={() => setSelectedCity(city)}
-              >
-                {city}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="catalogue-filter-group">
-          <h2>Quartier</h2>
-          <div>
-            {filters.neighborhoods.map((neighborhood, index) => (
-              <button
-                type="button"
-                className={activeNeighborhood === neighborhood ? 'is-active' : ''}
-                key={`${neighborhood}-${index}`}
-                onClick={() => setSelectedNeighborhood(neighborhood)}
-              >
-                {neighborhood}
-              </button>
-            ))}
-          </div>
-        </section>
-      </aside>
+        <Filterpanel
+          filters={filters}
+          activeCategory={activeCategory}
+          activeRoom={activeRoom}
+          activeRange={activeRange}
+          activeCity={activeCity}
+          activeNeighborhood={activeNeighborhood}
+          onCategoryChange={setSelectedCategory}
+          onRoomChange={setSelectedRoom}
+          onRangeChange={setSelectedRange}
+          onCityChange={setSelectedCity}
+          onNeighborhoodChange={setSelectedNeighborhood}
+          onWorkspaceReturn={handleWorkspaceReturn}
+        />
       )}
 
       <main className="catalogue-product-main">
         <div className="catalogue-product-heading">
           <div>
-            <span className="catalogue-eyebrow">Cartes articles</span>
+            <span className="catalogue-eyebrow"> articles</span>
             <h2>{hasCatalogueProducts ? `${filteredProducts.length} articles disponibles` : 'Aucun catalogue ou produits disponible'}</h2>
           </div>
 
@@ -551,64 +531,18 @@ export default function Catalogue() {
         </section>
       </main>
 
-      {isBudgetVisible && selectedProducts.length > 0 && (
-      <aside className="catalogue-budget-panel" aria-label="Simulation budget live">
-        <div className="catalogue-budget-card">
-          <span className="catalogue-eyebrow">Simulation budget live</span>
-          <h2>Budget</h2>
-
-          <label className="catalogue-budget-field">
-            Budget cible
-            <input
-              type="text"
-              inputMode="numeric"
-              value={formatBudgetInputValue(budgetTarget)}
-              placeholder="Définir le budget"
-              onChange={(event) => setBudgetTarget(normalizeBudgetInput(event.target.value))}
-            />
-          </label>
-
-          <dl className="catalogue-budget-list">
-            
-            <div>
-              <dt>Estimation min</dt>
-              <dd>{formatCurrency(budgetSummary.min)}</dd>
-            </div>
-            <div>
-              <dt>Estimation max</dt>
-              <dd>{formatCurrency(budgetSummary.max)}</dd>
-            </div>
-            <div className={budgetSummary.overage > 0 ? 'is-over' : 'is-ok'}>
-              <dt>Dépassement éventuel</dt>
-              <dd>
-                {!budgetSummary.hasTarget
-                  ? 'Budget à définir'
-                  : budgetSummary.overage > 0
-                    ? formatCurrency(budgetSummary.overage)
-                    : 'Aucun'}
-              </dd>
-            </div>
-          </dl>
-
-          <p>
-            {selectedProducts.length === 0
-              ? 'Ajoutez des articles pour lancer la simulation.'
-              : `${selectedProducts.length} article(s) ajouté(s) au panier budget.`}
-          </p>
-          {validationError && !isRecapVisible && (
-            <Alert variant="danger" className="catalogue-summary-error">{validationError}</Alert>
-          )}
-          <Button
-            type="button"
-            variant="success"
-            fullWidth
-            icon={<Icon name="Check" size="sm" />}
-            onClick={handleBudgetValidation}
-          >
-            Valider
-          </Button>
-        </div>
-      </aside>
+      {activeProjectId && (
+        <SimulBudget
+          budgetTarget={budgetTarget}
+          budgetSummary={budgetSummary}
+          selectedCount={selectedProducts.length}
+          validationError={!isRecapVisible ? validationError : ''}
+          formatCurrency={formatCurrency}
+          formatBudgetInputValue={formatBudgetInputValue}
+          normalizeBudgetInput={normalizeBudgetInput}
+          onBudgetChange={setBudgetTarget}
+          onValidate={handleBudgetValidation}
+        />
       )}
 
       {selectedProducts.length > 0 && isRecapVisible && (
@@ -616,7 +550,7 @@ export default function Catalogue() {
           selectedProducts={selectedProducts}
           budgetSummary={budgetSummary}
           generatedAt={generatedAt}
-          reference={searchParams.get('projectId') || 'ARCHI-CATALOGUE'}
+          reference={activeProjectId || 'ARCHI-CATALOGUE'}
           validationError={validationError}
           isValidating={isValidating}
           formatCurrency={formatCurrency}
@@ -626,6 +560,13 @@ export default function Catalogue() {
           onConfirm={handleConfirmValidation}
         />
       )}
+
+      <Newproject
+        isOpen={!activeProjectId}
+        onCancel={handleGateCancel}
+        onCreated={handleProjectGateCreated}
+        roomTypes={roomOptions}
+      />
 
       {fullscreenProduct && (
         <ArticleFullscreen

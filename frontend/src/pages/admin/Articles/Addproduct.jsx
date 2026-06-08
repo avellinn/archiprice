@@ -1,4 +1,7 @@
+import { useState } from 'react';
 import { Button, Icon } from '../../../components/ui';
+import Alert from '../../../components/ui/Alert';
+import { sanitizeNumericInput } from '../../../utils/formInput';
 
 export default function Addproduct({
   productForm,
@@ -19,6 +22,7 @@ export default function Addproduct({
   getProductImages,
   getImageUrl,
 }) {
+  const [actionMessage, setActionMessage] = useState('');
   const productImages = getProductImages(productForm);
   const selectedNeighborhoodValue = getNeighborhoodSelectValue(productForm.neighborhood, neighborhoodOptions);
   const hasImages = productImages.length > 0;
@@ -26,6 +30,7 @@ export default function Addproduct({
 
   function submitProduct(event) {
     event.preventDefault();
+    setActionMessage('Sauvegarde de l’article en cours.');
     onSave();
   }
 
@@ -94,7 +99,7 @@ export default function Addproduct({
                   value={productForm.price}
                   placeholder="Prix en FCFA"
                   required
-                  onChange={(event) => onUpdateField('price', event.target.value)}
+                  onChange={(event) => onUpdateField('price', sanitizeNumericInput(event.target.value))}
                 />
               </label>
               <label className="admin-product-field">
@@ -194,7 +199,7 @@ export default function Addproduct({
                     type="file"
                     accept="image/png,image/jpeg,image/webp"
                     multiple
-                    disabled={isImageUploading || productImages.length >= maxImageCount}
+                    disabled={isImageUploading}
                     onChange={onImageUpload}
                   />
                   <Icon name="Upload" />
@@ -223,6 +228,12 @@ export default function Addproduct({
               )}
             </div>
           </div>
+
+          {actionMessage && (
+            <Alert variant="success" onClose={() => setActionMessage('')}>
+              {actionMessage}
+            </Alert>
+          )}
 
           <footer className="admin-product-modal__footer">
             <Button type="button" variant="outline" onClick={onClose}>

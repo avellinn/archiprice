@@ -1,6 +1,6 @@
 .espacepro {
-  --espacepro-left-width: minmax(220px, 0.7fr);
-  --espacepro-center-width: minmax(620px, 1fr);
+  --espacepro-left-width: minmax(170px, 0.42fr);
+  --espacepro-center-width: minmax(760px, 1.45fr);
   --espacepro-info-height: 178px;
   --espacepro-projects-bg: #f0f0f0;
   --espacepro-projects-border: var(--app-border-color);
@@ -256,11 +256,31 @@
   height: calc(100% - 4.6rem);
   min-height: 0;
   margin: 0.75rem;
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto auto;
 }
 
 .espacepro__article-card--featured .espacepro__article-image {
   min-height: 0;
+}
+
+.espacepro__article-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding: 0.75rem 1rem 1rem;
+  border-top: 1px solid transparent;
+}
+
+.espacepro__article-footer .workspace-shop-cta {
+  position: static;
+  right: auto;
+  bottom: auto;
+  z-index: auto;
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
 }
 
 .espacepro__article-list {
@@ -273,7 +293,7 @@
   position: relative;
   display: grid;
   width: 100%;
-  min-height: 235px;
+  min-height: 315px;
   place-items: center;
   border: 0;
   overflow: hidden;
@@ -319,6 +339,7 @@
 }
 
 .espacepro__article-image.espacepro__article-image--has-photo i {
+  min-height: 100%;
   opacity: 1;
   background:
     linear-gradient(180deg, rgb(15 23 42 / 0.06), rgb(15 23 42 / 0.2)),
@@ -326,6 +347,7 @@
   background-position: center;
   background-size: cover;
   transform: none;
+  
 }
 
 .espacepro__article-image--1 {
@@ -353,29 +375,34 @@
 }
 
 .espacepro__article-body {
-  padding: 1rem;
+  display: grid;
+  gap: 0.22rem;
+  padding: 0.55rem 0.85rem 0.35rem;
 }
 
 .espacepro__article-body h3 {
-  margin: 0 0 0.4rem;
+  margin: 0;
   color: var(--app-heading-color);
-  font-size: 1.1rem;
+  font-size: 0.98rem;
 }
 
 .espacepro__article-body p {
-  margin: 0 0 0.75rem;
+  margin: 0;
   color: var(--app-muted-color);
+  font-size: 0.82rem;
 }
 
 .espacepro__article-body strong {
   color: var(--app-heading-color);
+  font-size: 0.9rem;
 }
 
 .espacepro__recap-actions {
   display: flex;
   align-items: center;
   gap: 0.55rem;
-  margin-top: 0.95rem;
+  min-width: 0;
+  margin-top: 0;
   
 }
 
@@ -426,15 +453,22 @@
 
 .espacepro__info {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr);
-  align-content: start;
-  gap: 0.7rem;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: stretch;
+  gap: 0.75rem;
+  overflow: hidden;
+  
 }
 
 .espacepro__info-section {
-  padding: 1rem;
+  display: grid;
+  min-height: 0;
+  gap: 0.75rem;
+  padding: 0.9rem;
   border: 1px solid var(--app-border-color);
-  border-radius: 100px;
+  border-radius: 12px;
+  background: var(--app-card-background);
+  box-shadow: 0 10px 24px rgb(15 23 42 / 0.045);
 }
 
 .espacepro__info-section:only-child {
@@ -442,36 +476,41 @@
 }
 
 .espacepro__info-section h2 {
-  margin: 0 0 0.85rem;
+  margin: 0;
   color: var(--app-heading-color);
-  font-size: 1.05rem;
+  font-size: 0.95rem;
+  font-weight: 850;
 }
 
 .espacepro__info-section dl {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 0.7rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
   margin: 0;
 }
 
 .espacepro__info-section dl div {
   min-width: 0;
-  padding: 0.85rem;
+  padding: 0.65rem;
   border: 1px solid var(--app-border-color);
-  border-radius: 8px;
+  border-radius: 10px;
+  background: var(--app-panel-background);
 }
 
 .espacepro__info-section dt {
-  color: black;
-  font-size: 0.86rem;
-  font-weight: 500;
+  color: var(--app-muted-color);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }
 
 .espacepro__info-section dd {
-  margin: 0.3rem 0 0;
+  margin: 0.28rem 0 0;
   color: var(--app-heading-color);
-  font-weight: 400;
-  font-size: 0.76rem;
+  font-weight: 750;
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
 }
 
 .espacepro__recap-modal {
@@ -632,6 +671,50 @@
   margin: 0 1.2rem 1rem;
 }
 
+.dashboard-shell.is-theme-dark .espacepro {
+  --espacepro-projects-bg: #111827;
+  --espacepro-articles-bg: #111827;
+  --espacepro-info-bg: #111827;
+  --espacepro-scrollbar-thumb: #475569;
+  --espacepro-scrollbar-thumb-hover: #94a3b8;
+}
+
+.dashboard-shell.is-theme-dark .espacepro__projects,
+.dashboard-shell.is-theme-dark .espacepro__articles,
+.dashboard-shell.is-theme-dark .espacepro__info,
+.dashboard-shell.is-theme-dark .espacepro__article-card,
+.dashboard-shell.is-theme-dark .espacepro__info-section,
+.dashboard-shell.is-theme-dark .espacepro__recap-card {
+  border-color: var(--app-border-color);
+  background: var(--app-card-background);
+  color: var(--app-text-color);
+}
+
+.dashboard-shell.is-theme-dark .espacepro__project-row--active {
+  background: #1d4ed8;
+}
+
+.dashboard-shell.is-theme-dark .espacepro__project-action,
+.dashboard-shell.is-theme-dark .espacepro__project-icon,
+.dashboard-shell.is-theme-dark .espacepro__recap-open,
+.dashboard-shell.is-theme-dark .espacepro__recap-link {
+  border-color: var(--app-border-color);
+  background: var(--app-panel-background);
+  color: var(--app-heading-color);
+}
+
+.dashboard-shell.is-theme-dark .espacepro__article-image {
+  background: #0f172a;
+}
+
+.dashboard-shell.is-theme-dark .espacepro__info-section dl div {
+  background: var(--app-panel-background);
+}
+
+.dashboard-shell.is-theme-dark .espacepro__recap-modal {
+  background: rgb(0 0 0 / 0.62);
+}
+
 @media (max-width: 980px) {
   .espacepro {
     grid-template-columns: 1fr;
@@ -657,6 +740,7 @@
 
   .espacepro__projects {
     max-height: 280px;
+    
   }
 
   .espacepro__articles {

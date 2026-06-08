@@ -1,21 +1,11 @@
 import './Dashboard.css';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import DonutChartCard from '../../../components/DonutChart';
 import { Button, Icon, Text } from '../../../components/ui';
 import { useAdminData } from '../../../services/adminData';
-
-const MONTH_ACTIVITY = [
-  { label: 'Jan' },
-  { label: 'Fév' },
-  { label: 'Mar' },
-  { label: 'Avr' },
-  { label: 'Mai' },
-  { label: 'Juin' },
-  { label: 'Juil' },
-  { label: 'Août' },
-];
+import { fetchAdminSupportItems } from '../../../services/adminMongo';
 
 function formatDate(value) {
   if (!value) return 'Date non renseignée';
@@ -40,6 +30,23 @@ function getDonutDisplayValue(value, total) {
   return value > 0 ? value : Math.max(total * 0.04, 0.08);
 }
 
+function buildMonthActivity(items = []) {
+  const monthFormatter = new Intl.DateTimeFormat('fr-FR', { month: 'short' });
+  const months = [...new Set(items
+    .map((item) => item.createdAt || item.updatedAt || item.date || item.submittedAt)
+    .map((value) => new Date(value))
+    .filter((date) => !Number.isNaN(date.getTime()))
+    .map((date) => monthFormatter.format(date).replace('.', '')))];
+
+  if (months.length > 0) return months.slice(-8).map((label) => ({ label }));
+
+  return Array.from({ length: 8 }, (_, index) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - (7 - index));
+    return { label: monthFormatter.format(date).replace('.', '') };
+  });
+}
+
 function isAvailable(product) {
   return String(product.availability || '').toLowerCase() === 'disponible';
 }
@@ -56,7 +63,7 @@ function isOpenSupport(item) {
   return String(item.status || '').toLowerCase() === 'ouvert';
 }
 
-function getActivityRows(adminData) {
+function getActivityRows(adminData, supportItems = []) {
   const productRows = (adminData.products || []).slice(0, 2).map((product, index) => ({
     id: `product-${product.id || index}`,
     title: product.name || 'Article sans nom',
@@ -71,7 +78,7 @@ function getActivityRows(adminData) {
     date: simulation.date || simulation.createdAt || '',
   }));
 
-  const supportRows = (adminData.supportItems || []).slice(0, 2).map((item, index) => ({
+  const supportRows = supportItems.slice(0, 2).map((item, index) => ({
     id: `support-${item.id || index}`,
     title: item.subject || 'Ticket support',
     status: item.status || item.type || 'Support',
@@ -85,12 +92,34 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [adminData] = useAdminData();
+  const [supportItems, setSupportItems] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    function loadSupportItems() {
+      fetchAdminSupportItems()
+        .then((items) => {
+          if (!cancelled) setSupportItems(items.filter((item) => item.tab === 'feedback'));
+        })
+        .catch(() => {
+          if (!cancelled) setSupportItems([]);
+        });
+    }
+
+    loadSupportItems();
+    const refreshTimer = window.setInterval(loadSupportItems, 10000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(refreshTimer);
+    };
+  }, []);
 
   const stats = useMemo(() => {
     const products = adminData.products || [];
     const suppliers = adminData.suppliers || [];
     const simulations = adminData.simulations || [];
-    const supportItems = adminData.supportItems || [];
 
     return {
       totalProducts: products.length,
@@ -102,14 +131,20 @@ export default function Dashboard() {
       totalSupport: supportItems.length,
       openSupport: supportItems.filter(isOpenSupport).length,
     };
-  }, [adminData]);
+  }, [adminData, supportItems]);
 
   const dashboardSearchTerm = searchParams.get('q')?.trim().toLowerCase() || '';
-  const history = useMemo(() => getActivityRows(adminData).filter((item) => (
+  const history = useMemo(() => getActivityRows(adminData, supportItems).filter((item) => (
     !dashboardSearchTerm
     || String(item.title || '').toLowerCase().includes(dashboardSearchTerm)
     || String(item.status || '').toLowerCase().includes(dashboardSearchTerm)
-  )), [adminData, dashboardSearchTerm]);
+  )), [adminData, dashboardSearchTerm, supportItems]);
+  const monthActivity = useMemo(() => buildMonthActivity([
+    ...(adminData.products || []),
+    ...(adminData.suppliers || []),
+    ...(adminData.simulations || []),
+    ...supportItems,
+  ]), [adminData.products, adminData.simulations, adminData.suppliers, supportItems]);
 
   const repartitionTotal = stats.totalProducts + stats.totalSuppliers + stats.totalSimulations + stats.totalSupport;
   const repartitionData = [
@@ -204,7 +239,7 @@ export default function Dashboard() {
           <div className="panel-heading">
             <h1>Activité backoffice</h1>
             <Text as="span" variant="bold" size="sm">
-              Catalogue vs simulations
+               simulations
             </Text>
           </div>
           <div className="line-chart" aria-label="Graphique d'activité backoffice">
@@ -227,14 +262,14 @@ export default function Dashboard() {
               <circle cx="329" cy="42" r="5" />
             </svg>
             <div className="chart-axis">
-              {MONTH_ACTIVITY.map((item, index) => (
+              {monthActivity.map((item, index) => (
                 <Text as="span" size="sm" key={`${item.label}-${index}`}>
                   {item.label}
                 </Text>
               ))}
             </div>
             <div className="chart-legend">
-              <Text as="span" variant="bold" size="sm"><i className="legend-blue" /> Catalogue</Text>
+              
               <Text as="span" variant="bold" size="sm"><i className="legend-orange" /> Simulations</Text>
             </div>
           </div>

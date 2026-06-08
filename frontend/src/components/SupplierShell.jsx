@@ -7,7 +7,7 @@ import useAuth from '../context/useAuth';
 import { syncAdminDataFromRemote, useAdminData } from '../services/adminData';
 import { connectRealtime } from '../services/realtime';
 import { fetchMySupportItems } from '../services/support';
-import { notifySupplierWorkspaceChange } from '../services/supplier';
+import { fetchSupplierWorkspace, notifySupplierWorkspaceChange } from '../services/supplier';
 import { getAvatarColor, getDisplayName, getUserInitials } from '../utils/userDisplay';
 import { getSupplierLanguage, getSupplierTranslations } from '../utils/supplierLanguage';
 import siteLogo from '../assets/images/log.png';
@@ -19,6 +19,7 @@ const SUPPLIER_SEARCH_ICONS = {
   '/supplier/products': 'ReceiptLong',
   '/supplier/products/new': 'Add',
   '/supplier/clients': 'Visibility',
+  '/supplier/demande': 'Storefront',
   '/supplier/content/files': 'Folder',
   '/supplier/support': 'Chat',
   '/supplier/settings': 'Info',
@@ -36,8 +37,10 @@ function normalizeSupplierKey(value) {
   return String(value || '').trim().toLowerCase();
 }
 
-function isClientNotificationForSupplier(notification, user, adminData) {
+function isClientNotificationForSupplier(notification, user, supplierProfile) {
   const supplierIds = [
+    supplierProfile?._id,
+    supplierProfile?.id,
     user?.supplierId,
     user?.supplier?._id,
     user?.supplier?.id,
@@ -46,16 +49,20 @@ function isClientNotificationForSupplier(notification, user, adminData) {
   ].filter(Boolean).map(String);
 
   const supplierNames = [
+    supplierProfile?.companyName,
+    supplierProfile?.name,
+    supplierProfile?.shopLabel,
+    supplierProfile?.storeLabel,
     user?.shopName,
     user?.companyName,
     user?.storeLabel,
     user?.name,
-    adminData.supplierSettings?.shopProfile?.name,
   ].map(normalizeSupplierKey).filter(Boolean);
   const supplierContacts = [
+    supplierProfile?.email,
+    supplierProfile?.contact,
     user?.email,
     user?.supplier?.email,
-    adminData.supplierSettings?.shopProfile?.email,
   ].map(normalizeSupplierKey).filter(Boolean);
   const hasSupplierIdentity = supplierIds.length > 0 || supplierNames.length > 0 || supplierContacts.length > 0;
 
@@ -72,6 +79,23 @@ function isClientNotificationForSupplier(notification, user, adminData) {
   );
 }
 
+function getLastDemandMessage(notification) {
+  if (Array.isArray(notification.messages) && notification.messages.length > 0) {
+    return notification.messages.at(-1);
+  }
+
+  if (notification.message) {
+    return {
+      id: `${notification.id}-initial`,
+      senderRole: 'user',
+      message: notification.message,
+      createdAt: notification.createdAt,
+    };
+  }
+
+  return null;
+}
+
 export default function SupplierShell() {
   const { user } = useAuth();
   const location = useLocation();
@@ -84,6 +108,7 @@ export default function SupplierShell() {
   const [searchMessage, setSearchMessage] = useState('');
   const [adminData] = useAdminData();
   const [supportItems, setSupportItems] = useState([]);
+  const [supplierProfile, setSupplierProfile] = useState(null);
   const [dismissedNotificationKeys, setDismissedNotificationKeys] = useState(readDismissedNotificationKeys);
   const supplierLanguage = getSupplierLanguage(adminData);
   const supplierText = getSupplierTranslations(supplierLanguage);
@@ -112,6 +137,20 @@ export default function SupplierShell() {
     };
   }, [refreshSupportNotifications, location.pathname]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchSupplierWorkspace()
+      .then((workspace) => {
+        if (!cancelled) setSupplierProfile(workspace?.supplier || null);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname]);
+
   const publicationNotices = useMemo(() => {
     const userIds = [user?.id, user?._id].filter(Boolean).map(String);
     const notices = adminData.supplierPublicationNotices || [];
@@ -126,12 +165,29 @@ export default function SupplierShell() {
   const clientNotifications = useMemo(() => {
     const notifications = adminData.supplierClientNotifications || [];
     return notifications.filter((notification) => (
-      isClientNotificationForSupplier(notification, user, adminData)
+      notification.type !== 'Demande'
+      && isClientNotificationForSupplier(notification, user, supplierProfile)
     ));
-  }, [adminData, user]);
+  }, [adminData.supplierClientNotifications, supplierProfile, user]);
   const visibleClientNotifications = useMemo(() => (
     clientNotifications.filter((notification) => !dismissedNotificationKeys.includes(`supplier-client-${notification.id}`))
   ), [clientNotifications, dismissedNotificationKeys]);
+  const demandNotifications = useMemo(() => (
+    (adminData.supplierClientNotifications || [])
+      .filter((notification) => notification.type === 'Demande')
+      .filter((notification) => isClientNotificationForSupplier(notification, user, supplierProfile))
+      .map((notification) => ({
+        ...notification,
+        lastMessage: getLastDemandMessage(notification),
+      }))
+      .filter((notification) => notification.lastMessage?.senderRole === 'user')
+      .sort((a, b) => new Date(b.lastMessage.createdAt || b.updatedAt || 0) - new Date(a.lastMessage.createdAt || a.updatedAt || 0))
+  ), [adminData.supplierClientNotifications, supplierProfile, user]);
+  const visibleDemandNotifications = useMemo(() => (
+    demandNotifications.filter((notification) => (
+      !dismissedNotificationKeys.includes(`supplier-demand-${notification.id}-${notification.lastMessage.id}`)
+    ))
+  ), [demandNotifications, dismissedNotificationKeys]);
   const visibleSupportReplies = useMemo(() => (
     supportItems
       .filter((item) => item.reply && !dismissedNotificationKeys.includes(`supplier-support-reply-${item.id}`))
@@ -166,6 +222,12 @@ export default function SupplierShell() {
             label: supplierText.sidebar.clients,
             path: '/supplier/clients',
             icon: <Icon name="Visibility" />,
+          },
+          {
+            id: 'supplier-demande',
+            label: supplierText.sidebar.demande,
+            path: '/supplier/demande',
+            icon: <Icon name="Storefront" />,
           },
           {
             id: 'supplier-content',
@@ -235,6 +297,7 @@ export default function SupplierShell() {
       ...dismissedNotificationKeys,
       ...visiblePublicationNotices.map((notice) => `supplier-notice-${notice.id}`),
       ...visibleClientNotifications.map((notification) => `supplier-client-${notification.id}`),
+      ...visibleDemandNotifications.map((notification) => `supplier-demand-${notification.id}-${notification.lastMessage.id}`),
       ...visibleSupportReplies.map((item) => `supplier-support-reply-${item.id}`),
     ];
     const uniqueKeys = [...new Set(nextKeys)];
@@ -278,7 +341,7 @@ export default function SupplierShell() {
           searchValue={searchValue}
           searchIcon={searchIcon}
           searchPlaceholder={supplierText.search.placeholder(currentPage)}
-          notificationCount={visiblePublicationNotices.length + visibleClientNotifications.length + visibleSupportReplies.length}
+          notificationCount={visiblePublicationNotices.length + visibleClientNotifications.length + visibleDemandNotifications.length + visibleSupportReplies.length}
           onAccountClick={() => {
             setIsAccountOpen((open) => !open);
             setIsNotificationsOpen(false);
@@ -302,10 +365,27 @@ export default function SupplierShell() {
                 <Icon name="Close" size="sm" />
               </button>
             </div>
-            {visiblePublicationNotices.length === 0 && visibleClientNotifications.length === 0 && visibleSupportReplies.length === 0 ? (
+            {visiblePublicationNotices.length === 0 && visibleClientNotifications.length === 0 && visibleDemandNotifications.length === 0 && visibleSupportReplies.length === 0 ? (
               <span>{supplierText.notifications.empty}</span>
             ) : (
               <div className="notification-panel__list">
+                {visibleDemandNotifications.map((notification) => (
+                  <button
+                    key={`${notification.id}-${notification.lastMessage.id}`}
+                    type="button"
+                    className="notification-panel__item"
+                    onClick={() => {
+                      setIsNotificationsOpen(false);
+                      navigate('/supplier/demande');
+                    }}
+                  >
+                    <Icon name="Storefront" size="sm" />
+                    <span>
+                      Demande client : <b>{notification.clientName || 'Client ArchiPrice'}</b>
+                      <small>{notification.lastMessage.message}</small>
+                    </span>
+                  </button>
+                ))}
                 {visibleSupportReplies.map((item) => (
                   <button
                     key={item.id}

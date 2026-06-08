@@ -44,25 +44,18 @@ export default function Recap({
               <span>Articles choisis</span>
               <strong>{selectedProducts.length}</strong>
             </div>
-            <div>
-              <span>Boutiques</span>
-              <strong>{new Set(selectedProducts.map((product) => product.shop)).size}</strong>
-            </div>
+            
             <div>
               <span>Statut</span>
               <strong>{!budgetSummary.hasTarget ? 'A definir' : budgetSummary.overage > 0 ? 'Depassement' : 'Controle'}</strong>
             </div>
           </div>
 
-          <div className="catalogue-summary-tags">
-            {selectedProducts.slice(0, 4).map((product, index) => (
-              <span key={`${product.id || product.name}-${index}`}>{product.name}</span>
-            ))}
-          </div>
+        
 
           <h3>
             <Icon name="Info" size="sm" />
-            Volumes budget (FCFA)
+            Fourchette de prix  (FCFA)
           </h3>
 
           <div className="catalogue-summary-volume">
@@ -77,7 +70,7 @@ export default function Recap({
               </strong>
             </div>
             <div>
-              <span>Accordé max</span>
+              <span>Constaté max</span>
               <strong>{formatCurrency(budgetSummary.max)}</strong>
             </div>
           </div>

@@ -1,8 +1,9 @@
 import './Clients.css';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Badge, Icon, Table, Text } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
 import { useAdminData } from '../../../services/adminData';
+import { fetchSupplierWorkspace } from '../../../services/supplier';
 import ClientModal from './clientModal';
 
 function normalizeKey(value) {
@@ -45,26 +46,32 @@ function normalizeArticleImages(notification) {
     ));
 }
 
-function isNotificationForSupplier(notification, user, adminData) {
+function isNotificationForSupplier(notification, user, supplierProfile) {
   const supplierIds = [
     user?.supplierId,
     user?.supplier?._id,
     user?.supplier?.id,
+    supplierProfile?._id,
+    supplierProfile?.id,
     user?.id,
     user?._id,
   ].filter(Boolean).map(String);
 
   const supplierNames = [
+    supplierProfile?.companyName,
+    supplierProfile?.name,
+    supplierProfile?.shopLabel,
+    supplierProfile?.storeLabel,
     user?.shopName,
     user?.companyName,
     user?.storeLabel,
     user?.name,
-    adminData.supplierSettings?.shopProfile?.name,
   ].map(normalizeKey).filter(Boolean);
   const supplierContacts = [
+    supplierProfile?.email,
+    supplierProfile?.contact,
     user?.email,
     user?.supplier?.email,
-    adminData.supplierSettings?.shopProfile?.email,
   ].map(normalizeKey).filter(Boolean);
   const hasSupplierIdentity = supplierIds.length > 0 || supplierNames.length > 0 || supplierContacts.length > 0;
 
@@ -84,18 +91,34 @@ function isNotificationForSupplier(notification, user, adminData) {
 export default function Clients() {
   const { user } = useAuth();
   const [adminData, updateAdminData] = useAdminData();
+  const [supplierProfile, setSupplierProfile] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
   const [pendingClientDelete, setPendingClientDelete] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchSupplierWorkspace()
+      .then((workspace) => {
+        if (!cancelled) setSupplierProfile(workspace?.supplier || null);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const clients = useMemo(() => {
     const notifications = adminData.supplierClientNotifications || [];
     return notifications.filter((notification) => (
-      isNotificationForSupplier(notification, user, adminData)
+      isNotificationForSupplier(notification, user, supplierProfile)
     )).map((notification) => ({
       ...notification,
       articleImages: normalizeArticleImages(notification),
       createdAtLabel: formatDateTime(notification.createdAt),
     }));
-  }, [adminData, user]);
+  }, [adminData.supplierClientNotifications, supplierProfile, user]);
 
   function confirmClientDelete() {
     if (!pendingClientDelete) return;

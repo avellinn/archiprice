@@ -1,15 +1,17 @@
 import api from './api';
-import { MAX_FILES_PER_UPLOAD } from '../constants/uploads';
+
+const CATALOGUE_IMAGE_UPLOAD_TIMEOUT = 120000;
 
 export async function uploadCatalogueImages(files) {
   const formData = new FormData();
 
-  files.slice(0, MAX_FILES_PER_UPLOAD).forEach((file) => {
+  files.forEach((file) => {
     formData.append('image', file);
   });
 
   const { data } = await api.post('/api/uploads/products/images', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: CATALOGUE_IMAGE_UPLOAD_TIMEOUT,
   });
 
   return Array.isArray(data.images) ? data.images : [];

@@ -63,6 +63,13 @@
   border: 1px solid var(--app-border-color);
   border-radius: 9px;
   background: var(--app-panel-background);
+  cursor: pointer;
+}
+
+.user-support-list article:hover,
+.user-support-list article:focus-visible {
+  background: var(--app-card-background);
+  outline: 0;
 }
 
 .user-support-list strong,

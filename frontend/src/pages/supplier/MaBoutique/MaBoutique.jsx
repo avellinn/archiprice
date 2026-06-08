@@ -4,12 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import SupplierShopCard from '../../../components/SupplierShopCard';
 import { Alert } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
-import { useAdminData } from '../../../services/adminData';
 import { deleteSupplierProduct, fetchSupplierWorkspace, subscribeSupplierWorkspaceChange } from '../../../services/supplier';
 
 export default function MaBoutique() {
   const navigate = useNavigate();
-  const [adminData] = useAdminData();
   const [workspace, setWorkspace] = useState(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -48,15 +46,14 @@ export default function MaBoutique() {
   }, []);
 
   const supplier = workspace?.supplier;
-  const savedShopProfile = adminData.supplierSettings?.shopProfile || {};
-  const shopName = savedShopProfile.name
+  const shopName = supplier?.companyName
     || supplier?.shopLabel
     || supplier?.storeLabel
     || supplier?.label
     || supplier?.name
-    || supplier?.companyName
     || workspace?.user?.name
-    || 'ArchiPrice Store';
+    || workspace?.user?.email
+    || '';
   const backgroundImage = supplier?.coverImage?.secure_url
     || supplier?.coverImage?.url
     || supplier?.backgroundImage
@@ -113,7 +110,7 @@ export default function MaBoutique() {
         <SupplierShopCard
           shopName={shopName}
           backgroundImage={backgroundImage}
-          heroTitle={`Découvrez les nouveautés ${shopName}`}
+          heroTitle={shopName ? `Découvrez les nouveautés ${shopName}` : 'Découvrez les nouveautés'}
           products={products}
           onAddProduct={() => navigate('/supplier/products/new')}
           onEditProduct={(product) => navigate(`/supplier/products/new?edit=${product.id}`)}

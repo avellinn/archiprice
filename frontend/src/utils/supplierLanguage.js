@@ -10,6 +10,7 @@ export const SUPPLIER_TRANSLATIONS = {
       '/supplier/shop': 'Ma boutique',
       '/supplier/products': 'Produits',
       '/supplier/clients': 'Clients',
+      '/supplier/demande': 'Demande',
       '/supplier/content/files': 'Fichiers',
       '/supplier/support': 'Support',
       '/supplier/settings': 'Paramètres',
@@ -21,6 +22,7 @@ export const SUPPLIER_TRANSLATIONS = {
       shop: 'Ma boutique',
       products: 'Produits',
       clients: 'Clients',
+      demande: 'Demande',
       content: 'Contenu',
       files: 'Fichiers',
       support: 'Support',
@@ -59,9 +61,12 @@ export const SUPPLIER_TRANSLATIONS = {
       heading: 'Titre',
       media: 'Supports multimédias',
       import: 'Importer',
-      mediaHint: 'Jusqu’à 12 images JPG, PNG ou WebP. 5 Mo maximum par fichier.',
-      selectedFiles: (count, max) => `${count}/${max} fichier(s) sélectionné(s)`,
-      maxFilesError: (max) => `Maximum ${max} images par article.`,
+      mediaHint: 'Nombre illimité d’images JPG, PNG ou WebP. 5 Mo maximum par fichier.',
+      selectedFiles: (count, max) => (
+        max === 'illimité'
+          ? `${count} fichier(s) sélectionné(s) · import illimité`
+          : `${count}/${max} fichier(s) sélectionné(s)`
+      ),
       deleteFile: (name) => `Supprimer ${name}`,
       deleteExistingImage: (index) => `Supprimer l'image existante ${index}`,
       category: 'Catégorie',
@@ -93,6 +98,7 @@ export const SUPPLIER_TRANSLATIONS = {
       '/supplier/shop': 'My shop',
       '/supplier/products': 'Products',
       '/supplier/clients': 'Customers',
+      '/supplier/demande': 'Request',
       '/supplier/content/files': 'Files',
       '/supplier/support': 'Support',
       '/supplier/settings': 'Settings',
@@ -104,6 +110,7 @@ export const SUPPLIER_TRANSLATIONS = {
       shop: 'My shop',
       products: 'Products',
       clients: 'Customers',
+      demande: 'Request',
       content: 'Content',
       files: 'Files',
       support: 'Support',
@@ -142,9 +149,12 @@ export const SUPPLIER_TRANSLATIONS = {
       heading: 'Heading',
       media: 'Media',
       import: 'Import',
-      mediaHint: 'Up to 12 JPG, PNG or WebP images. 5 MB maximum per file.',
-      selectedFiles: (count, max) => `${count}/${max} file(s) selected`,
-      maxFilesError: (max) => `Maximum ${max} images per item.`,
+      mediaHint: 'Unlimited JPG, PNG or WebP images. 5 MB maximum per file.',
+      selectedFiles: (count, max) => (
+        max === 'illimité'
+          ? `${count} file(s) selected · unlimited import`
+          : `${count}/${max} file(s) selected`
+      ),
       deleteFile: (name) => `Remove ${name}`,
       deleteExistingImage: (index) => `Remove existing image ${index}`,
       category: 'Category',

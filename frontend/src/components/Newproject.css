@@ -6,6 +6,8 @@
   place-items: center;
   padding: 1rem;
   background: rgb(15 23 42 / 0.42);
+  backdrop-filter: blur(2px);
+
 }
 
 .modal-create-project {

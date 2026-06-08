@@ -11,10 +11,12 @@ export default function PasswordSettingsModal({ onClose, onSubmit }) {
     confirmPassword: '',
   });
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function updateField(field, value) {
     setError('');
+    setSuccessMessage('');
     setForm((currentForm) => ({
       ...currentForm,
       [field]: value,
@@ -37,7 +39,8 @@ export default function PasswordSettingsModal({ onClose, onSubmit }) {
         currentPassword: form.currentPassword,
         newPassword: form.newPassword,
       });
-      onClose();
+      setSuccessMessage('Mot de passe sauvegardé.');
+      window.setTimeout(onClose, 500);
     } catch (apiError) {
       setError(getApiErrorMessage(apiError, 'Impossible de modifier le mot de passe.'));
     } finally {
@@ -62,6 +65,11 @@ export default function PasswordSettingsModal({ onClose, onSubmit }) {
           {error && (
             <Alert variant="danger" onClose={() => setError('')}>
               {error}
+            </Alert>
+          )}
+          {successMessage && (
+            <Alert variant="success" onClose={() => setSuccessMessage('')}>
+              {successMessage}
             </Alert>
           )}
 

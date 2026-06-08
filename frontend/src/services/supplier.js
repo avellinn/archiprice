@@ -1,9 +1,9 @@
 import { API_ROUTES } from '../constants/api';
-import { MAX_FILES_PER_UPLOAD } from '../constants/uploads';
 import api from './api';
 
 export const SUPPLIER_WORKSPACE_EVENT = 'archiprice:supplier-workspace-change';
 const SUPPLIER_WORKSPACE_CHANNEL = 'archiprice-supplier-workspace';
+const SUPPLIER_UPLOAD_TIMEOUT = 120000;
 
 function getSupplierWorkspaceChannel() {
   if (typeof window === 'undefined' || typeof window.BroadcastChannel === 'undefined') {
@@ -52,6 +52,16 @@ export async function fetchSupplierWorkspace() {
   return data;
 }
 
+export async function fetchSupplierProfile() {
+  const { data } = await api.get(API_ROUTES.supplier.me);
+  return data.supplier;
+}
+
+export async function fetchSupplierProducts() {
+  const { data } = await api.get(API_ROUTES.supplier.products);
+  return Array.isArray(data.products) ? data.products : [];
+}
+
 export async function updateSupplierProfile(payload) {
   const { data } = await api.put(API_ROUTES.supplier.me, payload);
   notifySupplierWorkspaceChange({ action: 'update-supplier-profile', supplierId: data.supplier?.id });
@@ -67,12 +77,13 @@ export async function createSupplierProduct(payload, files = []) {
     }
   });
 
-  files.slice(0, MAX_FILES_PER_UPLOAD).forEach((file) => {
+  files.forEach((file) => {
     formData.append('image', file);
   });
 
   const { data } = await api.post(API_ROUTES.supplier.products, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: SUPPLIER_UPLOAD_TIMEOUT,
   });
 
   notifySupplierWorkspaceChange({ action: 'create-product', productId: data.product?.id });
@@ -88,12 +99,13 @@ export async function updateSupplierProduct(productId, payload, files = []) {
     }
   });
 
-  files.slice(0, MAX_FILES_PER_UPLOAD).forEach((file) => {
+  files.forEach((file) => {
     formData.append('image', file);
   });
 
   const { data } = await api.put(API_ROUTES.supplier.product(productId), formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: SUPPLIER_UPLOAD_TIMEOUT,
   });
 
   notifySupplierWorkspaceChange({ action: 'update-product', productId });

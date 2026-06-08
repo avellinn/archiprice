@@ -7,17 +7,6 @@ import { Button, Icon, Text } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
 import { fetchSupplierWorkspace, subscribeSupplierWorkspaceChange } from '../../../services/supplier';
 
-const MONTH_ACTIVITY = [
-  { label: 'Jan', value: 14 },
-  { label: 'Fév', value: 22 },
-  { label: 'Mar', value: 18 },
-  { label: 'Avr', value: 34 },
-  { label: 'Mai', value: 42 },
-  { label: 'Juin', value: 58 },
-  { label: 'Juil', value: 51 },
-  { label: 'Août', value: 66 },
-];
-
 const STATUS_COPY = {
   active: 'Actif',
   actif: 'Actif',
@@ -48,6 +37,23 @@ function getPercent(value, total) {
 function getDonutDisplayValue(value, total) {
   if (!total) return 0;
   return value > 0 ? value : Math.max(total * 0.04, 0.08);
+}
+
+function buildMonthActivity(products = []) {
+  const monthFormatter = new Intl.DateTimeFormat('fr-FR', { month: 'short' });
+  const months = [...new Set(products
+    .map((product) => product.createdAt || product.updatedAt || product.submittedAt)
+    .map((value) => new Date(value))
+    .filter((date) => !Number.isNaN(date.getTime()))
+    .map((date) => monthFormatter.format(date).replace('.', '')))];
+
+  if (months.length > 0) return months.slice(-8).map((label) => ({ label }));
+
+  return Array.from({ length: 8 }, (_, index) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - (7 - index));
+    return { label: monthFormatter.format(date).replace('.', '') };
+  });
 }
 
 function normalizeStatus(value) {
@@ -149,6 +155,7 @@ export default function Analysedon() {
       || String(product.publicationStatus || '').toLowerCase().includes(dashboardSearchTerm)
     ))
     .slice(0, 4);
+  const monthActivity = useMemo(() => buildMonthActivity(products), [products]);
   const repartitionData = [
     {
       name: 'Articles actifs',
@@ -241,7 +248,7 @@ export default function Analysedon() {
           <div className="panel-heading">
             <h1>Activité des articles</h1>
             <Text as="span" variant="bold" size="sm">
-              Ventes vs publications
+              Publications
             </Text>
           </div>
           <div className="line-chart" aria-label="Graphique d'activité fournisseur">
@@ -264,14 +271,14 @@ export default function Analysedon() {
               <circle cx="329" cy="42" r="5" />
             </svg>
             <div className="chart-axis">
-              {MONTH_ACTIVITY.map((item, index) => (
+              {monthActivity.map((item, index) => (
                 <Text as="span" size="sm" key={`${item.label}-${index}`}>
                   {item.label}
                 </Text>
               ))}
             </div>
             <div className="chart-legend">
-              <Text as="span" variant="bold" size="sm"><i className="legend-blue" /> Ventes</Text>
+              
               <Text as="span" variant="bold" size="sm"><i className="legend-orange" /> Publications</Text>
             </div>
           </div>

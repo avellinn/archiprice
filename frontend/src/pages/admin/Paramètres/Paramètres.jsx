@@ -124,6 +124,11 @@ export default function Paramètres() {
     });
   }
 
+  function saveAndNotify(nextProfile = adminProfile, nextSettings = settings, nextPolicies = policies, message = 'Paramètres sauvegardés.') {
+    persistAdminSettings(nextProfile, nextSettings, nextPolicies);
+    setSettingsAlert({ variant: 'success', message });
+  }
+
   function updateLanguage(value) {
     const nextSettings = {
       ...settings,
@@ -131,7 +136,17 @@ export default function Paramètres() {
     };
 
     setSettings(nextSettings);
-    persistAdminSettings(adminProfile, nextSettings, policies);
+    saveAndNotify(adminProfile, nextSettings, policies, 'Langue sauvegardée.');
+  }
+
+  function updateTimezone(value) {
+    const nextSettings = {
+      ...settings,
+      timezone: value,
+    };
+
+    setSettings(nextSettings);
+    saveAndNotify(adminProfile, nextSettings, policies, 'Fuseau horaire sauvegardé.');
   }
 
   function closeModal() {
@@ -139,7 +154,7 @@ export default function Paramètres() {
   }
 
   function saveAdminSettings() {
-    persistAdminSettings(adminProfile, settings);
+    saveAndNotify(adminProfile, settings);
     closeModal();
   }
 
@@ -183,7 +198,7 @@ export default function Paramètres() {
             <Icon name="History" size="sm" />
             <div>
               <strong>{adminText.settings.timezone}</strong>
-              <select value={settings.timezone} onChange={(event) => updateSetting('timezone', event.target.value)}>
+              <select value={settings.timezone} onChange={(event) => updateTimezone(event.target.value)}>
                 {TIMEZONES.map((timezone) => (
                   <option key={timezone} value={timezone}>{timezone}</option>
                 ))}

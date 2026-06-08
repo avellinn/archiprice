@@ -20,13 +20,15 @@ import Login from './pages/user/Login/Login';
 import Register from './pages/user/Register/Register';
 import Dashboard from './pages/user/Dashboard/Dashboard';
 import Catalogue from './pages/user/Catalogue/Catalogue';
-import Invoices from './pages/user/Invoices/Invoices';
+import Archives from './pages/user/Archives/Archives';
+import Demande from './pages/user/Demande/Demande';
 import Logout from './pages/user/Logout/Logout';
 import Workspace from './pages/user/Workspace/Workspace';
 import UserParametres from './pages/user/Parametres/Parametres';
 import UserSupport from './pages/user/Support/Support';
 import SupplierAnalysedon from './pages/supplier/Analysedon/Analysedon';
 import SupplierClients from './pages/supplier/Clients/Clients';
+import SupplierDemandesup from './pages/supplier/Demandesup/Demandesup';
 import SupplierFichiers from './pages/supplier/Fichiers/Fichiers';
 import SupplierMaBoutique from './pages/supplier/MaBoutique/MaBoutique';
 import SupplierParametres from './pages/supplier/Parametres/Parametres';
@@ -94,6 +96,7 @@ function App() {
           <Route path="/supplier/products" element={<SupplierProduits />} />
           <Route path="/supplier/products/new" element={<SupplierAjouterProduit />} />
           <Route path="/supplier/clients" element={<SupplierClients />} />
+          <Route path="/supplier/demande" element={<SupplierDemandesup />} />
           <Route path="/supplier/content/files" element={<SupplierFichiers />} />
           <Route path="/supplier/support" element={<SupplierSupport />} />
           <Route path="/supplier/settings" element={<SupplierParametres />} />
@@ -108,7 +111,9 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/catalogue" element={<Catalogue />} />
           <Route path="/workspace" element={<Workspace />} />
-          <Route path="/factures" element={<Invoices />} />
+          <Route path="/demande" element={<Demande />} />
+          <Route path="/archives" element={<Archives />} />
+          <Route path="/factures" element={<Navigate to="/archives" replace />} />
           <Route path="/support" element={<UserSupport />} />
           <Route path="/parametres" element={<UserParametres />} />
           <Route path="/deconnexion" element={<Logout />} />

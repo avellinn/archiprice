@@ -3,13 +3,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import EspacePro from '../../../components/espacepro';
 import ModalBoutique from '../../../components/modalBoutique';
-import ModalCreateProject from '../../../components/ModalCreateProject';
+import Newproject from '../../../components/Newproject';
 import { Alert, Button, Icon } from '../../../components/ui';
 import WorkspaceMiniGrid from '../../../components/WorkspaceMiniGrid';
 import useAuth from '../../../context/useAuth';
 import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
 import { deleteProject, fetchProjects, updateProject } from '../../../services/projects';
+import { isNumericOnly, sanitizeNumericInput } from '../../../utils/formInput';
 
 const WORKSPACE_CARDS = [
   {
@@ -30,13 +31,13 @@ const WORKSPACE_CARDS = [
     kind: 'projects',
   },
   {
-    id: 'invoices',
-    title: 'Documents exportés',
+    id: 'archives',
+    title: 'Archives',
     action: 'Consulter',
     icon: 'ReceiptLong',
     tone: 'green',
     description:
-      'Visualisez les documents exportés liés à vos projets et gardez une vue claire sur les coûts engagés.',
+      'Visualisez les archives créées après validation de vos projets.',
   },
   {
     id: 'purchase-travel',
@@ -47,15 +48,6 @@ const WORKSPACE_CARDS = [
     description: 'Boutique recommandée',
     intent: 'shop',
   },
-];
-
-const EDIT_ROOM_TYPES = [
-  { value: 'salon', label: 'Salon' },
-  { value: 'chambre', label: 'Chambre' },
-  { value: 'bureau', label: 'Bureau' },
-  { value: 'douche', label: 'Douche' },
-  { value: 'appartement', label: 'Appartement' },
-  { value: 'espace externe', label: 'Espace externe' },
 ];
 
 function isFinished(project) {
@@ -176,6 +168,7 @@ function buildSupplierClientNotification({
   project,
   simulation,
   products = [],
+  message = '',
 }) {
   const now = new Date().toISOString();
   const userId = user?.id || user?._id || user?.email || 'client';
@@ -205,19 +198,39 @@ function buildSupplierClientNotification({
       unitPrice: Number(product.unitPrice || 0),
       images: getArticleCloudinaryLinks(product),
     })),
+    type: 'Demande',
+    message,
+    messages: message ? [
+      {
+        id: `message-${Date.now()}`,
+        senderRole: 'user',
+        senderName: user?.name || user?.fullName || user?.email || 'Client ArchiPrice',
+        message,
+        createdAt: now,
+      },
+    ] : [],
     status: 'Nouveau',
     createdAt: now,
   };
 }
 
-function extractEditableProjectData(project) {
+function normalizeRoomOptions(items = []) {
+  return items
+    .map((item) => item?.name || item?.label || item)
+    .map((name) => String(name || '').trim())
+    .filter(Boolean)
+    .map((name) => ({ value: name, label: name }));
+}
+
+function extractEditableProjectData(project, roomOptions = []) {
   const description = project?.description || '';
   const roomMatch = description.match(/Type de pièce\s*:\s*(.+)/i);
   const budgetMatch = description.match(/Estimation budget\s*:\s*(.+)/i);
-  const roomType = roomMatch?.[1]?.trim().toLowerCase() || EDIT_ROOM_TYPES[0].value;
-  const knownRoomType = EDIT_ROOM_TYPES.some((type) => type.value === roomType)
+  const firstRoomType = roomOptions[0]?.value || '';
+  const roomType = roomMatch?.[1]?.trim() || firstRoomType;
+  const knownRoomType = roomOptions.some((type) => type.value === roomType)
     ? roomType
-    : EDIT_ROOM_TYPES[0].value;
+    : firstRoomType;
 
   return {
     name: project?.name || '',
@@ -262,7 +275,7 @@ export default function Workspace() {
   const [activeCardId, setActiveCardId] = useState('');
   const [editingProject, setEditingProject] = useState(null);
   const [editProjectName, setEditProjectName] = useState('');
-  const [editRoomType, setEditRoomType] = useState(EDIT_ROOM_TYPES[0].value);
+  const [editRoomType, setEditRoomType] = useState('');
   const [editBudget, setEditBudget] = useState('');
   const [editStatus, setEditStatus] = useState('draft');
   const [editProjectError, setEditProjectError] = useState('');
@@ -270,6 +283,7 @@ export default function Workspace() {
   const [deletingProjectId, setDeletingProjectId] = useState('');
   const [pendingProjectDelete, setPendingProjectDelete] = useState(null);
   const [selectedProjectProducts, setSelectedProjectProducts] = useState([]);
+  const [projectLaunchNotice, setProjectLaunchNotice] = useState('');
   const workspaceStats = useMemo(() => {
     const completed = projects.filter(isFinished).length;
     const active = Math.max(projects.length - completed, 0);
@@ -282,9 +296,12 @@ export default function Workspace() {
       totalProjects: projects.length,
       activeProjects: active,
       exportedEstimates,
-      recommendedShops: (adminData.suppliers || []).length,
+      recommendedShops: (adminData.suppliers || []).filter((supplier) => supplier.isRecommended).length,
     };
   }, [adminData.suppliers, projects]);
+  const roomOptions = useMemo(() => (
+    normalizeRoomOptions(adminData.taxonomies?.rooms || [])
+  ), [adminData.taxonomies?.rooms]);
 
   useEffect(() => {
     let cancelled = false;
@@ -337,19 +354,22 @@ export default function Workspace() {
     : null;
   const projectShops = useMemo(
     () => {
-      const adminShops = (adminData.suppliers || []).map((supplier) => ({
-        id: supplier.id,
-        name: supplier.companyName || supplier.name,
-        companyName: supplier.companyName || supplier.name,
-        contact: supplier.contact || supplier.email || '',
-        zone: supplier.region || supplier.zone || 'Zone non renseignée',
-        categories: Array.isArray(supplier.categories) && supplier.categories.length > 0
-          ? supplier.categories.join(', ')
-          : supplier.products
-            ? `${supplier.products} article(s) lié(s)`
-            : 'Catégories configurées par l’admin',
-        status: supplier.status,
-      })).filter((supplier) => supplier.name);
+      const adminShops = (adminData.suppliers || [])
+        .filter((supplier) => supplier.isRecommended)
+        .map((supplier) => ({
+          id: supplier.id,
+          name: supplier.companyName || supplier.name,
+          companyName: supplier.companyName || supplier.name,
+          contact: supplier.contact || supplier.email || '',
+          zone: supplier.region || supplier.zone || 'Zone non renseignée',
+          categories: Array.isArray(supplier.categories) && supplier.categories.length > 0
+            ? supplier.categories.join(', ')
+            : supplier.products
+              ? `${supplier.products} article(s) lié(s)`
+              : 'Catégories configurées par l’admin',
+          status: supplier.status,
+          isRecommended: supplier.isRecommended,
+        })).filter((supplier) => supplier.name);
 
       return getDynamicProjectShops(selectedProject, selectedProjectProducts, adminShops);
     },
@@ -373,6 +393,7 @@ export default function Workspace() {
 
   function closeModal() {
     setIsModalOpen(false);
+    setProjectLaunchNotice('');
     setSearchParams({}, { replace: true });
   }
 
@@ -385,6 +406,7 @@ export default function Workspace() {
       setSelectedProjectId(project.id);
       setProjectsError('');
       setIsModalOpen(false);
+      setProjectLaunchNotice('');
       navigate(`/catalogue?projectId=${project.id}`, { state: { from: location } });
       return;
     }
@@ -392,7 +414,12 @@ export default function Workspace() {
   }
 
   function openEditProject(project) {
-    const editableProject = extractEditableProjectData(project);
+    if (project?.id) {
+      navigate(`/catalogue?projectId=${project.id}&recap=1`, { state: { from: location } });
+      return;
+    }
+
+    const editableProject = extractEditableProjectData(project, roomOptions);
     setEditingProject(project);
     setEditProjectName(editableProject.name);
     setEditRoomType(editableProject.roomType);
@@ -415,6 +442,16 @@ export default function Workspace() {
     const name = editProjectName.trim();
     if (!name) {
       setEditProjectError('Nom du projet requis');
+      return;
+    }
+
+    if (isNumericOnly(name)) {
+      setEditProjectError('Le nom du projet doit contenir du texte.');
+      return;
+    }
+
+    if (!editRoomType) {
+      setEditProjectError('Type de pièce requis');
       return;
     }
 
@@ -476,12 +513,20 @@ export default function Workspace() {
   }
 
   function handleCardAction(card) {
+    if (card.id === 'archives') {
+      navigate('/archives');
+      return;
+    }
+
     if (card.intent === 'create') {
+      setProjectLaunchNotice('');
       setIsModalOpen(true);
       return;
     }
 
     if (card.intent === 'shop') {
+      setProjectLaunchNotice('Lancez votre projet et découvrez les boutiques recommandées');
+      setIsModalOpen(true);
       return;
     }
 
@@ -490,6 +535,7 @@ export default function Workspace() {
 
   function handleMiniCardClick(card) {
     if (card.intent === 'create') {
+      setProjectLaunchNotice('');
       setIsModalOpen(true);
       return;
     }
@@ -514,7 +560,7 @@ export default function Workspace() {
     setActiveCardId('catalogue-projects');
   }
 
-  function handleShopSelect(shop) {
+  function handleShopSelect(shop, message = '') {
     if (!shop?.name) return;
 
     setSelectedShopName(shop.name);
@@ -524,6 +570,7 @@ export default function Workspace() {
       project: selectedProject,
       simulation: selectedProjectPurchaseSimulation,
       products: selectedProjectProducts,
+      message,
     });
 
     updateAdminData((currentData) => ({
@@ -552,7 +599,7 @@ export default function Workspace() {
       };
     }
 
-    if (card.id === 'invoices') {
+    if (card.id === 'archives') {
       return {
         value: workspaceStats.exportedEstimates,
         trend: formatTrend(getPercent(workspaceStats.exportedEstimates, Math.max(totalProjects, workspaceStats.exportedEstimates))),
@@ -698,17 +745,6 @@ export default function Workspace() {
               onArticleShopOpen={() => setIsShopSelectorOpen(true)}
             />
 
-            <div className="workspace-shop-cta">
-              <Button
-                type="button"
-                variant="secondary"
-                size="lg"
-                icon={<Icon name="Storefront" />}
-                onClick={() => setIsShopSelectorOpen((isOpen) => !isOpen)}
-              >
-                Où acheter
-              </Button>
-            </div>
           </>
         ) : (
           <div className="workspace-card-grid">
@@ -757,11 +793,22 @@ export default function Workspace() {
         )}
       </section>
 
-      <ModalCreateProject
+      <Newproject
         isOpen={isModalOpen}
         onCancel={closeModal}
         onCreated={handleProjectCreated}
+        roomTypes={roomOptions}
       />
+
+      {isModalOpen && projectLaunchNotice && (
+        <Alert
+          variant="info"
+          className="workspace-project-launch-alert"
+          onClose={() => setProjectLaunchNotice('')}
+        >
+          {projectLaunchNotice}
+        </Alert>
+      )}
 
       <ModalBoutique
         isOpen={isShopSelectorOpen}
@@ -815,7 +862,8 @@ export default function Workspace() {
               <label className="modal-create-project__field">
                 Type de pièce
                 <select value={editRoomType} onChange={(event) => setEditRoomType(event.target.value)}>
-                  {EDIT_ROOM_TYPES.map((type) => (
+                  <option value="" disabled>Choisir une pièce</option>
+                  {roomOptions.map((type) => (
                     <option key={type.value} value={type.value}>
                       {type.label}
                     </option>
@@ -826,10 +874,9 @@ export default function Workspace() {
               <label className="modal-create-project__field">
                 Estimation budget (FCFA)
                 <input
-                  type="number"
+                  type="text"
                   value={editBudget}
-                  onChange={(event) => setEditBudget(event.target.value)}
-                  min="0"
+                  onChange={(event) => setEditBudget(sanitizeNumericInput(event.target.value))}
                   inputMode="numeric"
                 />
               </label>

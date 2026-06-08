@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Alert from '../Alert';
 import Icon from '../Icon';
 
 const POLICY_PAGES = [
@@ -86,7 +87,13 @@ const POLICY_PAGES = [
 
 export function SupplierPolicyModal({ onClose, onSave }) {
   const [activePolicyId, setActivePolicyId] = useState(null);
+  const [actionMessage, setActionMessage] = useState('');
   const activePolicy = POLICY_PAGES.find((policy) => policy.id === activePolicyId);
+
+  function savePolicySettings() {
+    setActionMessage('Politiques sauvegardées.');
+    window.setTimeout(onSave, 350);
+  }
 
   return (
     <div className="supplier-settings-modal-backdrop" role="presentation">
@@ -132,9 +139,15 @@ export function SupplierPolicyModal({ onClose, onSave }) {
           </div>
         )}
 
+        {actionMessage && (
+          <Alert variant="success" onClose={() => setActionMessage('')}>
+            {actionMessage}
+          </Alert>
+        )}
+
         <footer className="supplier-settings-modal__footer">
           <button type="button" onClick={onClose}>Annuler</button>
-          <button type="button" className="is-primary" onClick={onSave}>Sauvegarder</button>
+          <button type="button" className="is-primary" onClick={savePolicySettings}>Sauvegarder</button>
         </footer>
       </section>
     </div>
@@ -142,6 +155,13 @@ export function SupplierPolicyModal({ onClose, onSave }) {
 }
 
 export function SupplierShopModal({ shopProfile, onChange, onClose, onSave }) {
+  const [actionMessage, setActionMessage] = useState('');
+
+  function saveShopSettings() {
+    setActionMessage('Coordonnées sauvegardées.');
+    window.setTimeout(onSave, 350);
+  }
+
   return (
     <div className="supplier-settings-modal-backdrop" role="presentation">
       <section className="supplier-settings-modal supplier-settings-modal--shop" role="dialog" aria-modal="true" aria-labelledby="supplier-shop-modal-title">
@@ -173,9 +193,15 @@ export function SupplierShopModal({ shopProfile, onChange, onClose, onSave }) {
           </label>
         </div>
 
+        {actionMessage && (
+          <Alert variant="success" onClose={() => setActionMessage('')}>
+            {actionMessage}
+          </Alert>
+        )}
+
         <footer className="supplier-settings-modal__footer">
           <button type="button" onClick={onClose}>Annuler</button>
-          <button type="button" className="is-primary" onClick={onSave}>Sauvegarder</button>
+          <button type="button" className="is-primary" onClick={saveShopSettings}>Sauvegarder</button>
         </footer>
       </section>
     </div>
@@ -191,6 +217,12 @@ export function SupplierLocationModal({
   onSave,
 }) {
   const canSave = Boolean(settings.companyName.trim() || settings.address.trim() || settings.neighborhood.trim() || settings.city.trim());
+  const [actionMessage, setActionMessage] = useState('');
+
+  function saveLocationSettings() {
+    setActionMessage('Emplacement sauvegardé.');
+    window.setTimeout(onSave, 350);
+  }
 
   return (
     <div className="supplier-settings-modal-backdrop" role="presentation">
@@ -238,9 +270,15 @@ export function SupplierLocationModal({
           </label>
         </div>
 
+        {actionMessage && (
+          <Alert variant="success" onClose={() => setActionMessage('')}>
+            {actionMessage}
+          </Alert>
+        )}
+
         <footer className="supplier-settings-modal__footer supplier-settings-modal__footer--sticky">
           <button type="button" onClick={onClose}>Annuler</button>
-          <button type="button" className="is-primary" onClick={onSave} disabled={!canSave}>
+          <button type="button" className="is-primary" onClick={saveLocationSettings} disabled={!canSave}>
             Sauvegarder
           </button>
         </footer>

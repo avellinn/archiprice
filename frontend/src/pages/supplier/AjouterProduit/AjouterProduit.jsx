@@ -2,7 +2,7 @@ import './AjouterProduit.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Alert, Button, Icon, ServerError } from '../../../components/ui';
-import { MAX_FILES_PER_UPLOAD } from '../../../constants/uploads';
+import { UPLOAD_LIMIT_LABEL } from '../../../constants/uploads';
 import useAuth from '../../../context/useAuth';
 import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
@@ -12,9 +12,9 @@ import {
   fetchSupplierWorkspace,
   updateSupplierProduct,
 } from '../../../services/supplier';
+import { sanitizeNumericInput } from '../../../utils/formInput';
 import { getSupplierTranslations } from '../../../utils/supplierLanguage';
 
-const MAX_PRODUCT_FILES = MAX_FILES_PER_UPLOAD;
 const INITIAL_PRODUCT_FORM = {
   name: '',
   description: '',
@@ -77,13 +77,16 @@ export default function AjouterProduit() {
   const [serverError, setServerError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingImageId, setDeletingImageId] = useState('');
+  const [supplierProfile, setSupplierProfile] = useState(null);
   const supplierText = getSupplierTranslations(adminData);
   const productText = supplierText.productForm;
-  const savedSupplierSettings = adminData.supplierSettings || {};
-  const shopName = savedSupplierSettings.shopProfile?.name
-    || user?.shopName
+  const shopName = supplierProfile?.companyName
+    || supplierProfile?.shopLabel
+    || supplierProfile?.storeLabel
+    || supplierProfile?.label
+    || supplierProfile?.name
     || user?.companyName
-    || user?.storeLabel
+    || user?.shopName
     || user?.name
     || user?.email
     || '';
@@ -111,7 +114,6 @@ export default function AjouterProduit() {
     url: URL.createObjectURL(file),
   })), [files]);
   const totalImageCount = existingImages.length + files.length;
-  const remainingFileSlots = Math.max(MAX_PRODUCT_FILES - totalImageCount, 0);
 
   function handleApiError(apiError, fallback) {
     const message = getApiErrorMessage(apiError, fallback);
@@ -125,6 +127,22 @@ export default function AjouterProduit() {
   }
 
   useEffect(() => {
+    let cancelled = false;
+
+    fetchSupplierWorkspace()
+      .then((data) => {
+        if (!cancelled) setSupplierProfile(data.supplier || null);
+      })
+      .catch(() => {
+        // Le nom de boutique restera basé sur le compte connecté si le workspace est indisponible.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!productIdToEdit) return undefined;
 
     let cancelled = false;
@@ -132,6 +150,7 @@ export default function AjouterProduit() {
     fetchSupplierWorkspace()
       .then((data) => {
         if (cancelled) return;
+        setSupplierProfile(data.supplier || null);
         const product = (data.products || []).find((item) => item.id === productIdToEdit);
         if (!product) {
           setError(productText.missingProduct);
@@ -241,16 +260,8 @@ export default function AjouterProduit() {
     if (selectedFiles.length === 0) return;
 
     setFiles((currentFiles) => {
-      const availableSlots = Math.max(MAX_PRODUCT_FILES - existingImages.length - currentFiles.length, 0);
-      const filesToAdd = selectedFiles.slice(0, availableSlots);
-
-      if (selectedFiles.length > availableSlots) {
-        setError(productText.maxFilesError(MAX_PRODUCT_FILES));
-      } else {
-        setError('');
-      }
-
-      return [...currentFiles, ...filesToAdd];
+      setError('');
+      return [...currentFiles, ...selectedFiles];
     });
 
     if (fileInputRef.current) {
@@ -294,9 +305,10 @@ export default function AjouterProduit() {
 
   function submitProductToAdmin(product) {
     setAdminData((currentData) => {
+      const currentProducts = Array.isArray(currentData.products) ? currentData.products : [];
       const image = getProductImage(product);
       const proposal = {
-        id: currentData.products.find((item) => item.sourceSupplierProductId === product.id)?.id || `supplier-product-${product.id}`,
+        id: currentProducts.find((item) => item.sourceSupplierProductId === product.id)?.id || `supplier-product-${product.id}`,
         sourceSupplierProductId: product.id,
         supplierUserId: product.supplierUserId,
         name: product.name,
@@ -317,13 +329,13 @@ export default function AjouterProduit() {
         publicationSource: 'supplier',
         submittedAt: new Date().toISOString(),
       };
-      const exists = currentData.products.some((item) => item.sourceSupplierProductId === product.id);
+      const exists = currentProducts.some((item) => item.sourceSupplierProductId === product.id);
 
       return {
         ...currentData,
         products: exists
-          ? currentData.products.map((item) => (item.sourceSupplierProductId === product.id ? proposal : item))
-          : [proposal, ...(currentData.products || [])],
+          ? currentProducts.map((item) => (item.sourceSupplierProductId === product.id ? proposal : item))
+          : [proposal, ...currentProducts],
       };
     });
   }
@@ -464,13 +476,12 @@ export default function AjouterProduit() {
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
                     multiple
-                    disabled={remainingFileSlots === 0}
                     required={existingImages.length === 0 && files.length === 0}
                     onChange={handleFilesChange}
                   />
                 </div>
                 <p>{productText.mediaHint}</p>
-                <p>{productText.selectedFiles(totalImageCount, MAX_PRODUCT_FILES)}</p>
+                <p>{productText.selectedFiles(totalImageCount, UPLOAD_LIMIT_LABEL)}</p>
                 {previews.length > 0 && (
                   <div className="supplier-product-preview-grid">
                     {previews.map((preview, index) => (
@@ -527,11 +538,11 @@ export default function AjouterProduit() {
               <span>{productText.price}</span>
               <div>
                 <input
-                  type="number"
-                  min="0"
+                  type="text"
                   value={productForm.price}
-                  onChange={(event) => updateProductForm('price', event.target.value)}
+                  onChange={(event) => updateProductForm('price', sanitizeNumericInput(event.target.value))}
                   placeholder="0"
+                  inputMode="numeric"
                   required
                 />
                 <b>FCFA</b>

@@ -7,7 +7,7 @@ import TaxonomyModal from './taxonomyModal';
 const tabs = [
   { key: 'categories', productField: 'category', label: 'Catégories', addLabel: 'Ajouter une catégorie', placeholder: 'Ex: Mobilier' },
   { key: 'rooms', productField: 'room', label: 'Pièces', addLabel: 'Ajouter une pièce', placeholder: 'Ex: Salon' },
-  { key: 'ranges', productField: 'range', label: 'Gammes', addLabel: 'Ajouter une gamme', placeholder: 'Ex: Premium' },
+  { key: 'ranges', productField: 'range', label: 'Gammes', addLabel: 'Ajouter une gamme', placeholder: 'Ex: Haut de gamme' },
   { key: 'availability', productField: 'availability', label: 'Disponibilités', addLabel: 'Ajouter une disponibilité', placeholder: 'Ex: Disponible' },
   { key: 'cities', productField: 'city', label: 'Villes', addLabel: 'Ajouter une ville', placeholder: 'Ex: Cotonou' },
   { key: 'neighborhoods', productField: 'neighborhood', label: 'Quartiers', addLabel: 'Ajouter un quartier', placeholder: 'Ex: Fidjrossè' },

@@ -2,6 +2,7 @@ import express from 'express';
 import { protect, requireAdmin } from '../middleware/auth.js';
 import requireDb from '../middleware/requireDb.js';
 import Product from '../models/Product.js';
+import Project from '../models/Project.js';
 import Simulation from '../models/Simulation.js';
 import Supplier from '../models/Supplier.js';
 import SupplierRequest from '../models/SupplierRequest.js';
@@ -46,12 +47,12 @@ function formatAdminUser(user, supplier = null) {
     phone: user.phone || formattedSupplier?.phone || '',
     role,
     type,
+    category: user.category || type,
     supplier: formattedSupplier,
     shopName: formattedSupplier?.companyName || formattedSupplier?.name || '',
     simulations: hasUsageStats ? user.simulations || 0 : '-',
     inscription: new Intl.DateTimeFormat('fr-FR').format(user.createdAt || new Date()),
     status: user.status || 'Actif',
-    subscription: hasUsageStats ? user.subscription || 'Essai' : '-',
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
@@ -62,6 +63,42 @@ function formatDocument(document) {
   return {
     ...plain,
     id: plain._id,
+  };
+}
+
+function parseProjectBudget(description = '') {
+  const budgetMatch = String(description || '').match(/Estimation budget\s*:\s*(.+)/i);
+  if (!budgetMatch) return 0;
+
+  const amount = Number(String(budgetMatch[1]).replace(/[^\d.-]/g, ''));
+  return Number.isFinite(amount) ? amount : 0;
+}
+
+function formatProjectAsSimulation(project) {
+  const plain = project.toObject ? project.toObject() : project;
+  const user = plain.user && typeof plain.user === 'object' ? plain.user : null;
+  const totalAmount = parseProjectBudget(plain.description);
+
+  return {
+    id: `project-${String(plain._id)}`,
+    projectId: String(plain._id),
+    user: user?.name || plain.clientName || user?.email || 'Utilisateur ArchiPrice',
+    email: user?.email || 'Compte user',
+    avatar: String(user?.name || user?.email || 'AP').slice(0, 2).toUpperCase(),
+    date: new Intl.DateTimeFormat('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(plain.updatedAt || plain.createdAt || new Date()),
+    total: `${new Intl.NumberFormat('fr-FR').format(totalAmount)} FCFA`,
+    products: 0,
+    status: plain.status === 'archived' ? 'Succès' : 'En cours',
+    city: plain.name || '-',
+    coefficient: '1,00',
+    items: [],
+    source: 'project',
   };
 }
 
@@ -89,6 +126,7 @@ function formatAdminSupplier(supplier, productCount) {
     region: plain.region || '',
     status: plain.status || 'Actif',
     products: productCount ?? plain.products ?? 0,
+    isRecommended: Boolean(plain.isRecommended),
   };
 }
 
@@ -141,8 +179,8 @@ router.post('/users', async (req, res) => {
     phone,
     role: requestedRole,
     type,
+    category,
     status = 'Actif',
-    subscription = 'Essai',
   } = req.body;
 
   if (!name?.trim() || !email?.trim()) {
@@ -159,7 +197,8 @@ router.post('/users', async (req, res) => {
 
   try {
     const role = requestedRole ? normalizeRole(requestedRole) : roleFromType(type);
-    const normalizedType = type || typeFromRole(role);
+    const normalizedCategory = String(category || type || typeFromRole(role)).trim();
+    const normalizedType = type || normalizedCategory || typeFromRole(role);
     const user = await User.create({
       name: name.trim(),
       email: email.trim(),
@@ -167,8 +206,8 @@ router.post('/users', async (req, res) => {
       password: `Archiprice-${Date.now()}`,
       role,
       type: normalizedType,
+      category: normalizedCategory,
       status,
-      subscription: role === 'user' ? subscription : '-',
     });
     await ensureSupplierProfile(user);
 
@@ -206,7 +245,6 @@ router.put('/users/:id/role', async (req, res) => {
       {
         role,
         type: typeFromRole(role),
-        ...(role === 'user' ? {} : { subscription: '-' }),
       },
       { new: true, runValidators: true }
     ).select('-password');
@@ -224,16 +262,17 @@ router.put('/users/:id/role', async (req, res) => {
 
 router.patch('/users/:id', async (req, res) => {
   const patch = {};
-  ['name', 'email', 'phone', 'type', 'status', 'subscription', 'simulations'].forEach((field) => {
+  ['name', 'email', 'phone', 'type', 'category', 'status', 'simulations'].forEach((field) => {
     if (req.body[field] !== undefined) patch[field] = req.body[field];
   });
+
+  if (patch.category && !patch.type) patch.type = patch.category;
 
   if (patch.type) {
     if (patch.type === 'Fournisseur') {
       return res.status(400).json({ error: 'Le rôle supplier nécessite une demande fournisseur validée' });
     }
     patch.role = roleFromType(patch.type);
-    if (patch.role !== 'user') patch.subscription = '-';
   }
 
   if (req.body.role !== undefined) {
@@ -243,7 +282,6 @@ router.patch('/users/:id', async (req, res) => {
     }
     patch.role = requestedRole;
     patch.type = patch.type || typeFromRole(requestedRole);
-    if (patch.role !== 'user') patch.subscription = '-';
   }
 
   try {
@@ -295,8 +333,8 @@ router.post('/supplier-requests/:id/approve', async (req, res) => {
 
   user.role = 'supplier';
   user.type = 'Fournisseur';
+  user.category = user.category || supplierRequest.categories?.[0] || 'Fournisseur';
   user.status = 'Actif';
-  user.subscription = '-';
   await user.save();
 
   let supplier = await Supplier.findOne({
@@ -380,7 +418,9 @@ router.post('/supplier-requests/:id/reject', async (req, res) => {
 });
 
 router.get('/suppliers', async (_req, res) => {
-  const suppliers = await Supplier.find().populate('user', 'name email phone role status').sort({ name: 1 });
+  const suppliers = await Supplier.find({ status: { $ne: 'Supprimé' } })
+    .populate('user', 'name email phone role status')
+    .sort({ name: 1 });
   const productCounts = await Product.aggregate([
     { $match: { supplier: { $in: suppliers.map((supplier) => supplier._id) } } },
     { $group: { _id: '$supplier', count: { $sum: 1 } } },
@@ -437,8 +477,16 @@ router.delete('/suppliers/:id', async (req, res) => {
 });
 
 router.get('/simulations', async (_req, res) => {
-  const simulations = await Simulation.find().sort({ createdAt: -1 });
-  res.json({ simulations: simulations.map(formatDocument) });
+  const [simulations, projects] = await Promise.all([
+    Simulation.find().sort({ createdAt: -1 }),
+    Project.find().populate('user', 'name email').sort({ updatedAt: -1 }),
+  ]);
+  res.json({
+    simulations: [
+      ...simulations.map(formatDocument),
+      ...projects.map(formatProjectAsSimulation),
+    ],
+  });
 });
 
 router.post('/simulations', async (req, res) => {
@@ -458,7 +506,10 @@ router.patch('/simulations/:id', async (req, res) => {
 });
 
 router.get('/support-items', async (_req, res) => {
-  const supportItems = await SupportItem.find().sort({ createdAt: -1 });
+  const supportItems = await SupportItem.find({
+    userId: { $exists: true, $ne: null },
+    sourceRole: { $in: ['user', 'supplier'] },
+  }).sort({ createdAt: -1 });
   res.json({ supportItems: supportItems.map(formatDocument) });
 });
 

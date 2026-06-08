@@ -71,6 +71,10 @@ const supplierSchema = new mongoose.Schema(
       min: 0,
       default: 0,
     },
+    isRecommended: {
+      type: Boolean,
+      default: false,
+    },
     approvedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

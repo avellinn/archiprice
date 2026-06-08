@@ -1,5 +1,6 @@
 import './taxonomyModal.css';
-import { Icon } from '../../../components/ui';
+import { useState } from 'react';
+import { Alert, Icon } from '../../../components/ui';
 
 export default function TaxonomyModal({
   activeTab,
@@ -9,12 +10,18 @@ export default function TaxonomyModal({
   onClose,
   onSubmit,
 }) {
+  const [actionMessage, setActionMessage] = useState('');
   const isEditing = Boolean(item);
   const title = isEditing ? `Modifier ${item.name}` : activeTab.addLabel;
 
+  function submitTaxonomy(event) {
+    setActionMessage(isEditing ? 'Modification du filtre en cours.' : 'Création du filtre en cours.');
+    onSubmit(event);
+  }
+
   return (
     <div className="taxonomy-modal-backdrop" role="presentation">
-      <form className="taxonomy-modal" role="dialog" aria-modal="true" aria-labelledby="taxonomy-modal-title" onSubmit={onSubmit}>
+      <form className="taxonomy-modal" role="dialog" aria-modal="true" aria-labelledby="taxonomy-modal-title" onSubmit={submitTaxonomy}>
         <header className="taxonomy-modal__header">
           <div className="taxonomy-modal__title">
             <Icon name="Tag" size="sm" />
@@ -62,6 +69,14 @@ export default function TaxonomyModal({
             </article>
           </div>
         </section>
+
+        {actionMessage && (
+          <section className="taxonomy-modal__card">
+            <Alert variant="success" onClose={() => setActionMessage('')}>
+              {actionMessage}
+            </Alert>
+          </section>
+        )}
 
         <footer className="taxonomy-modal__footer">
           <button type="button" onClick={onClose}>Annuler</button>

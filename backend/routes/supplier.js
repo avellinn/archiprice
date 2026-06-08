@@ -1,6 +1,6 @@
 import express from 'express';
 import { protect, requireSupplier } from '../middleware/auth.js';
-import { MAX_IMAGE_COUNT, handleMulterError, upload } from '../middleware/multerUpload.js';
+import { handleMulterError, upload } from '../middleware/multerUpload.js';
 import requireDb from '../middleware/requireDb.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import Product from '../models/Product.js';
@@ -44,6 +44,16 @@ function formatProduct(product) {
   };
 }
 
+function parsePrice(value) {
+  const normalized = String(value ?? '')
+    .replace(/\s/g, '')
+    .replace(',', '.')
+    .replace(/[^\d.-]/g, '');
+  const parsedValue = Number(normalized);
+
+  return Number.isFinite(parsedValue) ? parsedValue : Number.NaN;
+}
+
 async function findOrCreateSupplierProfile(user) {
   const email = String(user.email || '').toLowerCase().trim();
   let supplier = await Supplier.findOne({
@@ -79,7 +89,7 @@ async function findSupplierProducts(user, supplier) {
       { supplier: supplier._id },
       { supplierUser: user._id },
     ],
-  }).sort({ updatedAt: -1 });
+  }).sort({ updatedAt: -1 }).lean();
 }
 
 router.use(requireDb);
@@ -126,13 +136,13 @@ router.get('/products', asyncHandler(async (req, res) => {
 
 router.post(
   '/products',
-  upload.array('image', MAX_IMAGE_COUNT),
+  upload.array('image'),
   handleMulterError,
   asyncHandler(async (req, res) => {
     const supplier = await findOrCreateSupplierProfile(req.user);
     const files = req.files || [];
     const name = String(req.body.name || '').trim();
-    const unitPrice = Number(req.body.unitPrice || 0);
+    const unitPrice = parsePrice(req.body.unitPrice || 0);
 
     if (!name) {
       return res.status(400).json({ error: 'Nom du produit requis' });
@@ -189,7 +199,7 @@ router.post(
 
 router.put(
   '/products/:productId',
-  upload.array('image', MAX_IMAGE_COUNT),
+  upload.array('image'),
   handleMulterError,
   asyncHandler(async (req, res) => {
     const supplier = await findOrCreateSupplierProfile(req.user);
@@ -207,15 +217,11 @@ router.put(
 
     const files = req.files || [];
     const nextUnitPrice = req.body.unitPrice !== undefined
-      ? Number(req.body.unitPrice || 0)
+      ? parsePrice(req.body.unitPrice || 0)
       : product.unitPrice;
 
     if (Number.isNaN(nextUnitPrice) || nextUnitPrice < 0) {
       return res.status(400).json({ error: 'Prix unitaire invalide' });
-    }
-
-    if ((product.images || []).length + files.length > MAX_IMAGE_COUNT) {
-      return res.status(400).json({ error: `Maximum ${MAX_IMAGE_COUNT} images par article` });
     }
 
     const uploadedImages = files.length > 0
@@ -227,7 +233,7 @@ router.put(
         if (req.body[field] !== undefined) product[field] = req.body[field];
       });
       product.unitPrice = nextUnitPrice;
-      product.images = [...(product.images || []), ...uploadedImages].slice(0, MAX_IMAGE_COUNT);
+      product.images = [...(product.images || []), ...uploadedImages];
 
       if (!String(product.name || '').trim()) {
         return res.status(400).json({ error: 'Nom du produit requis' });
@@ -334,7 +340,10 @@ router.get('/workspace', asyncHandler(async (req, res) => {
     user: {
       id: req.user._id,
       name: req.user.name,
+      firstName: req.user.firstName || '',
+      lastName: req.user.lastName || '',
       email: req.user.email,
+      phone: req.user.phone || '',
       role: req.user.role,
     },
     supplier: formatSupplier(supplier),

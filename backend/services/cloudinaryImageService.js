@@ -2,6 +2,7 @@ import { Readable } from 'node:stream';
 import { assertCloudinaryConfig, cloudinary } from '../config/cloudinary.js';
 
 const CLOUDINARY_PRODUCT_FOLDER = 'archiprice/products';
+const CLOUDINARY_UPLOAD_CONCURRENCY = 3;
 
 function buildOptimizedUrl(publicId) {
   return cloudinary.url(publicId, {
@@ -64,9 +65,20 @@ async function uploadProductImages(files = [], options = {}) {
   const uploaded = [];
 
   try {
-    for (const file of files) {
-      const result = await uploadBufferToCloudinary(file, options);
-      uploaded.push({ result, file });
+    for (let index = 0; index < files.length; index += CLOUDINARY_UPLOAD_CONCURRENCY) {
+      const chunk = files.slice(index, index + CLOUDINARY_UPLOAD_CONCURRENCY);
+      const results = await Promise.allSettled(chunk.map((file) => uploadBufferToCloudinary(file, options)));
+      const rejectedResult = results.find((result) => result.status === 'rejected');
+
+      results.forEach((result, resultIndex) => {
+        if (result.status === 'fulfilled') {
+          uploaded.push({ result: result.value, file: chunk[resultIndex] });
+        }
+      });
+
+      if (rejectedResult) {
+        throw rejectedResult.reason;
+      }
     }
 
     return uploaded.map(({ result, file }) => toImageDocument(result, file));

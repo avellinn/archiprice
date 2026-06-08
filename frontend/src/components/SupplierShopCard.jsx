@@ -2,7 +2,7 @@ import { Button, Icon } from './ui';
 import './SupplierShopCard.css';
 
 function getShortShopName(shopName) {
-  return String(shopName || 'archiprice').slice(0, 12).toLowerCase();
+  return String(shopName || 'boutique').slice(0, 12).toLowerCase();
 }
 
 function getProductImage(product) {
@@ -25,7 +25,7 @@ function handleCardKeyDown(event, callback) {
 }
 
 export default function SupplierShopCard({
-  shopName = 'ArchiPrice Store',
+  shopName = '',
   heroTitle,
   backgroundImage = '',
   products = [],
@@ -34,7 +34,7 @@ export default function SupplierShopCard({
   onDeleteProduct,
 }) {
   const shortName = getShortShopName(shopName);
-  const displayHeroTitle = heroTitle || `Découvrez les nouveautés ${shopName}`;
+  const displayHeroTitle = heroTitle || (shopName ? `Découvrez les nouveautés ${shopName}` : 'Découvrez les nouveautés');
   const shopStyle = backgroundImage
     ? { '--supplier-shop-hero-background': `linear-gradient(rgba(17, 24, 39, 0.12), rgba(17, 24, 39, 0.24)), url("${backgroundImage}")` }
     : undefined;

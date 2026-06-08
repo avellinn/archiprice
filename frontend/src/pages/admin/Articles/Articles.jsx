@@ -2,9 +2,10 @@ import './Articles.css';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Alert, Button, Icon, Table } from '../../../components/ui';
-import { MAX_FILES_PER_UPLOAD, MAX_PRODUCT_IMAGE_SIZE } from '../../../constants/uploads';
+import { MAX_PRODUCT_IMAGE_SIZE, UPLOAD_LIMIT_LABEL } from '../../../constants/uploads';
 import { createAdminId, useAdminData } from '../../../services/adminData';
 import { deleteCatalogueImage, uploadCatalogueImages } from '../../../services/catalogueImages';
+import { isNumericOnly } from '../../../utils/formInput';
 import { Badge } from '../PageShell';
 import Addproduct from './Addproduct';
 
@@ -26,7 +27,6 @@ const EMPTY_PRODUCT_FORM = {
   neighborhood: '',
 };
 const CUSTOM_NEIGHBORHOOD_VALUE = '__custom_neighborhood__';
-const MAX_PRODUCT_IMAGE_COUNT = MAX_FILES_PER_UPLOAD;
 
 const INITIAL_FILTER_VALUES = {
   category: 'Toutes',
@@ -86,7 +86,7 @@ function getProductImages(product) {
     ? product.images.filter(Boolean)
     : [product.image].filter(Boolean);
 
-  return images.slice(0, MAX_PRODUCT_IMAGE_COUNT);
+  return images;
 }
 
 function getImageUrl(image) {
@@ -190,27 +190,20 @@ export default function Articles() {
     setIsImageUploading(true);
     setImageUploadError('');
     const currentImages = getProductImages(productForm);
-    const availableSlots = Math.max(MAX_PRODUCT_IMAGE_COUNT - currentImages.length, 0);
-    const acceptedFiles = files
-      .filter((file) => file.type.startsWith('image/') && file.size <= MAX_PRODUCT_IMAGE_SIZE)
-      .slice(0, availableSlots);
-
-    if (files.length > availableSlots) {
-      setImageUploadError(`Maximum ${MAX_PRODUCT_IMAGE_COUNT} images par article. ${availableSlots} emplacement(s) disponible(s).`);
-    }
+    const acceptedFiles = files.filter((file) => (
+      file.type.startsWith('image/') && file.size <= MAX_PRODUCT_IMAGE_SIZE
+    ));
 
     if (acceptedFiles.length === 0) {
       event.target.value = '';
-      setImageUploadError(availableSlots === 0
-        ? `Maximum ${MAX_PRODUCT_IMAGE_COUNT} images par article atteint.`
-        : 'Images refusées: utilisez PNG/JPG/WebP de moins de 5 Mo.');
+      setImageUploadError('Images refusées: utilisez PNG/JPG/WebP de moins de 5 Mo.');
       setIsImageUploading(false);
       return;
     }
 
     try {
       const uploadedImages = await uploadCatalogueImages(acceptedFiles);
-      const nextImages = [...currentImages, ...uploadedImages].slice(0, MAX_PRODUCT_IMAGE_COUNT);
+      const nextImages = [...currentImages, ...uploadedImages];
 
       setProductForm((currentForm) => ({
         ...currentForm,
@@ -262,6 +255,11 @@ export default function Articles() {
       || productImages.length === 0
     ) {
       setImageUploadError('Renseignez tous les champs requis et ajoutez au moins une image.');
+      return;
+    }
+
+    if (isNumericOnly(productForm.name) || isNumericOnly(productForm.description)) {
+      setImageUploadError("Le nom et la description de l'article doivent contenir du texte.");
       return;
     }
 
@@ -487,12 +485,7 @@ export default function Articles() {
         <div className="admin-products-toolbar">
           
 
-          <Button type="button" variant="outline" size="sm" icon={<Icon name="Upload" size="sm" />}>
-            Importer CSV
-          </Button>
-          <Button type="button" variant="outline" size="sm" icon={<Icon name="Download" size="sm" />}>
-            Exporter CSV
-          </Button>
+          
           <Button
             type="button"
             variant="outline"
@@ -597,7 +590,7 @@ export default function Articles() {
           cityOptions={cityOptions}
           neighborhoodOptions={neighborhoodOptions}
           customNeighborhoodValue={CUSTOM_NEIGHBORHOOD_VALUE}
-          maxImageCount={MAX_PRODUCT_IMAGE_COUNT}
+          maxImageCount={UPLOAD_LIMIT_LABEL}
           isImageUploading={isImageUploading}
           imageUploadError={imageUploadError}
           onClose={() => setIsProductModalOpen(false)}

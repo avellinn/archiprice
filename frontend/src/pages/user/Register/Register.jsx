@@ -27,8 +27,10 @@ export default function Register() {
       await registerUser({
         ...data,
         name: data.name,
+        category: data.category,
         accountType,
         companyName: accountType === 'supplier' ? data.companyName : undefined,
+        categories: accountType === 'supplier' ? [data.category] : undefined,
       });
       navigate(accountType === 'supplier' ? '/supplier/pending' : '/dashboard', { replace: true });
     } catch (err) {
@@ -65,6 +67,19 @@ export default function Register() {
             />
           </label>
           {errors.email && <small className="register-field-error">{errors.email.message}</small>}
+
+          <label className="register-field" htmlFor="register-category">
+            <span>Catégorie</span>
+            <input
+              id="register-category"
+              type="text"
+              autoComplete="organization-title"
+              placeholder="Profession, secteur d'activité ou statut"
+              aria-invalid={Boolean(errors.category)}
+              {...register('category', { required: 'Catégorie requise' })}
+            />
+          </label>
+          {errors.category && <small className="register-field-error">{errors.category.message}</small>}
 
           <label className="register-field" htmlFor="register-password">
             <span>Mot de passe</span>

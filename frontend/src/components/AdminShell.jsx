@@ -124,14 +124,11 @@ export default function AdminShell() {
     unseenRecentUsers.filter((item) => !dismissedNotificationKeys.includes(`user-${item.id}`))
   ), [dismissedNotificationKeys, unseenRecentUsers]);
   const allFeedbackNotifications = useMemo(() => {
-    const byId = new Map();
-    [...(adminData?.supportItems || []), ...recentFeedbacks].forEach((item) => {
-      if (item?.id && item.tab === 'feedback') byId.set(item.id, item);
-    });
-    return [...byId.values()]
+    return recentFeedbacks
+      .filter((item) => item?.id && item.tab === 'feedback')
       .sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0))
       .slice(0, 8);
-  }, [adminData?.supportItems, recentFeedbacks]);
+  }, [recentFeedbacks]);
   const visibleFeedbacks = useMemo(() => (
     allFeedbackNotifications.filter((item) => !dismissedNotificationKeys.includes(`feedback-${item.id}`))
   ), [allFeedbackNotifications, dismissedNotificationKeys]);

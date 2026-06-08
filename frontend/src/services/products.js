@@ -1,5 +1,6 @@
 import { API_ROUTES } from '../constants/api';
 import api from './api';
+import { getCurrentStorageScope, getScopedStorageKey } from './scopedStorage';
 
 const LOCAL_PROJECT_PRODUCTS_KEY = 'archiprice_local_project_products';
 
@@ -11,7 +12,11 @@ function readLocalProjectProducts() {
   if (!canUseBrowserStorage()) return {};
 
   try {
-    const products = JSON.parse(window.localStorage.getItem(LOCAL_PROJECT_PRODUCTS_KEY) || '{}');
+    const storageScope = getCurrentStorageScope();
+    const storageKey = storageScope === 'anonymous'
+      ? LOCAL_PROJECT_PRODUCTS_KEY
+      : getScopedStorageKey(LOCAL_PROJECT_PRODUCTS_KEY);
+    const products = JSON.parse(window.localStorage.getItem(storageKey) || '{}');
     return products && typeof products === 'object' ? products : {};
   } catch {
     return {};
@@ -22,9 +27,9 @@ function writeLocalProjectProducts(productsByProject) {
   if (!canUseBrowserStorage()) return;
 
   try {
-    window.localStorage.setItem(LOCAL_PROJECT_PRODUCTS_KEY, JSON.stringify(productsByProject));
+    window.localStorage.setItem(getScopedStorageKey(LOCAL_PROJECT_PRODUCTS_KEY), JSON.stringify(productsByProject));
   } catch {
-    window.localStorage.removeItem(LOCAL_PROJECT_PRODUCTS_KEY);
+    window.localStorage.removeItem(getScopedStorageKey(LOCAL_PROJECT_PRODUCTS_KEY));
   }
 }
 
