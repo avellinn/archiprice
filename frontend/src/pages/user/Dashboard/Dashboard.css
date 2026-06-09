@@ -182,6 +182,7 @@
 
 .line-chart {
   position: relative;
+  display: grid;
   min-height: 0;
 }
 
@@ -195,11 +196,28 @@
   fill: url(#activityFill);
 }
 
+.chart-fill--user {
+  fill: url(#activityUserFill);
+}
+
+.chart-fill--supplier {
+  fill: url(#activitySupplierFill);
+}
+
 .chart-line {
   fill: none;
   stroke: #ff943b;
   stroke-width: 8;
   stroke-linecap: round;
+}
+
+.chart-line--user {
+  stroke: #ff943b;
+}
+
+.chart-line--supplier {
+  stroke: #5877f7;
+  stroke-width: 6;
 }
 
 .line-chart circle {
@@ -208,11 +226,20 @@
   stroke-width: 3;
 }
 
+.line-chart .chart-point--supplier {
+  stroke: #5877f7;
+}
+
 .chart-axis {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
-  color: #8c98a8;
+  gap: 0.15rem;
+}
+
+.chart-axis span {
+  color: #2a2c2e96;
   font-size: 0.72rem;
+  font-weight: 800;
   text-align: center;
 }
 
@@ -251,7 +278,7 @@
 }
 
 .legend-orange {
-  background: #0dd825;
+  background: #FF943B;
 }
 
 .legend-dark {
@@ -265,18 +292,39 @@
 .history-list {
   display: flex;
   flex-direction: column;
+  max-height: 242px;
   margin: 0;
   padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   list-style: none;
+  scrollbar-width: thin;
 }
 
 .history-list li {
+  border-bottom: 1px solid rgb(226 232 240 / 0.7);
+}
+
+.history-list button {
   display: flex;
   align-items: center;
   gap: 1rem;
+  width: 100%;
   min-height: 58px;
   padding: 0.65rem 0;
-  border-bottom: 1px solid rgb(226 232 240 / 0.7);
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.history-list button:hover,
+.history-list button:focus-visible {
+  background: rgb(255 255 255 / 0.58);
+  outline: 0;
 }
 
 .history-list li:last-child {
@@ -319,6 +367,7 @@
 .history-list strong,
 .history-list span {
   display: block;
+  
 }
 
 .history-list strong {
@@ -333,7 +382,7 @@
 .history-list div span {
   color: var(--app-muted-color);
   font-size: 0.74rem;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .history-empty {
@@ -380,31 +429,31 @@
 
 @media (max-width: 980px) {
   .dashboard-content:has(.dashboard-page) {
-    height: auto;
+    height: 100vh;
     min-height: 100vh;
-    overflow: auto;
+    overflow: hidden;
   }
 
   .dashboard-page {
-    height: auto;
+    height: calc(100vh - 64px);
     min-height: calc(100vh - 64px);
-    overflow: visible;
+    overflow: hidden;
   }
 
   .dashboard-grid {
-      height: auto;
+      height: 100%;
       grid-template-rows: auto;
       padding: 1.5rem;
-      overflow: visible;
+      overflow: hidden;
     }
   
   .dashboard-new-project {
-      position: sticky;
-      right: auto;
+      position: absolute;
+      right: 1.5rem;
       bottom: 1rem;
       display: flex;
       justify-content: flex-end;
-      padding: 0 1.5rem 1rem;
+      padding: 0;
     }
 }
 

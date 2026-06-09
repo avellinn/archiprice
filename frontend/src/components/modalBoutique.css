@@ -8,6 +8,17 @@
   background: rgb(15 23 42 / 0.46);
 }
 
+.modal-boutique__detail-backdrop {
+  z-index: 2100;
+  background: rgb(15 23 42 / 0.46);
+}
+
+.modal-boutique__detail-backdrop .fournisseur-modal {
+  max-height: calc(100vh - 2rem);
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+}
+
 .modal-boutique {
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);

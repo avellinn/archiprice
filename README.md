@@ -205,7 +205,7 @@ Les routes supplier sont protégées par JWT et `requireSupplier`.
 | `PUT` | `/api/supplier/products/:productId` | Modifie un produit du fournisseur courant |
 | `DELETE` | `/api/supplier/products/:productId` | Supprime un produit du fournisseur courant et ses images Cloudinary |
 
-`POST` et `PUT /api/supplier/products` utilisent `multipart/form-data`, champ fichier `image` répété jusqu'à 12 fois. Les images sont streamées vers Cloudinary, dossier `archiprice/products`.
+`POST` et `PUT /api/supplier/products` utilisent `multipart/form-data`, champ fichier `image` répété selon les fichiers sélectionnés. Les images sont streamées vers Cloudinary, dossier `archiprice/products`.
 
 ## Routes Frontend
 
@@ -220,7 +220,11 @@ Routes utilisateur :
 - `/dashboard`
 - `/catalogue`
 - `/workspace`
-- `/factures`
+- `/demande`
+- `/archives`
+- `/factures` → redirige vers `/archives`
+- `/support`
+- `/parametres`
 - `/deconnexion`
 
 Routes admin :
@@ -242,7 +246,9 @@ Routes supplier :
 - `/supplier/products` : produits
 - `/supplier/products/new` : ajouter un produit et uploader des images
 - `/supplier/clients`
+- `/supplier/demande`
 - `/supplier/content/files`
+- `/supplier/support`
 - `/supplier/settings`
 
 La route supplier catalogue a été supprimée. Les produits et catalogues fournisseur passent par `/supplier/products`, `/supplier/products/new`, `/supplier/shop` et `/supplier/content/files`.
@@ -275,7 +281,16 @@ Les layouts restent spécifiques :
 - `AdminShell.jsx` pour les administrateurs.
 - `SupplierShell.jsx` pour les fournisseurs validés.
 
-Les messages applicatifs ne doivent pas utiliser `window.alert`, `window.confirm` ou `window.prompt` dans les workflows admin. Utiliser `Alert.jsx` ou une modale React.
+Les messages applicatifs ne doivent pas utiliser `window.alert`, `window.confirm` ou `window.prompt` dans les workflows métier. Utiliser `Alert.jsx` ou une modale React.
+
+Règles actuelles :
+
+- `Alert.jsx` se ferme automatiquement après 4 secondes quand `onClose` est fourni.
+- Les actions de boutons dans les modales doivent afficher un retour `Alert` : créer, sauvegarder, envoyer, supprimer, valider, refuser, bloquer.
+- Les pages `Support` user/supplier affichent les feedbacks personnels via `/api/support-items/me`; l'admin répond via `/api/admin/support-items`.
+- Les pages `Demande` user et `Demandesup` supplier regroupent les conversations par boutique ou client/projet.
+- `/api/admin/simulations` expose les simulations et les projets Workspace afin que l'admin voie les projets créés par les users.
+- Les uploads admin/supplier ne doivent pas imposer de limite arbitraire côté interface ; la validation serveur reste obligatoire.
 
 ```bash
 curl -X POST http://localhost:5000/api/auth/register \

@@ -41,6 +41,75 @@ function normalizeSupplierForWorkspace(supplier) {
   };
 }
 
+function buildSupplierUser(supplier) {
+  const normalizedSupplier = normalizeSupplierForWorkspace(supplier);
+
+  return {
+    id: normalizedSupplier.userId || `supplier-${normalizedSupplier.id}`,
+    supplierId: normalizedSupplier.id,
+    name: normalizedSupplier.companyName,
+    email: normalizedSupplier.email || normalizedSupplier.contact || '',
+    phone: normalizedSupplier.phone || '',
+    role: 'supplier',
+    type: 'Fournisseur',
+    status: normalizedSupplier.status || 'Actif',
+    simulations: 0,
+  };
+}
+
+function syncSupplierUsers(currentUsers = [], suppliers = []) {
+  const activeSuppliers = suppliers.filter((supplier) => supplier.status !== 'Supprimé');
+  const nextUsers = currentUsers
+    .filter((user) => {
+      if (user.role !== 'supplier' && user.type !== 'Fournisseur') return true;
+      return activeSuppliers.some((supplier) => (
+        String(user.supplierId || '') === String(supplier.id || supplier._id)
+        || String(user.id || '') === String(supplier.userId || '')
+        || (
+          String(user.email || '').toLowerCase()
+          && String(user.email || '').toLowerCase() === String(supplier.email || supplier.contact || '').toLowerCase()
+        )
+      ));
+    })
+    .map((user) => {
+      const supplier = activeSuppliers.find((item) => (
+        String(user.supplierId || '') === String(item.id || item._id)
+        || String(user.id || '') === String(item.userId || '')
+        || (
+          String(user.email || '').toLowerCase()
+          && String(user.email || '').toLowerCase() === String(item.email || item.contact || '').toLowerCase()
+        )
+      ));
+
+      return supplier ? { ...user, ...buildSupplierUser(supplier), id: user.id } : user;
+    });
+
+  activeSuppliers.forEach((supplier) => {
+    const supplierUser = buildSupplierUser(supplier);
+    const exists = nextUsers.some((user) => (
+      String(user.supplierId || '') === String(supplierUser.supplierId)
+      || String(user.id || '') === String(supplierUser.id)
+      || (
+        String(user.email || '').toLowerCase()
+        && String(user.email || '').toLowerCase() === String(supplierUser.email || '').toLowerCase()
+      )
+    ));
+
+    if (!exists) nextUsers.push(supplierUser);
+  });
+
+  return nextUsers;
+}
+
+function getSyncedSupplierData(currentData, suppliers) {
+  const normalizedSuppliers = suppliers.map(normalizeSupplierForWorkspace);
+
+  return {
+    suppliers: normalizedSuppliers,
+    users: syncSupplierUsers(currentData.users || [], normalizedSuppliers),
+  };
+}
+
 export default function Fournisseurs() {
   const [searchParams] = useSearchParams();
   const [, updateAdminData] = useAdminData();
@@ -68,7 +137,7 @@ export default function Fournisseurs() {
           setSuppliers(activeSuppliers);
           updateAdminData((currentData) => ({
             ...currentData,
-            suppliers: activeSuppliers.map(normalizeSupplierForWorkspace),
+            ...getSyncedSupplierData(currentData, activeSuppliers),
           }));
           setError('');
         }
@@ -78,7 +147,7 @@ export default function Fournisseurs() {
           setSuppliers([]);
           updateAdminData((currentData) => ({
             ...currentData,
-            suppliers: [],
+            ...getSyncedSupplierData(currentData, []),
           }));
           setError(getApiErrorMessage(apiError, 'Impossible de charger les fournisseurs Mongo.'));
         }
@@ -129,7 +198,7 @@ export default function Fournisseurs() {
           ));
           updateAdminData((currentData) => ({
             ...currentData,
-            suppliers: nextSuppliers.map(normalizeSupplierForWorkspace),
+            ...getSyncedSupplierData(currentData, nextSuppliers),
           }));
           return nextSuppliers;
         });
@@ -139,7 +208,7 @@ export default function Fournisseurs() {
           const nextSuppliers = [createdSupplier, ...currentSuppliers];
           updateAdminData((currentData) => ({
             ...currentData,
-            suppliers: nextSuppliers.map(normalizeSupplierForWorkspace),
+            ...getSyncedSupplierData(currentData, nextSuppliers),
           }));
           return nextSuppliers;
         });
@@ -185,7 +254,7 @@ export default function Fournisseurs() {
     if (selectedSupplierId === supplierId) setSelectedSupplierId('');
     updateAdminData((currentData) => ({
       ...currentData,
-      suppliers: nextSuppliers.map(normalizeSupplierForWorkspace),
+      ...getSyncedSupplierData(currentData, nextSuppliers),
     }));
 
     try {
@@ -194,7 +263,7 @@ export default function Fournisseurs() {
       setSuppliers(previousSuppliers);
       updateAdminData((currentData) => ({
         ...currentData,
-        suppliers: previousSuppliers.map(normalizeSupplierForWorkspace),
+        ...getSyncedSupplierData(currentData, previousSuppliers),
       }));
       setError(getApiErrorMessage(apiError, 'La suppression du fournisseur a échoué.'));
     }

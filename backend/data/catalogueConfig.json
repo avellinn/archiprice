@@ -1,9 +1,10 @@
 {
-  "__version": 686,
-  "__updatedAt": 1780944777329,
+  "__version": 793,
+  "__updatedAt": 1781015088605,
   "users": [
     {
       "id": "6a2671be3e7aaea935dd1117",
+      "supplierId": "",
       "name": "Super Admin",
       "email": "admin@archiprice.com",
       "phone": "",
@@ -13,62 +14,104 @@
       "inscription": "08/06/2026",
       "status": "Actif",
       "createdAt": "2026-06-08T07:39:42.774Z",
-      "updatedAt": "2026-06-08T18:09:31.133Z"
+      "updatedAt": "2026-06-09T09:20:35.504Z"
     },
     {
-      "id": "6a26777b461186376f847de7",
-      "name": "lookooo",
-      "email": "lookin@gmail.com",
-      "phone": "1212122221200",
+      "id": "6a27ef905eb0f34f3d488904",
+      "supplierId": "6a218aac3836162a85468e69",
+      "name": "Avelin",
+      "email": "avellinadjai@gmail.com",
+      "phone": "010101123",
       "role": "supplier",
       "type": "Fournisseur",
       "simulations": "-",
-      "inscription": "08/06/2026",
-      "status": "Bloqué",
-      "createdAt": "2026-06-08T08:04:11.026Z",
-      "updatedAt": "2026-06-08T15:32:46.790Z"
-    },
-    {
-      "id": "6a2692cd461186376f847dfd",
-      "name": "led@gmail.com",
-      "email": "led@gmail.com",
-      "phone": "",
-      "role": "user",
-      "type": "Architecte",
-      "simulations": 0,
-      "inscription": "08/06/2026",
+      "inscription": "09/06/2026",
       "status": "Actif",
-      "createdAt": "2026-06-08T10:00:45.650Z",
-      "updatedAt": "2026-06-08T10:00:45.650Z"
+      "createdAt": "2026-06-09T10:48:48.564Z",
+      "updatedAt": "2026-06-09T10:52:31.638Z"
     },
     {
-      "id": "6a269365461186376f847dfe",
-      "name": "mooo",
-      "email": "moo@gmail.com",
-      "phone": "64554545",
+      "id": "supplier-6a2810e25eb0f34f3d48890d",
+      "supplierId": "6a2810e25eb0f34f3d48890d",
+      "name": "n xjc",
+      "email": "lernjc@gmail.com",
+      "phone": "kjnibrf",
       "role": "supplier",
       "type": "Fournisseur",
-      "simulations": "-",
-      "inscription": "08/06/2026",
-      "status": "Actif",
-      "createdAt": "2026-06-08T10:03:17.718Z",
-      "updatedAt": "2026-06-08T14:46:03.623Z"
-    },
-    {
-      "id": "6a26ee8ed7b80b61a598f1db",
-      "name": "lon",
-      "email": "loni@gmail.com",
-      "phone": "",
-      "role": "user",
-      "type": "BTP",
       "simulations": 0,
-      "inscription": "08/06/2026",
+      "inscription": "",
       "status": "Actif",
-      "createdAt": "2026-06-08T16:32:14.657Z",
-      "updatedAt": "2026-06-08T16:34:03.609Z"
+      "createdAt": "2026-06-09T13:10:58.899Z",
+      "updatedAt": "2026-06-09T13:10:58.899Z"
     }
   ],
   "products": [
+    {
+      "id": "supplier-product-6a28095a5eb0f34f3d48890b",
+      "sourceSupplierProductId": "6a28095a5eb0f34f3d48890b",
+      "supplierUserId": "6a27ef905eb0f34f3d488904",
+      "name": "huddd",
+      "description": "huhbucj",
+      "price": 4521545,
+      "image": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/yffpiwmcbkzbsplb2nsy?_a=BAMAPqhK0",
+      "images": [
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/yffpiwmcbkzbsplb2nsy?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/yffpiwmcbkzbsplb2nsy",
+          "metadata": {
+            "originalName": "pexels-mateusz-dach-450035 (1).jpg",
+            "mimeType": "image/jpeg",
+            "bytes": 1600979,
+            "width": 4608,
+            "height": 3072,
+            "format": "jpg",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        },
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/ybjt45bbb2uloqd6mdjz?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/ybjt45bbb2uloqd6mdjz",
+          "metadata": {
+            "originalName": "pexels-photo-1379640.jpeg",
+            "mimeType": "image/jpeg",
+            "bytes": 97336,
+            "width": 1125,
+            "height": 750,
+            "format": "jpg",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        },
+        {
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/q1blth4yxn9nfnecqo99?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/q1blth4yxn9nfnecqo99",
+          "metadata": {
+            "originalName": "pexels-pok-rie-1603821.jpg",
+            "mimeType": "image/jpeg",
+            "bytes": 2746439,
+            "width": 3616,
+            "height": 2598,
+            "format": "jpg",
+            "provider": "cloudinary",
+            "folder": "archiprice/products"
+          }
+        }
+      ],
+      "category": "bhdhf",
+      "room": "Jardin",
+      "range": "Milieu de gamme",
+      "supplier": "Avelin",
+      "vat": "20%",
+      "visual": "sofa",
+      "city": "Porto-Novo",
+      "neighborhood": "Cadjehoun",
+      "availability": "Sur commande",
+      "publicationStatus": "Validé",
+      "publicationSource": "supplier",
+      "submittedAt": "2026-06-09T12:38:51.574Z",
+      "approvedAt": "2026-06-09T12:39:20.460Z"
+    },
     {
       "id": "supplier-product-6a26e5ae40275a84679b1b9e",
       "sourceSupplierProductId": "6a26e5ae40275a84679b1b9e",
@@ -93,7 +136,7 @@
           }
         }
       ],
-      "category": "Mooon",
+      "category": "Mobilier",
       "room": "Salon",
       "range": "Confort",
       "supplier": "mooo",
@@ -101,7 +144,7 @@
       "visual": "sofa",
       "city": "Cotonou",
       "neighborhood": "Cadjehoun",
-      "availability": "Disponible",
+      "availability": "Non Disponible",
       "publicationStatus": "Validé",
       "publicationSource": "supplier",
       "submittedAt": "2026-06-08T15:54:23.312Z",
@@ -159,7 +202,7 @@
           }
         }
       ],
-      "category": "Mooon",
+      "category": "Mobilier",
       "room": "Salon",
       "range": "Confort",
       "supplier": "lookooo",
@@ -167,7 +210,7 @@
       "visual": "sofa",
       "city": "Cotonou",
       "neighborhood": "Cadjehoun",
-      "availability": "Disponible",
+      "availability": "Non Disponible",
       "publicationStatus": "Validé",
       "publicationSource": "supplier",
       "submittedAt": "2026-06-08T08:27:49.791Z",
@@ -225,7 +268,7 @@
           }
         }
       ],
-      "category": "Mooon",
+      "category": "Mobilier",
       "room": "Salon",
       "range": "Confort",
       "supplier": "lookooo",
@@ -233,7 +276,7 @@
       "visual": "sofa",
       "city": "Cotonou",
       "neighborhood": "Cadjehoun",
-      "availability": "Disponible",
+      "availability": "Non Disponible",
       "publicationStatus": "Validé",
       "publicationSource": "supplier",
       "submittedAt": "2026-06-08T08:24:05.101Z",
@@ -291,7 +334,7 @@
           }
         }
       ],
-      "category": "Mooon",
+      "category": "Mobilier",
       "room": "Salon",
       "range": "Confort",
       "supplier": "lookooo",
@@ -299,7 +342,7 @@
       "visual": "sofa",
       "city": "Cotonou",
       "neighborhood": "Cadjehoun",
-      "availability": "Disponible",
+      "availability": "Non Disponible",
       "publicationStatus": "Validé",
       "publicationSource": "supplier",
       "submittedAt": "2026-06-08T08:23:07.676Z",
@@ -357,7 +400,7 @@
           }
         }
       ],
-      "category": "Mooon",
+      "category": "Mobilier",
       "room": "Salon",
       "range": "Confort",
       "supplier": "Cloock",
@@ -365,7 +408,7 @@
       "visual": "sofa",
       "city": "Cotonou",
       "neighborhood": "Cadjehoun",
-      "availability": "Disponible",
+      "availability": "Non Disponible",
       "publicationStatus": "Validé",
       "publicationSource": "supplier",
       "submittedAt": "2026-06-05T15:58:39.794Z",
@@ -395,7 +438,7 @@
           }
         }
       ],
-      "category": "Mooon",
+      "category": "Mobilier",
       "room": "Salon",
       "range": "Confort",
       "supplier": "Cloock",
@@ -403,7 +446,7 @@
       "visual": "sofa",
       "city": "Cotonou",
       "neighborhood": "Cadjehoun",
-      "availability": "Disponible",
+      "availability": "Non Disponible",
       "publicationStatus": "Validé",
       "publicationSource": "supplier",
       "submittedAt": "2026-06-05T15:56:34.722Z",
@@ -412,49 +455,234 @@
   ],
   "suppliers": [
     {
-      "id": "6a26e18740275a84679b1b9a",
-      "userId": "",
-      "name": "Hospice",
-      "companyName": "Hospice",
-      "contact": "hospiceavell@gmail.com",
-      "email": "hospiceavell@gmail.com",
-      "phone": "465455",
-      "region": "521000",
+      "logo": {
+        "metadata": {
+          "provider": "cloudinary"
+        }
+      },
+      "_id": "6a218aac3836162a85468e69",
+      "user": {
+        "_id": "6a27ef905eb0f34f3d488904",
+        "name": "Avellin",
+        "email": "avellinadjai@gmail.com",
+        "phone": "010101123",
+        "role": "supplier",
+        "status": "Actif"
+      },
+      "name": "Avelin",
+      "companyName": "Avelin",
+      "email": "avellinadjai@gmail.com",
+      "contact": "010101123",
+      "categories": [
+        "Architecte",
+        "Architecte"
+      ],
+      "region": "Cotonou",
       "status": "Actif",
-      "products": 0,
-      "categories": [],
-      "isRecommended": true
+      "products": 1,
+      "approvedBy": "6a2671be3e7aaea935dd1117",
+      "approvedAt": "2026-06-09T10:48:58.089Z",
+      "createdAt": "2026-06-04T14:24:44.547Z",
+      "updatedAt": "2026-06-09T12:38:51.366Z",
+      "__v": 1,
+      "isRecommended": true,
+      "phone": "010101123",
+      "id": "6a218aac3836162a85468e69",
+      "userId": "6a27ef905eb0f34f3d488904"
     },
     {
-      "id": "6a2693dd461186376f847e00",
-      "userId": "6a269365461186376f847dfe",
-      "name": "mooo",
-      "companyName": "mooo",
-      "contact": "moo@gmail.com",
-      "email": "moo@gmail.com",
-      "phone": "64554545",
-      "region": "Bénin",
-      "status": "Actif",
-      "products": 4,
+      "logo": {
+        "metadata": {
+          "provider": "cloudinary"
+        }
+      },
+      "_id": "6a2810e25eb0f34f3d48890d",
+      "name": "n xjc",
+      "companyName": "n xjc",
+      "email": "lernjc@gmail.com",
+      "contact": "lernjc@gmail.com",
+      "phone": "kjnibrf",
       "categories": [],
-      "isRecommended": true
-    },
-    {
-      "id": "6a26e1b140275a84679b1b9b",
-      "userId": "",
-      "name": "zed",
-      "companyName": "zed",
-      "contact": "ded@gmail.com",
-      "email": "ded@gmail.com",
-      "phone": "4587962",
-      "region": "littoral",
+      "region": "kjbrf",
       "status": "Actif",
       "products": 0,
-      "categories": [],
-      "isRecommended": true
+      "isRecommended": false,
+      "createdAt": "2026-06-09T13:10:58.899Z",
+      "updatedAt": "2026-06-09T13:10:58.899Z",
+      "__v": 0,
+      "id": "6a2810e25eb0f34f3d48890d",
+      "userId": ""
     }
   ],
   "supplierClientNotifications": [
+    {
+      "id": "supplier-client-6a2693dd461186376f847e00-6a2692cd461186376f847dfd-1781002016084",
+      "supplierId": "6a2693dd461186376f847e00",
+      "supplierName": "mooo",
+      "supplierContact": "64554545",
+      "clientId": "6a2692cd461186376f847dfd",
+      "clientName": "led@gmail.com",
+      "clientProfession": "Architecte",
+      "clientEmail": "led@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a27eeb25eb0f34f3d4888ff",
+      "projectName": "jis",
+      "simulationTotal": 377809209,
+      "simulationTotalLabel": "377 809 209 FCFA",
+      "articleCount": 4,
+      "categories": [
+        "Mobilier"
+      ],
+      "articleImages": [
+        {
+          "name": "dd",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/j7bwygatmozt6tyqbm9e?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/j7bwygatmozt6tyqbm9e"
+        },
+        {
+          "name": "koudous",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/exoslmcik9tx0gvfu3bs?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/exoslmcik9tx0gvfu3bs"
+        },
+        {
+          "name": "koudous",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gwdpem6vlq6la38i65ui?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/gwdpem6vlq6la38i65ui"
+        },
+        {
+          "name": "koudous",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/l5ku9jsla4rp208j8tzj?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/l5ku9jsla4rp208j8tzj"
+        },
+        {
+          "name": "jiiinooin",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/xmoetgnub08euxasunsd?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/xmoetgnub08euxasunsd"
+        },
+        {
+          "name": "jiiinooin",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/rhc9he6lcpa2rv0u7eiq?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/rhc9he6lcpa2rv0u7eiq"
+        },
+        {
+          "name": "jiiinooin",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/q3jeyv6ejucqjypvcx0o?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/q3jeyv6ejucqjypvcx0o"
+        },
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kq3zs0rd9weeocq4jijd?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/kq3zs0rd9weeocq4jijd"
+        },
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gjibmanscvtzo2y5wjvk?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/gjibmanscvtzo2y5wjvk"
+        },
+        {
+          "name": "juste",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/coltwyeeqdcj5fxbrl6u?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/coltwyeeqdcj5fxbrl6u"
+        }
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a27eed65eb0f34f3d488900",
+          "name": "dd",
+          "category": "Mobilier",
+          "unitPrice": 57703555,
+          "images": [
+            {
+              "name": "dd",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/j7bwygatmozt6tyqbm9e?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/j7bwygatmozt6tyqbm9e"
+            }
+          ]
+        },
+        {
+          "id": "6a27eed65eb0f34f3d488901",
+          "name": "koudous",
+          "category": "Mobilier",
+          "unitPrice": 255200000,
+          "images": [
+            {
+              "name": "koudous",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/exoslmcik9tx0gvfu3bs?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/exoslmcik9tx0gvfu3bs"
+            },
+            {
+              "name": "koudous",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gwdpem6vlq6la38i65ui?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/gwdpem6vlq6la38i65ui"
+            },
+            {
+              "name": "koudous",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/l5ku9jsla4rp208j8tzj?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/l5ku9jsla4rp208j8tzj"
+            }
+          ]
+        },
+        {
+          "id": "6a27eed75eb0f34f3d488902",
+          "name": "jiiinooin",
+          "category": "Mobilier",
+          "unitPrice": 57999942,
+          "images": [
+            {
+              "name": "jiiinooin",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/xmoetgnub08euxasunsd?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/xmoetgnub08euxasunsd"
+            },
+            {
+              "name": "jiiinooin",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/rhc9he6lcpa2rv0u7eiq?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/rhc9he6lcpa2rv0u7eiq"
+            },
+            {
+              "name": "jiiinooin",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/q3jeyv6ejucqjypvcx0o?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/q3jeyv6ejucqjypvcx0o"
+            }
+          ]
+        },
+        {
+          "id": "6a27eed75eb0f34f3d488903",
+          "name": "juste",
+          "category": "Mobilier",
+          "unitPrice": 6905712,
+          "images": [
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/kq3zs0rd9weeocq4jijd?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/kq3zs0rd9weeocq4jijd"
+            },
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/gjibmanscvtzo2y5wjvk?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/gjibmanscvtzo2y5wjvk"
+            },
+            {
+              "name": "juste",
+              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/coltwyeeqdcj5fxbrl6u?_a=BAMAPqhK0",
+              "public_id": "archiprice/products/coltwyeeqdcj5fxbrl6u"
+            }
+          ]
+        }
+      ],
+      "type": "Demande",
+      "message": "bonjour",
+      "messages": [
+        {
+          "id": "message-1781002016084",
+          "senderRole": "user",
+          "senderName": "led@gmail.com",
+          "message": "bonjour",
+          "createdAt": "2026-06-09T10:46:56.084Z"
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-09T10:46:56.084Z"
+    },
     {
       "id": "supplier-client-6a2693dd461186376f847e00-6a26ee8ed7b80b61a598f1db-1780944241118",
       "supplierId": "6a2693dd461186376f847e00",
@@ -2226,12 +2454,72 @@
   "taxonomies": {
     "categories": [
       {
+        "id": "categories-1781000534625-271b3c",
+        "name": "Extérieur",
+        "count": 0
+      },
+      {
+        "id": "categories-1781000518411-db0d25",
+        "name": "Accessoires",
+        "count": 0
+      },
+      {
+        "id": "categories-1781000505258-d70ecf",
+        "name": "Murale",
+        "count": 0
+      },
+      {
+        "id": "categories-1781000488066-15df23",
+        "name": "Revêtements",
+        "count": 0
+      },
+      {
+        "id": "categories-1781000475702-243e0e",
+        "name": "Textiles",
+        "count": 0
+      },
+      {
+        "id": "categories-1781000467139-c0cca9",
+        "name": "Luminaires",
+        "count": 0
+      },
+      {
         "id": "categories-1780602005940-598e2a",
-        "name": "Mooon",
+        "name": "Mobilier",
         "count": 0
       }
     ],
     "rooms": [
+      {
+        "id": "rooms-1781000678986-82f48f",
+        "name": "Cuisine",
+        "count": 0
+      },
+      {
+        "id": "rooms-1781000661884-ec3807",
+        "name": "Jardin",
+        "count": 0
+      },
+      {
+        "id": "rooms-1781000643886-29ee12",
+        "name": "Balcon",
+        "count": 0
+      },
+      {
+        "id": "rooms-1781000624915-eaf1ee",
+        "name": "Terrasse",
+        "count": 0
+      },
+      {
+        "id": "rooms-1781000600735-18a7d0",
+        "name": "Bureau",
+        "count": 0
+      },
+      {
+        "id": "rooms-1781000568936-72ea4e",
+        "name": "Chambre",
+        "count": 0
+      },
       {
         "id": "rooms-1780602021414-042007",
         "name": "Salon",
@@ -2240,6 +2528,26 @@
     ],
     "ranges": [
       {
+        "id": "ranges-1781000823594-1d2e24",
+        "name": "Milieu de gamme",
+        "count": 0
+      },
+      {
+        "id": "ranges-1781000799678-359146",
+        "name": "Luxe",
+        "count": 0
+      },
+      {
+        "id": "ranges-1781000783144-1e25a2",
+        "name": "Haut de gamme",
+        "count": 0
+      },
+      {
+        "id": "ranges-1781000739601-33152c",
+        "name": "Essentielle",
+        "count": 0
+      },
+      {
         "id": "ranges-1780602047935-4b3f0b",
         "name": "Confort",
         "count": 0
@@ -2247,12 +2555,32 @@
     ],
     "availability": [
       {
-        "id": "availability-1780602062307-fd9c7c",
+        "id": "availability-1781000879143-f3916b",
         "name": "Disponible",
+        "count": 0
+      },
+      {
+        "id": "availability-1781000852560-871cc3",
+        "name": "Sur commande",
+        "count": 0
+      },
+      {
+        "id": "availability-1780602062307-fd9c7c",
+        "name": "Non Disponible",
         "count": 0
       }
     ],
     "cities": [
+      {
+        "id": "cities-1781000985680-eefe78",
+        "name": "Porto-Novo",
+        "count": 0
+      },
+      {
+        "id": "cities-1781000976377-f98b18",
+        "name": "Abomey-calavi",
+        "count": 0
+      },
       {
         "id": "cities-1780602072187-aee632",
         "name": "Cotonou",
@@ -2260,6 +2588,76 @@
       }
     ],
     "neighborhoods": [
+      {
+        "id": "neighborhoods-1781001396599-1b3e3f",
+        "name": "Ouando",
+        "count": 0
+      },
+      {
+        "id": "neighborhoods-1781001332422-c46d80",
+        "name": "Glo-Djigbé",
+        "count": 0
+      },
+      {
+        "id": "neighborhoods-1781001294339-eb9454",
+        "name": "Zinvié",
+        "count": 0
+      },
+      {
+        "id": "neighborhoods-1781001268591-c02eda",
+        "name": "Ouèdo",
+        "count": 0
+      },
+      {
+        "id": "neighborhoods-1781001241309-d636d7",
+        "name": "Ouidah",
+        "count": 0
+      },
+      {
+        "id": "neighborhoods-1781001181212-44b65b",
+        "name": "Godomey",
+        "count": 0
+      },
+      {
+        "id": "neighborhoods-1781001165463-371984",
+        "name": "Zongo",
+        "count": 0
+      },
+      {
+        "id": "neighborhoods-1781001127523-cafa37",
+        "name": "Jéricho",
+        "count": 0
+      },
+      {
+        "id": "neighborhoods-1781001105442-895bf4",
+        "name": "Akassato",
+        "count": 0
+      },
+      {
+        "id": "neighborhoods-1781001091167-fc987b",
+        "name": "Akpakpa",
+        "count": 0
+      },
+      {
+        "id": "neighborhoods-1781001073933-0427b2",
+        "name": "Ganhi",
+        "count": 0
+      },
+      {
+        "id": "neighborhoods-1781001051394-7915f5",
+        "name": "Tôgbin",
+        "count": 0
+      },
+      {
+        "id": "neighborhoods-1781001037579-ed3897",
+        "name": "Fidjrossè",
+        "count": 0
+      },
+      {
+        "id": "neighborhoods-1781001017999-301409",
+        "name": "Saint-Michel",
+        "count": 0
+      },
       {
         "id": "neighborhoods-1780602081965-2ea085",
         "name": "Cadjehoun",

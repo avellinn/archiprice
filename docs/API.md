@@ -214,7 +214,7 @@ Un compte fournisseur n'a accès à ces routes qu'après validation admin.
 `POST` et `PUT /api/supplier/products` acceptent un `multipart/form-data` :
 
 - champs texte : `name`, `description`, `category`, `unit`, `unitPrice` ;
-- fichiers : champ `image`, jusqu'à 12 images ;
+- fichiers : champ `image` répété, sans limite arbitraire côté interface admin/supplier ;
 - formats : JPG, PNG, WebP ;
 - taille max : 5 Mo par image.
 

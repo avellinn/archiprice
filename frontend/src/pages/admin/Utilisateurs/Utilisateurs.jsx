@@ -1,13 +1,16 @@
 import './Utilisateurs.css';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Alert, Badge, Icon, Table } from '../../../components/ui';
+import { Alert, Badge, Button, Icon, Table } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
 import {
   createAdminUser,
   deleteAdminUser,
+  deleteAdminSupplier,
+  fetchAdminSuppliers,
   fetchAdminUsers,
+  updateAdminSupplier,
   updateAdminUser,
 } from '../../../services/adminMongo';
 import UtilisateurModal from './utilisateurModal';
@@ -43,6 +46,7 @@ function getSimulationCount(user) {
 function normalizeUserForWorkspace(user) {
   return {
     id: user.id,
+    supplierId: user.supplierId || user.supplier?.id || user.supplier?._id || '',
     name: user.name || user.email,
     email: user.email || '',
     phone: user.phone || '',
@@ -56,13 +60,73 @@ function normalizeUserForWorkspace(user) {
   };
 }
 
+function getSupplierName(supplier) {
+  return supplier?.companyName || supplier?.name || supplier?.email || 'Fournisseur';
+}
+
+function normalizeSupplierAsUser(supplier) {
+  const supplierId = supplier.id || supplier._id;
+
+  return {
+    id: supplier.userId || `supplier-${supplierId}`,
+    supplierId,
+    isSupplierMirror: true,
+    name: getSupplierName(supplier),
+    email: supplier.email || supplier.contact || '',
+    phone: supplier.phone || '',
+    role: 'supplier',
+    type: 'Fournisseur',
+    status: supplier.status || 'Actif',
+    simulations: supplier.simulations || 0,
+    inscription: supplier.inscription || '',
+    createdAt: supplier.createdAt,
+    updatedAt: supplier.updatedAt,
+  };
+}
+
+function mergeUsersWithSuppliers(users = [], suppliers = []) {
+  const mergedUsers = users.map((user) => ({
+    ...user,
+    supplierId: user.supplierId || user.supplier?.id || user.supplier?._id || '',
+  }));
+
+  suppliers
+    .filter((supplier) => supplier.status !== 'Supprimé')
+    .forEach((supplier) => {
+      const supplierId = supplier.id || supplier._id;
+      const supplierEmail = String(supplier.email || supplier.contact || '').toLowerCase();
+      const existingIndex = mergedUsers.findIndex((user) => (
+        String(user.supplierId || '') === String(supplierId)
+        || String(user.id || '') === String(supplier.userId || '')
+        || (supplierEmail && String(user.email || '').toLowerCase() === supplierEmail)
+      ));
+
+      if (existingIndex >= 0) {
+        mergedUsers[existingIndex] = {
+          ...mergedUsers[existingIndex],
+          supplierId,
+          role: 'supplier',
+          type: 'Fournisseur',
+          status: supplier.status || mergedUsers[existingIndex].status || 'Actif',
+          shopName: getSupplierName(supplier),
+        };
+        return;
+      }
+
+      mergedUsers.push(normalizeSupplierAsUser(supplier));
+    });
+
+  return mergedUsers;
+}
+
 export default function Utilisateurs() {
   const [searchParams] = useSearchParams();
   const [, updateAdminData] = useAdminData();
-  const [users, setUsers] = useState([]);
+  const [rawUsers, setRawUsers] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [searchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter] = useState('Tous');
   const [roleFilter, setRoleFilter] = useState('Tous');
   const [selectedUserId, setSelectedUserId] = useState('');
@@ -78,13 +142,17 @@ export default function Utilisateurs() {
   useEffect(() => {
     let cancelled = false;
 
-    fetchAdminUsers()
-      .then((list) => {
+    Promise.all([fetchAdminUsers(), fetchAdminSuppliers()])
+      .then(([userList, supplierList]) => {
         if (!cancelled) {
-          setUsers(list);
+          const activeSuppliers = supplierList.filter((supplier) => supplier.status !== 'Supprimé');
+          const mergedUsers = mergeUsersWithSuppliers(userList, activeSuppliers);
+          setRawUsers(userList);
+          setSuppliers(activeSuppliers);
           updateAdminData((currentData) => ({
             ...currentData,
-            users: list.map(normalizeUserForWorkspace),
+            users: mergedUsers.map(normalizeUserForWorkspace),
+            suppliers: activeSuppliers,
           }));
           setError('');
         }
@@ -101,6 +169,7 @@ export default function Utilisateurs() {
     };
   }, [updateAdminData]);
 
+  const users = useMemo(() => mergeUsersWithSuppliers(rawUsers, suppliers), [rawUsers, suppliers]);
   const userRoles = useMemo(() => (
     ['Tous', ...new Set(users.map((user) => getUserRole(user)))]
   ), [users]);
@@ -134,37 +203,98 @@ export default function Utilisateurs() {
     name: editForm.name || 'Nouvel utilisateur',
     email: editForm.email,
     phone: editForm.phone,
-        role: editForm.role || 'user',
-        type: ROLE_LABELS[editForm.role] || 'Utilisateur',
-        status: editForm.status || 'Actif',
+    role: editForm.role || 'user',
+    type: ROLE_LABELS[editForm.role] || 'Utilisateur',
+    status: editForm.status || 'Actif',
   } : selectedUser;
 
   async function updateUser(userId, patch) {
     const previousUsers = users;
+    const previousRawUsers = rawUsers;
+    const previousSuppliers = suppliers;
+    const currentUser = users.find((user) => user.id === userId);
     const optimisticUsers = users.map((user) => (
       user.id === userId ? { ...user, ...patch } : user
     ));
-    setUsers(optimisticUsers);
+    const optimisticRawUsers = rawUsers.map((user) => (
+      user.id === userId ? { ...user, ...patch } : user
+    ));
+    const optimisticSuppliers = currentUser?.supplierId
+      ? suppliers.map((supplier) => (
+        String(supplier.id || supplier._id) === String(currentUser.supplierId)
+          ? {
+            ...supplier,
+            name: patch.name ?? supplier.name,
+            companyName: patch.name ?? supplier.companyName,
+            email: patch.email ?? supplier.email,
+            contact: patch.email ?? supplier.contact,
+            phone: patch.phone ?? supplier.phone,
+            status: patch.status ?? supplier.status,
+          }
+          : supplier
+      ))
+      : suppliers;
+    setRawUsers(optimisticRawUsers);
+    setSuppliers(optimisticSuppliers);
     updateAdminData((currentData) => ({
       ...currentData,
       users: optimisticUsers.map(normalizeUserForWorkspace),
+      suppliers: optimisticSuppliers,
     }));
 
     try {
+      if (currentUser?.isSupplierMirror && currentUser?.supplierId) {
+        const supplier = await updateAdminSupplier(currentUser.supplierId, {
+          name: patch.name ?? currentUser.name,
+          companyName: patch.name ?? currentUser.name,
+          email: patch.email ?? currentUser.email,
+          contact: patch.email ?? currentUser.email,
+          phone: patch.phone ?? currentUser.phone,
+          status: patch.status ?? currentUser.status,
+        });
+        setSuppliers((currentSuppliers) => {
+          const nextSuppliers = currentSuppliers.map((item) => (
+            String(item.id || item._id) === String(supplier.id || supplier._id) ? supplier : item
+          ));
+          const nextUsers = mergeUsersWithSuppliers(rawUsers, nextSuppliers);
+          updateAdminData((currentData) => ({
+            ...currentData,
+            users: nextUsers.map(normalizeUserForWorkspace),
+            suppliers: nextSuppliers,
+          }));
+          return nextSuppliers;
+        });
+        return;
+      }
+
       const user = await updateAdminUser(userId, patch);
-      setUsers((currentUsers) => {
-        const nextUsers = currentUsers.map((item) => (item.id === user.id ? user : item));
+      setRawUsers((currentUsers) => {
+        const nextRawUsers = currentUsers.map((item) => (item.id === user.id ? user : item));
+        const nextUsers = mergeUsersWithSuppliers(nextRawUsers, optimisticSuppliers);
         updateAdminData((currentData) => ({
           ...currentData,
           users: nextUsers.map(normalizeUserForWorkspace),
+          suppliers: optimisticSuppliers,
         }));
-        return nextUsers;
+        return nextRawUsers;
       });
+      if (currentUser?.supplierId) {
+        await updateAdminSupplier(currentUser.supplierId, {
+          name: patch.name ?? currentUser.name,
+          companyName: patch.name ?? currentUser.name,
+          email: patch.email ?? currentUser.email,
+          contact: patch.email ?? currentUser.email,
+          phone: patch.phone ?? currentUser.phone,
+          status: patch.status ?? currentUser.status,
+        });
+      }
     } catch (apiError) {
-      setUsers(previousUsers);
+      setRawUsers(previousRawUsers);
+      setSuppliers(previousSuppliers);
       updateAdminData((currentData) => ({
         ...currentData,
         users: previousUsers.map(normalizeUserForWorkspace),
+        suppliers: previousSuppliers,
       }));
       setError(getApiErrorMessage(apiError, "La modification de l'utilisateur a échoué."));
     }
@@ -180,13 +310,14 @@ export default function Utilisateurs() {
         type: editForm.role === 'admin' ? 'Admin' : 'Architecte',
         status: editForm.status,
       });
-      setUsers((currentUsers) => {
-        const nextUsers = [user, ...currentUsers];
+      setRawUsers((currentUsers) => {
+        const nextRawUsers = [user, ...currentUsers];
+        const nextUsers = mergeUsersWithSuppliers(nextRawUsers, suppliers);
         updateAdminData((currentData) => ({
           ...currentData,
           users: nextUsers.map(normalizeUserForWorkspace),
         }));
-        return nextUsers;
+        return nextRawUsers;
       });
       setError('');
       closeUserDetail();
@@ -197,21 +328,36 @@ export default function Utilisateurs() {
 
   async function deleteUser(userId) {
     const previousUsers = users;
-    const nextUsers = users.filter((user) => user.id !== userId);
-    setUsers(nextUsers);
+    const previousRawUsers = rawUsers;
+    const previousSuppliers = suppliers;
+    const currentUser = users.find((user) => user.id === userId);
+    const nextRawUsers = rawUsers.filter((user) => user.id !== userId);
+    const nextSuppliers = currentUser?.isSupplierMirror
+      ? suppliers.filter((supplier) => String(supplier.id || supplier._id) !== String(currentUser.supplierId))
+      : suppliers;
+    const nextUsers = mergeUsersWithSuppliers(nextRawUsers, nextSuppliers);
+    setRawUsers(nextRawUsers);
+    setSuppliers(nextSuppliers);
     if (selectedUserId === userId) closeUserDetail();
     updateAdminData((currentData) => ({
       ...currentData,
       users: nextUsers.map(normalizeUserForWorkspace),
+      suppliers: nextSuppliers,
     }));
 
     try {
-      await deleteAdminUser(userId);
+      if (currentUser?.isSupplierMirror && currentUser?.supplierId) {
+        await deleteAdminSupplier(currentUser.supplierId);
+      } else {
+        await deleteAdminUser(userId);
+      }
     } catch (apiError) {
-      setUsers(previousUsers);
+      setRawUsers(previousRawUsers);
+      setSuppliers(previousSuppliers);
       updateAdminData((currentData) => ({
         ...currentData,
         users: previousUsers.map(normalizeUserForWorkspace),
+        suppliers: previousSuppliers,
       }));
       setError(getApiErrorMessage(apiError, "La suppression de l'utilisateur a échoué."));
     }
@@ -262,6 +408,11 @@ export default function Utilisateurs() {
       ...currentForm,
       [field]: value,
     }));
+  }
+
+  function resetHeaderFilters() {
+    setSearchTerm('');
+    setRoleFilter('Tous');
   }
 
   async function submitUserDetail(event) {
@@ -405,8 +556,15 @@ export default function Utilisateurs() {
   return (
     <div className="admin-users-management">
       <header className="admin-users-management__header">
-       
-
+        <label className="admin-users-management__search" aria-label="Rechercher un utilisateur">
+          <input
+            type="search"
+            value={searchTerm}
+            placeholder="Rechercher un utilisateur"
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
+          <Icon name="Search" size="sm" />
+        </label>
 
         <label className="admin-users-management__filter">
           <span>Rôle :</span>
@@ -419,10 +577,13 @@ export default function Utilisateurs() {
           </select>
         </label>
 
-        <button type="button" className="admin-users-management__add" onClick={openCreateUser}>
-          <Icon name="Add" size="sm" />
-          Ajouter
-        </button>
+        <Button type="button" variant="outline" onClick={resetHeaderFilters}>
+          Réinitialiser
+        </Button>
+
+        <Button type="button" icon={<Icon name="Add" size="sm" />} className="admin-products-add" onClick={openCreateUser}>
+          Ajouter un utilisateur
+        </Button>
       </header>
 
       {error && (

@@ -1,16 +1,20 @@
 /* Page styles migrated from App.css */
 .admin-users-management {
-  min-height: 100%;
-  padding: 1.55rem 1.65rem 2rem;
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-height: calc(100vh - 64px);
+  padding: 1.55rem 1.55rem 5.5rem;
   background: var(--dashboard-page-background);
+  overflow-x: hidden;
 }
 
 .admin-users-management__header {
   display: grid;
-  grid-template-columns: minmax(140px, auto) minmax(280px, 360px) minmax(160px, 190px) auto 1fr;
+  grid-template-columns: minmax(280px, 520px) minmax(160px, 190px) auto;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.35rem;
+  gap: 1.6rem;
+  margin-bottom: 1.45rem;
 }
 
 .admin-users-management__header h1 {
@@ -32,11 +36,15 @@
 }
 
 .admin-users-management__search {
+  position: relative;
   gap: 0.55rem;
-  padding: 0 0.85rem;
+  width: 100%;
+  max-width: 520px;
 }
 
 .admin-users-management__search svg {
+  position: absolute;
+  right: 0.75rem;
   color: #98a2b3;
 }
 
@@ -50,6 +58,12 @@
   font-size: 0.86rem;
   font-weight: 800;
   outline: 0;
+}
+
+.admin-users-management__search input {
+  height: 44px;
+  padding-right: 2.3rem;
+  padding-left: 1rem;
 }
 
 .admin-users-management__search input::placeholder {
@@ -73,27 +87,26 @@
   cursor: pointer;
 }
 
-.admin-users-management__add {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  min-height: 42px;
-  padding: 0 0.9rem;
-  border: 0;
-  border-radius: 7px;
-  background: #224b73;
-  color: #ffffff;
-  font: inherit;
-  font-size: 0.84rem;
-  font-weight: 900;
-  cursor: pointer;
-  box-shadow: 0 10px 22px rgb(29 115 248 / 0.2);
-  transition: all 0.3s ease;
+.admin-users-management__header .admin-products-add,
+.admin-users-management__header .admin-products-add.btn {
+  position: absolute;
+  right: 1.55rem;
+  bottom: 1.55rem;
+  left: auto;
+  border-color: #224b73 !important;
+  background: #224b73 !important;
+  background-color: #224b73 !important;
+  color: #fff !important;
 }
 
-.admin-users-management__add:hover {
-  background: #69d890;
+.admin-users-management__header .admin-products-add:hover,
+.admin-users-management__header .admin-products-add:focus-visible,
+.admin-users-management__header .admin-products-add.btn:hover,
+.admin-users-management__header .admin-products-add.btn:focus-visible {
+  border-color: #1a3a59 !important;
+  background: #1a3a59 !important;
+  background-color: #1a3a59 !important;
+  color: #fff !important;
 }
 
 .admin-users-management__notice {
@@ -124,8 +137,27 @@
   width: 100%;
 }
 
+.admin-users-management__list .ui-table-wrap {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.admin-users-management__list .ui-data-table {
+  min-width: 980px;
+}
+
+.admin-users-management__list.ui-table-card--adaptive {
+  border: 1px solid #e5ebf3;
+  border-radius: 10px;
+  box-shadow: 0 16px 42px rgb(15 23 42 / 0.045);
+}
+
 .admin-users-management__table-wrap {
-  overflow-x: auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .admin-users-management__table {
@@ -192,7 +224,7 @@
   padding: 0;
   border: 1px solid var(--app-border-color);
   border-radius: 7px;
-  background: var(--app-card-background);
+  background: #224b73;
   color: var(--app-heading-color);
   cursor: pointer;
   transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
@@ -230,6 +262,10 @@
 .admin-users-management__actions .is-danger:hover {
   background: #fff1f2;
   color: #dc2626;
+}
+
+.admin-users-management__actions .is-link {
+  color: #405f8e;
 }
 
 .admin-users-management__requests {

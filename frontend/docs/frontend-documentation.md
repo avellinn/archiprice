@@ -160,7 +160,7 @@ Le workflow fournisseur :
 
 - route : `/supplier/products/new` ;
 - formulaire produit : titre, description, catégorie, prix, statut ;
-- upload multiple d'images via `multipart/form-data`, jusqu'à 12 fichiers ;
+- upload multiple d'images via `multipart/form-data`, sans limite arbitraire côté interface admin/supplier ;
 - aperçu local des images avant envoi ;
 - service utilisé : `src/services/supplier.js`.
 

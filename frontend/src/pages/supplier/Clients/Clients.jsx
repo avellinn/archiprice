@@ -200,9 +200,7 @@ export default function Clients() {
     <div className="supplier-clients-page">
       <div className="workspace-heading">
         <div>
-          <Text as="span" size="sm" variant="bold" className="workspace-eyebrow">
-            Relation commerciale
-          </Text>
+          
           <h1>Clients</h1>
         </div>
       </div>

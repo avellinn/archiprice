@@ -39,7 +39,8 @@
   font-weight: 700;
 }
 
-.register-field input {
+.register-field input,
+.register-field select {
   width: 100%;
   min-width: 0;
   height: 2.5rem;
@@ -52,7 +53,8 @@
   font-weight: 400;
 }
 
-.register-field input:focus {
+.register-field input:focus,
+.register-field select:focus {
   border-color: #0a66c2;
   box-shadow: 0 0 0 1px #0a66c2;
   outline: 0;

@@ -49,15 +49,12 @@ export default function TaxonomyModal({
                 onChange={(event) => onChange(event.target.value)}
               />
             </label>
-            <article>
-              <span>Type</span>
-              <strong>{activeTab.label}</strong>
-            </article>
+            
           </div>
         </section>
 
         <section className="taxonomy-modal__card">
-          <h3>Impact catalogue</h3>
+            
           <div className="taxonomy-modal__grid">
             <article>
               <span>Synchronisation</span>

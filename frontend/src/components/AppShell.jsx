@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Header from './Header';
 import Icon from './Icon';
+import Logo from './Logo';
 import Sidebar from './Sidebar';
 import useAuth from '../context/useAuth';
 import { syncAdminDataFromRemote, useAdminData } from '../services/adminData';
@@ -9,7 +10,6 @@ import { connectRealtime } from '../services/realtime';
 import { fetchMySupportItems } from '../services/support';
 import { getUserTranslations, normalizeUserLanguage } from '../utils/userLanguage';
 import { getAvatarColor, getDisplayName, getUserInitials } from '../utils/userDisplay';
-import siteLogo from '../assets/images/log.png';
 
 const USER_PROFILE_KEY = 'archiprice_user_profile_preferences';
 const USER_PROFILE_EVENT = 'archiprice:user-profile-change';
@@ -246,7 +246,7 @@ export default function AppShell() {
         .join(' ')}
     >
       <Sidebar
-        logo={<img src={siteLogo} alt="ArchiPrice" />}
+        logo={<Logo variant="sidebar" />}
         sections={sidebarSections}
         isOpen={!isSidebarCollapsed}
         onClose={() => setIsSidebarCollapsed(true)}

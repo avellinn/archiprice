@@ -12,7 +12,26 @@ function formatSupplierName(supplier) {
   return supplier.companyName || supplier.name || supplier.shopName || 'Boutique sans nom';
 }
 
+function formatSupplierCategories(supplier) {
+  const categories = supplier.categories;
 
+  if (Array.isArray(categories)) {
+    return categories.length ? categories.join(', ') : 'Non renseignées';
+  }
+
+  return categories || supplier.category || 'Non renseignées';
+}
+
+function isVisibleRecommendedShop(shop) {
+  const status = String(shop.status || 'Actif').trim().toLowerCase();
+  const hiddenStatuses = ['inactif', 'bloqué', 'bloque', 'supprimé', 'supprime'];
+
+  return (
+    shop.isRecommended
+    && !hiddenStatuses.includes(status)
+    && formatSupplierName(shop) !== 'Boutique sans nom'
+  );
+}
 
 export default function ModalBoutique({
   isOpen,
@@ -33,10 +52,7 @@ export default function ModalBoutique({
     onClose?.();
   }
 
-  const activeShops = shops
-    .filter((shop) => shop.isRecommended)
-    .filter((shop) => String(shop.status || 'Actif').toLowerCase() !== 'inactif')
-    .filter((shop) => formatSupplierName(shop) !== 'Boutique sans nom');
+  const activeShops = shops.filter(isVisibleRecommendedShop);
   const selectedShop = activeShops.find((shop) => formatSupplierName(shop) === selectedShopName) || activeShops[0];
   const visibleDetailShop = detailShop && activeShops.some((shop) => (
     (shop.id && shop.id === detailShop.id)
@@ -50,7 +66,7 @@ export default function ModalBoutique({
     const statusTone = shopStatus === 'Actif' ? 'success' : shopStatus === 'Bloqué' ? 'warning' : 'danger';
 
     return (
-      <div className="fournisseur-modal-backdrop" role="presentation">
+      <div className="fournisseur-modal-backdrop modal-boutique__detail-backdrop" role="presentation">
         <section className="fournisseur-modal" role="dialog" aria-modal="true" aria-labelledby="modal-boutique-detail-title">
           <header className="fournisseur-modal__header">
             <div className="fournisseur-modal__title">
@@ -85,25 +101,17 @@ export default function ModalBoutique({
                 <span>Zone</span>
                 <strong>{formatSupplierZone(visibleDetailShop)}</strong>
               </article>
-              
-             
               <article>
-                <span>Simulation achat</span>
-                <strong>{simulation?.totalLabel || '0 FCFA'}</strong>
-              </article>
-            </div>
-          </section>
-
-          <section className="fournisseur-modal__card">
-            <h3>Votre sélection</h3>
-            <div className="fournisseur-modal__grid">
-              <article>
-                <span>Articles</span>
-                <strong>{simulation?.count || 0}</strong>
+                <span>Contact</span>
+                <strong>{visibleDetailShop.contact || visibleDetailShop.email || 'Non renseigné'}</strong>
               </article>
               <article>
-                <span>Catégories projet</span>
-                <strong>{simulation?.categories?.length ? simulation.categories.join(', ') : 'Non renseigné'}</strong>
+                <span>Téléphone</span>
+                <strong>{visibleDetailShop.phone || 'Aucun téléphone'}</strong>
+              </article>
+              <article>
+                <span>Catégories</span>
+                <strong>{formatSupplierCategories(visibleDetailShop)}</strong>
               </article>
             </div>
           </section>

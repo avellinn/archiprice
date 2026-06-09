@@ -3,6 +3,7 @@ import api from './api';
 import { getCurrentStorageScope, getScopedStorageKey } from './scopedStorage';
 
 const LOCAL_PROJECTS_KEY = 'archiprice_local_projects';
+const PROJECTS_EVENT = 'archiprice:projects-change';
 
 function canUseBrowserStorage() {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
@@ -28,6 +29,7 @@ function writeLocalProjects(projects) {
 
   try {
     window.localStorage.setItem(getScopedStorageKey(LOCAL_PROJECTS_KEY), JSON.stringify(projects));
+    window.dispatchEvent(new CustomEvent(PROJECTS_EVENT, { detail: projects }));
   } catch {
     window.localStorage.removeItem(getScopedStorageKey(LOCAL_PROJECTS_KEY));
   }
@@ -66,6 +68,28 @@ export async function fetchProjects() {
   } catch {
     return readLocalProjects();
   }
+}
+
+export function subscribeProjectsChange(callback) {
+  if (typeof window === 'undefined') return () => {};
+
+  function handleChange(event) {
+    if (event.type === 'storage'
+      && event.key !== LOCAL_PROJECTS_KEY
+      && event.key !== getScopedStorageKey(LOCAL_PROJECTS_KEY)) return;
+
+    fetchProjects()
+      .then(callback)
+      .catch(() => callback([]));
+  }
+
+  window.addEventListener(PROJECTS_EVENT, handleChange);
+  window.addEventListener('storage', handleChange);
+
+  return () => {
+    window.removeEventListener(PROJECTS_EVENT, handleChange);
+    window.removeEventListener('storage', handleChange);
+  };
 }
 
 export async function createProject(payload) {

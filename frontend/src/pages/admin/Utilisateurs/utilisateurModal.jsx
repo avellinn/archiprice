@@ -141,22 +141,13 @@ export default function UtilisateurModal({
               <span>Rôle</span>
               <strong>{ROLE_LABELS[userRole] || userRole}</strong>
             </article>
-            <article>
-              <span>Type</span>
-              <strong>{user.type || ROLE_LABELS[userRole] || '-'}</strong>
-            </article>
-            <article>
-              <span>Simulations</span>
-              <strong>{userRole === 'admin' ? '-' : user.simulations || 0}</strong>
-            </article>
+            
+            
             <article>
               <span>Inscription</span>
               <strong>{user.inscription || 'Non renseignée'}</strong>
             </article>
-            <article>
-              <span>Impact du statut</span>
-              <strong>{userStatus === 'Bloqué' ? 'Accès interdit et données conservées' : userStatus === 'Inactif' ? 'Accès temporairement retiré' : 'Compte opérationnel'}</strong>
-            </article>
+            
           </div>
         </section>
 

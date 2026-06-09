@@ -6,6 +6,21 @@ import { Alert } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
 import { getApiErrorMessage } from '../../../services/api';
 
+const CATEGORY_OTHER_VALUE = '__other_category__';
+const ACTIVITY_SECTORS = [
+  'Architecture',
+  'Architecture d’intérieur',
+  'BTP / Construction',
+  'Décoration',
+  'Immobilier',
+  'Ingénierie',
+  'Maîtrise d’ouvrage',
+  'Menuiserie',
+  'Peinture',
+  'Plomberie',
+  'Électricité',
+];
+
 export default function Register() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -17,20 +32,24 @@ export default function Register() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm();
+  const selectedCategory = watch('category');
+  const isCustomCategory = selectedCategory === CATEGORY_OTHER_VALUE;
 
   const onSubmit = async (data) => {
     setApiError(null);
+    const category = isCustomCategory ? data.customCategory?.trim() : data.category;
 
     try {
       await registerUser({
         ...data,
         name: data.name,
-        category: data.category,
+        category,
         accountType,
         companyName: accountType === 'supplier' ? data.companyName : undefined,
-        categories: accountType === 'supplier' ? [data.category] : undefined,
+        categories: accountType === 'supplier' ? [category] : undefined,
       });
       navigate(accountType === 'supplier' ? '/supplier/pending' : '/dashboard', { replace: true });
     } catch (err) {
@@ -45,7 +64,7 @@ export default function Register() {
       <section className="register-card" aria-label="Formulaire d'inscription">
         <form className="register-form" onSubmit={handleSubmit(onSubmit)} noValidate>
           <label className="register-field" htmlFor="register-name">
-            <span>Nom complet</span>
+            <span>Nom du Gestionnaire</span>
             <input
               id="register-name"
               type="text"
@@ -70,16 +89,40 @@ export default function Register() {
 
           <label className="register-field" htmlFor="register-category">
             <span>Catégorie</span>
-            <input
+            <select
               id="register-category"
-              type="text"
-              autoComplete="organization-title"
-              placeholder="Profession, secteur d'activité ou statut"
               aria-invalid={Boolean(errors.category)}
               {...register('category', { required: 'Catégorie requise' })}
-            />
+            >
+              <option value="">Choisir un secteur d’activité</option>
+              {ACTIVITY_SECTORS.map((sector) => (
+                <option key={sector} value={sector}>{sector}</option>
+              ))}
+              <option value={CATEGORY_OTHER_VALUE}>Autres</option>
+            </select>
           </label>
           {errors.category && <small className="register-field-error">{errors.category.message}</small>}
+
+          {isCustomCategory && (
+            <>
+              <label className="register-field" htmlFor="register-custom-category">
+                <span>Catégorie personnalisée</span>
+                <input
+                  id="register-custom-category"
+                  type="text"
+                  autoComplete="organization-title"
+                  placeholder="Votre secteur d’activité"
+                  aria-invalid={Boolean(errors.customCategory)}
+                  {...register('customCategory', {
+                    validate: (value) => (
+                      !isCustomCategory || Boolean(value?.trim()) || 'Catégorie personnalisée requise'
+                    ),
+                  })}
+                />
+              </label>
+              {errors.customCategory && <small className="register-field-error">{errors.customCategory.message}</small>}
+            </>
+          )}
 
           <label className="register-field" htmlFor="register-password">
             <span>Mot de passe</span>

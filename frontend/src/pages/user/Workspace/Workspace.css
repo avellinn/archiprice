@@ -56,6 +56,8 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
+  overscroll-behavior: contain;
+  padding-right: 0.25rem;
 }
 
 .workspace-back-button {
@@ -85,6 +87,10 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
+  max-height: 100%;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  padding-right: 0.25rem;
 }
 
 .workspace-feature-card {
@@ -571,15 +577,15 @@
 
 @media (max-width: 980px) {
   .dashboard-content:has(.workspace-page) {
-    height: auto;
+    height: 100vh;
     min-height: 100vh;
-    overflow: auto;
+    overflow: hidden;
   }
 
   .workspace-page {
-    height: auto;
+    height: calc(100vh - 64px);
     min-height: calc(100vh - 64px);
-    overflow: visible;
+    overflow: hidden;
   }
 
   .workspace-card-grid {
@@ -587,9 +593,9 @@
   }
 
   .workspace-hub {
-      height: auto;
+      height: 100%;
       min-height: calc(100vh - 128px);
-      overflow: visible;
+      overflow: hidden;
     }
   
   .workspace-feature-card__body {

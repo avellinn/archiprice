@@ -5,7 +5,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import DonutChartCard from '../../../components/DonutChart';
 import { Button, Icon, Text } from '../../../components/ui';
 import { useAdminData } from '../../../services/adminData';
-import { fetchAdminSupportItems } from '../../../services/adminMongo';
+import { fetchAdminSimulations, fetchAdminSupportItems, fetchAdminUsers } from '../../../services/adminMongo';
+import {
+  fetchExportedDocuments,
+  subscribeExportedDocumentsChange,
+} from '../../../services/exportedDocuments';
 
 function formatDate(value) {
   if (!value) return 'Date non renseignée';
@@ -32,19 +36,39 @@ function getDonutDisplayValue(value, total) {
 
 function buildMonthActivity(items = []) {
   const monthFormatter = new Intl.DateTimeFormat('fr-FR', { month: 'short' });
-  const months = [...new Set(items
-    .map((item) => item.createdAt || item.updatedAt || item.date || item.submittedAt)
-    .map((value) => new Date(value))
-    .filter((date) => !Number.isNaN(date.getTime()))
-    .map((date) => monthFormatter.format(date).replace('.', '')))];
-
-  if (months.length > 0) return months.slice(-8).map((label) => ({ label }));
-
   return Array.from({ length: 8 }, (_, index) => {
     const date = new Date();
     date.setMonth(date.getMonth() - (7 - index));
-    return { label: monthFormatter.format(date).replace('.', '') };
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const monthItems = items.filter((item) => {
+      const itemDate = new Date(item.exportedAt || item.createdAt || item.updatedAt || item.date || item.submittedAt);
+      if (Number.isNaN(itemDate.getTime())) return false;
+      return itemDate.getFullYear() === date.getFullYear() && itemDate.getMonth() === date.getMonth();
+    });
+
+    return {
+      key: monthKey,
+      label: monthFormatter.format(date).replace('.', ''),
+      count: monthItems.length,
+    };
   });
+}
+
+function buildActivityPath(activity = []) {
+  const maxCount = Math.max(...activity.map((item) => item.count), 1);
+  const points = activity.map((item, index) => {
+    const x = 30 + ((364 / Math.max(activity.length - 1, 1)) * index);
+    const y = 162 - ((item.count / maxCount) * 124);
+    return { ...item, x: Number(x.toFixed(1)), y: Number(y.toFixed(1)) };
+  });
+  const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'}${point.x} ${point.y}`).join(' ');
+  const fillPath = `${linePath} L394 184 L30 184 Z`;
+
+  return { points, linePath, fillPath };
+}
+
+function getSimulationDate(simulation) {
+  return simulation.exportedAt || simulation.createdAt || simulation.updatedAt || simulation.date;
 }
 
 function isAvailable(product) {
@@ -63,19 +87,27 @@ function isOpenSupport(item) {
   return String(item.status || '').toLowerCase() === 'ouvert';
 }
 
-function getActivityRows(adminData, supportItems = []) {
+function getUserRole(user) {
+  if (String(user.role || '').toLowerCase() === 'admin' || user.type === 'Admin') return 'admin';
+  if (String(user.role || '').toLowerCase() === 'supplier' || user.type === 'Fournisseur') return 'supplier';
+  return 'user';
+}
+
+function getActivityRows(adminData, supportItems = [], simulations = []) {
   const productRows = (adminData.products || []).slice(0, 2).map((product, index) => ({
     id: `product-${product.id || index}`,
     title: product.name || 'Article sans nom',
     status: product.availability || 'Catalogue',
     date: product.updatedAt || product.createdAt || product.city || '',
+    route: '/admin/catalogue/products',
   }));
 
-  const simulationRows = (adminData.simulations || []).slice(0, 2).map((simulation, index) => ({
+  const simulationRows = simulations.slice(0, 2).map((simulation, index) => ({
     id: `simulation-${simulation.id || index}`,
     title: `Simulation ${simulation.user || 'utilisateur'}`,
     status: simulation.status || 'Simulation',
-    date: simulation.date || simulation.createdAt || '',
+    date: getSimulationDate(simulation) || '',
+    route: '/admin/simulations',
   }));
 
   const supportRows = supportItems.slice(0, 2).map((item, index) => ({
@@ -83,6 +115,7 @@ function getActivityRows(adminData, supportItems = []) {
     title: item.subject || 'Ticket support',
     status: item.status || item.type || 'Support',
     date: item.date || item.createdAt || '',
+    route: '/admin/support',
   }));
 
   return [...productRows, ...simulationRows, ...supportRows].slice(0, 4);
@@ -93,6 +126,9 @@ export default function Dashboard() {
   const [searchParams] = useSearchParams();
   const [adminData] = useAdminData();
   const [supportItems, setSupportItems] = useState([]);
+  const [mongoSimulations, setMongoSimulations] = useState([]);
+  const [adminUsers, setAdminUsers] = useState([]);
+  const [exportedDocuments, setExportedDocuments] = useState(() => fetchExportedDocuments());
 
   useEffect(() => {
     let cancelled = false;
@@ -116,10 +152,68 @@ export default function Dashboard() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    function loadSimulations() {
+      fetchAdminSimulations()
+        .then((items) => {
+          if (!cancelled) setMongoSimulations(items);
+        })
+        .catch(() => {
+          if (!cancelled) setMongoSimulations([]);
+        });
+    }
+
+    loadSimulations();
+    const refreshTimer = window.setInterval(loadSimulations, 10000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(refreshTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    function loadUsers() {
+      fetchAdminUsers()
+        .then((items) => {
+          if (!cancelled) setAdminUsers(items);
+        })
+        .catch(() => {
+          if (!cancelled) setAdminUsers([]);
+        });
+    }
+
+    loadUsers();
+    const refreshTimer = window.setInterval(loadUsers, 10000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(refreshTimer);
+    };
+  }, []);
+
+  useEffect(() => subscribeExportedDocumentsChange(setExportedDocuments), []);
+
+  const synchronizedSimulations = useMemo(() => ([
+    ...exportedDocuments.map((document) => ({
+      ...document,
+      id: `exported-${document.id}`,
+      user: document.userName || 'Utilisateur ArchiPrice',
+      email: document.userEmail || 'Compte user',
+      status: document.status || 'Succès',
+      date: document.exportedAt,
+    })),
+    ...mongoSimulations,
+  ]), [exportedDocuments, mongoSimulations]);
+
   const stats = useMemo(() => {
     const products = adminData.products || [];
     const suppliers = adminData.suppliers || [];
-    const simulations = adminData.simulations || [];
+    const simulations = synchronizedSimulations;
 
     return {
       totalProducts: products.length,
@@ -131,20 +225,19 @@ export default function Dashboard() {
       totalSupport: supportItems.length,
       openSupport: supportItems.filter(isOpenSupport).length,
     };
-  }, [adminData, supportItems]);
+  }, [adminData, supportItems, synchronizedSimulations]);
 
   const dashboardSearchTerm = searchParams.get('q')?.trim().toLowerCase() || '';
-  const history = useMemo(() => getActivityRows(adminData, supportItems).filter((item) => (
+  const simpleUsers = useMemo(() => adminUsers.filter((user) => getUserRole(user) === 'user'), [adminUsers]);
+  const history = useMemo(() => getActivityRows(adminData, supportItems, synchronizedSimulations).filter((item) => (
     !dashboardSearchTerm
     || String(item.title || '').toLowerCase().includes(dashboardSearchTerm)
     || String(item.status || '').toLowerCase().includes(dashboardSearchTerm)
-  )), [adminData, dashboardSearchTerm, supportItems]);
-  const monthActivity = useMemo(() => buildMonthActivity([
-    ...(adminData.products || []),
-    ...(adminData.suppliers || []),
-    ...(adminData.simulations || []),
-    ...supportItems,
-  ]), [adminData.products, adminData.simulations, adminData.suppliers, supportItems]);
+  )), [adminData, dashboardSearchTerm, supportItems, synchronizedSimulations]);
+  const userMonthActivity = useMemo(() => buildMonthActivity(simpleUsers), [simpleUsers]);
+  const supplierMonthActivity = useMemo(() => buildMonthActivity(adminData.suppliers || []), [adminData.suppliers]);
+  const userActivityChart = useMemo(() => buildActivityPath(userMonthActivity), [userMonthActivity]);
+  const supplierActivityChart = useMemo(() => buildActivityPath(supplierMonthActivity), [supplierMonthActivity]);
 
   const repartitionTotal = stats.totalProducts + stats.totalSuppliers + stats.totalSimulations + stats.totalSupport;
   const repartitionData = [
@@ -239,30 +332,46 @@ export default function Dashboard() {
           <div className="panel-heading">
             <h1>Activité backoffice</h1>
             <Text as="span" variant="bold" size="sm">
-               simulations
+              Comptes
             </Text>
           </div>
           <div className="line-chart" aria-label="Graphique d'activité backoffice">
             <svg viewBox="0 0 420 210" role="img">
               <defs>
-                <linearGradient id="activityFill" x1="0" x2="0" y1="0" y2="1">
+                <linearGradient id="activityUserFill" x1="0" x2="0" y1="0" y2="1">
                   <stop offset="0%" stopColor="#ffac4a" stopOpacity="0.55" />
                   <stop offset="100%" stopColor="#ffac4a" stopOpacity="0.02" />
                 </linearGradient>
+                <linearGradient id="activitySupplierFill" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="#5877f7" stopOpacity="0.35" />
+                  <stop offset="100%" stopColor="#5877f7" stopOpacity="0.01" />
+                </linearGradient>
               </defs>
               <path
-                className="chart-fill"
-                d="M30 162 C55 78 86 120 112 118 S150 146 178 75 S225 116 252 58 S300 106 329 42 S376 104 394 18 L394 184 L30 184 Z"
+                className="chart-fill chart-fill--user"
+                d={userActivityChart.fillPath}
               />
               <path
-                className="chart-line"
-                d="M30 162 C55 78 86 120 112 118 S150 146 178 75 S225 116 252 58 S300 106 329 42 S376 104 394 18"
+                className="chart-fill chart-fill--supplier"
+                d={supplierActivityChart.fillPath}
               />
-              <circle cx="112" cy="118" r="5" />
-              <circle cx="329" cy="42" r="5" />
+              <path
+                className="chart-line chart-line--user"
+                d={userActivityChart.linePath}
+              />
+              <path
+                className="chart-line chart-line--supplier"
+                d={supplierActivityChart.linePath}
+              />
+              {userActivityChart.points.map((point) => (
+                <circle key={`user-${point.key}`} className="chart-point--user" cx={point.x} cy={point.y} r={point.count ? 5 : 3} />
+              ))}
+              {supplierActivityChart.points.map((point) => (
+                <circle key={`supplier-${point.key}`} className="chart-point--supplier" cx={point.x} cy={point.y} r={point.count ? 4 : 2.5} />
+              ))}
             </svg>
             <div className="chart-axis">
-              {monthActivity.map((item, index) => (
+              {userMonthActivity.map((item, index) => (
                 <Text as="span" size="sm" key={`${item.label}-${index}`}>
                   {item.label}
                 </Text>
@@ -270,7 +379,8 @@ export default function Dashboard() {
             </div>
             <div className="chart-legend">
               
-              <Text as="span" variant="bold" size="sm"><i className="legend-orange" /> Simulations</Text>
+              <Text as="span" variant="bold" size="sm"><i className="legend-orange" /> Utilisateur simple</Text>
+              <Text as="span" variant="bold" size="sm"><i className="legend-blue" /> Boutique</Text>
             </div>
           </div>
         </section>
@@ -288,15 +398,17 @@ export default function Dashboard() {
             <ul className="history-list">
               {history.map((item, index) => (
                 <li key={`${item.id || item.title}-${index}`}>
-                  <span className={`history-icon history-icon-${index + 1}`} aria-hidden="true" />
-                  <div>
-                    <Text as="strong" variant="bold" size="sm">
-                      {item.title}
-                    </Text>
-                    <Text as="span" variant="bold" size="sm">
-                      {item.status} · {formatDate(item.date)}
-                    </Text>
-                  </div>
+                  <button type="button" onClick={() => navigate(item.route || '/admin')}>
+                    <span className={`history-icon history-icon-${index + 1}`} aria-hidden="true" />
+                    <div>
+                      <Text as="strong" variant="bold" size="sm">
+                        {item.title}
+                      </Text>
+                      <Text as="span" variant="bold" size="sm">
+                        {item.status} · {formatDate(item.date)}
+                      </Text>
+                    </div>
+                  </button>
                 </li>
               ))}
             </ul>

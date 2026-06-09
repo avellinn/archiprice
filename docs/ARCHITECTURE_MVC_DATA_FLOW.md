@@ -1,6 +1,6 @@
 # Architecture MVC Et Flux De Données
 
-Date : 2026-06-03
+Date : 2026-06-08
 
 Ce document explique comment ArchiPrice organise le code et comment les données circulent entre MongoDB, l'API Express et les interfaces React `user`, `admin` et `supplier`.
 
@@ -152,7 +152,7 @@ Les routes API sont centralisées dans `frontend/src/constants/api.js`.
 ## Flux 4 — Création Et Publication D'Articles Supplier
 
 1. Le supplier crée un article dans `pages/supplier/AjouterProduit/`.
-2. Le formulaire est envoyé en `multipart/form-data` avec jusqu'à 12 fichiers `image`.
+2. Le formulaire est envoyé en `multipart/form-data` avec le champ `image` répété selon les fichiers sélectionnés.
 3. `multer` utilise `memoryStorage`.
 4. Le backend stream les images vers Cloudinary.
 5. MongoDB stocke les métadonnées Cloudinary dans `Product.images`.
@@ -191,6 +191,12 @@ Les routes API sont centralisées dans `frontend/src/constants/api.js`.
 6. Le document exporté apparaît dans `pages/user/Invoices/`.
 7. Les exports sont aussi visibles côté admin dans `pages/admin/Simulations/`.
 
+Extension actuelle :
+
+- `GET /api/admin/simulations` agrège aussi les projets MongoDB créés dans `Project`.
+- Cela permet à l'admin de voir les projets créés depuis le Workspace même si l'export PDF n'a pas encore produit une simulation complète.
+- Les exports validés restent la source la plus riche pour le détail articles, quantités, totaux et liens Cloudinary.
+
 ## Flux 7 — Workspace Et Boutiques
 
 1. Le workspace affiche les projets user.
@@ -202,6 +208,55 @@ Les routes API sont centralisées dans `frontend/src/constants/api.js`.
 7. Le supplier voit ensuite les informations client dans `pages/supplier/Clients/`.
 
 La page supplier `Clients` reste cliquable pour afficher les détails client et les liens Cloudinary des articles choisis. Le supplier ne peut pas ajouter ni modifier ces clients ; seule la suppression côté supplier est exposée dans l'interface.
+
+## Flux 8 — Demandes User/Supplier
+
+Les pages `pages/user/Demande/` et `pages/supplier/Demandesup/` forment un canal de conversation entre le client et la boutique.
+
+1. Le user clique sur une boutique dans `modalBoutique.jsx`.
+2. Le frontend crée une notification `supplierClientNotifications` avec :
+   - informations boutique ;
+   - informations client ;
+   - projet ;
+   - articles sélectionnés ;
+   - message initial si renseigné.
+3. La page user regroupe les notifications par boutique pour éviter les doublons.
+4. La page supplier regroupe les notifications par client/projet/boutique.
+5. Les messages sont normalisés et dédupliqués avant affichage.
+6. Les réponses ajoutent un message dans le tableau `messages` de la notification source.
+7. Les actions de chat affichent un retour avec `Alert.jsx`.
+
+État actuel :
+
+- la persistance principale de ces conversations utilise encore le store synchronisé frontend `adminData.js` ;
+- pour une synchronisation multi-navigateurs complète, la cible est de migrer ces conversations vers une collection MongoDB dédiée.
+
+## Flux 9 — Support Et Feedback
+
+1. User ou supplier envoie un feedback depuis sa page `Support`.
+2. `frontend/src/services/support.js` appelle `POST /api/support-items`.
+3. `backend/routes/supportItems.js` crée un `SupportItem` MongoDB avec `sourceRole`, `userId`, `email`, `subject`, `description` et `status`.
+4. Le backend publie un événement realtime `support-items:created` pour l'admin.
+5. L'admin lit `/api/admin/support-items` et répond via `PATCH /api/admin/support-items/:id`.
+6. User/supplier lit ses propres feedbacks via `/api/support-items/me`.
+7. Les pages user/supplier affichent leurs feedbacks en liste cliquable et ouvrent le modal de détail en lecture seule.
+
+Règles UI :
+
+- toutes les actions de support utilisent `Alert.jsx` ;
+- une suppression côté user/supplier masque localement l'élément ;
+- une suppression côté admin supprime le document via endpoint admin.
+
+## Flux 10 — Alertes Et Actions De Modales
+
+`Alert.jsx` est le composant unique pour les retours applicatifs.
+
+Règles :
+
+- si `onClose` est fourni, l'alerte se ferme automatiquement après 4 secondes ;
+- les actions principales de modales doivent afficher un `Alert` local : créer, sauvegarder, envoyer, supprimer, valider, refuser, bloquer ;
+- les erreurs de validation de formulaire restent dans le modal qui les déclenche ;
+- les alertes navigateur (`window.alert`, `window.confirm`, `window.prompt`) ne doivent pas être utilisées pour les workflows métier.
 
 ## Synchronisation
 
@@ -232,6 +287,9 @@ Les shells `AppShell.jsx`, `AdminShell.jsx` et `SupplierShell.jsx` se connectent
 - Les composants UI génériques restent partagés.
 - Les pages gardent leur CSS dans leur dossier.
 - Les messages applicatifs doivent utiliser `Alert.jsx` et des modales React plutôt que les alertes navigateur.
+- Les actions de boutons dans les modales doivent produire un feedback visible avec `Alert.jsx`.
+- Les champs texte ne doivent pas accepter des valeurs composées uniquement de chiffres quand une chaîne descriptive est attendue.
+- Les champs numériques doivent filtrer ou valider les caractères non numériques.
 - Le dark mode doit passer par les variables `--app-*` du shell.
 
 ## Où Modifier Quoi

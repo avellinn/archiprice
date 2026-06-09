@@ -12,6 +12,9 @@
 
 .modal-create-project {
   width: min(520px, 100%);
+  max-height: calc(100vh - 2rem);
+  overflow: hidden auto;
+  overscroll-behavior: contain;
   padding: 1.35rem;
   border-radius: 15px;
   background: #f3f4f6;

@@ -21,14 +21,14 @@
 }
 
 .ui-table-card--adaptive .ui-data-table thead {
-  background: #f0f2f5;
+  background: #6585b539;
 }
 
 .ui-table-card--adaptive .ui-data-table th {
   height: 38px;
   padding: 0 0.85rem;
   border-bottom: 1px solid #e2e7ef;
-  color: #6f7f9b;
+  color: #4c4e51e7;
   font-size: 0.78rem;
   font-weight: 900;
   letter-spacing: 0.06em;

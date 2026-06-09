@@ -29,13 +29,16 @@ const INITIAL_PRODUCT_FORM = {
   collections: '',
   tags: '',
 };
+const CUSTOM_OPTION_VALUE = '__custom__';
 
 function getTaxonomyNames(items = []) {
   return items.map((item) => item.name).filter(Boolean);
 }
 
-function getSyncedOptionValue(value, options = []) {
-  return options.includes(value) ? value : '';
+function getSelectOptionValue(value, options = [], isCustom = false) {
+  if (isCustom) return CUSTOM_OPTION_VALUE;
+  if (!value) return '';
+  return options.includes(value) ? value : CUSTOM_OPTION_VALUE;
 }
 
 function getProductImage(product) {
@@ -71,6 +74,7 @@ export default function AjouterProduit() {
   const productIdToEdit = searchParams.get('edit') || '';
   const [adminData, setAdminData] = useAdminData();
   const [productForm, setProductForm] = useState(INITIAL_PRODUCT_FORM);
+  const [customTaxonomyFields, setCustomTaxonomyFields] = useState({});
   const [existingImages, setExistingImages] = useState([]);
   const [files, setFiles] = useState([]);
   const [error, setError] = useState('');
@@ -102,12 +106,12 @@ export default function AjouterProduit() {
     cities: getTaxonomyNames(adminData.taxonomies?.cities),
     neighborhoods: getTaxonomyNames(adminData.taxonomies?.neighborhoods),
   }), [adminData.taxonomies]);
-  const selectedCategory = getSyncedOptionValue(productForm.category, taxonomyOptions.categories);
-  const selectedRoom = getSyncedOptionValue(productForm.type, taxonomyOptions.rooms);
-  const selectedRange = getSyncedOptionValue(productForm.range, taxonomyOptions.ranges);
-  const selectedAvailability = getSyncedOptionValue(productForm.availability, taxonomyOptions.availability);
-  const selectedCity = getSyncedOptionValue(productForm.city, taxonomyOptions.cities);
-  const selectedNeighborhood = getSyncedOptionValue(productForm.neighborhood, taxonomyOptions.neighborhoods);
+  const categorySelectValue = getSelectOptionValue(productForm.category, taxonomyOptions.categories, customTaxonomyFields.category);
+  const roomSelectValue = getSelectOptionValue(productForm.type, taxonomyOptions.rooms, customTaxonomyFields.type);
+  const rangeSelectValue = getSelectOptionValue(productForm.range, taxonomyOptions.ranges, customTaxonomyFields.range);
+  const availabilitySelectValue = getSelectOptionValue(productForm.availability, taxonomyOptions.availability, customTaxonomyFields.availability);
+  const citySelectValue = getSelectOptionValue(productForm.city, taxonomyOptions.cities, customTaxonomyFields.city);
+  const neighborhoodSelectValue = getSelectOptionValue(productForm.neighborhood, taxonomyOptions.neighborhoods, customTaxonomyFields.neighborhood);
 
   const previews = useMemo(() => files.map((file) => ({
     name: file.name,
@@ -191,6 +195,14 @@ export default function AjouterProduit() {
       ...currentForm,
       [field]: value,
     }));
+  }
+
+  function updateTaxonomySelect(field, value) {
+    setCustomTaxonomyFields((currentFields) => ({
+      ...currentFields,
+      [field]: value === CUSTOM_OPTION_VALUE,
+    }));
+    updateProductForm(field, value === CUSTOM_OPTION_VALUE ? '' : value);
   }
 
   function updateDescriptionSelection(transformSelection) {
@@ -322,9 +334,9 @@ export default function AjouterProduit() {
         supplier: effectiveSupplierName,
         vat: '20%',
         visual: 'sofa',
-        city: selectedCity,
-        neighborhood: selectedNeighborhood,
-        availability: product.availability || selectedAvailability,
+        city: productForm.city,
+        neighborhood: productForm.neighborhood,
+        availability: product.availability || productForm.availability,
         publicationStatus: 'En attente',
         publicationSource: 'supplier',
         submittedAt: new Date().toISOString(),
@@ -347,12 +359,12 @@ export default function AjouterProduit() {
 
     if (!productForm.name.trim()
       || !productForm.description.trim()
-      || !selectedCategory
-      || !selectedRoom
-      || !selectedRange
-      || !selectedAvailability
-      || !selectedCity
-      || !selectedNeighborhood
+      || !productForm.category.trim()
+      || !productForm.type.trim()
+      || !productForm.range.trim()
+      || !productForm.availability.trim()
+      || !productForm.city.trim()
+      || !productForm.neighborhood.trim()
       || !effectiveSupplierName
       || productForm.price === ''
       || (files.length === 0 && existingImages.length === 0)) {
@@ -366,12 +378,12 @@ export default function AjouterProduit() {
       const payload = {
         name: productForm.name.trim(),
         description: productForm.description.trim(),
-        category: selectedCategory,
-        room: selectedRoom,
-        range: selectedRange,
-        availability: selectedAvailability,
-        city: selectedCity,
-        neighborhood: selectedNeighborhood,
+        category: productForm.category.trim(),
+        room: productForm.type.trim(),
+        range: productForm.range.trim(),
+        availability: productForm.availability.trim(),
+        city: productForm.city.trim(),
+        neighborhood: productForm.neighborhood.trim(),
         unitPrice: productForm.price,
         unit: 'u',
       };
@@ -524,12 +536,22 @@ export default function AjouterProduit() {
 
             <label className="supplier-product-field">
               <span>{productText.category}</span>
-              <select required value={selectedCategory} onChange={(event) => updateProductForm('category', event.target.value)}>
+              <select required value={categorySelectValue} onChange={(event) => updateTaxonomySelect('category', event.target.value)}>
                 <option value="">{productText.categoryPlaceholder}</option>
                 {taxonomyOptions.categories.map((category) => (
                   <option key={category} value={category}>{category}</option>
                 ))}
+                <option value={CUSTOM_OPTION_VALUE}>Autres</option>
               </select>
+              {categorySelectValue === CUSTOM_OPTION_VALUE && (
+                <input
+                  type="text"
+                  value={productForm.category}
+                  onChange={(event) => updateProductForm('category', event.target.value)}
+                  placeholder="Saisir une catégorie"
+                  required
+                />
+              )}
             </label>
           </section>
 
@@ -560,21 +582,41 @@ export default function AjouterProduit() {
             </div>
             <label className="supplier-product-field">
               <span>{productText.availability}</span>
-              <select required value={selectedAvailability} onChange={(event) => updateProductForm('availability', event.target.value)}>
+              <select required value={availabilitySelectValue} onChange={(event) => updateTaxonomySelect('availability', event.target.value)}>
                 <option value="">{productText.availabilityPlaceholder}</option>
                 {taxonomyOptions.availability.map((availability) => (
                   <option key={availability} value={availability}>{availability}</option>
                 ))}
+                <option value={CUSTOM_OPTION_VALUE}>Autres</option>
               </select>
+              {availabilitySelectValue === CUSTOM_OPTION_VALUE && (
+                <input
+                  type="text"
+                  value={productForm.availability}
+                  onChange={(event) => updateProductForm('availability', event.target.value)}
+                  placeholder="Saisir une disponibilité"
+                  required
+                />
+              )}
             </label>
             <label className="supplier-product-field">
               <span>{productText.room}</span>
-              <select required value={selectedRoom} onChange={(event) => updateProductForm('type', event.target.value)}>
+              <select required value={roomSelectValue} onChange={(event) => updateTaxonomySelect('type', event.target.value)}>
                 <option value="">{productText.roomPlaceholder}</option>
                 {taxonomyOptions.rooms.map((room) => (
                   <option key={room} value={room}>{room}</option>
                 ))}
+                <option value={CUSTOM_OPTION_VALUE}>Autres</option>
               </select>
+              {roomSelectValue === CUSTOM_OPTION_VALUE && (
+                <input
+                  type="text"
+                  value={productForm.type}
+                  onChange={(event) => updateProductForm('type', event.target.value)}
+                  placeholder="Saisir une pièce"
+                  required
+                />
+              )}
             </label>
             <label className="supplier-product-field">
               <span>{productText.supplier}</span>
@@ -585,30 +627,60 @@ export default function AjouterProduit() {
             </label>
             <label className="supplier-product-field">
               <span>{productText.range}</span>
-              <select required value={selectedRange} onChange={(event) => updateProductForm('range', event.target.value)}>
+              <select required value={rangeSelectValue} onChange={(event) => updateTaxonomySelect('range', event.target.value)}>
                 <option value="">{productText.rangePlaceholder}</option>
                 {taxonomyOptions.ranges.map((range) => (
                   <option key={range} value={range}>{range}</option>
                 ))}
+                <option value={CUSTOM_OPTION_VALUE}>Autres</option>
               </select>
+              {rangeSelectValue === CUSTOM_OPTION_VALUE && (
+                <input
+                  type="text"
+                  value={productForm.range}
+                  onChange={(event) => updateProductForm('range', event.target.value)}
+                  placeholder="Saisir une gamme"
+                  required
+                />
+              )}
             </label>
             <label className="supplier-product-field">
               <span>Ville</span>
-              <select required value={selectedCity} onChange={(event) => updateProductForm('city', event.target.value)}>
+              <select required value={citySelectValue} onChange={(event) => updateTaxonomySelect('city', event.target.value)}>
                 <option value="">Choisir une ville</option>
                 {taxonomyOptions.cities.map((city) => (
                   <option key={city} value={city}>{city}</option>
                 ))}
+                <option value={CUSTOM_OPTION_VALUE}>Autres</option>
               </select>
+              {citySelectValue === CUSTOM_OPTION_VALUE && (
+                <input
+                  type="text"
+                  value={productForm.city}
+                  onChange={(event) => updateProductForm('city', event.target.value)}
+                  placeholder="Saisir une ville"
+                  required
+                />
+              )}
             </label>
             <label className="supplier-product-field">
               <span>Quartier</span>
-              <select required value={selectedNeighborhood} onChange={(event) => updateProductForm('neighborhood', event.target.value)}>
+              <select required value={neighborhoodSelectValue} onChange={(event) => updateTaxonomySelect('neighborhood', event.target.value)}>
                 <option value="">Choisir un quartier</option>
                 {taxonomyOptions.neighborhoods.map((neighborhood) => (
                   <option key={neighborhood} value={neighborhood}>{neighborhood}</option>
                 ))}
+                <option value={CUSTOM_OPTION_VALUE}>Autres</option>
               </select>
+              {neighborhoodSelectValue === CUSTOM_OPTION_VALUE && (
+                <input
+                  type="text"
+                  value={productForm.neighborhood}
+                  onChange={(event) => updateProductForm('neighborhood', event.target.value)}
+                  placeholder="Saisir un quartier"
+                  required
+                />
+              )}
             </label>
           </section>
 

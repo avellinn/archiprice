@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Header from './Header';
 import Icon from './Icon';
+import Logo from './Logo';
 import Sidebar from './Sidebar';
 import useAuth from '../context/useAuth';
 import { fetchAdminSupportItems, fetchAdminUsers, fetchSupplierRequests } from '../services/adminMongo';
@@ -9,7 +10,6 @@ import { syncAdminDataFromRemote, useAdminData } from '../services/adminData';
 import { connectRealtime } from '../services/realtime';
 import { getAdminTranslations } from '../utils/adminLanguage';
 import { getAvatarColor, getDisplayName, getUserInitials } from '../utils/userDisplay';
-import siteLogo from '../assets/images/log.png';
 const ADMIN_SEARCH_ICONS = {
   '/admin/dashboard': 'Dashboard',
   '/admin/catalogue/products': 'Tag',
@@ -288,7 +288,7 @@ export default function AdminShell() {
         .join(' ')}
     >
       <Sidebar
-        logo={<img src={siteLogo} alt="ArchiPrice" />}
+        logo={<Logo variant="sidebar" />}
         title="Backoffice"
         variant="admin"
         sections={sidebarSections}

@@ -47,13 +47,6 @@
   justify-content: flex-start;
 }
 
-.sidebar__logo img {
-  max-width: 118px;
-  height: auto;
-  max-height: 42px;
-  object-fit: contain;
-}
-
 .sidebar__logo-mark {
   width: 3.25rem;
   height: 3.25rem;
@@ -319,12 +312,6 @@
 
 .dashboard-shell.is-theme-dark .sidebar__nav-link {
   color: var(--app-text-color);
-}
-
-.dashboard-shell.is-theme-dark .sidebar__logo img {
-  padding: 0.25rem 0.35rem;
-  border-radius: 8px;
-  background: #ffffff;
 }
 
 .dashboard-shell.is-theme-dark .sidebar__close-btn {

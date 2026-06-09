@@ -1,6 +1,6 @@
 # Cahier Des Charges ArchiPrice
 
-Date : 2026-06-04
+Date : 2026-06-08
 
 Ce document sert de référence fonctionnelle et technique pour comprendre ArchiPrice dans son ensemble : interfaces frontend, données manipulées, backend Express, base MongoDB, stockage Cloudinary, rôles, synchronisation et règles métier.
 
@@ -53,7 +53,7 @@ Un supplier peut :
 - accéder à son espace seulement après validation admin ;
 - gérer le profil de sa boutique ;
 - créer, modifier et supprimer ses produits ;
-- uploader jusqu'à 12 fichiers/images par sélection selon le flux ;
+- uploader des fichiers/images depuis les flux prévus sans limite arbitraire côté interface admin/supplier, sous réserve des validations serveur ;
 - publier un produit vers l'admin pour validation ;
 - retirer une publication ;
 - consulter ses fichiers ;
@@ -185,6 +185,13 @@ Règle UX :
 - 20 à 30% de layout spécifique au rôle.
 
 Les messages applicatifs doivent utiliser `Alert.jsx` ou une modale React. Les workflows ne doivent pas dépendre de `window.alert`, `window.confirm` ou `window.prompt`.
+
+Règles `Alert.jsx` :
+
+- durée d'affichage par défaut : 4 secondes quand un `onClose` est fourni ;
+- les erreurs de formulaires et de modales doivent être affichées avec `Alert`;
+- les actions de boutons dans les modales doivent déclencher un retour visuel `Alert` : sauvegarde, envoi, suppression, validation, refus, création ou modification ;
+- les alertes permanentes sans `onClose` restent visibles tant que le composant parent les affiche.
 
 ## 5. Backend
 
@@ -422,7 +429,7 @@ Le serveur ne stocke aucun fichier local temporaire.
 
 Règles :
 
-- maximum 12 fichiers par sélection ;
+- les interfaces admin/supplier ne doivent pas imposer une limite arbitraire de nombre de fichiers ;
 - pour les produits : images uniquement ;
 - formats produit autorisés : JPG, PNG, WebP ;
 - taille max image produit : 5 Mo ;
@@ -439,7 +446,13 @@ La page supplier `Fichiers` peut accepter plusieurs types de fichiers côté int
 - documents ;
 - autres fichiers locaux.
 
-La sélection est limitée à 12 fichiers par import côté frontend. Les fichiers locaux affichés dans cette page ne deviennent durables que s'ils sont rattachés à un flux backend prévu.
+La page inclut un bouton `Réinitialiser` qui vide la liste affichée :
+
+- les fichiers locaux sélectionnés sont retirés de l'état frontend ;
+- les images produits déjà uploadées sont supprimées via les endpoints supplier prévus ;
+- l'action affiche une confirmation puis un retour visuel avec `Alert.jsx`.
+
+Les fichiers locaux affichés dans cette page ne deviennent durables que s'ils sont rattachés à un flux backend prévu.
 
 ## 8. Flux Des Données Par Domaine
 
@@ -526,6 +539,12 @@ Le seed est idempotent :
 7. L'estimation apparaît dans `Invoices` côté user.
 8. La même estimation apparaît dans `Simulations` côté admin.
 
+Règle de synchronisation admin :
+
+- `/api/admin/simulations` agrège les documents `Simulation` et les projets MongoDB créés dans le Workspace ;
+- un projet créé dans `Workspace` doit donc apparaître côté admin même avant export PDF, avec un statut cohérent (`En cours` ou `Succès` selon l'état du projet) ;
+- les exports validés restent visibles comme simulations/estimations complètes avec articles et liens Cloudinary.
+
 ### Workspace User Vers Clients Supplier
 
 1. User ouvre son workspace.
@@ -547,6 +566,33 @@ Le seed est idempotent :
 7. Backend publie `support-items:updated`.
 8. User ou supplier reçoit la notification de réponse.
 9. Le destinataire peut supprimer/masquer la réponse de sa liste locale sans effacer le document MongoDB.
+
+Règles d'affichage :
+
+- les pages `Support` user et supplier affichent la liste personnelle des feedbacks créés via `/api/support-items/me` ;
+- chaque feedback est cliquable et ouvre le même modal de détail que le support admin, en lecture seule côté user/supplier ;
+- un feedback masqué côté user/supplier ne supprime pas l'entrée MongoDB ;
+- la page `Support` admin reprend le même format visuel que les pages Support user/supplier, avec actions de réponse et suppression.
+
+### Demandes Et Conversations Boutique
+
+Les pages `Demande` user et `Demandesup` supplier sont le système de conversation entre un particulier et une boutique.
+
+Flux :
+
+1. Le user démarre une demande depuis le modal `Où acheter`.
+2. Une notification `type: "Demande"` est ajoutée à `supplierClientNotifications`.
+3. La page `Demande` du user affiche les conversations groupées par boutique.
+4. La page `Demandesup` du supplier affiche les conversations groupées par client/projet/boutique.
+5. Les messages user sont alignés côté user, les messages supplier côté supplier selon le rôle de l'émetteur.
+6. Chaque conversation est une ligne cliquable ; le détail s'ouvre dans un modal de chat.
+7. Les actions `Répondre`, `Envoyer`, `Supprimer de ma liste` utilisent `Alert.jsx`.
+
+Règles :
+
+- les doublons doivent être dédupliqués par identifiant de conversation et contenu de message ;
+- masquer une conversation côté user ou supplier est local à ce compte ;
+- la conversation reste disponible pour l'autre partie tant que la source métier existe.
 
 ## 9. Synchronisation Temps Réel
 
@@ -700,6 +746,7 @@ Elles doivent inclure :
 - actions `Annuler`, `Enregistrer`, `Envoyer`, etc. ;
 - validation required si nécessaire ;
 - gestion d'erreur via `Alert`.
+- confirmation de succès via `Alert` pour les boutons d'action principaux.
 
 ### Tables Et Listes Cliquables
 
@@ -849,8 +896,8 @@ Le workspace est considéré cohérent si :
 - un user/supplier peut envoyer un feedback ;
 - l'admin reçoit une notification et peut répondre ;
 - le destinataire reçoit la réponse ;
-- les uploads produit refusent plus de 12 images ;
-- la page Fichiers limite chaque import à 12 fichiers ;
+- les uploads produit valident le type et la taille des images sans limite arbitraire côté interface admin/supplier ;
+- la page Fichiers permet de vider/réinitialiser la liste complète ;
 - les dark/light themes restent lisibles ;
 - les données critiques survivent à un changement de navigateur.
 

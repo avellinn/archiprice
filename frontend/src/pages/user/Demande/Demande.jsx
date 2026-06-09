@@ -122,6 +122,7 @@ export default function Demande() {
   const [replyDemandId, setReplyDemandId] = useState('');
   const [replyText, setReplyText] = useState('');
   const [replyError, setReplyError] = useState('');
+  const [actionMessage, setActionMessage] = useState('');
   const [selectedDemandId, setSelectedDemandId] = useState('');
 
   const userEmail = user?.email || '';
@@ -152,6 +153,7 @@ export default function Demande() {
     setHiddenDemandIds(nextHiddenIds);
     writeHiddenDemandItems(hiddenDemandItemsKey, nextHiddenIds);
     if (selectedDemandId === itemId) setSelectedDemandId('');
+    setActionMessage('Conversation supprimée de votre liste.');
   }
 
   function sendReply(event) {
@@ -160,6 +162,7 @@ export default function Demande() {
     if (!replyDemandId || !comment) return;
     if (isNumericOnly(comment)) {
       setReplyError('Le message doit contenir du texte.');
+      setActionMessage('');
       return;
     }
 
@@ -188,6 +191,7 @@ export default function Demande() {
     setReplyText('');
     setReplyDemandId('');
     setReplyError('');
+    setActionMessage('Message envoyé.');
   }
 
   const selectedDemand = demands.find((item) => item.id === selectedDemandId);
@@ -214,6 +218,11 @@ export default function Demande() {
 
         <section className="user-support-card">
           <h2>Mes demandes boutique</h2>
+          {actionMessage && (
+            <Alert variant="success" className="user-demand-action-alert" onClose={() => setActionMessage('')}>
+              {actionMessage}
+            </Alert>
+          )}
           {demands.length ? (
             <div className="user-support-list user-demand-list">
               {demands.map((item) => (
@@ -295,7 +304,16 @@ export default function Demande() {
                     required
                     autoFocus
                   />
-                  {replyError && <Alert variant="danger">{replyError}</Alert>}
+                  {replyError && (
+                    <Alert variant="danger" onClose={() => setReplyError('')}>
+                      {replyError}
+                    </Alert>
+                  )}
+                  {actionMessage && (
+                    <Alert variant="success" onClose={() => setActionMessage('')}>
+                      {actionMessage}
+                    </Alert>
+                  )}
                   <div>
                     <button type="button" onClick={() => {
                       setReplyDemandId('');

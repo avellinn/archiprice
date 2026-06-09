@@ -5,6 +5,7 @@ import { Alert, Table } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
 import { fetchAdminSimulations } from '../../../services/adminMongo';
 import { fetchExportedDocuments, subscribeExportedDocumentsChange } from '../../../services/exportedDocuments';
+import { fetchProjects, subscribeProjectsChange } from '../../../services/projects';
 import { Badge } from '../PageShell';
 import SimulationModal from './simulationModal';
 
@@ -47,10 +48,28 @@ function mapExportToSimulation(document) {
   };
 }
 
+function mapProjectToSimulation(project) {
+  return {
+    id: `project-${project.id}`,
+    user: project.clientName || project.userName || 'Utilisateur ArchiPrice',
+    email: project.userEmail || 'Projet workspace',
+    avatar: 'PW',
+    date: formatExportDate(project.updatedAt || project.createdAt),
+    total: formatFCFA(project.budget || project.amount || project.total || 0),
+    products: project.itemCount || project.items?.length || 0,
+    status: project.status === 'draft' ? 'Projet créé' : project.status || 'Projet créé',
+    city: project.city || project.name || '-',
+    coefficient: project.coefficient || '1,00',
+    items: project.items || [],
+    projectName: project.name || 'Projet sans nom',
+  };
+}
+
 export default function Simulations() {
   const [searchParams] = useSearchParams();
   const [simulations, setSimulations] = useState([]);
   const [exportedDocuments, setExportedDocuments] = useState(() => fetchExportedDocuments());
+  const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedSimulation, setSelectedSimulation] = useState(null);
@@ -79,10 +98,32 @@ export default function Simulations() {
 
   useEffect(() => subscribeExportedDocumentsChange(setExportedDocuments), []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchProjects()
+      .then((list) => {
+        if (!cancelled) setProjects(list);
+      })
+      .catch(() => {
+        if (!cancelled) setProjects([]);
+      });
+
+    const unsubscribe = subscribeProjectsChange((list) => {
+      if (!cancelled) setProjects(list);
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, []);
+
   const synchronizedSimulations = useMemo(() => ([
+    ...projects.map(mapProjectToSimulation),
     ...exportedDocuments.map(mapExportToSimulation),
     ...simulations,
-  ]), [exportedDocuments, simulations]);
+  ]), [exportedDocuments, projects, simulations]);
 
   const filteredSimulations = useMemo(() => {
     const normalizedSearch = (searchParams.get('q') || '').trim().toLowerCase();
@@ -90,7 +131,9 @@ export default function Simulations() {
     return synchronizedSimulations.filter((simulation) => {
       const matchesSearch = !normalizedSearch
         || String(simulation.user || '').toLowerCase().includes(normalizedSearch)
-        || String(simulation.email || '').toLowerCase().includes(normalizedSearch);
+        || String(simulation.email || '').toLowerCase().includes(normalizedSearch)
+        || String(simulation.projectName || '').toLowerCase().includes(normalizedSearch)
+        || String(simulation.city || '').toLowerCase().includes(normalizedSearch);
 
       return matchesSearch;
     });
@@ -121,7 +164,7 @@ export default function Simulations() {
       key: 'status',
       label: 'Statut',
       render: (status) => (
-        <Badge tone={status === 'Succès' ? 'success' : 'danger'}>
+        <Badge tone={status === 'Succès' ? 'success' : status === 'Projet créé' ? 'neutral' : 'danger'}>
           {status}
         </Badge>
       ),

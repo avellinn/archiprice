@@ -3,10 +3,10 @@ import { useEffect, useMemo, useState } from 'react';
 import Avatar from './Avatar';
 import './Header.css';
 import Icon from './Icon';
+import Logo from './Logo';
 import Text from './Text';
 import useAuth from '../context/useAuth';
 import { getAvatarColor, getDisplayName, getUserInitials } from '../utils/userDisplay';
-import siteLogo from '../assets/images/log.png';
 
 export default function Header({
   currentPage = 'Tableau de bord',
@@ -216,8 +216,7 @@ export default function Header({
   return (
     <header className="header header--public">
       <Link to={isAuthenticated ? '/dashboard' : '/'} className="logo">
-        <img src={siteLogo} alt="" />
-        <span>ArchiPrice</span>
+        <Logo variant="header" alt="" showText />
       </Link>
       <nav>
         <Link to="/login">Connexion</Link>

@@ -39,12 +39,6 @@
   box-shadow: 0 10px 24px rgb(15 23 42 / 0.08);
 }
 
-.auth-icon img {
-  width: 72px;
-  height: 72px;
-  object-fit: contain;
-}
-
 .auth-title {
   margin: 0 0 0.35rem;
   color: #1e293b;

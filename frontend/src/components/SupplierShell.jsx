@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Header from './Header';
+import Logo from './Logo';
 import Sidebar from './Sidebar';
 import { Icon } from './ui';
 import useAuth from '../context/useAuth';
@@ -10,7 +11,6 @@ import { fetchMySupportItems } from '../services/support';
 import { fetchSupplierWorkspace, notifySupplierWorkspaceChange } from '../services/supplier';
 import { getAvatarColor, getDisplayName, getUserInitials } from '../utils/userDisplay';
 import { getSupplierLanguage, getSupplierTranslations } from '../utils/supplierLanguage';
-import siteLogo from '../assets/images/log.png';
 
 const SUPPLIER_DISMISSED_NOTIFICATIONS_KEY = 'archiprice:supplier-dismissed-notifications';
 const SUPPLIER_SEARCH_ICONS = {
@@ -318,7 +318,7 @@ export default function SupplierShell() {
         .join(' ')}
     >
       <Sidebar
-        logo={<img src={siteLogo} alt="ArchiPrice" />}
+        logo={<Logo variant="sidebar" />}
         variant="supplier"
         sections={sidebarSections}
         isOpen={!isSidebarCollapsed}

@@ -1,5 +1,5 @@
 import './AuthLayout.css';
-import siteLogo from '../assets/images/log.png';
+import Logo from './Logo';
 
 export default function AuthLayout({ title, subtitle, children, footer }) {
   return (
@@ -7,7 +7,7 @@ export default function AuthLayout({ title, subtitle, children, footer }) {
       <div className="auth-card">
         <header className="auth-header">
           <div className="auth-icon">
-            <img src={siteLogo} alt="ArchiPrice" />
+            <Logo variant="auth" />
           </div>
           <h1 className="auth-title">{title}</h1>
           <p className="auth-subtitle">{subtitle}</p>

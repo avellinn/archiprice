@@ -467,7 +467,7 @@
   padding: 0.9rem;
   border: 1px solid var(--app-border-color);
   border-radius: 12px;
-  background: var(--app-card-background);
+  background: #F3F4F6;
   box-shadow: 0 10px 24px rgb(15 23 42 / 0.045);
 }
 

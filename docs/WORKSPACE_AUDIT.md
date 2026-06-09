@@ -1,6 +1,6 @@
 # Audit Et Nettoyage Du Workspace
 
-Date : 2026-06-03
+Date : 2026-06-08
 
 ## Synthèse
 
@@ -31,7 +31,7 @@ Conclusion : le poids réel vient presque entièrement des dépendances locales.
 
 ## Nettoyage Effectué
 
-Dernière passe du 2026-06-03 :
+Dernière passe du 2026-06-08 :
 
 - suppression des artefacts générés avec `npm run clean` :
   - `frontend/dist` ;
@@ -40,11 +40,11 @@ Dernière passe du 2026-06-03 :
   - `frontend/node_modules/.tmp` ;
   - `backend/node_modules/.cache` ;
 - vérification que les pages frontend actives sont organisées par dossiers `Page/Page.jsx` + `Page/Page.css` ;
-- mise à jour du README et de la documentation frontend pour retirer les références obsolètes à l'ancien catalogue supplier ;
+- mise à jour du README et de la documentation frontend pour retirer les références obsolètes à l'ancien catalogue supplier et aux limites d'upload côté interface ;
 - ajout de la documentation MVC/data-flow : `docs/ARCHITECTURE_MVC_DATA_FLOW.md`.
 - mise à jour de la documentation pour les trois rôles `user`, `admin`, `supplier` ;
 - clarification du dark mode global et des variables `--app-*` ;
-- clarification de l'usage obligatoire de `Alert.jsx` pour les messages applicatifs ;
+- clarification de l'usage obligatoire de `Alert.jsx` pour les messages applicatifs et les actions de boutons dans les modales ;
 - documentation du canal realtime `/api/realtime`.
 
 Le build frontend produit uniquement l'avertissement connu de chunk Vite supérieur à `500 kB`.
@@ -130,7 +130,9 @@ Toutes les pages utilisateur sont regroupées dans `frontend/src/pages/user/` :
 - `Dashboard/Dashboard.jsx`
 - `Catalogue/Catalogue.jsx`
 - `Workspace/Workspace.jsx`
-- `Invoices/Invoices.jsx`
+- `Demande/Demande.jsx`
+- `Archives/Archives.jsx`
+- `Support/Support.jsx`
 - `Logout/Logout.jsx`
 - `Parametres/Parametres.jsx`
 
@@ -168,11 +170,15 @@ Toutes les pages fournisseur sont regroupées dans `frontend/src/pages/supplier/
 - `Produits/Produits.jsx`
 - `AjouterProduit/AjouterProduit.jsx`
 - `Clients/Clients.jsx`
+- `Demandesup/Demandesup.jsx`
 - `Fichiers/Fichiers.jsx`
+- `Support/Support.jsx`
 - `Parametres/Parametres.jsx`
 - `Pending/Pending.jsx`
 
 Le fichier historique `Dashboard.jsx` a été supprimé lors d'une passe précédente : le routeur pointe directement vers `Analysedon/Analysedon.jsx`. La page catalogue supplier a aussi été retirée du routeur ; les produits fournisseur sont gérés via `Produits`, `AjouterProduit`, `MaBoutique` et `Fichiers`.
+
+Les pages `Demande` et `Demandesup` gèrent les conversations user/boutique. Les conversations sont affichées en liste cliquable, groupées par boutique ou client/projet et utilisent `Alert.jsx` pour les actions de réponse et suppression.
 
 ### Composants Partagés
 
@@ -195,6 +201,8 @@ Le fichier historique `Dashboard.jsx` a été supprimé lors d'une passe précé
 - `PasswordInput.jsx`
 - `WorkspaceMiniGrid.jsx`
 - `espacepro.jsx`
+
+`Alert.jsx` est obligatoire pour les retours applicatifs. Les boutons d'action des modales doivent afficher une confirmation ou une erreur via `Alert`, avec fermeture automatique après 4 secondes quand `onClose` est fourni.
 
 ## Backend Actuel
 
@@ -300,7 +308,7 @@ Priorité 3 :
 
 ## Documentation Mise À Jour
 
-- `README.md` : routes supplier actuelles, limite d'upload à 12 fichiers, lien vers l'architecture MVC.
+- `README.md` : routes supplier actuelles, règles d'upload sans limite arbitraire côté interface, lien vers l'architecture MVC.
 - `frontend/docs/frontend-documentation.md` : chemins de pages en dossiers, retrait du catalogue supplier obsolète, repères CSS actualisés.
 - `docs/ARCHITECTURE_MVC_DATA_FLOW.md` : description détaillée du modèle MVC et des flux de données user/admin/supplier.
 - `frontend/docs/design-system.md` : règle shared design system, dark mode et alertes applicatives.

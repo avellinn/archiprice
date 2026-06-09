@@ -4,8 +4,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import DonutChartCard from '../../../components/DonutChart';
 import { Button, Icon, Text } from '../../../components/ui';
+import useAuth from '../../../context/useAuth';
+import { useAdminData } from '../../../services/adminData';
 import { getApiErrorMessage } from '../../../services/api';
 import { fetchSupplierWorkspace, subscribeSupplierWorkspaceChange } from '../../../services/supplier';
+
+const HIDDEN_SUPPLIER_DEMAND_ITEMS_KEY = 'archiprice:supplier-demand-hidden-items';
 
 const STATUS_COPY = {
   active: 'Actif',
@@ -39,21 +43,37 @@ function getDonutDisplayValue(value, total) {
   return value > 0 ? value : Math.max(total * 0.04, 0.08);
 }
 
-function buildMonthActivity(products = []) {
+function buildMonthActivity(items = []) {
   const monthFormatter = new Intl.DateTimeFormat('fr-FR', { month: 'short' });
-  const months = [...new Set(products
-    .map((product) => product.createdAt || product.updatedAt || product.submittedAt)
-    .map((value) => new Date(value))
-    .filter((date) => !Number.isNaN(date.getTime()))
-    .map((date) => monthFormatter.format(date).replace('.', '')))];
-
-  if (months.length > 0) return months.slice(-8).map((label) => ({ label }));
-
   return Array.from({ length: 8 }, (_, index) => {
     const date = new Date();
     date.setMonth(date.getMonth() - (7 - index));
-    return { label: monthFormatter.format(date).replace('.', '') };
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const monthItems = items.filter((item) => {
+      const itemDate = new Date(item.createdAt || item.updatedAt || item.submittedAt || item.date);
+      if (Number.isNaN(itemDate.getTime())) return false;
+      return itemDate.getFullYear() === date.getFullYear() && itemDate.getMonth() === date.getMonth();
+    });
+
+    return {
+      key: monthKey,
+      label: monthFormatter.format(date).replace('.', ''),
+      count: monthItems.length,
+    };
   });
+}
+
+function buildActivityPath(activity = []) {
+  const maxCount = Math.max(...activity.map((item) => item.count), 1);
+  const points = activity.map((item, index) => {
+    const x = 30 + ((364 / Math.max(activity.length - 1, 1)) * index);
+    const y = 162 - ((item.count / maxCount) * 124);
+    return { ...item, x: Number(x.toFixed(1)), y: Number(y.toFixed(1)) };
+  });
+  const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'}${point.x} ${point.y}`).join(' ');
+  const fillPath = `${linePath} L394 184 L30 184 Z`;
+
+  return { points, linePath, fillPath };
 }
 
 function normalizeStatus(value) {
@@ -64,8 +84,8 @@ function isPublished(product) {
   const publicationStatus = normalizeStatus(product.publicationStatus || product.statusPublication);
   const status = normalizeStatus(product.status);
 
-  return ['validé', 'valide', 'approved', 'published', 'publié', 'publie'].includes(publicationStatus)
-    || ['approved', 'published', 'publié', 'publie'].includes(status);
+  return ['validé', 'valide', 'validée', 'validee', 'approved', 'published', 'publié', 'publie'].includes(publicationStatus)
+    || ['approved', 'published', 'publié', 'publie', 'validé', 'valide'].includes(status);
 }
 
 function isPending(product) {
@@ -92,10 +112,130 @@ function getProductStatusLabel(product) {
   return STATUS_COPY[status] || product.status || product.availability || 'Brouillon';
 }
 
+function getEffectiveProductStatusLabel(product, adminProducts = []) {
+  const effectiveStatus = getEffectivePublicationStatus(product, adminProducts);
+  if (effectiveStatus) {
+    return getProductStatusLabel({ ...product, publicationStatus: effectiveStatus });
+  }
+
+  return getProductStatusLabel(product);
+}
+
+function getAdminProposalForProduct(product, adminProducts = []) {
+  return adminProducts.find((item) => (
+    String(item.sourceSupplierProductId || '') === String(product.id || product._id || '')
+    || String(item.id || '') === String(product.sourceAdminProductId || '')
+  ));
+}
+
+function getEffectivePublicationStatus(product, adminProducts = []) {
+  const adminProposal = getAdminProposalForProduct(product, adminProducts);
+  return adminProposal?.publicationStatus
+    || product.publicationStatus
+    || product.statusPublication
+    || product.status
+    || '';
+}
+
+function isPublishedForAdmin(product, adminProducts = []) {
+  return isPublished({
+    ...product,
+    publicationStatus: getEffectivePublicationStatus(product, adminProducts),
+  });
+}
+
+function isPendingForAdmin(product, adminProducts = []) {
+  return isPending({
+    ...product,
+    publicationStatus: getEffectivePublicationStatus(product, adminProducts),
+  });
+}
+
+function normalizeKey(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function getHiddenDemandItemsKey(user, supplierProfile) {
+  const supplierIdentity = supplierProfile?.id
+    || supplierProfile?._id
+    || user?.supplierId
+    || user?.id
+    || user?._id
+    || user?.email
+    || 'anonymous';
+
+  return `${HIDDEN_SUPPLIER_DEMAND_ITEMS_KEY}:${supplierIdentity}`;
+}
+
+function readHiddenDemandItems(storageKey) {
+  try {
+    const storedValue = window.localStorage.getItem(storageKey);
+    return storedValue ? JSON.parse(storedValue).map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+function isDemandForSupplier(notification, user, supplierProfile) {
+  const supplierIds = [
+    user?.supplierId,
+    user?.supplier?._id,
+    user?.supplier?.id,
+    supplierProfile?._id,
+    supplierProfile?.id,
+    user?.id,
+    user?._id,
+  ].filter(Boolean).map(String);
+
+  const supplierNames = [
+    supplierProfile?.companyName,
+    supplierProfile?.name,
+    supplierProfile?.shopLabel,
+    supplierProfile?.storeLabel,
+    user?.shopName,
+    user?.companyName,
+    user?.storeLabel,
+    user?.name,
+  ].map(normalizeKey).filter(Boolean);
+  const supplierContacts = [
+    supplierProfile?.email,
+    supplierProfile?.contact,
+    user?.email,
+    user?.supplier?.email,
+  ].map(normalizeKey).filter(Boolean);
+  const hasSupplierIdentity = supplierIds.length > 0 || supplierNames.length > 0 || supplierContacts.length > 0;
+
+  const notificationSupplierId = String(notification.supplierId || '');
+  const notificationSupplierName = normalizeKey(notification.supplierName);
+  const notificationSupplierContact = normalizeKey(notification.supplierContact);
+
+  if (!hasSupplierIdentity) return true;
+
+  return (
+    supplierIds.includes(notificationSupplierId)
+    || supplierNames.includes(notificationSupplierName)
+    || supplierContacts.includes(notificationSupplierContact)
+  );
+}
+
+function getSupplierDemandGroupId(notification) {
+  return [
+    notification.clientId,
+    notification.clientEmail,
+    notification.projectId,
+    notification.supplierId,
+    notification.supplierName,
+  ].map((value) => String(value || '').trim().toLowerCase()).filter(Boolean).join('|')
+    || String(notification.id || '');
+}
+
 export default function Analysedon() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [adminData] = useAdminData();
   const [workspace, setWorkspace] = useState(null);
+  const [hiddenDemandIds, setHiddenDemandIds] = useState([]);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -131,10 +271,24 @@ export default function Analysedon() {
     };
   }, []);
 
+  const supplierProfile = workspace?.supplier || null;
+  const hiddenDemandItemsKey = getHiddenDemandItemsKey(user, supplierProfile);
+
+  useEffect(() => {
+    setHiddenDemandIds(readHiddenDemandItems(hiddenDemandItemsKey));
+  }, [hiddenDemandItemsKey]);
+
   const products = useMemo(() => workspace?.products || [], [workspace]);
+  const adminProducts = useMemo(() => adminData.products || [], [adminData.products]);
+  const demands = useMemo(() => (
+    (adminData.supplierClientNotifications || [])
+      .filter((notification) => notification.type === 'Demande')
+      .filter((notification) => isDemandForSupplier(notification, user, supplierProfile))
+      .filter((notification) => !hiddenDemandIds.includes(getSupplierDemandGroupId(notification)))
+  ), [adminData.supplierClientNotifications, hiddenDemandIds, supplierProfile, user]);
   const stats = useMemo(() => {
-    const published = products.filter(isPublished).length;
-    const pending = products.filter(isPending).length;
+    const published = products.filter((product) => isPublishedForAdmin(product, adminProducts)).length;
+    const pending = products.filter((product) => isPendingForAdmin(product, adminProducts)).length;
     const active = products.filter(isActive).length;
 
     return {
@@ -143,7 +297,7 @@ export default function Analysedon() {
       published,
       pending,
     };
-  }, [products]);
+  }, [adminProducts, products]);
 
   const dashboardSearchTerm = searchParams.get('q')?.trim().toLowerCase() || '';
   const history = products
@@ -155,7 +309,8 @@ export default function Analysedon() {
       || String(product.publicationStatus || '').toLowerCase().includes(dashboardSearchTerm)
     ))
     .slice(0, 4);
-  const monthActivity = useMemo(() => buildMonthActivity(products), [products]);
+  const monthActivity = useMemo(() => buildMonthActivity(demands), [demands]);
+  const activityChart = useMemo(() => buildActivityPath(monthActivity), [monthActivity]);
   const repartitionData = [
     {
       name: 'Articles actifs',
@@ -246,9 +401,9 @@ export default function Analysedon() {
 
         <section className="dashboard-panel activity-panel">
           <div className="panel-heading">
-            <h1>Activité des articles</h1>
+            <h1>Activité des demandes</h1>
             <Text as="span" variant="bold" size="sm">
-              Publications
+              Demandes
             </Text>
           </div>
           <div className="line-chart" aria-label="Graphique d'activité fournisseur">
@@ -261,14 +416,15 @@ export default function Analysedon() {
               </defs>
               <path
                 className="chart-fill supplier-chart-fill"
-                d="M30 162 C55 78 86 120 112 118 S150 146 178 75 S225 116 252 58 S300 106 329 42 S376 104 394 18 L394 184 L30 184 Z"
+                d={activityChart.fillPath}
               />
               <path
                 className="chart-line"
-                d="M30 162 C55 78 86 120 112 118 S150 146 178 75 S225 116 252 58 S300 106 329 42 S376 104 394 18"
+                d={activityChart.linePath}
               />
-              <circle cx="112" cy="118" r="5" />
-              <circle cx="329" cy="42" r="5" />
+              {activityChart.points.map((point) => (
+                <circle key={point.key} cx={point.x} cy={point.y} r={point.count ? 5 : 3} />
+              ))}
             </svg>
             <div className="chart-axis">
               {monthActivity.map((item, index) => (
@@ -279,7 +435,7 @@ export default function Analysedon() {
             </div>
             <div className="chart-legend">
               
-              <Text as="span" variant="bold" size="sm"><i className="legend-orange" /> Publications</Text>
+              <Text as="span" variant="bold" size="sm"><i className="legend-orange" /> Demandes</Text>
             </div>
           </div>
         </section>
@@ -301,16 +457,21 @@ export default function Analysedon() {
             <ul className="history-list">
               {history.map((product, index) => (
                 <li key={`${product.id || product.name}-${index}`}>
-                  <span className={`history-icon history-icon-${index + 1}`} aria-hidden="true" />
-                  <div>
-                    <Text as="strong" variant="bold" size="sm">
-                      {product.name}
-                    </Text>
-                    <Text as="span" variant="bold" size="sm">
-                      {getProductStatusLabel(product)} ·{' '}
-                      {formatDate(product.updatedAt || product.createdAt)}
-                    </Text>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => navigate(product.id ? `/supplier/products/new?edit=${product.id}` : '/supplier/products')}
+                  >
+                    <span className={`history-icon history-icon-${index + 1}`} aria-hidden="true" />
+                    <div>
+                      <Text as="strong" variant="bold" size="sm">
+                        {product.name}
+                      </Text>
+                      <Text as="span" variant="bold" size="sm">
+                        {getEffectiveProductStatusLabel(product, adminProducts)} ·{' '}
+                        {formatDate(product.updatedAt || product.createdAt)}
+                      </Text>
+                    </div>
+                  </button>
                 </li>
               ))}
             </ul>

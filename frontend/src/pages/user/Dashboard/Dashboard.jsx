@@ -44,19 +44,36 @@ function getDonutDisplayValue(value, total) {
 
 function buildMonthActivity(items = []) {
   const monthFormatter = new Intl.DateTimeFormat('fr-FR', { month: 'short' });
-  const months = [...new Set(items
-    .map((item) => item.createdAt || item.updatedAt || item.date)
-    .map((value) => new Date(value))
-    .filter((date) => !Number.isNaN(date.getTime()))
-    .map((date) => monthFormatter.format(date).replace('.', '')))];
-
-  if (months.length > 0) return months.slice(-8).map((label) => ({ label }));
-
   return Array.from({ length: 8 }, (_, index) => {
     const date = new Date();
     date.setMonth(date.getMonth() - (7 - index));
-    return { label: monthFormatter.format(date).replace('.', '') };
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const monthItems = items.filter((item) => {
+      const itemDate = new Date(item.exportedAt || item.createdAt || item.updatedAt || item.date);
+      if (Number.isNaN(itemDate.getTime())) return false;
+      return itemDate.getFullYear() === date.getFullYear() && itemDate.getMonth() === date.getMonth();
+    });
+
+    return {
+      key: monthKey,
+      label: monthFormatter.format(date).replace('.', ''),
+      count: monthItems.length,
+      items: monthItems,
+    };
   });
+}
+
+function buildActivityPath(activity = []) {
+  const maxCount = Math.max(...activity.map((item) => item.count), 1);
+  const points = activity.map((item, index) => {
+    const x = 30 + ((364 / Math.max(activity.length - 1, 1)) * index);
+    const y = 162 - ((item.count / maxCount) * 124);
+    return { ...item, x: Number(x.toFixed(1)), y: Number(y.toFixed(1)) };
+  });
+  const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'}${point.x} ${point.y}`).join(' ');
+  const fillPath = `${linePath} L394 184 L30 184 Z`;
+
+  return { points, linePath, fillPath };
 }
 
 function getProjectExportedEstimateCount(project) {
@@ -103,8 +120,8 @@ export default function Dashboard() {
   useEffect(() => subscribeExportedDocumentsChange(setExportedDocuments), []);
 
   const stats = useMemo(() => {
-    const completed = projects.filter(isFinished).length;
-    const active = Math.max(projects.length - completed, 0);
+    const finishedProjects = projects.filter(isFinished).length;
+    const active = Math.max(projects.length - finishedProjects, 0);
     const processed = projects.filter((project) => project.status !== 'draft').length;
     const projectExportedEstimates = projects.reduce(
       (total, project) => total + getProjectExportedEstimateCount(project),
@@ -115,8 +132,8 @@ export default function Dashboard() {
     return {
       total: projects.length,
       active,
-      completed,
-      processed,
+      archived: exportedEstimates,
+      processed: Math.max(processed, exportedEstimates),
       exportedEstimates,
     };
   }, [exportedDocuments.length, projects]);
@@ -129,7 +146,8 @@ export default function Dashboard() {
       || String(project.status || '').toLowerCase().includes(dashboardSearchTerm)
     ))
     .slice(0, 4);
-  const monthActivity = buildMonthActivity([...projects, ...exportedDocuments]);
+  const monthActivity = buildMonthActivity(exportedDocuments);
+  const activityChart = buildActivityPath(monthActivity);
   const repartitionData = [
     {
       name: 'Projets en cours',
@@ -139,17 +157,18 @@ export default function Dashboard() {
       color: '#5877f7',
     },
     {
-      name: 'Projets terminés',
-      value: stats.completed,
-      chartValue: getDonutDisplayValue(stats.completed, stats.total),
-      percent: getPercent(stats.completed, stats.total),
+      name: 'Archives',
+      value: stats.archived,
+      chartValue: getDonutDisplayValue(stats.archived, Math.max(stats.total, stats.archived)),
+      percent: getPercent(stats.archived, Math.max(stats.total, stats.archived)),
       color: '#ffc865',
+      unit: 'archive',
     },
     {
       name: 'Projets traités',
       value: stats.processed,
-      chartValue: getDonutDisplayValue(stats.processed, stats.total),
-      percent: getPercent(stats.processed, stats.total),
+      chartValue: getDonutDisplayValue(stats.processed, Math.max(stats.total, stats.processed)),
+      percent: getPercent(stats.processed, Math.max(stats.total, stats.processed)),
       color: '#22c55e',
     },
     {
@@ -159,15 +178,17 @@ export default function Dashboard() {
       percent: stats.total ? 100 : 0,
       color: '#1d0870',
     },
-    {
-      name: 'Archives',
-      value: stats.exportedEstimates,
-      chartValue: stats.exportedEstimates,
-      percent: getPercent(stats.exportedEstimates, Math.max(stats.total, stats.exportedEstimates)),
-      color: '#c0893f',
-      unit: 'archive',
-    },
+    
   ];
+
+  function openProject(project) {
+    if (!project?.id) {
+      navigate('/workspace?mode=projects');
+      return;
+    }
+
+    navigate(`/workspace?projectId=${encodeURIComponent(project.id)}&mode=projects`);
+  }
 
   return (
     <div className="dashboard-page">
@@ -187,10 +208,10 @@ export default function Dashboard() {
 
           <article className="stat-card stat-yellow">
             <Text as="span" variant="bold" size="sm">
-              Projets terminés
+              Projets archives
             </Text>
             <Text as="strong" variant="medium" size="lg">
-              {String(stats.completed).padStart(2, '0')}
+              {String(stats.archived).padStart(2, '0')}
             </Text>
             <svg viewBox="0 0 78 34" aria-hidden="true">
               <path d="M4 24 C18 12 24 22 35 18 S50 29 74 7" />
@@ -225,9 +246,7 @@ export default function Dashboard() {
         <section className="dashboard-panel activity-panel">
           <div className="panel-heading">
             <h1>Activité des projets</h1>
-            <Text as="span" variant="bold" size="sm">
-              Simulation 
-            </Text>
+            
           </div>
           <div className="line-chart" aria-label="Graphique d'activité mensuelle">
             <svg viewBox="0 0 420 210" role="img">
@@ -239,25 +258,31 @@ export default function Dashboard() {
               </defs>
               <path
                 className="chart-fill"
-                d="M30 162 C55 78 86 120 112 118 S150 146 178 75 S225 116 252 58 S300 106 329 42 S376 104 394 18 L394 184 L30 184 Z"
+                d={activityChart.fillPath}
               />
               <path
                 className="chart-line"
-                d="M30 162 C55 78 86 120 112 118 S150 146 178 75 S225 116 252 58 S300 106 329 42 S376 104 394 18"
+                d={activityChart.linePath}
               />
-              <circle cx="112" cy="118" r="5" />
-              <circle cx="329" cy="42" r="5" />
+              {activityChart.points.map((point) => (
+                <circle
+                  key={point.key}
+                  cx={point.x}
+                  cy={point.y}
+                  r={point.count ? 5 : 3}
+                />
+              ))}
             </svg>
             <div className="chart-axis">
-              {monthActivity.map((item, index) => (
-                <Text as="span" size="sm" key={`${item.label}-${index}`}>
+              {monthActivity.map((item) => (
+                <Text as="span" size="sm" key={item.key}>
                   {item.label}
                 </Text>
               ))}
             </div>
             <div className="chart-legend">
               
-              <Text as="span" variant="bold" size="sm"><i className="legend-orange" /> simulation</Text>
+              <Text as="span" variant="bold" size="sm"><i className="legend-orange" /> simulations exportées</Text>
             </div>
           </div>
         </section>
@@ -275,16 +300,18 @@ export default function Dashboard() {
             <ul className="history-list">
               {history.map((project, index) => (
                 <li key={`${project.id || project.name}-${index}`}>
-                  <span className={`history-icon history-icon-${index + 1}`} aria-hidden="true" />
-                  <div>
-                    <Text as="strong" variant="bold" size="sm">
-                      {project.name}
-                    </Text>
-                    <Text as="span" variant="bold" size="sm">
-                      {STATUS_COPY[project.status] ?? project.status} ·{' '}
-                      {formatDate(project.updatedAt || project.createdAt)}
-                    </Text>
-                  </div>
+                  <button type="button" onClick={() => openProject(project)}>
+                    <span className={`history-icon history-icon-${index + 1}`} aria-hidden="true" />
+                    <div>
+                      <Text as="strong" variant="bold" size="sm">
+                        {project.name}
+                      </Text>
+                      <Text as="span" variant="bold" size="sm">
+                        {STATUS_COPY[project.status] ?? project.status} ·{' '}
+                        {formatDate(project.updatedAt || project.createdAt)}
+                      </Text>
+                    </div>
+                  </button>
                 </li>
               ))}
             </ul>
