@@ -39,6 +39,16 @@ export async function login({ email, password }) {
   return data;
 }
 
+export async function requestPasswordReset(email) {
+  const { data } = await api.post(API_ROUTES.auth.forgotPassword, { email });
+  return data;
+}
+
+export async function resetPassword({ token, password }) {
+  const { data } = await api.post(API_ROUTES.auth.resetPassword, { token, password });
+  return data;
+}
+
 export async function fetchMe() {
   const { data } = await api.get(API_ROUTES.auth.me);
   return data.user;

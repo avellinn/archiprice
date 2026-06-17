@@ -3,66 +3,37 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ProduitAjouteSup from '../../../components/ProduitAjouteSup';
 import { Button, Icon } from '../../../components/ui';
-import useAuth from '../../../context/useAuth';
 import { getApiErrorMessage } from '../../../services/api';
-import { createAdminId, useAdminData } from '../../../services/adminData';
+import { useAdminData } from '../../../services/adminData';
 import {
   deleteSupplierProduct,
   fetchSupplierProducts,
-  fetchSupplierProfile,
   subscribeSupplierWorkspaceChange,
+  updateSupplierProductPublication,
 } from '../../../services/supplier';
 
-function getProductImage(product) {
-  const image = Array.isArray(product.images) ? product.images[0] : product.image;
-
-  if (!image) return '';
-  if (typeof image === 'string') return image;
-  return image.secure_url || image.url || '';
-}
-
 export default function Produits() {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [adminData, setAdminData] = useAdminData();
+  const [, setAdminData] = useAdminData();
   const [products, setProducts] = useState([]);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [deletingProductId, setDeletingProductId] = useState('');
-  const [supplierProfile, setSupplierProfile] = useState(null);
-  const shopName = supplierProfile?.companyName
-    || supplierProfile?.shopLabel
-    || supplierProfile?.storeLabel
-    || supplierProfile?.label
-    || supplierProfile?.name
-    || user?.companyName
-    || user?.shopName
-    || user?.name
-    || user?.email
-    || '';
 
   function loadProducts() {
     let cancelled = false;
 
-    Promise.allSettled([
-      fetchSupplierProducts(),
-      fetchSupplierProfile(),
-    ])
-      .then(([productsResult, profileResult]) => {
+    fetchSupplierProducts()
+      .then((items) => {
         if (cancelled) return;
-
-        if (productsResult.status === 'fulfilled') {
-          setProducts(productsResult.value || []);
-          setError('');
-        } else {
-          setProducts([]);
-          setError(getApiErrorMessage(productsResult.reason, 'Impossible de charger les produits.'));
-        }
-
-        if (profileResult.status === 'fulfilled') {
-          setSupplierProfile(profileResult.value || null);
-        }
+        setProducts(items || []);
+        setError('');
+      })
+      .catch((apiError) => {
+        if (cancelled) return;
+        setProducts([]);
+        setError(getApiErrorMessage(apiError, 'Impossible de charger les produits.'));
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -91,59 +62,34 @@ export default function Produits() {
       || String(product.category || '').toLowerCase().includes(query)
     ))
   ), [products, query]);
-  const adminProductsBySupplierSource = useMemo(() => {
-    const entries = (adminData.products || [])
-      .filter((product) => product.sourceSupplierProductId)
-      .map((product) => [product.sourceSupplierProductId, product]);
+  const adminProductsBySupplierSource = useMemo(() => (
+    new Map(products.map((product) => [product.id, {
+      publicationStatus: product.publicationStatus || 'Brouillon',
+    }]))
+  ), [products]);
 
-    return new Map(entries);
-  }, [adminData.products]);
-
-  function publishProduct(product) {
-    setAdminData((currentData) => {
-      const existingProduct = (currentData.products || []).find((item) => item.sourceSupplierProductId === product.id);
-      const image = getProductImage(product);
-      const proposal = {
-        ...(existingProduct || {}),
-        id: existingProduct?.id || createAdminId('supplier-product'),
-        sourceSupplierProductId: product.id,
-        supplierUserId: product.supplierUserId,
-        name: product.name,
-        description: product.description,
-        price: product.unitPrice,
-        image,
-        images: product.images || [],
-        category: product.category,
-        room: product.room,
-        range: product.range,
-        supplier: product.supplierName || product.supplierLabel || product.supplier || shopName,
-        vat: '20%',
-        visual: 'sofa',
-        city: product.city || '',
-        neighborhood: product.neighborhood || '',
-        availability: product.availability || '',
-        publicationStatus: 'En attente',
-        publicationSource: 'supplier',
-        submittedAt: existingProduct?.submittedAt || new Date().toISOString(),
-      };
-
-      return {
-        ...currentData,
-        products: existingProduct
-          ? currentData.products.map((item) => (item.id === existingProduct.id ? proposal : item))
-          : [proposal, ...(currentData.products || [])],
-      };
-    });
+  async function publishProduct(product) {
+    try {
+      const updatedProduct = await updateSupplierProductPublication(product.id, 'En attente');
+      setProducts((currentProducts) => currentProducts.map((item) => (
+        item.id === product.id ? updatedProduct : item
+      )));
+      setError('');
+    } catch (apiError) {
+      setError(getApiErrorMessage(apiError, 'Impossible de publier le produit.'));
+    }
   }
 
-  function withdrawProduct(product) {
-    const publishedProduct = adminProductsBySupplierSource.get(product.id);
-    if (!publishedProduct) return;
-
-    setAdminData((currentData) => ({
-      ...currentData,
-      products: (currentData.products || []).filter((item) => item.id !== publishedProduct.id),
-    }));
+  async function withdrawProduct(product) {
+    try {
+      const updatedProduct = await updateSupplierProductPublication(product.id, 'Retiré');
+      setProducts((currentProducts) => currentProducts.map((item) => (
+        item.id === product.id ? updatedProduct : item
+      )));
+      setError('');
+    } catch (apiError) {
+      setError(getApiErrorMessage(apiError, 'Impossible de retirer le produit.'));
+    }
   }
 
   async function removeProduct(productId) {
@@ -153,10 +99,7 @@ export default function Produits() {
     try {
       await deleteSupplierProduct(productId);
       setProducts((currentProducts) => currentProducts.filter((product) => product.id !== productId));
-      setAdminData((currentData) => ({
-        ...currentData,
-        products: (currentData.products || []).filter((product) => product.sourceSupplierProductId !== productId),
-      }));
+      setAdminData((currentData) => ({ ...currentData, products: [] }));
     } catch (apiError) {
       setError(getApiErrorMessage(apiError, 'Impossible de supprimer le produit.'));
     } finally {

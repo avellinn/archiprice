@@ -1,11 +1,10 @@
 import './Utilisateurs.css';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Alert, Badge, Button, Icon, Table } from '../../../components/ui';
+import { Alert, Badge, Icon, Loader, Table } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
 import {
-  createAdminUser,
   deleteAdminUser,
   deleteAdminSupplier,
   fetchAdminSuppliers,
@@ -21,26 +20,40 @@ const ROLE_LABELS = {
   user: 'Utilisateur',
 };
 
-const EMPTY_USER = {
-  id: '',
-  name: '',
-  email: '',
-  phone: '',
-  role: 'user',
-  type: 'Architecte',
-  status: 'Actif',
-  simulations: 0,
-};
-
 function getUserRole(user) {
-  if (String(user.role || '').toLowerCase() === 'admin' || user.type === 'Admin') return 'admin';
-  if (String(user.role || '').toLowerCase() === 'supplier' || user.type === 'Fournisseur') return 'supplier';
+  const role = String(user.role || '').toLowerCase();
+  if (role === 'admin') return 'admin';
+  if (role === 'supplier') return 'supplier';
   return 'user';
 }
 
 function getSimulationCount(user) {
   if (getUserRole(user) === 'admin') return '-';
   return user.simulations || 0;
+}
+
+function normalizeStatusKey(status) {
+  return String(status || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function isBlockedStatus(status) {
+  return normalizeStatusKey(status) === 'bloque';
+}
+
+function isActiveStatus(status) {
+  return normalizeStatusKey(status) === 'actif';
+}
+
+function isInactiveStatus(status) {
+  return ['inactif', 'desactive', 'desactivee'].includes(normalizeStatusKey(status));
+}
+
+function isDeletedStatus(status) {
+  return normalizeStatusKey(status) === 'supprime';
 }
 
 function normalizeUserForWorkspace(user) {
@@ -102,11 +115,13 @@ function mergeUsersWithSuppliers(users = [], suppliers = []) {
       ));
 
       if (existingIndex >= 0) {
+        const existingUser = mergedUsers[existingIndex];
+        const existingRole = getUserRole(existingUser);
         mergedUsers[existingIndex] = {
-          ...mergedUsers[existingIndex],
+          ...existingUser,
           supplierId,
-          role: 'supplier',
-          type: 'Fournisseur',
+          role: existingRole,
+          type: existingRole === 'supplier' ? 'Fournisseur' : existingUser.type,
           status: supplier.status || mergedUsers[existingIndex].status || 'Actif',
           shopName: getSupplierName(supplier),
         };
@@ -126,11 +141,7 @@ export default function Utilisateurs() {
   const [suppliers, setSuppliers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter] = useState('Tous');
-  const [roleFilter, setRoleFilter] = useState('Tous');
   const [selectedUserId, setSelectedUserId] = useState('');
-  const [isCreatingUser, setIsCreatingUser] = useState(false);
   const [editForm, setEditForm] = useState({
     name: '',
     email: '',
@@ -170,13 +181,9 @@ export default function Utilisateurs() {
   }, [updateAdminData]);
 
   const users = useMemo(() => mergeUsersWithSuppliers(rawUsers, suppliers), [rawUsers, suppliers]);
-  const userRoles = useMemo(() => (
-    ['Tous', ...new Set(users.map((user) => getUserRole(user)))]
-  ), [users]);
-
   const filteredUsers = useMemo(() => {
     const headerSearchTerm = searchParams.get('q') || '';
-    const normalizedSearch = [searchTerm, headerSearchTerm].join(' ').trim().toLowerCase();
+    const normalizedSearch = headerSearchTerm.trim().toLowerCase();
 
     return users.filter((user) => {
       const role = getUserRole(user);
@@ -188,25 +195,15 @@ export default function Utilisateurs() {
         || String(user.supplier?.companyName || '').toLowerCase().includes(normalizedSearch)
         || String(user.type || '').toLowerCase().includes(normalizedSearch)
         || role.toLowerCase().includes(normalizedSearch);
-      const matchesType = typeFilter === 'Tous' || user.type === typeFilter;
-      const matchesRole = roleFilter === 'Tous' || role === roleFilter;
 
-      return matchesSearch && matchesType && matchesRole;
+      return matchesSearch;
     });
-  }, [roleFilter, searchParams, searchTerm, typeFilter, users]);
+  }, [searchParams, users]);
 
   const selectedUser = useMemo(() => (
     users.find((user) => user.id === selectedUserId) || null
   ), [selectedUserId, users]);
-  const modalUser = isCreatingUser ? {
-    ...EMPTY_USER,
-    name: editForm.name || 'Nouvel utilisateur',
-    email: editForm.email,
-    phone: editForm.phone,
-    role: editForm.role || 'user',
-    type: ROLE_LABELS[editForm.role] || 'Utilisateur',
-    status: editForm.status || 'Actif',
-  } : selectedUser;
+  const modalUser = selectedUser;
 
   async function updateUser(userId, patch) {
     const previousUsers = users;
@@ -300,45 +297,29 @@ export default function Utilisateurs() {
     }
   }
 
-  async function createUserFromForm() {
-    try {
-      const user = await createAdminUser({
-        name: editForm.name.trim(),
-        email: editForm.email.trim(),
-        phone: editForm.phone.trim(),
-        role: editForm.role || 'user',
-        type: editForm.role === 'admin' ? 'Admin' : 'Architecte',
-        status: editForm.status,
-      });
-      setRawUsers((currentUsers) => {
-        const nextRawUsers = [user, ...currentUsers];
-        const nextUsers = mergeUsersWithSuppliers(nextRawUsers, suppliers);
-        updateAdminData((currentData) => ({
-          ...currentData,
-          users: nextUsers.map(normalizeUserForWorkspace),
-        }));
-        return nextRawUsers;
-      });
-      setError('');
-      closeUserDetail();
-    } catch (apiError) {
-      setError(getApiErrorMessage(apiError, "La création de l'utilisateur a échoué."));
-    }
-  }
-
   async function deleteUser(userId) {
     const previousUsers = users;
     const previousRawUsers = rawUsers;
     const previousSuppliers = suppliers;
     const currentUser = users.find((user) => user.id === userId);
-    const nextRawUsers = rawUsers.filter((user) => user.id !== userId);
+    const nextRawUsers = rawUsers.map((user) => (
+      user.id === userId ? { ...user, status: 'Supprimé' } : user
+    ));
     const nextSuppliers = currentUser?.isSupplierMirror
-      ? suppliers.filter((supplier) => String(supplier.id || supplier._id) !== String(currentUser.supplierId))
-      : suppliers;
+      ? suppliers.map((supplier) => (
+        String(supplier.id || supplier._id) === String(currentUser.supplierId)
+          ? { ...supplier, status: 'Supprimé' }
+          : supplier
+      ))
+      : suppliers.map((supplier) => (
+        String(supplier.userId || supplier.user?._id || supplier.user || '') === String(userId)
+          ? { ...supplier, status: 'Supprimé' }
+          : supplier
+      ));
     const nextUsers = mergeUsersWithSuppliers(nextRawUsers, nextSuppliers);
     setRawUsers(nextRawUsers);
     setSuppliers(nextSuppliers);
-    if (selectedUserId === userId) closeUserDetail();
+    if (selectedUserId === userId) fillUserForm({ ...currentUser, status: 'Supprimé' });
     updateAdminData((currentData) => ({
       ...currentData,
       users: nextUsers.map(normalizeUserForWorkspace),
@@ -346,7 +327,7 @@ export default function Utilisateurs() {
     }));
 
     try {
-      if (currentUser?.isSupplierMirror && currentUser?.supplierId) {
+      if (currentUser?.isSupplierMirror && String(currentUser.id || '').startsWith('supplier-') && currentUser?.supplierId) {
         await deleteAdminSupplier(currentUser.supplierId);
       } else {
         await deleteAdminUser(userId);
@@ -363,6 +344,18 @@ export default function Utilisateurs() {
     }
   }
 
+  async function restoreUser(user) {
+    await updateUser(user.id, { status: 'Actif' });
+    if (user.supplierId) {
+      updateAdminSupplier(user.supplierId, { status: 'Actif' }).catch(() => {});
+      setSuppliers((currentSuppliers) => currentSuppliers.map((supplier) => (
+        String(supplier.id || supplier._id) === String(user.supplierId)
+          ? { ...supplier, status: 'Actif' }
+          : supplier
+      )));
+    }
+  }
+
   function fillUserForm(user) {
     setEditForm({
       name: user.name || '',
@@ -374,26 +367,12 @@ export default function Utilisateurs() {
   }
 
   function openUserDetail(user) {
-    setIsCreatingUser(false);
     setSelectedUserId(user.id);
     fillUserForm(user);
   }
 
-  function openCreateUser() {
-    setSelectedUserId('');
-    setIsCreatingUser(true);
-    setEditForm({
-      name: '',
-      email: '',
-      phone: '',
-      role: 'user',
-      status: 'Actif',
-    });
-  }
-
   function closeUserDetail() {
     setSelectedUserId('');
-    setIsCreatingUser(false);
     setEditForm({
       name: '',
       email: '',
@@ -410,18 +389,8 @@ export default function Utilisateurs() {
     }));
   }
 
-  function resetHeaderFilters() {
-    setSearchTerm('');
-    setRoleFilter('Tous');
-  }
-
   async function submitUserDetail(event) {
     event.preventDefault();
-
-    if (isCreatingUser) {
-      await createUserFromForm();
-      return;
-    }
 
     if (!selectedUser) return;
 
@@ -434,7 +403,7 @@ export default function Utilisateurs() {
   }
 
   function toggleUserStatus(user) {
-    const nextStatus = user.status === 'Actif' ? 'Inactif' : 'Actif';
+    const nextStatus = isActiveStatus(user.status) ? 'Inactif' : 'Actif';
     if (selectedUserId === user.id) {
       updateEditForm('status', nextStatus);
     }
@@ -448,8 +417,26 @@ export default function Utilisateurs() {
     updateUser(user.id, { status: 'Bloqué' });
   }
 
+  function unblockUser(user) {
+    if (selectedUserId === user.id) {
+      updateEditForm('status', 'Actif');
+    }
+    updateUser(user.id, { status: 'Actif' });
+  }
+
+  function activateUser(user) {
+    if (selectedUserId === user.id) {
+      updateEditForm('status', 'Actif');
+    }
+    updateUser(user.id, { status: 'Actif' });
+  }
+
   function renderUserActions(user) {
     const userName = user.name || user.email || 'Utilisateur';
+    const isActive = isActiveStatus(user.status);
+    const isInactive = isInactiveStatus(user.status);
+    const isBlocked = isBlockedStatus(user.status);
+    const isDeleted = isDeletedStatus(user.status);
 
     return (
       <span className="admin-users-management__actions">
@@ -464,40 +451,91 @@ export default function Utilisateurs() {
         >
           <Icon name="Edit" size="sm" />
         </button>
-        <button
-          type="button"
-          title={user.status === 'Actif' ? 'Désactiver' : 'Activer'}
-          aria-label={user.status === 'Actif' ? `Désactiver ${userName}` : `Activer ${userName}`}
-          onClick={(event) => {
-            event.stopPropagation();
-            toggleUserStatus(user);
-          }}
-        >
-          <Icon name="Visibility" size="sm" />
-        </button>
-        <button
-          type="button"
-          title="Bloquer"
-          aria-label={`Bloquer ${userName}`}
-          onClick={(event) => {
-            event.stopPropagation();
-            blockUser(user);
-          }}
-        >
-          <Icon name="VisibilityOff" size="sm" />
-        </button>
-        <button
-          type="button"
-          className="is-danger"
-          title="Supprimer"
-          aria-label={`Supprimer ${userName}`}
-          onClick={(event) => {
-            event.stopPropagation();
-            deleteUser(user.id);
-          }}
-        >
-          <Icon name="Delete" size="sm" />
-        </button>
+        {!isDeleted && (
+          <button
+            type="button"
+            title={isActive ? 'Désactiver' : 'Activer'}
+            aria-label={isActive ? `Désactiver ${userName}` : `Activer ${userName}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              toggleUserStatus(user);
+            }}
+          >
+            <Icon name="Visibility" size="sm" />
+          </button>
+        )}
+        {isInactive && (
+          <button
+            type="button"
+            className="is-activate"
+            title="Activer"
+            aria-label={`Activer ${userName}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              activateUser(user);
+            }}
+          >
+            <Icon name="CheckCircle" size="sm" />
+            <span className="visually-hidden">Activer</span>
+          </button>
+        )}
+        {!isDeleted && (
+          <button
+            type="button"
+            title="Bloquer"
+            aria-label={`Bloquer ${userName}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              blockUser(user);
+            }}
+          >
+            <Icon name="VisibilityOff" size="sm" />
+          </button>
+        )}
+        {isBlocked && (
+          <button
+            type="button"
+            className="is-unblock"
+            title="Débloquer"
+            aria-label={`Débloquer ${userName}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              unblockUser(user);
+            }}
+          >
+            <Icon name="CheckCircle" size="sm" />
+            <span className="visually-hidden">Débloquer</span>
+          </button>
+        )}
+        {isDeleted && (
+          <button
+            type="button"
+            className="is-restore"
+            title="Restaurer"
+            aria-label={`Restaurer ${userName}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              restoreUser(user);
+            }}
+          >
+            <Icon name="History" size="sm" />
+            <span className="visually-hidden">Restaurer</span>
+          </button>
+        )}
+        {!isDeleted && (
+          <button
+            type="button"
+            className="is-danger"
+            title="Supprimer"
+            aria-label={`Supprimer ${userName}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              deleteUser(user.id);
+            }}
+          >
+            <Icon name="Delete" size="sm" />
+          </button>
+        )}
       </span>
     );
   }
@@ -541,7 +579,7 @@ export default function Utilisateurs() {
       key: 'status',
       label: 'Statut',
       render: (status) => (
-        <Badge tone={status === 'Actif' ? 'success' : status === 'Bloqué' ? 'warning' : 'danger'}>
+        <Badge tone={isActiveStatus(status) ? 'success' : isBlockedStatus(status) ? 'warning' : 'danger'}>
           {status || 'Actif'}
         </Badge>
       ),
@@ -555,57 +593,30 @@ export default function Utilisateurs() {
 
   return (
     <div className="admin-users-management">
-      <header className="admin-users-management__header">
-        <label className="admin-users-management__search" aria-label="Rechercher un utilisateur">
-          <input
-            type="search"
-            value={searchTerm}
-            placeholder="Rechercher un utilisateur"
-            onChange={(event) => setSearchTerm(event.target.value)}
-          />
-          <Icon name="Search" size="sm" />
-        </label>
-
-        <label className="admin-users-management__filter">
-          <span>Rôle :</span>
-          <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)}>
-            {userRoles.map((role, index) => (
-              <option key={`${role}-${index}`} value={role}>
-                {role === 'Tous' ? 'Tous' : ROLE_LABELS[role] || role}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <Button type="button" variant="outline" onClick={resetHeaderFilters}>
-          Réinitialiser
-        </Button>
-
-        <Button type="button" icon={<Icon name="Add" size="sm" />} className="admin-products-add" onClick={openCreateUser}>
-          Ajouter un utilisateur
-        </Button>
-      </header>
-
       {error && (
         <Alert variant="danger" className="admin-users-management__alert" onClose={() => setError('')}>
           {error}
         </Alert>
       )}
 
-      <Table
-        className="admin-users-management__list"
-        columns={userColumns}
-        data={isLoading ? [] : filteredUsers}
-        getRowId={(user, index) => user.id || `${user.email || 'user'}-${index}`}
-        onRowClick={openUserDetail}
-        emptyLabel={isLoading ? 'Chargement des utilisateurs Archiprice...' : 'Aucun utilisateur trouvé.'}
-      />
+      {isLoading ? (
+        <Loader className="admin-users-management__loader"  />
+      ) : (
+        <Table
+          className="admin-users-management__list"
+          columns={userColumns}
+          data={filteredUsers}
+          getRowId={(user, index) => user.id || `${user.email || 'user'}-${index}`}
+          onRowClick={openUserDetail}
+          emptyLabel="Aucun utilisateur trouvé."
+        />
+      )}
 
       {modalUser && (
         <UtilisateurModal
           user={modalUser}
           form={editForm}
-          isCreating={isCreatingUser}
+          isCreating={false}
           onChange={updateEditForm}
           onClose={closeUserDetail}
           onSubmit={submitUserDetail}

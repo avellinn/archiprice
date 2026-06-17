@@ -10,8 +10,8 @@ import { useAdminData } from '../../../services/adminData';
 import { addExportedDocument } from '../../../services/exportedDocuments';
 import { createProduct, fetchProducts } from '../../../services/products';
 import { createProject, fetchProjects, updateProject } from '../../../services/projects';
-import Filterpanel from './Filterpanel';
-import SimulBudget from './simulBudget';
+import Filterpanel from '../../../components/Filterpanel';
+import SimulBudget from '../../../components/simulBudget';
 
 const VISUAL_TONES = {
   sofa: 'linen',

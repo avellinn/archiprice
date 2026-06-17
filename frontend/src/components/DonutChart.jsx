@@ -10,7 +10,7 @@ import './DonutChart.css';
 function CustomDonutTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
 
-  const { name, value, percent, color, isPlaceholder, unit = 'projet' } = payload[0].payload;
+  const { name, value, color, isPlaceholder, unit = 'projet' } = payload[0].payload;
 
   if (isPlaceholder) return null;
 
@@ -20,7 +20,6 @@ function CustomDonutTooltip({ active, payload }) {
       <div className="chart-tooltip__value" style={{ color }}>
         {value} {unit}{value > 1 ? 's' : ''}
       </div>
-      <div className="chart-tooltip__meta">{percent}% du total</div>
     </div>
   );
 }
@@ -75,7 +74,7 @@ export default function DonutChartCard({ title, data }) {
                 />
                 <span className="chart-legend__label">{item.name}</span>
                 <span className="chart-legend__value">
-                  {item.value} · {item.percent}%
+                  {item.value}
                 </span>
               </div>
             ))}

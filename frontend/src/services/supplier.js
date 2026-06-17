@@ -117,6 +117,12 @@ export async function deleteSupplierProduct(productId) {
   notifySupplierWorkspaceChange({ action: 'delete-product', productId });
 }
 
+export async function updateSupplierProductPublication(productId, publicationStatus) {
+  const { data } = await api.patch(API_ROUTES.supplier.productPublication(productId), { publicationStatus });
+  notifySupplierWorkspaceChange({ action: 'update-product-publication', productId, publicationStatus });
+  return data.product;
+}
+
 export async function deleteSupplierProductImage(productId, publicId) {
   const { data } = await api.delete(API_ROUTES.supplier.productImages(productId), {
     data: { publicId },

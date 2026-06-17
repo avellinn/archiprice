@@ -1,6 +1,6 @@
 # Audit Et Nettoyage Du Workspace
 
-Date : 2026-06-08
+Date : 2026-06-09
 
 ## Synthèse
 
@@ -31,7 +31,7 @@ Conclusion : le poids réel vient presque entièrement des dépendances locales.
 
 ## Nettoyage Effectué
 
-Dernière passe du 2026-06-08 :
+Dernière passe du 2026-06-10 :
 
 - suppression des artefacts générés avec `npm run clean` :
   - `frontend/dist` ;
@@ -46,6 +46,16 @@ Dernière passe du 2026-06-08 :
 - clarification du dark mode global et des variables `--app-*` ;
 - clarification de l'usage obligatoire de `Alert.jsx` pour les messages applicatifs et les actions de boutons dans les modales ;
 - documentation du canal realtime `/api/realtime`.
+- extraction de `.catalogue-product-main` vers `frontend/src/pages/user/Catalogue/catalgrid.jsx` et `catalgrid.css` ;
+- conservation de `ModalCreateProject.jsx` comme wrapper de compatibilité vers `Newproject.jsx` ;
+- ajout de l'option `Autre` au champ `Type de pièce` de la modale de création de projet ;
+- ajout de l'option `Autre` éditable aux champs option du formulaire admin article ;
+- retrait de la colonne `Statut` dans la page admin `Simulations` ;
+- suppression de `Logo.jsx` et `Logo.css` ; le logo est désormais rendu par import direct de `log.png` dans les layouts ;
+- dark mode du logo déplacé vers `Sidebar.css`, `Header.css` et `AuthLayout.css` ;
+- verrouillage de l'accès supplier : `role: "supplier"` plus profil `Supplier` valide, jamais `type` ou `category` seuls ;
+- restauration de la validation admin des produits supplier avant affichage dans le catalogue user ;
+- vérification des artefacts : aucun `dist`, cache Vite ou fichier temporaire persistant avant build ; après vérification, `npm run clean` supprime les artefacts générés.
 
 Le build frontend produit uniquement l'avertissement connu de chunk Vite supérieur à `500 kB`.
 
@@ -144,7 +154,6 @@ Toutes les pages admin sont regroupées dans `frontend/src/pages/admin/` :
 - `Articles/Articles.jsx`
 - `CategoriesFiltres/CategoriesFiltres.jsx`
 - `Fournisseurs/Fournisseurs.jsx`
-- `NouvellesDemandes/NouvellesDemandes.jsx`
 - `Utilisateurs/Utilisateurs.jsx`
 - `Simulations/Simulations.jsx`
 - `Support/Support.jsx`
@@ -174,7 +183,6 @@ Toutes les pages fournisseur sont regroupées dans `frontend/src/pages/supplier/
 - `Fichiers/Fichiers.jsx`
 - `Support/Support.jsx`
 - `Parametres/Parametres.jsx`
-- `Pending/Pending.jsx`
 
 Le fichier historique `Dashboard.jsx` a été supprimé lors d'une passe précédente : le routeur pointe directement vers `Analysedon/Analysedon.jsx`. La page catalogue supplier a aussi été retirée du routeur ; les produits fournisseur sont gérés via `Produits`, `AjouterProduit`, `MaBoutique` et `Fichiers`.
 
@@ -202,6 +210,8 @@ Les pages `Demande` et `Demandesup` gèrent les conversations user/boutique. Les
 - `WorkspaceMiniGrid.jsx`
 - `espacepro.jsx`
 
+Le composant `Logo.jsx` a été supprimé. Les layouts utilisent directement `frontend/src/assets/images/log.png`.
+
 `Alert.jsx` est obligatoire pour les retours applicatifs. Les boutons d'action des modales doivent afficher une confirmation ou une erreur via `Alert`, avec fermeture automatique après 4 secondes quand `onClose` est fourni.
 
 ## Backend Actuel
@@ -224,9 +234,6 @@ Routes admin protégées par `protect` + `requireAdmin` :
 - `GET /api/admin/users/:id`
 - `PUT /api/admin/users/:id/role`
 - `GET /api/admin/suppliers`
-- `GET /api/admin/supplier-requests`
-- `POST /api/admin/supplier-requests/:id/approve`
-- `POST /api/admin/supplier-requests/:id/reject`
 - `GET /api/supplier/me`
 - `PUT /api/supplier/me`
 - `GET /api/supplier/workspace`

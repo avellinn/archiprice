@@ -1,0 +1,314 @@
+.categori {
+  position: fixed;
+  width: 100%;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  
+}
+
+.categori__track {
+  width: 100%;
+  min-width: 10%;
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  gap: clamp(0.65rem, 1.8vw, 1.35rem);
+  padding: 0.6rem 2rem 0.75rem;
+  animation: categori-slide 0.48s ease both;
+}
+
+.categori__item {
+  flex: 0 0 108px;
+  display: grid;
+  justify-items: center;
+  gap: 0.9rem;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: #030712;
+  cursor: pointer;
+  font: inherit;
+  text-align: center;
+}
+
+.categori__item.is-active .categori__thumb {
+  box-shadow: 0 0 0 3px #ff9800;
+}
+
+.categori__thumb {
+  position: relative;
+  width: 108px;
+  height: 108px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #e9e4dc;
+}
+
+.categori__thumb--has-image {
+  background: #e9e4dc;
+}
+
+.categori__thumb--has-image::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 50% 42%, rgb(255 255 255 / 0.08), rgb(0 0 0 / 0.04));
+  content: "";
+  pointer-events: none;
+}
+
+.categori__thumb img {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  padding: 0;
+}
+
+.categori__visual {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  display: block;
+}
+
+.categori__visual span,
+.categori__visual i {
+  position: absolute;
+  display: block;
+  content: "";
+}
+
+.categori__label {
+  max-width: 116px;
+  color: #000;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+@keyframes categori-slide {
+  from {
+    transform: translateX(7.5rem);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+.categori__visual--cuisine span {
+  left: 4px;
+  bottom: 16px;
+  width: 66px;
+  height: 32px;
+  border: 2px solid #9aa0a6;
+  background:
+    linear-gradient(90deg, #bec3c8 0 55%, #1d2329 55% 59%, #e4e7ea 59%),
+    linear-gradient(#aeb4ba, #d6dadd);
+  box-shadow: inset 0 -8px 0 #a8afb5;
+}
+
+.categori__visual--cuisine i {
+  left: 12px;
+  top: 22px;
+  width: 3px;
+  height: 14px;
+  background: #8c9298;
+  box-shadow: 40px 18px 0 #777d84;
+}
+
+.categori__visual--eclairage span {
+  left: 24px;
+  top: 10px;
+  width: 32px;
+  height: 26px;
+  border-radius: 999px 999px 3px 3px;
+  background: radial-gradient(circle at 50% 10%, #f7e4b0, #b89245 72%);
+}
+
+.categori__visual--eclairage i {
+  left: 34px;
+  top: 34px;
+  width: 14px;
+  height: 34px;
+  background: linear-gradient(90deg, #e0c17d, #87662e);
+  box-shadow: 0 33px 0 6px #8b6a35;
+}
+
+.categori__visual--outdoor span {
+  left: 18px;
+  top: 10px;
+  width: 40px;
+  height: 44px;
+  border-radius: 46% 46% 35% 35%;
+  background: repeating-linear-gradient(90deg, #c29656 0 3px, #302921 3px 5px);
+}
+
+.categori__visual--outdoor i {
+  left: 27px;
+  top: 52px;
+  width: 24px;
+  height: 18px;
+  border-right: 3px solid #9f743a;
+  border-left: 3px solid #9f743a;
+  transform: perspective(20px) rotateX(18deg);
+}
+
+.categori__visual--bureau span {
+  left: 19px;
+  top: 8px;
+  width: 42px;
+  height: 42px;
+  border-radius: 18px;
+  background: linear-gradient(#2f7da8, #17506e);
+}
+
+.categori__visual--bureau i {
+  left: 18px;
+  top: 45px;
+  width: 42px;
+  height: 20px;
+  border-radius: 50% 50% 20% 20%;
+  background: #1e5978;
+  box-shadow: 18px 19px 0 -7px #1f2937, -18px 19px 0 -7px #1f2937;
+}
+
+.categori__visual--collectivites span {
+  left: 8px;
+  top: 36px;
+  width: 60px;
+  height: 10px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #8b2f5f, #c52458);
+  box-shadow: 0 13px 0 #d7b27a;
+}
+
+.categori__visual--collectivites i {
+  left: 14px;
+  top: 47px;
+  width: 4px;
+  height: 22px;
+  background: #a87747;
+  box-shadow: 42px 0 0 #a87747;
+}
+
+.categori__visual--bien-etre span {
+  left: 6px;
+  top: 24px;
+  width: 64px;
+  height: 34px;
+  border-radius: 4px 4px 20px 20px;
+  background: linear-gradient(#e5f3f9 0 22%, #85634e 22%);
+  box-shadow: inset 0 5px 0 #cfe9f2;
+}
+
+.categori__visual--bien-etre i {
+  left: 12px;
+  top: 20px;
+  width: 52px;
+  height: 8px;
+  border-radius: 999px;
+  background: #cfe8ef;
+}
+
+.categori__visual--decor span {
+  left: 15px;
+  top: 13px;
+  width: 43px;
+  height: 43px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 48%, #113b55 0 48%, transparent 50%), #e6d6ca;
+  border: 2px solid #6a3f32;
+}
+
+.categori__visual--decor i {
+  left: 25px;
+  top: 29px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid #936a53;
+  background: rgb(230 214 202 / 0.55);
+}
+
+.categori__visual--finitions span {
+  inset: -8px;
+  background:
+    linear-gradient(90deg, transparent 0 61%, #72a273 61% 65%, transparent 65%),
+    linear-gradient(0deg, transparent 0 35%, #d9b8ac 35% 38%, transparent 38%),
+    repeating-linear-gradient(90deg, #eff0ed 0 14px, #dfe2dd 14px 16px);
+  filter: blur(0.1px);
+}
+
+.categori__visual--batiment span {
+  left: 14px;
+  top: 20px;
+  width: 48px;
+  height: 30px;
+  border: 3px solid #1f2933;
+  background: linear-gradient(135deg, #f4fbff 0 45%, #b7c2c8 45% 52%, #ffffff 52%);
+  transform: skew(-18deg) rotate(-12deg);
+  box-shadow: 4px 5px 0 #9aa4aa;
+}
+
+.categori__visual--batiment i {
+  left: 25px;
+  top: 23px;
+  width: 3px;
+  height: 28px;
+  background: #5a666d;
+  transform: rotate(21deg);
+}
+
+.categori__visual--lifestyle span {
+  left: 9px;
+  top: 18px;
+  width: 58px;
+  height: 42px;
+  border: 3px solid #916846;
+  background: #efe2d3;
+  box-shadow: inset 0 0 0 5px #d7b99a;
+}
+
+.categori__visual--lifestyle i {
+  left: 20px;
+  top: 29px;
+  width: 16px;
+  height: 16px;
+  border: 3px solid #222;
+  border-radius: 50%;
+  box-shadow: 24px 0 0 -1px #222;
+}
+
+@media (max-width: 760px) {
+  .categori {
+    min-height: 144px;
+  }
+
+  .categori__track {
+    justify-content: flex-start;
+    gap: 0.85rem;
+    padding-inline: 1.6rem;
+  }
+
+  .categori__item {
+    flex-basis: 96px;
+  }
+
+  .categori__thumb {
+    width: 92px;
+    height: 92px;
+  }
+
+  .categori__visual {
+    transform: scale(0.86);
+  }
+}

@@ -1,41 +1,71 @@
 .app-logo {
   display: inline-flex;
   align-items: center;
-  gap: 0.65rem;
-  min-width: 0;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
 }
 
 .app-logo__image {
   display: block;
-  width: 100%;
-  height: 100%;
+  width: auto;
+  height: auto;
   object-fit: contain;
 }
 
+.app-logo__text {
+  color: currentColor;
+  font-family: var(--font-heading, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+  font-weight: 800;
+  letter-spacing: 0;
+}
 
+.app-logo--sidebar {
+  min-height: 44px;
+  padding: 0.18rem 0.25rem;
+  border-radius: 8px;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.app-logo--sidebar .app-logo__image {
+  max-width: 136px;
+}
 
 .app-logo--auth {
-  width: 2000px;
-  height: 2000px;
+  width: 86px;
+  height: 86px;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgb(15 23 42 / 0.08);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.app-logo--header {
-  width: 2000px;
-  height: 2000px;
+.app-logo--auth .app-logo__image {
+  max-width: 70px;
 }
 
-.app-logo--header .app-logo__image {
+.app-logo--public {
+  gap: 0.65rem;
+  color: inherit;
+}
+
+.app-logo--public .app-logo__image {
   width: 56px;
   height: 56px;
 }
 
-.app-logo--sidebar {
-  width: 150px;
-  height: 56px;
+.app-logo--public .app-logo__text {
+  font-size: 1rem;
 }
 
-.dashboard-shell.is-theme-dark .app-logo--sidebar .app-logo__image {
-  padding: 0.25rem 0.35rem;
-  border-radius: 8px;
+.dashboard-shell.is-theme-dark .app-logo--sidebar,
+.dashboard-shell.is-theme-dark .app-logo--auth,
+body.theme-dark .app-logo--auth {
   background: #ffffff;
+  box-shadow: 0 12px 28px rgb(15 23 42 / 0.22);
+}
+
+.dashboard-shell.is-theme-dark .sidebar__logo-link .app-logo--sidebar {
+  background: transparent;
+  box-shadow: none;
 }

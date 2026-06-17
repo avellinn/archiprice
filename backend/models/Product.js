@@ -99,6 +99,21 @@ const productSchema = new mongoose.Schema(
       type: [imageSchema],
       default: [],
     },
+    publicationStatus: {
+      type: String,
+      enum: ['Brouillon', 'En attente', 'Validé', 'Retiré', 'Refusé'],
+      default: 'Brouillon',
+      index: true,
+    },
+    submittedAt: {
+      type: Date,
+    },
+    approvedAt: {
+      type: Date,
+    },
+    withdrawnAt: {
+      type: Date,
+    },
   },
   { timestamps: true },
 );

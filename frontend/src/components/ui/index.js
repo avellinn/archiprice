@@ -5,6 +5,7 @@ export { default as Card } from './Card';
 export { default as DataTable } from './DataTable';
 export { default as EmptyState } from './EmptyState';
 export { default as Icon } from './Icon';
+export { default as Loader } from './loader';
 export { default as Pagination } from './Pagination';
 export { default as ServerError } from './ServerError';
 export { default as Table } from './Table';

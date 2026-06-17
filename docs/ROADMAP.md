@@ -31,7 +31,7 @@ ArchiPrice dispose maintenant :
 | 8 | Rôle admin + routes admin | Terminé / itératif |
 | 9 | Design system partagé user/admin/supplier | Terminé / itératif |
 | 10 | Pages admin métier complètes | En cours avancé |
-| 11 | Compte supplier contrôlé par validation admin | En cours avancé |
+| 11 | Compte supplier direct avec boutique synchronisée | En cours avancé |
 | 12 | Synchronisation realtime entre rôles | En cours |
 
 ## Interface Utilisateur
@@ -68,7 +68,7 @@ Routes en place :
 - `/admin/catalogue/products`
 - `/admin/catalogue/filters`
 - `/admin/suppliers`
-- `/admin/suppliers/requests`
+- `/admin/suppliers/requests` → redirection héritée vers `/admin/suppliers`
 - `/admin/users`
 - `/admin/simulations`
 - `/admin/support`
@@ -117,11 +117,9 @@ Routes en place :
 - `/supplier/clients`
 - `/supplier/content/files`
 - `/supplier/settings`
-- `/supplier/pending`
-
 Points clés :
 
-- accès supplier après validation admin ;
+- accès supplier direct après inscription ;
 - création/publication de produits avec upload Cloudinary ;
 - produits visibles user uniquement après validation admin ;
 - boutique dynamique ;
@@ -147,9 +145,6 @@ Routes admin en place :
 - `DELETE /api/admin/users/:id`
 - `PUT /api/admin/users/:id/role`
 - `GET/POST/PUT/DELETE /api/admin/suppliers`
-- `GET /api/admin/supplier-requests`
-- `POST /api/admin/supplier-requests/:id/approve`
-- `POST /api/admin/supplier-requests/:id/reject`
 - `GET/POST/PATCH /api/admin/simulations`
 - `GET/POST/PATCH /api/admin/support-items`
 

@@ -125,11 +125,7 @@ export async function deleteProduct(projectId, productId) {
     return deleteLocalProduct();
   }
 
-  try {
-    const { data } = await api.delete(API_ROUTES.products.detail(projectId, productId));
-    deleteLocalProduct();
-    return data;
-  } catch {
-    return deleteLocalProduct();
-  }
+  const { data } = await api.delete(API_ROUTES.products.detail(projectId, productId));
+  deleteLocalProduct();
+  return data;
 }

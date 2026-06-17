@@ -5,15 +5,15 @@ import Product from '../models/Product.js';
 import Project from '../models/Project.js';
 import Simulation from '../models/Simulation.js';
 import Supplier from '../models/Supplier.js';
-import SupplierRequest from '../models/SupplierRequest.js';
 import SupportItem from '../models/SupportItem.js';
 import User from '../models/User.js';
+import { deleteProductImage } from '../services/cloudinaryImageService.js';
 import { publishCrudEvent } from '../services/realtimeService.js';
 
 const router = express.Router();
 
 const USER_ROLES = ['user', 'admin', 'supplier'];
-const ADMIN_MANAGED_USER_ROLES = ['user', 'admin'];
+const ADMIN_MANAGED_USER_ROLES = USER_ROLES;
 
 function normalizeRole(role) {
   const normalizedRole = String(role || '').toLowerCase();
@@ -22,7 +22,6 @@ function normalizeRole(role) {
 
 function roleFromType(type) {
   if (type === 'Admin') return 'admin';
-  if (type === 'Fournisseur') return 'supplier';
   return 'user';
 }
 
@@ -102,14 +101,6 @@ function formatProjectAsSimulation(project) {
   };
 }
 
-function formatSupplierRequest(request) {
-  const plain = request.toObject ? request.toObject() : request;
-  return {
-    ...plain,
-    id: String(plain._id),
-  };
-}
-
 function formatAdminSupplier(supplier, productCount) {
   const plain = supplier.toObject ? supplier.toObject() : supplier;
   const user = plain.user && typeof plain.user === 'object' ? plain.user : null;
@@ -145,6 +136,7 @@ async function ensureSupplierProfile(user) {
     supplier.user = supplier.user || user._id;
     supplier.email = supplier.email || email;
     supplier.name = supplier.name || user.name || email;
+    if (user.status === 'Actif' && supplier.status === 'Supprimé') supplier.status = 'Actif';
     return supplier.save();
   }
 
@@ -154,6 +146,90 @@ async function ensureSupplierProfile(user) {
     email,
     contact: email,
   });
+}
+
+async function deleteProductsWithImages(filter) {
+  const products = await Product.find(filter);
+  const productIds = products.map((product) => product._id);
+  const publicIds = products
+    .flatMap((product) => product.images || [])
+    .map((image) => image.public_id)
+    .filter(Boolean);
+
+  await Promise.allSettled(publicIds.map((publicId) => deleteProductImage(publicId)));
+  if (productIds.length > 0) {
+    await Product.deleteMany({ _id: { $in: productIds } });
+  }
+}
+
+function getProductImage(product) {
+  const image = (product.images || [])[0];
+  return image?.secure_url || '';
+}
+
+function formatAdminProduct(product) {
+  const plain = product.toObject ? product.toObject() : product;
+  const supplier = plain.supplier && typeof plain.supplier === 'object' ? plain.supplier : null;
+  const supplierUser = plain.supplierUser && typeof plain.supplierUser === 'object' ? plain.supplierUser : null;
+  const supplierName = supplier?.companyName || supplier?.name || supplierUser?.name || supplierUser?.email || 'Fournisseur';
+
+  return {
+    id: String(plain._id),
+    name: plain.name,
+    description: plain.description || '',
+    category: plain.category || '',
+    room: plain.room || '',
+    range: plain.range || '',
+    availability: plain.availability || '',
+    city: plain.city || supplier?.city || supplier?.region || '',
+    neighborhood: plain.neighborhood || supplier?.neighborhood || '',
+    unit: plain.unit || 'u',
+    unitPrice: plain.unitPrice || 0,
+    price: plain.unitPrice || 0,
+    supplierId: supplier?._id ? String(supplier._id) : String(plain.supplier || ''),
+    supplierUserId: supplierUser?._id ? String(supplierUser._id) : String(plain.supplierUser || ''),
+    supplier: supplierName,
+    supplierName,
+    supplierStatus: supplier?.status || supplierUser?.status || 'Actif',
+    image: getProductImage(plain),
+    images: plain.images || [],
+    publicationStatus: plain.publicationStatus || 'Brouillon',
+    submittedAt: plain.submittedAt,
+    approvedAt: plain.approvedAt,
+    withdrawnAt: plain.withdrawnAt,
+    createdAt: plain.createdAt,
+    updatedAt: plain.updatedAt,
+  };
+}
+
+async function deleteUserCascade(user) {
+  const suppliers = await Supplier.find({
+    $or: [
+      { user: user._id },
+      ...(user.email ? [{ email: user.email }] : []),
+    ],
+  });
+  const supplierIds = suppliers.map((supplier) => supplier._id);
+  const projects = await Project.find({ user: user._id }).select('_id');
+  const projectIds = projects.map((project) => project._id);
+
+  await deleteProductsWithImages({
+    $or: [
+      { supplierUser: user._id },
+      ...(supplierIds.length ? [{ supplier: { $in: supplierIds } }] : []),
+      ...(projectIds.length ? [{ project: { $in: projectIds } }] : []),
+    ],
+  });
+  await Project.deleteMany({ user: user._id });
+  await Supplier.deleteMany({ _id: { $in: supplierIds } });
+  await SupportItem.deleteMany({
+    $or: [
+      { userId: user._id },
+      ...(user.email ? [{ email: user.email }] : []),
+    ],
+  });
+  if (user.email) await Simulation.deleteMany({ email: user.email });
+  await User.deleteOne({ _id: user._id });
 }
 
 router.use(requireDb);
@@ -189,10 +265,6 @@ router.post('/users', async (req, res) => {
 
   if (requestedRole !== undefined && !ADMIN_MANAGED_USER_ROLES.includes(String(requestedRole).toLowerCase())) {
     return res.status(400).json({ error: 'Rôle invalide' });
-  }
-
-  if (type === 'Fournisseur') {
-    return res.status(400).json({ error: 'Le rôle supplier nécessite une demande fournisseur validée' });
   }
 
   try {
@@ -268,13 +340,6 @@ router.patch('/users/:id', async (req, res) => {
 
   if (patch.category && !patch.type) patch.type = patch.category;
 
-  if (patch.type) {
-    if (patch.type === 'Fournisseur') {
-      return res.status(400).json({ error: 'Le rôle supplier nécessite une demande fournisseur validée' });
-    }
-    patch.role = roleFromType(patch.type);
-  }
-
   if (req.body.role !== undefined) {
     const requestedRole = String(req.body.role || '').toLowerCase();
     if (!ADMIN_MANAGED_USER_ROLES.includes(requestedRole)) {
@@ -303,9 +368,11 @@ router.patch('/users/:id', async (req, res) => {
 
 router.delete('/users/:id', async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
-    await Supplier.deleteOne({ user: user._id });
+    user.status = 'Supprimé';
+    await user.save();
+    await Supplier.updateMany({ user: user._id }, { status: 'Supprimé' });
     publishCrudEvent('users', 'deleted', { userId: String(user._id), role: user.role }, {
       roles: ['admin'],
       userIds: [user._id],
@@ -314,107 +381,6 @@ router.delete('/users/:id', async (req, res) => {
   } catch (error) {
     return res.status(500).json({ error: 'Erreur serveur' });
   }
-});
-
-router.get('/supplier-requests', async (_req, res) => {
-  const requests = await SupplierRequest.find().sort({ createdAt: -1 });
-  res.json({ requests: requests.map(formatSupplierRequest) });
-});
-
-router.post('/supplier-requests/:id/approve', async (req, res) => {
-  const supplierRequest = await SupplierRequest.findById(req.params.id);
-  if (!supplierRequest) return res.status(404).json({ error: 'Demande fournisseur introuvable' });
-  if (supplierRequest.status !== 'pending') {
-    return res.status(400).json({ error: 'Cette demande a déjà été traitée' });
-  }
-
-  const user = await User.findById(supplierRequest.user);
-  if (!user) return res.status(404).json({ error: 'Utilisateur lié introuvable' });
-
-  user.role = 'supplier';
-  user.type = 'Fournisseur';
-  user.category = user.category || supplierRequest.categories?.[0] || 'Fournisseur';
-  user.status = 'Actif';
-  await user.save();
-
-  let supplier = await Supplier.findOne({
-    $or: [
-      { user: user._id },
-      { email: supplierRequest.email },
-    ],
-  });
-
-  if (supplier) {
-    supplier.user = user._id;
-    supplier.name = supplierRequest.companyName;
-    supplier.companyName = supplierRequest.companyName;
-    supplier.email = supplierRequest.email;
-    supplier.phone = supplierRequest.phone;
-    supplier.contact = supplierRequest.phone || supplierRequest.email;
-    supplier.categories = supplierRequest.categories;
-    supplier.status = 'Actif';
-    supplier.approvedBy = req.user._id;
-    supplier.approvedAt = new Date();
-    await supplier.save();
-  } else {
-    supplier = await Supplier.create({
-      user: user._id,
-      name: supplierRequest.companyName,
-      companyName: supplierRequest.companyName,
-      email: supplierRequest.email,
-      phone: supplierRequest.phone,
-      contact: supplierRequest.phone || supplierRequest.email,
-      categories: supplierRequest.categories,
-      status: 'Actif',
-      approvedBy: req.user._id,
-      approvedAt: new Date(),
-    });
-  }
-
-  supplierRequest.status = 'approved';
-  supplierRequest.reviewedBy = req.user._id;
-  supplierRequest.reviewedAt = new Date();
-  supplierRequest.supplier = supplier._id;
-  await supplierRequest.save();
-
-  publishCrudEvent('supplier-requests', 'approved', {
-    requestId: String(supplierRequest._id),
-    supplierId: String(supplier._id),
-    userId: String(user._id),
-  }, {
-    roles: ['admin'],
-    userIds: [user._id],
-  });
-
-  return res.json({
-    request: formatSupplierRequest(supplierRequest),
-    user: formatAdminUser(user),
-    supplier: formatDocument(supplier),
-  });
-});
-
-router.post('/supplier-requests/:id/reject', async (req, res) => {
-  const supplierRequest = await SupplierRequest.findById(req.params.id);
-  if (!supplierRequest) return res.status(404).json({ error: 'Demande fournisseur introuvable' });
-  if (supplierRequest.status !== 'pending') {
-    return res.status(400).json({ error: 'Cette demande a déjà été traitée' });
-  }
-
-  supplierRequest.status = 'rejected';
-  supplierRequest.reviewedBy = req.user._id;
-  supplierRequest.reviewedAt = new Date();
-  supplierRequest.rejectionReason = req.body.reason?.trim() || undefined;
-  await supplierRequest.save();
-
-  publishCrudEvent('supplier-requests', 'rejected', {
-    requestId: String(supplierRequest._id),
-    userId: String(supplierRequest.user || ''),
-  }, {
-    roles: ['admin'],
-    userIds: [supplierRequest.user].filter(Boolean),
-  });
-
-  return res.json({ request: formatSupplierRequest(supplierRequest) });
 });
 
 router.get('/suppliers', async (_req, res) => {
@@ -461,19 +427,89 @@ router.put('/suppliers/:id', async (req, res) => {
 });
 
 router.delete('/suppliers/:id', async (req, res) => {
-  const supplier = await Supplier.findByIdAndUpdate(req.params.id, { status: 'Supprimé' }, {
-    new: true,
-    runValidators: true,
-  });
+  const supplier = await Supplier.findById(req.params.id);
   if (!supplier) return res.status(404).json({ error: 'Fournisseur non trouvé' });
-  if (supplier.user) {
-    await User.findByIdAndUpdate(supplier.user, { status: 'Bloqué' });
+
+  const linkedUser = supplier.user ? await User.findById(supplier.user) : null;
+  if (linkedUser) {
+    await deleteUserCascade(linkedUser);
+  } else {
+    await deleteProductsWithImages({ supplier: supplier._id });
+    await Supplier.deleteOne({ _id: supplier._id });
   }
+
   publishCrudEvent('suppliers', 'deleted', { supplierId: String(supplier._id) }, {
     roles: ['admin', 'supplier'],
     userIds: [supplier.user].filter(Boolean),
   });
-  return res.json({ message: 'Fournisseur masqué', supplier: formatAdminSupplier(supplier) });
+  return res.json({ message: 'Fournisseur supprimé', supplier: formatAdminSupplier(supplier) });
+});
+
+router.get('/products', async (_req, res) => {
+  const products = await Product.find({
+    supplier: { $exists: true, $ne: null },
+    publicationStatus: { $in: ['En attente', 'Validé', 'Retiré', 'Refusé'] },
+  })
+    .populate('supplier', 'name companyName email city region neighborhood status')
+    .populate('supplierUser', 'name email status')
+    .sort({ updatedAt: -1 });
+
+  return res.json({ products: products.map(formatAdminProduct) });
+});
+
+router.patch('/products/:id', async (req, res) => {
+  const allowedStatuses = ['Brouillon', 'En attente', 'Validé', 'Retiré', 'Refusé'];
+  const patch = {};
+
+  if (req.body.publicationStatus !== undefined) {
+    const nextStatus = String(req.body.publicationStatus || '').trim();
+    if (!allowedStatuses.includes(nextStatus)) {
+      return res.status(400).json({ error: 'Statut de publication invalide' });
+    }
+    patch.publicationStatus = nextStatus;
+    if (nextStatus === 'Validé') patch.approvedAt = new Date();
+    if (nextStatus === 'Retiré') patch.withdrawnAt = new Date();
+    if (nextStatus === 'En attente') patch.submittedAt = new Date();
+  }
+
+  const product = await Product.findByIdAndUpdate(req.params.id, patch, {
+    new: true,
+    runValidators: true,
+  })
+    .populate('supplier', 'name companyName email city region neighborhood status')
+    .populate('supplierUser', 'name email status');
+
+  if (!product) return res.status(404).json({ error: 'Article non trouvé' });
+
+  publishCrudEvent('admin-products', 'updated', {
+    productId: String(product._id),
+    publicationStatus: product.publicationStatus,
+  }, {
+    roles: ['admin', 'supplier'],
+    userIds: [product.supplierUser?._id || product.supplierUser].filter(Boolean),
+  });
+
+  return res.json({ product: formatAdminProduct(product) });
+});
+
+router.delete('/products/:id', async (req, res) => {
+  const product = await Product.findById(req.params.id);
+  if (!product) return res.status(404).json({ error: 'Article non trouvé' });
+
+  await Promise.allSettled((product.images || []).map((image) => deleteProductImage(image.public_id)));
+  await product.deleteOne();
+
+  if (product.supplier) {
+    const count = await Product.countDocuments({ supplier: product.supplier });
+    await Supplier.findByIdAndUpdate(product.supplier, { products: count });
+  }
+
+  publishCrudEvent('admin-products', 'deleted', { productId: String(product._id) }, {
+    roles: ['admin', 'supplier'],
+    userIds: [product.supplierUser].filter(Boolean),
+  });
+
+  return res.json({ success: true });
 });
 
 router.get('/simulations', async (_req, res) => {

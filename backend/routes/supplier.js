@@ -39,6 +39,10 @@ function formatProduct(product) {
     unit: product.unit,
     unitPrice: product.unitPrice,
     images: product.images || [],
+    publicationStatus: product.publicationStatus || 'Brouillon',
+    submittedAt: product.submittedAt,
+    approvedAt: product.approvedAt,
+    withdrawnAt: product.withdrawnAt,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
   };
@@ -105,7 +109,7 @@ router.put('/me', asyncHandler(async (req, res) => {
   const supplier = await findOrCreateSupplierProfile(req.user);
   const patch = {};
 
-  ['name', 'companyName', 'email', 'contact', 'phone', 'region', 'status'].forEach((field) => {
+  ['name', 'companyName', 'email', 'contact', 'phone', 'region', 'city', 'neighborhood', 'status'].forEach((field) => {
     if (req.body[field] !== undefined) patch[field] = req.body[field];
   });
 
@@ -164,8 +168,8 @@ router.post(
         room: req.body.room,
         range: req.body.range,
         availability: req.body.availability,
-        city: req.body.city,
-        neighborhood: req.body.neighborhood,
+        city: supplier.city || supplier.region || '',
+        neighborhood: supplier.neighborhood || '',
         unit: req.body.unit || 'u',
         unitPrice,
         supplier: supplier._id,
@@ -229,9 +233,11 @@ router.put(
       : [];
 
     try {
-      ['name', 'description', 'category', 'room', 'range', 'availability', 'city', 'neighborhood', 'unit'].forEach((field) => {
+      ['name', 'description', 'category', 'room', 'range', 'availability', 'unit'].forEach((field) => {
         if (req.body[field] !== undefined) product[field] = req.body[field];
       });
+      product.city = supplier.city || supplier.region || '';
+      product.neighborhood = supplier.neighborhood || '';
       product.unitPrice = nextUnitPrice;
       product.images = [...(product.images || []), ...uploadedImages];
 
@@ -289,6 +295,49 @@ router.delete('/products/:productId', asyncHandler(async (req, res) => {
   });
 
   res.status(204).end();
+}));
+
+router.patch('/products/:productId/publication', asyncHandler(async (req, res) => {
+  const supplier = await findOrCreateSupplierProfile(req.user);
+  const nextStatus = String(req.body.publicationStatus || '').trim();
+  const allowedStatuses = ['En attente', 'Retiré'];
+
+  if (!allowedStatuses.includes(nextStatus)) {
+    return res.status(400).json({ error: 'Statut de publication invalide' });
+  }
+
+  const product = await Product.findOne({
+    _id: req.params.productId,
+    $or: [
+      { supplier: supplier._id },
+      { supplierUser: req.user._id },
+    ],
+  });
+
+  if (!product) {
+    return res.status(404).json({ error: 'Produit introuvable' });
+  }
+
+  product.publicationStatus = nextStatus;
+  if (nextStatus === 'En attente') {
+    product.submittedAt = new Date();
+    product.withdrawnAt = undefined;
+  }
+  if (nextStatus === 'Retiré') {
+    product.withdrawnAt = new Date();
+  }
+
+  await product.save();
+  publishCrudEvent('supplier-products', 'publication-updated', {
+    supplierId: String(supplier._id),
+    productId: String(product._id),
+    publicationStatus: product.publicationStatus,
+  }, {
+    roles: ['admin'],
+    userIds: [req.user._id],
+  });
+
+  return res.json({ product: formatProduct(product) });
 }));
 
 router.delete('/products/:productId/images', asyncHandler(async (req, res) => {

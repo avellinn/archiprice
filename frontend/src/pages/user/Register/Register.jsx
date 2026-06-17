@@ -9,12 +9,12 @@ import { getApiErrorMessage } from '../../../services/api';
 const CATEGORY_OTHER_VALUE = '__other_category__';
 const ACTIVITY_SECTORS = [
   'Architecture',
-  'Architecture d’intérieur',
+  'Agence',
   'BTP / Construction',
   'Décoration',
   'Immobilier',
   'Ingénierie',
-  'Maîtrise d’ouvrage',
+  'Maître d’ouvrage',
   'Menuiserie',
   'Peinture',
   'Plomberie',
@@ -32,10 +32,9 @@ export default function Register() {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors, isSubmitting },
-  } = useForm();
-  const selectedCategory = watch('category');
+  } = useForm({ defaultValues: { category: ACTIVITY_SECTORS[0] } });
+  const [selectedCategory, setSelectedCategory] = useState(ACTIVITY_SECTORS[0]);
   const isCustomCategory = selectedCategory === CATEGORY_OTHER_VALUE;
 
   const onSubmit = async (data) => {
@@ -49,9 +48,11 @@ export default function Register() {
         category,
         accountType,
         companyName: accountType === 'supplier' ? data.companyName : undefined,
+        city: accountType === 'supplier' ? data.city : undefined,
+        neighborhood: accountType === 'supplier' ? data.neighborhood : undefined,
         categories: accountType === 'supplier' ? [category] : undefined,
       });
-      navigate(accountType === 'supplier' ? '/supplier/pending' : '/dashboard', { replace: true });
+      navigate(accountType === 'supplier' ? '/supplier/dashboard' : '/dashboard', { replace: true });
     } catch (err) {
       setApiError(getApiErrorMessage(err, 'Inscription impossible'));
     }
@@ -92,9 +93,10 @@ export default function Register() {
             <select
               id="register-category"
               aria-invalid={Boolean(errors.category)}
+              value={selectedCategory}
+              onChange={(event) => setSelectedCategory(event.target.value)}
               {...register('category', { required: 'Catégorie requise' })}
             >
-              <option value="">Choisir un secteur d’activité</option>
               {ACTIVITY_SECTORS.map((sector) => (
                 <option key={sector} value={sector}>{sector}</option>
               ))}
@@ -174,6 +176,30 @@ export default function Register() {
                 />
               </label>
               {errors.phone && <small className="register-field-error">{errors.phone.message}</small>}
+
+              <label className="register-field" htmlFor="register-city">
+                <span>Ville</span>
+                <input
+                  id="register-city"
+                  type="text"
+                  autoComplete="address-level2"
+                  aria-invalid={Boolean(errors.city)}
+                  {...register('city', { required: 'Ville requise' })}
+                />
+              </label>
+              {errors.city && <small className="register-field-error">{errors.city.message}</small>}
+
+              <label className="register-field" htmlFor="register-neighborhood">
+                <span>Quartier</span>
+                <input
+                  id="register-neighborhood"
+                  type="text"
+                  autoComplete="address-line2"
+                  aria-invalid={Boolean(errors.neighborhood)}
+                  {...register('neighborhood', { required: 'Quartier requis' })}
+                />
+              </label>
+              {errors.neighborhood && <small className="register-field-error">{errors.neighborhood.message}</small>}
             </>
           )}
 

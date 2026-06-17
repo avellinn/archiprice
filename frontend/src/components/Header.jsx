@@ -36,12 +36,17 @@ export default function Header({
       ? '/supplier/settings'
       : '/parametres';
   const [pageSearchIndex, setPageSearchIndex] = useState([]);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const searchQuery = searchValue.trim().toLowerCase();
   const searchMatches = useMemo(() => {
     if (!searchQuery) return [];
 
     return pageSearchIndex.filter((entry) => entry.toLowerCase().includes(searchQuery)).slice(0, 8);
   }, [pageSearchIndex, searchQuery]);
+  const visibleSearchEntries = useMemo(() => (
+    searchQuery ? searchMatches : pageSearchIndex.slice(0, 8)
+  ), [pageSearchIndex, searchMatches, searchQuery]);
+  const shouldShowSearchIndex = isSearchFocused && visibleSearchEntries.length > 0;
   const effectiveSearchIcon = searchQuery
     ? (searchMatches.length > 0 ? 'CheckCircle' : 'Info')
     : searchIcon;
@@ -67,6 +72,7 @@ export default function Header({
             node.closest('.header')
             || node.closest('.dashboard-floating-panel')
             || node.closest('.dashboard-search-message')
+            || node.closest('.header__search-index')
           ) {
             return;
           }
@@ -129,8 +135,12 @@ export default function Header({
               className="header__search-input"
               value={searchValue}
               onChange={(event) => onSearchChange?.(event.target.value)}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => window.setTimeout(() => setIsSearchFocused(false), 120)}
               placeholder={searchPlaceholder}
               aria-label={searchPlaceholder}
+              aria-expanded={shouldShowSearchIndex}
+              aria-controls={`${searchDatalistId}-panel`}
               list={searchDatalistId}
             />
             <datalist id={searchDatalistId}>
@@ -138,6 +148,29 @@ export default function Header({
                 <option key={match} value={match} />
               ))}
             </datalist>
+            {shouldShowSearchIndex && (
+              <div className="header__search-index" id={`${searchDatalistId}-panel`} role="listbox">
+                <span className="header__search-index-title">
+                  {searchQuery ? 'Résultats indexés' : 'Éléments indexés'}
+                </span>
+                {visibleSearchEntries.map((entry) => (
+                  <button
+                    key={entry}
+                    type="button"
+                    role="option"
+                    className="header__search-index-item"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => {
+                      onSearchChange?.(entry);
+                      onSearchSubmit?.({ query: entry, matches: [entry] });
+                      setIsSearchFocused(false);
+                    }}
+                  >
+                    {entry}
+                  </button>
+                ))}
+              </div>
+            )}
             <kbd className="header__search-shortcut">⌘/</kbd>
           </form>
 
@@ -216,7 +249,7 @@ export default function Header({
   return (
     <header className="header header--public">
       <Link to={isAuthenticated ? '/dashboard' : '/'} className="logo">
-        <Logo variant="header" alt="" showText />
+        <Logo variant="public" alt="" showText />
       </Link>
       <nav>
         <Link to="/login">Connexion</Link>

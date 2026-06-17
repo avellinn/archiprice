@@ -7,10 +7,12 @@ const ADMIN_DATA_CHANNEL = 'archiprice-admin-data-channel';
 const ADMIN_DATA_POLL_INTERVAL = 500;
 const ADMIN_DATA_REMOTE_POLL_INTERVAL = 2500;
 const ADMIN_DATA_REMOTE_ROUTE = '/api/catalogue-config';
+const ADMIN_DATA_STATIC_PURGE_VERSION = 2;
 
 export const DEFAULT_ADMIN_DATA = {
   __version: 1,
   __updatedAt: 0,
+  __staticPurgeVersion: ADMIN_DATA_STATIC_PURGE_VERSION,
   users: [],
   products: [],
   suppliers: [],
@@ -144,41 +146,6 @@ function isLegacyLocalUploadUrl(value) {
     );
 }
 
-function normalizeProductImage(image) {
-  if (!image || isLegacyLocalUploadUrl(image)) return null;
-  if (typeof image === 'string') return image;
-  if (typeof image !== 'object') return null;
-
-  const secureUrl = image.secure_url || image.url || '';
-  if (!secureUrl || isLegacyLocalUploadUrl(secureUrl)) return null;
-
-  return {
-    secure_url: secureUrl,
-    public_id: image.public_id || '',
-    metadata: image.metadata || {},
-  };
-}
-
-function normalizeProducts(products = []) {
-  if (!Array.isArray(products)) return [];
-
-  return products
-    .filter((product) => product && typeof product === 'object')
-    .map((product) => {
-      const images = (Array.isArray(product.images) ? product.images : [])
-        .map(normalizeProductImage)
-        .filter(Boolean);
-      const image = normalizeProductImage(product.image);
-      const primaryImage = images[0]?.secure_url || (typeof image === 'string' ? image : image?.secure_url) || '';
-
-      return {
-        ...product,
-        image: primaryImage,
-        images,
-      };
-    });
-}
-
 function hasLegacyProductImages(data) {
   return (Array.isArray(data?.products) ? data.products : []).some((product) => (
     isLegacyLocalUploadUrl(product?.image)
@@ -189,24 +156,26 @@ function hasLegacyProductImages(data) {
 }
 
 function mergeAdminData(savedData) {
-  const dynamicData = savedData || {};
+  const dynamicData = savedData?.__staticPurgeVersion === ADMIN_DATA_STATIC_PURGE_VERSION
+    ? savedData
+    : {};
 
   return {
     ...DEFAULT_ADMIN_DATA,
     ...dynamicData,
     __version: dynamicData?.__version || DEFAULT_ADMIN_DATA.__version,
     __updatedAt: dynamicData?.__updatedAt || DEFAULT_ADMIN_DATA.__updatedAt,
+    __staticPurgeVersion: ADMIN_DATA_STATIC_PURGE_VERSION,
     users: stripLegacyStaticItems(dynamicData?.users || DEFAULT_ADMIN_DATA.users),
     suppliers: stripLegacyStaticItems(dynamicData?.suppliers || DEFAULT_ADMIN_DATA.suppliers),
     simulations: stripLegacyStaticItems(dynamicData?.simulations || DEFAULT_ADMIN_DATA.simulations),
     supportItems: [],
     regionalCoefficients: stripLegacyStaticItems(dynamicData?.regionalCoefficients || DEFAULT_ADMIN_DATA.regionalCoefficients),
     supplierClientNotifications: stripLegacyStaticItems(dynamicData?.supplierClientNotifications || DEFAULT_ADMIN_DATA.supplierClientNotifications),
-    supplierPublicationNotices: stripLegacyStaticItems(dynamicData?.supplierPublicationNotices || []),
     supplierSettings: stripLegacyAccountSettings(dynamicData?.supplierSettings),
     adminSettings: stripLegacyAccountSettings(dynamicData?.adminSettings),
     taxonomies: mergeTaxonomies(dynamicData?.taxonomies),
-    products: normalizeProducts(dynamicData?.products || DEFAULT_ADMIN_DATA.products),
+    products: [],
     settings: {
       ...DEFAULT_ADMIN_DATA.settings,
       ...(dynamicData?.settings || {}),

@@ -59,7 +59,6 @@ Routes publiques :
 - `/` : accueil
 - `/login` : connexion
 - `/register` : inscription
-- `/supplier/pending` : attente après demande fournisseur
 
 Routes protégées :
 
@@ -77,7 +76,7 @@ Routes admin :
 - `/admin/catalogue/products` : produits
 - `/admin/catalogue/filters` : catégories & filtres
 - `/admin/suppliers` : fournisseurs
-- `/admin/suppliers/requests` : nouvelles demandes fournisseur
+- `/admin/suppliers/requests` : redirection héritée vers `/admin/suppliers`
 - `/admin/users` : utilisateurs
 - `/admin/simulations` : simulations
 - `/admin/support` : support regroupant tickets, feedback et signalements prix
@@ -99,7 +98,7 @@ Routes supplier :
 
 La page catalogue fournisseur historique a été retirée. Les catalogues/produits fournisseur sont maintenant gérés par `Produits`, `AjouterProduit`, `MaBoutique` et `Fichiers`.
 
-Les routes supplier passent par `SupplierRoute`, puis sont rendues dans `SupplierShell`.
+Les routes supplier passent par `SupplierRoute`, puis sont rendues dans `SupplierShell`. `SupplierRoute` ne se contente pas de lire `user.role` : il vérifie aussi `/api/supplier/me`. Si aucun profil boutique valide n'existe, le compte est redirigé vers `/dashboard`.
 
 ## Pages
 
@@ -111,7 +110,6 @@ Fichiers :
 - `src/pages/admin/Articles/Articles.jsx`
 - `src/pages/admin/CategoriesFiltres/CategoriesFiltres.jsx`
 - `src/pages/admin/Fournisseurs/Fournisseurs.jsx`
-- `src/pages/admin/NouvellesDemandes/NouvellesDemandes.jsx`
 - `src/pages/admin/Utilisateurs/Utilisateurs.jsx`
 - `src/pages/admin/Simulations/Simulations.jsx`
 - `src/pages/admin/Support/Support.jsx`
@@ -129,7 +127,7 @@ Les données dynamiques admin passent par `src/services/adminMongo.js` quand ell
 - bloquer un compte ;
 - supprimer un compte.
 
-`Fournisseurs.jsx` affiche uniquement les fournisseurs validés. `NouvellesDemandes.jsx` affiche uniquement les demandes supplier en attente et permet de les valider ou refuser.
+`Fournisseurs.jsx` affiche les fournisseurs disponibles. Les comptes supplier sont créés directement à l'inscription ou depuis l'administration des utilisateurs.
 
 `PageShell.jsx` centralise la structure commune des pages admin : en-tête, statistiques, toolbar, filtres, tables et badges.
 
@@ -146,15 +144,12 @@ Fichiers :
 - `src/pages/supplier/Clients/Clients.jsx`
 - `src/pages/supplier/Fichiers/Fichiers.jsx`
 - `src/pages/supplier/Parametres/Parametres.jsx`
-- `src/pages/supplier/Pending/Pending.jsx`
 
 Le workflow fournisseur :
 
 1. inscription avec `Type de compte = Fournisseur` ;
-2. affichage de la page d'attente `Pending.jsx` ;
-3. l'admin traite la demande dans `NouvellesDemandes.jsx` ;
-4. après validation, le compte reçoit le rôle `supplier` ;
-5. le fournisseur accède à `SupplierShell`.
+2. le backend crée le compte `supplier` et lie le profil boutique ;
+3. le fournisseur accède immédiatement à `SupplierShell`.
 
 `AjouterProduit.jsx` est une page secondaire fonctionnelle :
 
@@ -210,7 +205,7 @@ La page workspace contient deux modes :
 
 Fonctions principales :
 
-- création de projet via `ModalCreateProject` ;
+- création de projet via `Newproject`, exposé aussi par `ModalCreateProject` pour compatibilité ;
 - liste dynamique des projets récents ;
 - accès aux articles choisis par projet ;
 - informations projet en bas de la zone centrale ;
@@ -233,7 +228,7 @@ Les pages login/register utilisent `AuthLayout`, `PasswordInput`, `react-hook-fo
 - `AdminShell.jsx` : structure des pages administrateur, avec les mêmes composants UI et un layout spécifique admin.
 - `SupplierShell.jsx` : structure des pages fournisseur, avec les mêmes composants UI et un layout spécifique supplier.
 - `AdminRoute.jsx` : protection des routes admin selon le rôle `admin`.
-- `SupplierRoute.jsx` : protection des routes supplier selon le rôle `supplier`.
+- `SupplierRoute.jsx` : protection des routes supplier selon le rôle `supplier` et l'existence d'un profil boutique via `/api/supplier/me`.
 - `Sidebar.jsx` : navigation latérale. Styles isolés dans `Sidebar.css`.
 - `Header.jsx` : barre supérieure, recherche, thème, utilisateur.
 - `Avatar.jsx` : avatar utilisateur dynamique.
@@ -247,7 +242,9 @@ Les pages login/register utilisent `AuthLayout`, `PasswordInput`, `react-hook-fo
 - `espacepro.jsx` : layout détaillé des projets dans le workspace.
 - `modalBoutique.jsx` : modal "Où acheter" alimentée exclusivement par la liste des fournisseurs validés côté admin.
 - `recap.jsx` : récapitulatif d'estimation.
-- `ModalCreateProject.jsx` : modale de création de projet.
+- `Newproject.jsx` : modale de création de projet. Le champ `Type de pièce` propose `Autre` pour saisir une pièce personnalisée.
+- `ModalCreateProject.jsx` : wrapper de compatibilité vers `Newproject`.
+- `pages/user/Catalogue/catalgrid.jsx` : grille des articles catalogue extraite de `.catalogue-product-main`.
 - `Text.jsx` : composant typographique.
 
 ### Sidebar Partagée
@@ -265,6 +262,18 @@ Elle supporte :
 - variante minimale de rôle via `variant`.
 
 Le style de base reste uniforme entre user, admin et supplier. Le titre du sidebar supplier n'est pas affiché ; seuls le logo et les liens structurent la navigation.
+
+Le composant `Logo.jsx` a été supprimé. Les layouts importent directement `src/assets/images/log.png` :
+
+- `AuthLayout.jsx` pour les pages auth ;
+- `Header.jsx` pour l'en-tête public ;
+- `AppShell.jsx`, `AdminShell.jsx`, `SupplierShell.jsx` pour la sidebar.
+
+Le dark mode du logo est géré par les CSS actifs :
+
+- `Sidebar.css` : fond blanc du logo en `.dashboard-shell.is-theme-dark` ;
+- `Header.css` : support du logo public en thème sombre ;
+- `AuthLayout.css` : support des pages auth si elles héritent d'un thème sombre.
 
 ### Header, Recherche Et Dark Mode
 
@@ -382,7 +391,8 @@ Chaque composant important possède son CSS propre quand son style est suffisamm
 - `DonutChart.css`
 - `WorkspaceMiniGrid.css`
 - `espacepro.css`
-- `ModalCreateProject.css`
+- `Newproject.css`
+- `pages/user/Catalogue/catalgrid.css`
 - `AuthLayout.css`
 - `PasswordInput.css`
 - `Text.css`
@@ -452,19 +462,23 @@ Modifier la navigation :
 
 Modifier le catalogue :
 
-1. données et synchronisation : `src/services/adminData.js`
+1. données visibles : `src/services/catalogueProducts.js`
 2. rendu user : `src/pages/user/Catalogue/Catalogue.jsx`
 3. rendu des cards : `src/components/cardarticle.jsx` et `src/components/cardarticle.css`
 4. layout et style : `src/pages/user/Catalogue/Catalogue.css`
-5. données visibles : uniquement les articles validés par l'admin.
+5. catégories dynamiques : `src/components/Catégori.jsx`
+6. données visibles : uniquement les articles validés par l'admin via `/api/catalogue/products`.
+
+`adminData.products` ne doit plus être utilisé pour afficher le catalogue user. Cette clé est réservée au nettoyage legacy et doit rester vide.
 
 Modifier le parcours fournisseur :
 
 1. liste CRUD : `src/pages/supplier/Produits/Produits.jsx`
-2. création/publication : `src/pages/supplier/AjouterProduit/AjouterProduit.jsx`
-3. boutique et nouveautés : `src/pages/supplier/MaBoutique/MaBoutique.jsx`
-4. fichiers : `src/pages/supplier/Fichiers/Fichiers.jsx`
-5. API supplier : `src/services/supplier.js`
+2. création produit brouillon : `src/pages/supplier/AjouterProduit/AjouterProduit.jsx`
+3. publication/retrait : `src/pages/supplier/Produits/Produits.jsx`, via `updateSupplierProductPublication`
+4. boutique et nouveautés : `src/pages/supplier/MaBoutique/MaBoutique.jsx`
+5. fichiers : `src/pages/supplier/Fichiers/Fichiers.jsx`
+6. API supplier : `src/services/supplier.js`
 
 Modifier le workspace :
 
@@ -473,6 +487,14 @@ Modifier le workspace :
 3. espace projet : `espacepro.jsx` et `espacepro.css`
 4. modal "Où acheter" : `modalBoutique.jsx` et `modalBoutique.css`
 5. fournisseurs proposés : liste synchronisée depuis `pages/admin/Fournisseurs/`.
+
+Modifier le catalogue :
+
+1. orchestration : `src/pages/user/Catalogue/Catalogue.jsx`
+2. grille articles : `src/pages/user/Catalogue/catalgrid.jsx`
+3. styles grille : `src/pages/user/Catalogue/catalgrid.css`
+4. filtres : `Filterpanel.jsx` et `Filterpanel.css`
+5. simulation budget : `simulBudget.jsx` et `simulBudget.css`
 
 Modifier le dashboard :
 
@@ -494,6 +516,13 @@ Le script supprime :
 - cache backend éventuel : `backend/node_modules/.cache`
 
 Important : le script `clean` existe à la racine du monorepo, pas dans `frontend/package.json`.
+
+Dernière passe de nettoyage :
+
+- aucun artefact `frontend/dist`, cache Vite ou fichier temporaire n'était présent avant build ;
+- `frontend/dist` a été recréé par vérification build puis supprimé via `npm run clean` ;
+- la colonne `Statut` a été retirée de `admin/Simulations` ;
+- `.catalogue-product-main` est extrait dans `pages/user/Catalogue/catalgrid.jsx` avec `catalgrid.css`.
 
 Ne pas commiter :
 

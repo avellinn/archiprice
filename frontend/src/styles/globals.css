@@ -29,6 +29,8 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Responsive font-size using clamp */
+  font-size: clamp(14px, 2vw, 16px);
 }
 
 *,
@@ -39,6 +41,8 @@
 
 html {
   min-height: 100%;
+  /* Smooth scrolling for better UX */
+  scroll-behavior: smooth;
 }
 
 html,
@@ -67,7 +71,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background: #6f4747;
+  background: #F3F4F6;
   font-family: var(--font-primary);
 }
 
@@ -78,6 +82,23 @@ h4,
 h5,
 h6 {
   font-family: var(--font-heading);
+}
+
+/* Fluid heading sizes */
+h1 {
+  font-size: clamp(1.5rem, 5vw, 2.5rem);
+}
+
+h2 {
+  font-size: clamp(1.3rem, 4vw, 2rem);
+}
+
+h3 {
+  font-size: clamp(1.1rem, 3vw, 1.5rem);
+}
+
+h4 {
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
 }
 
 button,
@@ -102,6 +123,7 @@ canvas,
 iframe {
   max-width: 100%;
   height: auto;
+  display: block;
 }
 
 svg {
@@ -111,3 +133,94 @@ svg {
 #root {
   min-height: 100vh;
 }
+
+[class*="ContentCapture__CaptureCursorContainer"] {
+  display: none !important;
+}
+
+/* Mobile-first responsive adjustments */
+@media (max-width: 768px) {
+  :root {
+    --spacing-lg: 1.25rem;
+    --spacing-md: 0.75rem;
+  }
+
+  body {
+    font-size: clamp(13px, 1.5vw, 14px);
+  }
+
+  h1 {
+    font-size: clamp(1.3rem, 4vw, 1.8rem);
+  }
+
+  h2 {
+    font-size: clamp(1.1rem, 3.5vw, 1.5rem);
+  }
+
+  h3 {
+    font-size: clamp(1rem, 2.5vw, 1.3rem);
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --spacing-lg: 1rem;
+    --spacing-md: 0.65rem;
+  }
+
+  body {
+    font-size: 13px;
+  }
+
+  h1 {
+    font-size: clamp(1.2rem, 3.5vw, 1.6rem);
+  }
+
+  h2 {
+    font-size: clamp(1rem, 3vw, 1.3rem);
+  }
+
+  h3 {
+    font-size: clamp(0.95rem, 2.2vw, 1.1rem);
+  }
+}
+
+/* Touch-friendly sizing for interactive elements */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  a[role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  input,
+  textarea,
+  select {
+    min-height: 44px;
+    padding: 0.65rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: more) {
+  :root {
+    --shadow-md: 0 4px 12px rgb(15 23 42 / 0.2);
+    --shadow-lg: 0 8px 20px rgb(15 23 42 / 0.3);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+

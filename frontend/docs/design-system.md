@@ -51,7 +51,7 @@ Exemples actuels :
 - `Header.jsx` et `Header.css`
 - `Sidebar.jsx` et `Sidebar.css`
 - `Avatar.jsx` et `Avatar.css`
-- `ModalCreateProject.jsx` et `ModalCreateProject.css`
+- `Newproject.jsx` et `Newproject.css`, avec `ModalCreateProject.jsx` comme wrapper de compatibilité
 - `DonutChart.jsx` et `DonutChart.css`
 
 Les nouveaux composants génériques doivent être créés dans `src/components/ui/` lorsqu'ils ne dépendent pas d'un domaine métier.
@@ -140,6 +140,14 @@ Comportements partagés :
 - footer utilisateur/admin/supplier basé sur les mêmes classes.
 
 Le dark mode est piloté par `.dashboard-shell.is-theme-dark` et par les variables `--app-*` définies dans `App.css`. Les pages ne doivent pas forcer un fond global clair qui empêcherait le thème de s'appliquer.
+
+Le logo n'a plus de composant dédié. `log.png` est rendu directement par les layouts, et les styles doivent vivre dans les CSS du conteneur qui l'affiche :
+
+- sidebar : `components/Sidebar.css` ;
+- header public : `components/Header.css` ;
+- auth layout : `components/AuthLayout.css`.
+
+Ne pas recréer de `Logo.jsx`/`Logo.css` pour le dark mode : ajouter les règles au conteneur actif afin que le thème reste contrôlé par le shell.
 
 ## Messages Et Alertes
 

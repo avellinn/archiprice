@@ -27,16 +27,8 @@
   text-align: center;
 }
 
-.auth-icon {
-  width: 86px;
-  height: 86px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.auth-header .app-logo--auth {
   margin-bottom: 1rem;
-  border-radius: 18px;
-  background: #ffffff;
-  box-shadow: 0 10px 24px rgb(15 23 42 / 0.08);
 }
 
 .auth-title {

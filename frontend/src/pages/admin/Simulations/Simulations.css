@@ -1,5 +1,6 @@
 /* Page styles migrated from App.css */
 .admin-simulations-page {
+  position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -19,8 +20,55 @@
   font-weight: 900;
 }
 
-.admin-simulations-alert {
-  margin: -0.55rem 0 1rem;
+.admin-simulations-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.admin-simulations-header .btn {
+  border-color: #0a3764;
+  background: #0a3764;
+  color: #fff;
+}
+
+.admin-simulations-header .btn:hover,
+.admin-simulations-header .btn:focus-visible {
+  border-color: #082b4f;
+  background: #082b4f;
+  color: #fff;
+}
+
+.admin-simulations-alert,
+.admin-simulations-confirm-alert {
+  margin: 0 0 1rem;
+}
+
+.admin-simulations-confirm-alert__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+}
+
+.admin-simulations-confirm-alert__actions button {
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 7px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.admin-simulations-confirm-alert__actions button:last-child {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: #fff;
 }
 
 .admin-simulations-toolbar {
@@ -104,6 +152,7 @@
   font-weight: 900;
 }
 
+
 .admin-simulations-card {
   width: 100%;
   min-height: 0;
@@ -141,7 +190,42 @@
 }
 
 .admin-simulations-list .ui-data-table {
-  min-width: 980px;
+  min-width: 860px;
+}
+
+.admin-simulations-list .ui-data-table th:last-child,
+.admin-simulations-list .ui-data-table td:last-child {
+  width: 3.5rem;
+  text-align: right;
+}
+
+.admin-simulations-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 7px;
+  background: var(--app-card-background);
+  color: #dc2626;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateX(0.25rem);
+  transition: opacity 0.18s ease, transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.admin-simulations-list .ui-data-table tbody tr:hover .admin-simulations-delete,
+.admin-simulations-list .ui-data-table tbody tr:focus-within .admin-simulations-delete {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.admin-simulations-delete:hover,
+.admin-simulations-delete:focus-visible {
+  border-color: #fecaca;
+  background: #fff1f2;
+  outline: 0;
 }
 
 .admin-simulations-table-wrap {

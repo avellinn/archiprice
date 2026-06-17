@@ -1,9 +1,9 @@
-import './Analysedon.css';
+import './Dashboard.css';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import DonutChartCard from '../../../components/DonutChart';
-import { Button, Icon, Text } from '../../../components/ui';
+import { Button, Icon, Loader, Text } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
 import { useAdminData } from '../../../services/adminData';
 import { getApiErrorMessage } from '../../../services/api';
@@ -96,14 +96,6 @@ function isPending(product) {
     || ['pending', 'submitted'].includes(status);
 }
 
-function isActive(product) {
-  const status = normalizeStatus(product.status);
-  const availability = normalizeStatus(product.availability);
-
-  return !['archived', 'archive', 'archivé', 'rejected', 'refusé', 'refuse'].includes(status)
-    && !['rupture', 'non disponible'].includes(availability);
-}
-
 function getProductStatusLabel(product) {
   if (isPublished(product)) return 'Publié';
   if (isPending(product)) return 'En attente';
@@ -137,15 +129,8 @@ function getEffectivePublicationStatus(product, adminProducts = []) {
     || '';
 }
 
-function isPublishedForAdmin(product, adminProducts = []) {
+function isEffectivelyPublished(product, adminProducts = []) {
   return isPublished({
-    ...product,
-    publicationStatus: getEffectivePublicationStatus(product, adminProducts),
-  });
-}
-
-function isPendingForAdmin(product, adminProducts = []) {
-  return isPending({
     ...product,
     publicationStatus: getEffectivePublicationStatus(product, adminProducts),
   });
@@ -229,13 +214,12 @@ function getSupplierDemandGroupId(notification) {
     || String(notification.id || '');
 }
 
-export default function Analysedon() {
+export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [adminData] = useAdminData();
   const [workspace, setWorkspace] = useState(null);
-  const [hiddenDemandIds, setHiddenDemandIds] = useState([]);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -273,10 +257,10 @@ export default function Analysedon() {
 
   const supplierProfile = workspace?.supplier || null;
   const hiddenDemandItemsKey = getHiddenDemandItemsKey(user, supplierProfile);
-
-  useEffect(() => {
-    setHiddenDemandIds(readHiddenDemandItems(hiddenDemandItemsKey));
-  }, [hiddenDemandItemsKey]);
+  const hiddenDemandIds = useMemo(
+    () => readHiddenDemandItems(hiddenDemandItemsKey),
+    [hiddenDemandItemsKey],
+  );
 
   const products = useMemo(() => workspace?.products || [], [workspace]);
   const adminProducts = useMemo(() => adminData.products || [], [adminData.products]);
@@ -286,18 +270,24 @@ export default function Analysedon() {
       .filter((notification) => isDemandForSupplier(notification, user, supplierProfile))
       .filter((notification) => !hiddenDemandIds.includes(getSupplierDemandGroupId(notification)))
   ), [adminData.supplierClientNotifications, hiddenDemandIds, supplierProfile, user]);
+  const clients = useMemo(() => (
+    (adminData.supplierClientNotifications || [])
+      .filter((notification) => isDemandForSupplier(notification, user, supplierProfile))
+  ), [adminData.supplierClientNotifications, supplierProfile, user]);
   const stats = useMemo(() => {
-    const published = products.filter((product) => isPublishedForAdmin(product, adminProducts)).length;
-    const pending = products.filter((product) => isPendingForAdmin(product, adminProducts)).length;
-    const active = products.filter(isActive).length;
+    const active = products.filter((product) => isEffectivelyPublished(product, adminProducts)).length;
+    const published = products.filter((product) => (
+      isEffectivelyPublished(product, adminProducts) || isPending(product)
+    )).length;
+    const total = products.length;
 
     return {
-      total: products.length,
+      total,
       active,
       published,
-      pending,
+      clients: clients.length,
     };
-  }, [adminProducts, products]);
+  }, [adminProducts, clients.length, products]);
 
   const dashboardSearchTerm = searchParams.get('q')?.trim().toLowerCase() || '';
   const history = products
@@ -329,12 +319,12 @@ export default function Analysedon() {
       unit: 'article',
     },
     {
-      name: 'En attente',
-      value: stats.pending,
-      chartValue: getDonutDisplayValue(stats.pending, stats.total),
-      percent: getPercent(stats.pending, stats.total),
+      name: 'Clients',
+      value: stats.clients,
+      chartValue: getDonutDisplayValue(stats.clients, Math.max(stats.total, stats.clients)),
+      percent: getPercent(stats.clients, Math.max(stats.total, stats.clients)),
       color: '#22c55e',
-      unit: 'article',
+      unit: 'client',
     },
     {
       name: 'Total articles',
@@ -346,11 +336,23 @@ export default function Analysedon() {
     },
   ];
 
+  function handleStatKeyDown(event, route) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    navigate(route);
+  }
+
   return (
     <div className="dashboard-page supplier-dashboard-page">
       <div className="dashboard-grid">
         <section id="supplier-products-summary" className="dashboard-stats" aria-label="Résumé des articles fournisseur">
-          <article className="stat-card stat-blue">
+          <article
+            className="stat-card stat-blue stat-card--clickable"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate('/supplier/products')}
+            onKeyDown={(event) => handleStatKeyDown(event, '/supplier/products')}
+          >
             <Text as="span" variant="bold" size="sm">
               Articles actifs
             </Text>
@@ -362,7 +364,13 @@ export default function Analysedon() {
             </svg>
           </article>
 
-          <article className="stat-card stat-yellow">
+          <article
+            className="stat-card stat-yellow stat-card--clickable"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate('/supplier/products')}
+            onKeyDown={(event) => handleStatKeyDown(event, '/supplier/products')}
+          >
             <Text as="span" variant="bold" size="sm">
               Articles publiés
             </Text>
@@ -374,19 +382,31 @@ export default function Analysedon() {
             </svg>
           </article>
 
-          <article className="stat-card stat-red">
+          <article
+            className="stat-card stat-red stat-card--clickable"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate('/supplier/clients')}
+            onKeyDown={(event) => handleStatKeyDown(event, '/supplier/clients')}
+          >
             <Text as="span" variant="bold" size="sm">
-              En attente
+              Clients
             </Text>
             <Text as="strong" variant="medium" size="lg">
-              {String(stats.pending).padStart(2, '0')}
+              {String(stats.clients).padStart(2, '0')}
             </Text>
             <svg viewBox="0 0 78 34" aria-hidden="true">
               <path d="M4 22 C13 17 19 27 30 20 S46 10 55 19 S66 9 74 13" />
             </svg>
           </article>
 
-          <article className="stat-card stat-cyan">
+          <article
+            className="stat-card stat-cyan stat-card--clickable"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate('/supplier/products')}
+            onKeyDown={(event) => handleStatKeyDown(event, '/supplier/products')}
+          >
             <Text as="span" variant="bold" size="sm">
               Total articles
             </Text>
@@ -448,7 +468,7 @@ export default function Analysedon() {
             </Text>
           </div>
           {isLoading ? (
-            <Text className="muted history-empty">Chargement des articles...</Text>
+            <Loader label="Chargement des articles..." />
           ) : error ? (
             <Text className="muted history-empty">{error}</Text>
           ) : history.length === 0 ? (

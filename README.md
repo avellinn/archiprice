@@ -132,9 +132,10 @@ Les utilisateurs possèdent un rôle :
 
 - `user` : accès à l'interface utilisateur ;
 - `admin` : accès à l'interface backoffice.
-- `supplier` : accès à l'interface fournisseur après validation admin.
+- `supplier` : accès à l'interface fournisseur uniquement si un profil boutique `Supplier` existe.
 
-Les fournisseurs ne reçoivent pas librement le rôle `supplier` à l'inscription. Une inscription `accountType=supplier` crée une demande dans `supplier_requests`; l'admin valide ensuite la demande depuis le backoffice.
+Une inscription `accountType=supplier` crée directement un compte `supplier` et un profil boutique associé.
+Un simple `type` ou une `category` nommée "Fournisseur" ne donne pas l'accès supplier : seul `role: "supplier"` plus un profil `Supplier` valide autorise `/supplier/*`.
 
 Le frontend redirige automatiquement :
 
@@ -173,14 +174,14 @@ Les routes admin sont protégées par JWT et par le middleware `requireAdmin`.
 |---------|-------|-------------|
 | `GET` | `/api/admin/users` | Liste tous les utilisateurs |
 | `GET` | `/api/admin/users/:id` | Détail d'un utilisateur |
-| `PUT` | `/api/admin/users/:id/role` | Change le rôle `user` / `admin` |
-| `GET` | `/api/admin/suppliers` | Liste les fournisseurs validés |
+| `PUT` | `/api/admin/users/:id/role` | Change le rôle `user` / `admin` / `supplier` |
+| `GET` | `/api/admin/suppliers` | Liste les fournisseurs |
 | `POST` | `/api/admin/suppliers` | Crée un fournisseur administré |
 | `PUT` | `/api/admin/suppliers/:id` | Modifie un fournisseur |
 | `DELETE` | `/api/admin/suppliers/:id` | Supprime un fournisseur |
-| `GET` | `/api/admin/supplier-requests` | Liste les demandes fournisseur |
-| `POST` | `/api/admin/supplier-requests/:id/approve` | Valide une demande fournisseur |
-| `POST` | `/api/admin/supplier-requests/:id/reject` | Refuse une demande fournisseur |
+| `GET` | `/api/admin/products` | Liste les articles supplier soumis, validés, retirés ou refusés |
+| `PATCH` | `/api/admin/products/:id` | Met à jour le statut de publication d'un article supplier |
+| `DELETE` | `/api/admin/products/:id` | Supprime définitivement un article supplier et ses images |
 | `GET` | `/api/admin/simulations` | Liste les simulations et estimations exportées |
 | `GET` | `/api/admin/support-items` | Liste tickets, feedback et signalements |
 
@@ -195,7 +196,7 @@ curl -X PUT http://localhost:5000/api/admin/users/<userId>/role \
 
 ## API — Supplier
 
-Les routes supplier sont protégées par JWT et `requireSupplier`.
+Les routes supplier sont protégées par JWT et `requireSupplier`. Le middleware vérifie à la fois `role: "supplier"` et l'existence d'un profil boutique `Supplier` non supprimé.
 
 | Méthode | Route | Description |
 |---------|-------|-------------|
@@ -203,9 +204,12 @@ Les routes supplier sont protégées par JWT et `requireSupplier`.
 | `GET` | `/api/supplier/products` | Liste des produits du fournisseur |
 | `POST` | `/api/supplier/products` | Crée un produit et upload ses images |
 | `PUT` | `/api/supplier/products/:productId` | Modifie un produit du fournisseur courant |
+| `PATCH` | `/api/supplier/products/:productId/publication` | Soumet ou retire un produit du circuit de publication |
 | `DELETE` | `/api/supplier/products/:productId` | Supprime un produit du fournisseur courant et ses images Cloudinary |
 
 `POST` et `PUT /api/supplier/products` utilisent `multipart/form-data`, champ fichier `image` répété selon les fichiers sélectionnés. Les images sont streamées vers Cloudinary, dossier `archiprice/products`.
+
+Quand un supplier crée un produit, il reste en `publicationStatus: "Brouillon"`. Le bouton publier appelle `PATCH /api/supplier/products/:productId/publication` avec `publicationStatus: "En attente"`. L'admin voit alors l'article dans `/admin/catalogue/products`, puis peut le passer en `Validé`, `Retiré` ou `Refusé` via `/api/admin/products/:id`. Le catalogue user lit uniquement `/api/catalogue/products`, qui renvoie les articles `Validé`.
 
 ## Routes Frontend
 
@@ -233,7 +237,7 @@ Routes admin :
 - `/admin/catalogue/products`
 - `/admin/catalogue/filters`
 - `/admin/suppliers`
-- `/admin/suppliers/requests`
+- `/admin/suppliers/requests` → redirige vers `/admin/suppliers`
 - `/admin/users`
 - `/admin/simulations`
 - `/admin/support`
@@ -290,6 +294,10 @@ Règles actuelles :
 - Les pages `Support` user/supplier affichent les feedbacks personnels via `/api/support-items/me`; l'admin répond via `/api/admin/support-items`.
 - Les pages `Demande` user et `Demandesup` supplier regroupent les conversations par boutique ou client/projet.
 - `/api/admin/simulations` expose les simulations et les projets Workspace afin que l'admin voie les projets créés par les users.
+- La table admin Simulations n'affiche plus la colonne `Statut` ; les détails restent accessibles via le modal de ligne.
+- La grille catalogue est isolée dans `frontend/src/pages/user/Catalogue/catalgrid.jsx`.
+- La création projet accepte `Autre` dans `Type de pièce` pour saisir une pièce personnalisée.
+- Le composant `Logo.jsx` et `Logo.css` ont été supprimés : `log.png` est importé directement dans les shells/layouts et le dark mode du logo est géré par `Sidebar.css`, `Header.css` et `AuthLayout.css`.
 - Les uploads admin/supplier ne doivent pas imposer de limite arbitraire côté interface ; la validation serveur reste obligatoire.
 
 ```bash

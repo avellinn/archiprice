@@ -1,4 +1,4 @@
-import { Icon } from '../../../components/ui';
+import { Icon } from './ui';
 import './Filterpanel.css';
 
 function FilterGroup({ title, options, activeValue, onSelect }) {

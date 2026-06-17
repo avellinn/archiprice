@@ -104,6 +104,7 @@
   --app-muted-color: #64748b;
   --app-heading-color: #222633;
   --app-border-color: #e2e8f0;
+  --app-sidebar-width: 240px;
   --bg-primary: var(--app-card-background);
   --bg-secondary: var(--app-panel-background);
   --border-color: var(--app-border-color);
@@ -144,7 +145,7 @@
   position: relative;
   min-width: 0;
   min-height: 100vh;
-  margin-left: 280px;
+  margin-left: var(--app-sidebar-width);
   padding: 64px 0 0;
   border-left: 0;
   border-radius: 0 28px 28px 0;
@@ -617,10 +618,174 @@
     border: 0;
     border-radius: 0;
   }
+
+  .admin-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-toolbar__search {
+    min-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-toolbar {
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .admin-toolbar__search {
+    min-width: 100%;
+  }
+
+  .admin-toolbar__search input {
+    min-height: 40px;
+    font-size: 16px; /* Prevent iOS auto-zoom */
+  }
+
+  .admin-data-table {
+    font-size: 0.85rem;
+  }
+
+  .admin-data-table th,
+  .admin-data-table td {
+    padding: 0.6rem 0.5rem;
+  }
+
+  .project-modal {
+    width: min(90vw, 420px);
+  }
 }
 
 @media (max-width: 620px) {
   .dashboard-content {
     padding-top: 58px;
   }
+
+  .page {
+    padding: 1.25rem 1rem;
+  }
+
+  .form {
+    gap: 0.75rem;
+  }
+
+  .form input,
+  .form textarea,
+  .form select {
+    font-size: 16px; /* Prevent iOS auto-zoom */
+    min-height: 44px;
+    padding: 0.6rem;
+  }
+
+  .admin-filter-field select {
+    min-height: 40px;
+    font-size: 16px;
+  }
+
+  .admin-data-table {
+    font-size: 0.8rem;
+  }
+
+  .admin-data-table th,
+  .admin-data-table td {
+    padding: 0.5rem 0.4rem;
+  }
+
+  .project-modal {
+    width: min(92vw, 380px);
+    padding: 1rem;
+  }
+
+  .project-modal__header h2 {
+    font-size: 1.1rem;
+  }
+
+  .modal-backdrop {
+    padding: 0.75rem;
+  }
 }
+
+@media (max-width: 480px) {
+  .page {
+    padding: 1rem 0.75rem;
+    max-width: 100%;
+  }
+
+  .page-wide,
+  .page-narrow {
+    max-width: 100%;
+  }
+
+  .card {
+    margin: 1rem 0;
+    padding: 0.85rem 1rem;
+  }
+
+  .form {
+    gap: 0.65rem;
+  }
+
+  .form label {
+    gap: 0.25rem;
+    font-size: 0.85rem;
+  }
+
+  .form input,
+  .form textarea,
+  .form select {
+    padding: 0.5rem;
+    font-size: 16px;
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .actions button,
+  .actions a {
+    width: 100%;
+  }
+
+  .admin-toolbar {
+    margin-bottom: 0.65rem;
+  }
+
+  .admin-row-actions button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .project-modal {
+    width: 100%;
+    padding: 1rem;
+    margin: 0.5rem;
+  }
+
+  .project-modal__header {
+    margin-bottom: 0.85rem;
+  }
+
+  .notification-panel__item {
+    grid-template-columns: 0.8rem minmax(0, 1fr);
+    gap: 0.4rem;
+    padding: 0.5rem;
+  }
+}
+
+/* Landscape orientation optimizations */
+@media (max-height: 500px) {
+  .modal-backdrop {
+    align-items: flex-start;
+    padding-top: 1rem;
+  }
+
+  .project-modal {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+

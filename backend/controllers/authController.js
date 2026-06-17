@@ -1,8 +1,16 @@
+import crypto from 'node:crypto';
 import User from '../models/User.js';
 import Supplier from '../models/Supplier.js';
-import SupplierRequest from '../models/SupplierRequest.js';
+import PasswordResetToken from '../models/PasswordResetToken.js';
+import { sendPasswordResetEmail } from '../services/emailService.js';
 import { publishCrudEvent } from '../services/realtimeService.js';
 import generateToken from '../utils/generateToken.js';
+
+const PASSWORD_RESET_EXPIRES_MINUTES = 30;
+
+function hashResetToken(token) {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
 
 function getRedirectTo(role) {
   if (role === 'admin') return '/admin/dashboard';
@@ -67,10 +75,14 @@ async function ensureSupplierProfile(user, payload = {}) {
 
   return Supplier.create({
     user: user._id,
-    name: payload.name?.trim() || user.name || email,
+    name: payload.companyName?.trim() || payload.name?.trim() || user.name || email,
+    companyName: payload.companyName?.trim() || payload.name?.trim() || user.name || email,
     email,
     contact: payload.contact?.trim() || email,
-    region: payload.region?.trim() || undefined,
+    phone: payload.phone?.trim() || undefined,
+    region: payload.region?.trim() || payload.city?.trim() || undefined,
+    city: payload.city?.trim() || undefined,
+    neighborhood: payload.neighborhood?.trim() || undefined,
     categories: normalizeCategories([
       user.category,
       payload.category,
@@ -95,9 +107,12 @@ async function register(req, res) {
     accountType = 'user',
     companyName,
     phone,
+    city,
+    neighborhood,
     category,
     categories,
   } = req.body;
+  const normalizedAccountType = String(accountType || 'user').toLowerCase() === 'supplier' ? 'supplier' : 'user';
 
   if (!email || !password) {
     return res.status(400).json({ error: 'Email et mot de passe requis' });
@@ -108,38 +123,41 @@ async function register(req, res) {
     return res.status(400).json({ error: 'Un compte existe déjà avec cet email' });
   }
 
+  if (normalizedAccountType === 'supplier' && !companyName?.trim()) {
+    return res.status(400).json({ error: 'Nom de la boutique requis pour un compte fournisseur' });
+  }
+
   const profileCategory = String(category || '').trim();
-  const officialCategory = profileCategory || (accountType === 'supplier' ? 'Fournisseur' : 'Architecte');
+  const officialCategory = profileCategory || (normalizedAccountType === 'supplier' ? 'Fournisseur' : 'Architecte');
   const user = await User.create({
     name: name?.trim() || companyName?.trim() || undefined,
     email,
     phone: phone?.trim() || undefined,
     password,
-    role: 'user',
-    type: accountType === 'supplier' ? 'Fournisseur' : officialCategory,
+    role: normalizedAccountType === 'supplier' ? 'supplier' : 'user',
+    type: normalizedAccountType === 'supplier' ? 'Fournisseur' : officialCategory,
     category: officialCategory,
   });
 
-  if (accountType === 'supplier') {
-    if (!companyName?.trim()) {
-      await User.deleteOne({ _id: user._id });
-      return res.status(400).json({ error: 'Nom de la boutique requis pour une demande fournisseur' });
-    }
-
-    const supplierRequest = await SupplierRequest.create({
-      user: user._id,
-      companyName: companyName.trim(),
-      email: user.email,
-      phone: phone?.trim() || undefined,
+  if (normalizedAccountType === 'supplier') {
+    const supplier = await ensureSupplierProfile(user, {
+      companyName,
+      phone,
+      city,
+      neighborhood,
+      category: profileCategory,
       categories: normalizeCategories([
         profileCategory,
         ...(Array.isArray(categories) ? categories : []),
       ]),
     });
-    publishCrudEvent('supplier-requests', 'created', {
-      requestId: String(supplierRequest._id),
+    publishCrudEvent('suppliers', 'created', {
+      supplierId: String(supplier._id),
       userId: String(user._id),
-    }, { roles: ['admin'] });
+    }, {
+      roles: ['admin', 'supplier'],
+      userIds: [user._id],
+    });
   }
 
   publishCrudEvent('users', 'registered', { userId: String(user._id), role: user.role }, {
@@ -248,6 +266,91 @@ async function changePassword(req, res) {
   return res.json({ message: 'Mot de passe mis à jour' });
 }
 
+async function forgotPassword(req, res) {
+  const email = String(req.body.email || '').toLowerCase().trim();
+
+  if (!email) {
+    return res.status(400).json({ error: 'Email requis' });
+  }
+
+  const genericMessage = 'Si ce compte existe, un email de réinitialisation a été envoyé.';
+  const user = await User.findOne({ email });
+
+  if (!user || user.status === 'Supprimé') {
+    return res.json({ message: genericMessage });
+  }
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const tokenHash = hashResetToken(token);
+  const expiresAt = new Date(Date.now() + PASSWORD_RESET_EXPIRES_MINUTES * 60 * 1000);
+
+  await PasswordResetToken.deleteMany({ user: user._id });
+  await PasswordResetToken.create({
+    user: user._id,
+    tokenHash,
+    expiresAt,
+  });
+
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const resetUrl = `${frontendUrl.replace(/\/$/, '')}/reset-password?token=${encodeURIComponent(token)}`;
+
+  const emailResult = await sendPasswordResetEmail({
+    to: user.email,
+    name: user.name,
+    resetUrl,
+    expiresInMinutes: PASSWORD_RESET_EXPIRES_MINUTES,
+  });
+
+  publishCrudEvent('users', 'password-reset-requested', { userId: String(user._id), role: user.role }, {
+    userIds: [user._id],
+  });
+
+  return res.json({
+    message: emailResult.delivered
+      ? genericMessage
+      : `Email non envoyé (${emailResult.reason || 'SMTP non configuré'}). Utilisez le lien de réinitialisation affiché en mode développement.`,
+    resetUrl: emailResult.delivered || process.env.NODE_ENV === 'production' ? undefined : emailResult.previewUrl,
+    emailDelivered: emailResult.delivered,
+  });
+}
+
+async function resetPassword(req, res) {
+  const token = String(req.body.token || '').trim();
+  const newPassword = String(req.body.password || req.body.newPassword || '');
+
+  if (!token || !newPassword) {
+    return res.status(400).json({ error: 'Token et nouveau mot de passe requis' });
+  }
+
+  if (newPassword.length < 6) {
+    return res.status(400).json({ error: 'Le nouveau mot de passe doit contenir au moins 6 caractères' });
+  }
+
+  const tokenHash = hashResetToken(token);
+  const resetToken = await PasswordResetToken.findOne({ tokenHash });
+
+  if (!resetToken || resetToken.usedAt || resetToken.expiresAt <= new Date()) {
+    return res.status(400).json({ error: 'Lien de réinitialisation invalide ou expiré' });
+  }
+
+  const user = await User.findById(resetToken.user).select('+password');
+  if (!user || user.status === 'Supprimé') {
+    await PasswordResetToken.deleteOne({ _id: resetToken._id });
+    return res.status(400).json({ error: 'Lien de réinitialisation invalide ou expiré' });
+  }
+
+  user.password = newPassword;
+  if (user.status === 'Inactif') user.status = 'Actif';
+  await user.save();
+  await PasswordResetToken.deleteOne({ _id: resetToken._id });
+
+  publishCrudEvent('users', 'password-reset', { userId: String(user._id), role: user.role }, {
+    userIds: [user._id],
+  });
+
+  return res.json({ message: 'Mot de passe réinitialisé. Vous pouvez vous reconnecter.' });
+}
+
 async function login(req, res) {
   const { email, password } = req.body;
 
@@ -269,11 +372,6 @@ async function login(req, res) {
     });
   }
 
-  if (user.type === 'Fournisseur' && user.role !== 'supplier') {
-    return res.status(403).json({ error: 'Votre demande fournisseur est en attente de validation admin.' });
-  }
-
-  await ensureSupplierProfile(user);
   sendAuthResponse(res, user);
 }
 
@@ -281,4 +379,4 @@ async function getMe(req, res) {
   res.json({ user: formatUser(req.user) });
 }
 
-export { register, login, getMe, updateMe, changePassword };
+export { register, login, getMe, updateMe, changePassword, forgotPassword, resetPassword };

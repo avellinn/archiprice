@@ -313,7 +313,7 @@
   position: absolute;
   right: 0.75rem;
   bottom: 0.75rem;
-  z-index: 2;
+  z-index: 3;
   padding: 0.25rem 0.5rem;
   border-radius: 999px;
   background: rgb(255 255 255 / 0.82);
@@ -340,12 +340,14 @@
 
 .espacepro__article-image.espacepro__article-image--has-photo i {
   min-height: 100%;
+  z-index: 1;
   opacity: 1;
   background:
-    linear-gradient(180deg, rgb(15 23 42 / 0.06), rgb(15 23 42 / 0.2)),
+    linear-gradient(180deg, rgb(15 23 42 / 0.02), rgb(15 23 42 / 0.16)),
     var(--article-image-url);
   background-position: center;
-  background-size: cover;
+  background-repeat: no-repeat;
+  background-size: 100% 100%, contain;
   transform: none;
   
 }

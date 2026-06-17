@@ -61,6 +61,18 @@ const supplierSchema = new mongoose.Schema(
       maxlength: 120,
       default: '',
     },
+    city: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+      default: '',
+    },
+    neighborhood: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+      default: '',
+    },
     status: {
       type: String,
       enum: ['Actif', 'Inactif', 'Bloqué', 'Supprimé'],

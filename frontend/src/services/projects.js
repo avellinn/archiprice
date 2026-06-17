@@ -159,13 +159,9 @@ export async function deleteProject(id) {
     return deleteLocalProject();
   }
 
-  try {
-    const { data } = await api.delete(API_ROUTES.projects.detail(id));
-    deleteLocalProject();
-    return data;
-  } catch {
-    return deleteLocalProject();
-  }
+  const { data } = await api.delete(API_ROUTES.projects.detail(id));
+  deleteLocalProject();
+  return data;
 }
 
 export async function downloadProjectRecapPdf(id) {

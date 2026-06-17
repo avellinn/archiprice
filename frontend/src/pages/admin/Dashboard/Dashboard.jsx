@@ -5,11 +5,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import DonutChartCard from '../../../components/DonutChart';
 import { Button, Icon, Text } from '../../../components/ui';
 import { useAdminData } from '../../../services/adminData';
-import { fetchAdminSimulations, fetchAdminSupportItems, fetchAdminUsers } from '../../../services/adminMongo';
+import { fetchAdminProducts, fetchAdminSimulations, fetchAdminSupportItems, fetchAdminUsers } from '../../../services/adminMongo';
 import {
   fetchExportedDocuments,
   subscribeExportedDocumentsChange,
 } from '../../../services/exportedDocuments';
+import { fetchProjects, subscribeProjectsChange } from '../../../services/projects';
+
+const HIDDEN_SIMULATIONS_KEY = 'archiprice:admin-hidden-simulations';
 
 function formatDate(value) {
   if (!value) return 'Date non renseignée';
@@ -71,6 +74,30 @@ function getSimulationDate(simulation) {
   return simulation.exportedAt || simulation.createdAt || simulation.updatedAt || simulation.date;
 }
 
+function readHiddenSimulationIds() {
+  try {
+    return JSON.parse(window.localStorage.getItem(HIDDEN_SIMULATIONS_KEY) || '[]').map(String);
+  } catch {
+    return [];
+  }
+}
+
+function formatFCFA(amount) {
+  return `${new Intl.NumberFormat('fr-FR').format(Number(amount || 0))} FCFA`;
+}
+
+function formatExportDate(value) {
+  if (!value) return '-';
+
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value));
+}
+
 function isAvailable(product) {
   return String(product.availability || '').toLowerCase() === 'disponible';
 }
@@ -88,13 +115,55 @@ function isOpenSupport(item) {
 }
 
 function getUserRole(user) {
-  if (String(user.role || '').toLowerCase() === 'admin' || user.type === 'Admin') return 'admin';
-  if (String(user.role || '').toLowerCase() === 'supplier' || user.type === 'Fournisseur') return 'supplier';
+  const role = String(user.role || '').toLowerCase();
+  if (role === 'admin') return 'admin';
+  if (role === 'supplier') return 'supplier';
   return 'user';
 }
 
-function getActivityRows(adminData, supportItems = [], simulations = []) {
-  const productRows = (adminData.products || []).slice(0, 2).map((product, index) => ({
+function mergeSimulationSources(items) {
+  const simulationsById = new Map();
+
+  items.forEach((item) => {
+    if (!item?.id || simulationsById.has(item.id)) return;
+    simulationsById.set(item.id, item);
+  });
+
+  return [...simulationsById.values()];
+}
+
+function mapExportToSimulation(document) {
+  return {
+    ...document,
+    id: `exported-${document.id}`,
+    sourceType: 'export',
+    sourceId: document.id,
+    user: document.userName || 'Utilisateur ArchiPrice',
+    email: document.userEmail || 'Compte user',
+    status: document.status || 'Succès',
+    date: formatExportDate(document.exportedAt),
+    total: formatFCFA(document.amount),
+    products: document.itemCount || document.items?.length || 0,
+  };
+}
+
+function mapProjectToSimulation(project) {
+  return {
+    id: `project-${project.id}`,
+    sourceType: 'project',
+    sourceId: project.id,
+    user: project.clientName || project.userName || 'Utilisateur ArchiPrice',
+    email: project.userEmail || 'Projet workspace',
+    date: formatExportDate(project.updatedAt || project.createdAt),
+    total: formatFCFA(project.budget || project.amount || project.total || 0),
+    products: project.itemCount || project.items?.length || 0,
+    status: project.status === 'draft' ? 'Projet créé' : project.status || 'Projet créé',
+    projectName: project.name || 'Projet sans nom',
+  };
+}
+
+function getActivityRows(products = [], supportItems = [], simulations = []) {
+  const productRows = products.slice(0, 2).map((product, index) => ({
     id: `product-${product.id || index}`,
     title: product.name || 'Article sans nom',
     status: product.availability || 'Catalogue',
@@ -126,7 +195,10 @@ export default function Dashboard() {
   const [searchParams] = useSearchParams();
   const [adminData] = useAdminData();
   const [supportItems, setSupportItems] = useState([]);
+  const [adminProducts, setAdminProducts] = useState([]);
   const [mongoSimulations, setMongoSimulations] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [hiddenSimulationIds, setHiddenSimulationIds] = useState(readHiddenSimulationIds);
   const [adminUsers, setAdminUsers] = useState([]);
   const [exportedDocuments, setExportedDocuments] = useState(() => fetchExportedDocuments());
 
@@ -145,6 +217,28 @@ export default function Dashboard() {
 
     loadSupportItems();
     const refreshTimer = window.setInterval(loadSupportItems, 10000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(refreshTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    function loadProducts() {
+      fetchAdminProducts()
+        .then((items) => {
+          if (!cancelled) setAdminProducts(items);
+        })
+        .catch(() => {
+          if (!cancelled) setAdminProducts([]);
+        });
+    }
+
+    loadProducts();
+    const refreshTimer = window.setInterval(loadProducts, 10000);
 
     return () => {
       cancelled = true;
@@ -177,6 +271,37 @@ export default function Dashboard() {
   useEffect(() => {
     let cancelled = false;
 
+    fetchProjects()
+      .then((list) => {
+        if (!cancelled) setProjects(list);
+      })
+      .catch(() => {
+        if (!cancelled) setProjects([]);
+      });
+
+    const unsubscribe = subscribeProjectsChange((list) => {
+      if (!cancelled) setProjects(list);
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    function refreshHiddenSimulations(event) {
+      if (event.type === 'storage' && event.key !== HIDDEN_SIMULATIONS_KEY) return;
+      setHiddenSimulationIds(readHiddenSimulationIds());
+    }
+
+    window.addEventListener('storage', refreshHiddenSimulations);
+    return () => window.removeEventListener('storage', refreshHiddenSimulations);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
     function loadUsers() {
       fetchAdminUsers()
         .then((items) => {
@@ -199,21 +324,26 @@ export default function Dashboard() {
   useEffect(() => subscribeExportedDocumentsChange(setExportedDocuments), []);
 
   const synchronizedSimulations = useMemo(() => ([
-    ...exportedDocuments.map((document) => ({
-      ...document,
-      id: `exported-${document.id}`,
-      user: document.userName || 'Utilisateur ArchiPrice',
-      email: document.userEmail || 'Compte user',
-      status: document.status || 'Succès',
-      date: document.exportedAt,
+    ...projects.map(mapProjectToSimulation),
+    ...exportedDocuments.map(mapExportToSimulation),
+    ...mongoSimulations.map((simulation) => ({
+      ...simulation,
+      sourceType: simulation.sourceType || simulation.source || 'simulation',
+      sourceId: simulation.sourceId || simulation.projectId || simulation.id,
     })),
-    ...mongoSimulations,
-  ]), [exportedDocuments, mongoSimulations]);
+  ]), [exportedDocuments, mongoSimulations, projects]);
+
+  const visibleSimulations = useMemo(() => (
+    mergeSimulationSources(synchronizedSimulations)
+      .filter((simulation) => !hiddenSimulationIds.includes(String(simulation.id)))
+  ), [hiddenSimulationIds, synchronizedSimulations]);
+
+  const simpleUsers = useMemo(() => adminUsers.filter((user) => getUserRole(user) === 'user'), [adminUsers]);
 
   const stats = useMemo(() => {
-    const products = adminData.products || [];
+    const products = adminProducts;
     const suppliers = adminData.suppliers || [];
-    const simulations = synchronizedSimulations;
+    const simulations = visibleSimulations;
 
     return {
       totalProducts: products.length,
@@ -224,23 +354,38 @@ export default function Dashboard() {
       successfulSimulations: simulations.filter(isSuccessfulSimulation).length,
       totalSupport: supportItems.length,
       openSupport: supportItems.filter(isOpenSupport).length,
+      totalUsers: simpleUsers.length,
     };
-  }, [adminData, supportItems, synchronizedSimulations]);
+  }, [adminData.suppliers, adminProducts, simpleUsers.length, supportItems, visibleSimulations]);
 
   const dashboardSearchTerm = searchParams.get('q')?.trim().toLowerCase() || '';
-  const simpleUsers = useMemo(() => adminUsers.filter((user) => getUserRole(user) === 'user'), [adminUsers]);
-  const history = useMemo(() => getActivityRows(adminData, supportItems, synchronizedSimulations).filter((item) => (
+  const history = useMemo(() => getActivityRows(adminProducts, supportItems, visibleSimulations).filter((item) => (
     !dashboardSearchTerm
     || String(item.title || '').toLowerCase().includes(dashboardSearchTerm)
     || String(item.status || '').toLowerCase().includes(dashboardSearchTerm)
-  )), [adminData, dashboardSearchTerm, supportItems, synchronizedSimulations]);
+  )), [adminProducts, dashboardSearchTerm, supportItems, visibleSimulations]);
   const userMonthActivity = useMemo(() => buildMonthActivity(simpleUsers), [simpleUsers]);
   const supplierMonthActivity = useMemo(() => buildMonthActivity(adminData.suppliers || []), [adminData.suppliers]);
   const userActivityChart = useMemo(() => buildActivityPath(userMonthActivity), [userMonthActivity]);
   const supplierActivityChart = useMemo(() => buildActivityPath(supplierMonthActivity), [supplierMonthActivity]);
+  const userStrokeWidth = simpleUsers.length > 0
+    ? Math.min(8, 4 + Math.log10(simpleUsers.length + 1) * 2)
+    : 5;
 
-  const repartitionTotal = stats.totalProducts + stats.totalSuppliers + stats.totalSimulations + stats.totalSupport;
+  const repartitionTotal = stats.totalProducts
+    + stats.totalSuppliers
+    + stats.totalSimulations
+    + stats.totalSupport
+    + stats.totalUsers;
   const repartitionData = [
+    {
+      name: 'Utilisateurs',
+      value: stats.totalUsers,
+      chartValue: getDonutDisplayValue(stats.totalUsers, repartitionTotal),
+      percent: getPercent(stats.totalUsers, repartitionTotal),
+      color: '#ff943b',
+      unit: 'utilisateur',
+    },
     {
       name: 'Articles catalogue',
       value: stats.totalProducts,
@@ -275,11 +420,23 @@ export default function Dashboard() {
     },
   ];
 
+  function handleStatKeyDown(event, route) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    navigate(route);
+  }
+
   return (
     <div className="dashboard-page admin-dashboard-page">
       <div className="dashboard-grid">
         <section id="admin-dashboard-summary" className="dashboard-stats" aria-label="Résumé backoffice">
-          <article className="stat-card stat-blue">
+          <article
+            className="stat-card stat-blue stat-card--clickable"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate('/admin/catalogue/products')}
+            onKeyDown={(event) => handleStatKeyDown(event, '/admin/catalogue/products')}
+          >
             <Text as="span" variant="bold" size="sm">
               Articles catalogue
             </Text>
@@ -291,7 +448,13 @@ export default function Dashboard() {
             </svg>
           </article>
 
-          <article className="stat-card stat-yellow">
+          <article
+            className="stat-card stat-yellow stat-card--clickable"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate('/admin/suppliers')}
+            onKeyDown={(event) => handleStatKeyDown(event, '/admin/suppliers')}
+          >
             <Text as="span" variant="bold" size="sm">
               Fournisseurs actifs
             </Text>
@@ -303,7 +466,13 @@ export default function Dashboard() {
             </svg>
           </article>
 
-          <article className="stat-card stat-red">
+          <article
+            className="stat-card stat-red stat-card--clickable"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate('/admin/simulations')}
+            onKeyDown={(event) => handleStatKeyDown(event, '/admin/simulations')}
+          >
             <Text as="span" variant="bold" size="sm">
               Simulations réussies
             </Text>
@@ -315,7 +484,13 @@ export default function Dashboard() {
             </svg>
           </article>
 
-          <article className="stat-card stat-cyan">
+          <article
+            className="stat-card stat-cyan stat-card--clickable"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate('/admin/support')}
+            onKeyDown={(event) => handleStatKeyDown(event, '/admin/support')}
+          >
             <Text as="span" variant="bold" size="sm">
               Support ouvert
             </Text>
@@ -348,26 +523,27 @@ export default function Dashboard() {
                 </linearGradient>
               </defs>
               <path
-                className="chart-fill chart-fill--user"
-                d={userActivityChart.fillPath}
-              />
-              <path
                 className="chart-fill chart-fill--supplier"
                 d={supplierActivityChart.fillPath}
               />
               <path
-                className="chart-line chart-line--user"
-                d={userActivityChart.linePath}
+                className="chart-fill chart-fill--user"
+                d={userActivityChart.fillPath}
               />
               <path
                 className="chart-line chart-line--supplier"
                 d={supplierActivityChart.linePath}
               />
-              {userActivityChart.points.map((point) => (
-                <circle key={`user-${point.key}`} className="chart-point--user" cx={point.x} cy={point.y} r={point.count ? 5 : 3} />
-              ))}
+              <path
+                className="chart-line chart-line--user"
+                d={userActivityChart.linePath}
+                style={{ strokeWidth: userStrokeWidth }}
+              />
               {supplierActivityChart.points.map((point) => (
                 <circle key={`supplier-${point.key}`} className="chart-point--supplier" cx={point.x} cy={point.y} r={point.count ? 4 : 2.5} />
+              ))}
+              {userActivityChart.points.map((point) => (
+                <circle key={`user-${point.key}`} className="chart-point--user" cx={point.x} cy={point.y} r={point.count ? 5 : 3.5} />
               ))}
             </svg>
             <div className="chart-axis">
@@ -379,8 +555,8 @@ export default function Dashboard() {
             </div>
             <div className="chart-legend">
               
-              <Text as="span" variant="bold" size="sm"><i className="legend-orange" /> Utilisateur simple</Text>
-              <Text as="span" variant="bold" size="sm"><i className="legend-blue" /> Boutique</Text>
+              <Text as="span" variant="bold" size="sm"><i className="legend-orange" /> Utilisateur simple ({stats.totalUsers})</Text>
+              <Text as="span" variant="bold" size="sm"><i className="legend-blue" /> Boutique ({stats.totalSuppliers})</Text>
             </div>
           </div>
         </section>
@@ -425,9 +601,9 @@ export default function Dashboard() {
           type="button"
           size="lg"
           icon={<Icon name="Add" />}
-          onClick={() => navigate('/admin/catalogue/products')}
+          onClick={() => navigate('/admin/suppliers')}
         >
-          Gérer les articles
+          Voir les fournisseurs
         </Button>
       </div>
     </div>

@@ -83,15 +83,12 @@ Rôles possibles :
 ### Inscription fournisseur
 
 Le frontend peut envoyer `accountType: "supplier"` sur `/api/auth/register`.
-Le backend ne donne jamais directement le rôle `supplier` à partir du payload frontend.
 
 Flux :
 
-1. création d'un `User` avec `role: "user"` et `type: "Fournisseur"` ;
-2. création d'une entrée `supplier_requests` ;
-3. l'utilisateur voit une page d'attente ;
-4. l'admin valide ou refuse la demande ;
-5. après validation, le backend force `role: "supplier"` et crée/lie le profil `Supplier`.
+1. création d'un `User` avec `role: "supplier"` et `type: "Fournisseur"` ;
+2. création ou liaison automatique du profil `Supplier` ;
+3. redirection immédiate vers l'espace fournisseur.
 
 ## Projets
 
@@ -144,13 +141,10 @@ Un utilisateur authentifié sans rôle admin reçoit `403`.
 | `PATCH` | `/api/admin/users/:id` | Modifie nom, email, téléphone, statut, etc. |
 | `DELETE` | `/api/admin/users/:id` | Supprime un utilisateur |
 | `PUT` | `/api/admin/users/:id/role` | Change le rôle d'un utilisateur |
-| `GET` | `/api/admin/suppliers` | Liste les fournisseurs validés |
+| `GET` | `/api/admin/suppliers` | Liste les fournisseurs |
 | `POST` | `/api/admin/suppliers` | Crée un fournisseur administré |
 | `PUT` | `/api/admin/suppliers/:id` | Modifie un fournisseur |
 | `DELETE` | `/api/admin/suppliers/:id` | Supprime un fournisseur |
-| `GET` | `/api/admin/supplier-requests` | Liste les demandes fournisseur |
-| `POST` | `/api/admin/supplier-requests/:id/approve` | Valide une demande fournisseur |
-| `POST` | `/api/admin/supplier-requests/:id/reject` | Refuse une demande fournisseur |
 | `GET` | `/api/admin/simulations` | Liste les simulations/estimations exportées |
 | `POST` | `/api/admin/simulations` | Crée une simulation admin/fallback |
 | `PATCH` | `/api/admin/simulations/:id` | Modifie une simulation |
@@ -198,7 +192,12 @@ Routes protégées par :
 1. `protect`
 2. `requireSupplier`
 
-Un compte fournisseur n'a accès à ces routes qu'après validation admin.
+Un compte fournisseur a accès à ces routes seulement si deux conditions sont vraies :
+
+- le compte possède `role: "supplier"` ;
+- un profil `Supplier` existe pour ce compte et n'est pas supprimé.
+
+Le champ `type` ou `category` ne donne jamais l'accès supplier à lui seul. Cette règle évite qu'un compte user soit considéré comme supplier à cause d'une valeur descriptive.
 
 | Méthode | Route | Description |
 |---------|-------|-------------|
@@ -208,6 +207,7 @@ Un compte fournisseur n'a accès à ces routes qu'après validation admin.
 | `GET` | `/api/supplier/products` | Liste les produits du fournisseur |
 | `POST` | `/api/supplier/products` | Crée un produit fournisseur avec images optionnelles |
 | `PUT` | `/api/supplier/products/:productId` | Modifie un produit fournisseur et ajoute éventuellement des images |
+| `PATCH` | `/api/supplier/products/:productId/publication` | Soumet un produit (`En attente`) ou retire sa publication (`Retiré`) |
 | `DELETE` | `/api/supplier/products/:productId` | Supprime un produit fournisseur et ses images Cloudinary |
 | `DELETE` | `/api/supplier/products/:productId/images` | Supprime une image Cloudinary d'un produit fournisseur |
 
@@ -220,18 +220,47 @@ Un compte fournisseur n'a accès à ces routes qu'après validation admin.
 
 Les images sont envoyées vers Cloudinary, dossier `archiprice/products`. MongoDB stocke uniquement `secure_url`, `public_id` et `metadata`.
 
+### Publication Supplier Vers Catalogue User
+
+La création d'un produit supplier via `/api/supplier/products` ne suffit pas à rendre l'article visible dans le catalogue user. Le produit est enregistré dans MongoDB avec `publicationStatus: "Brouillon"` par défaut. Le supplier peut ensuite déclencher :
+
+```http
+PATCH /api/supplier/products/:productId/publication
+Content-Type: application/json
+
+{ "publicationStatus": "En attente" }
+```
+
+Le même endpoint accepte `publicationStatus: "Retiré"` pour retirer une publication côté supplier.
+
+L'admin gère ensuite les articles soumis depuis `/admin/catalogue/products`, qui lit les endpoints Mongo suivants :
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| `GET` | `/api/admin/products` | Liste les produits supplier soumis, validés, retirés ou refusés |
+| `PATCH` | `/api/admin/products/:id` | Change `publicationStatus` (`Validé`, `Retiré`, `Refusé`, `En attente`) |
+| `DELETE` | `/api/admin/products/:id` | Supprime définitivement le produit et ses images Cloudinary |
+
+- `Validé` : l'article devient visible dans `pages/user/Catalogue/`.
+- `Retiré` ou `Refusé` : l'article reste masqué côté catalogue.
+- `Supprimé` : l'article est supprimé de MongoDB et ses images sont supprimées de Cloudinary si possible.
+
+Le catalogue user ne lit pas `adminData.products`. Il appelle `GET /api/catalogue/products`, qui renvoie uniquement les produits `publicationStatus: "Validé"` dont le fournisseur n'est ni bloqué ni supprimé. Si aucun produit n'est validé, le catalogue reste vide et `Catégori.jsx` ne s'affiche pas.
+
 ## Catalogue Config
 
 | Méthode | Route | Accès | Description |
 |---------|-------|-------|-------------|
 | `GET` | `/api/catalogue-config` | Public/Auth selon contexte dev | Configuration catalogue |
 | `PUT` | `/api/catalogue-config` | Admin | Met à jour catégories, pièces, gammes, villes, quartiers, disponibilités |
+| `GET` | `/api/catalogue/products` | User/Auth | Articles validés visibles dans le catalogue user |
 
 La configuration catalogue alimente :
 
-- les filtres user dans `Catalogue.jsx` ;
-- les formulaires admin `CategoriesFiltres.jsx` et `Articles.jsx` ;
+- les filtres user dans `Catalogue.jsx`, dérivés des articles validés ;
 - les formulaires supplier `AjouterProduit.jsx`.
+
+Les anciennes données `products` de `catalogue-config` sont considérées legacy et sont purgées/ignorées : la source de vérité des articles est `Product` dans MongoDB.
 
 ## Uploads
 

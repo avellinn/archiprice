@@ -6,7 +6,7 @@ export const SUPPLIER_LANGUAGE_LABELS = {
 export const SUPPLIER_TRANSLATIONS = {
   fr: {
     pageTitles: {
-      '/supplier/dashboard': 'Analyses de données',
+      '/supplier/dashboard': 'Tableau de bord',
       '/supplier/shop': 'Ma boutique',
       '/supplier/products': 'Produits',
       '/supplier/clients': 'Clients',
@@ -18,7 +18,7 @@ export const SUPPLIER_TRANSLATIONS = {
     },
     sidebar: {
       section: 'Boutique',
-      dashboard: 'Analyses de données',
+      dashboard: 'Tableau de bord',
       shop: 'Ma boutique',
       products: 'Produits',
       clients: 'Clients',
@@ -94,7 +94,7 @@ export const SUPPLIER_TRANSLATIONS = {
   },
   en: {
     pageTitles: {
-      '/supplier/dashboard': 'Data analytics',
+      '/supplier/dashboard': 'Dashboard',
       '/supplier/shop': 'My shop',
       '/supplier/products': 'Products',
       '/supplier/clients': 'Customers',
@@ -106,7 +106,7 @@ export const SUPPLIER_TRANSLATIONS = {
     },
     sidebar: {
       section: 'Shop',
-      dashboard: 'Data analytics',
+      dashboard: 'Dashboard',
       shop: 'My shop',
       products: 'Products',
       clients: 'Customers',

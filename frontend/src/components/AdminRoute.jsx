@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import useAuth from '../context/useAuth';
-import Text from './Text';
+import { Loader } from './ui';
 
 export default function AdminRoute({ children }) {
   const { isAuthenticated, loading, user } = useAuth();
@@ -9,7 +9,7 @@ export default function AdminRoute({ children }) {
   if (loading) {
     return (
       <main className="page">
-        <Text>Chargement…</Text>
+        <Loader />
       </main>
     );
   }

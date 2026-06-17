@@ -190,11 +190,23 @@ export default function Dashboard() {
     navigate(`/workspace?projectId=${encodeURIComponent(project.id)}&mode=projects`);
   }
 
+  function handleStatKeyDown(event, route) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    navigate(route);
+  }
+
   return (
     <div className="dashboard-page">
       <div className="dashboard-grid">
         <section id="processed-projects" className="dashboard-stats" aria-label="Résumé des projets">
-          <article className="stat-card stat-blue">
+          <article
+            className="stat-card stat-blue stat-card--clickable"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate('/workspace?status=active')}
+            onKeyDown={(event) => handleStatKeyDown(event, '/workspace?status=active')}
+          >
             <Text as="span" variant="bold" size="sm">
               Projets en cours
             </Text>
@@ -206,7 +218,13 @@ export default function Dashboard() {
             </svg>
           </article>
 
-          <article className="stat-card stat-yellow">
+          <article
+            className="stat-card stat-yellow stat-card--clickable"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate('/archives')}
+            onKeyDown={(event) => handleStatKeyDown(event, '/archives')}
+          >
             <Text as="span" variant="bold" size="sm">
               Projets archives
             </Text>
@@ -218,7 +236,13 @@ export default function Dashboard() {
             </svg>
           </article>
 
-          <article className="stat-card stat-red">
+          <article
+            className="stat-card stat-red stat-card--clickable"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate('/workspace?status=processed')}
+            onKeyDown={(event) => handleStatKeyDown(event, '/workspace?status=processed')}
+          >
             <Text as="span" variant="bold" size="sm">
               Projets traités
             </Text>
@@ -230,7 +254,13 @@ export default function Dashboard() {
             </svg>
           </article>
 
-          <article className="stat-card stat-cyan">
+          <article
+            className="stat-card stat-cyan stat-card--clickable"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate('/workspace?mode=projects')}
+            onKeyDown={(event) => handleStatKeyDown(event, '/workspace?mode=projects')}
+          >
             <Text as="span" variant="bold" size="sm">
               Total projets
             </Text>

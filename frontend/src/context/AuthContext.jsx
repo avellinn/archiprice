@@ -93,6 +93,34 @@ export function AuthProvider({ children }) {
     };
   }, [clearSession, loading]);
 
+  useEffect(() => {
+    const userId = user?.id;
+    if (!userId) return undefined;
+
+    let isActive = true;
+    const refreshSession = () => {
+      fetchMe()
+        .then((userData) => {
+          if (!isActive) return;
+          setUser((currentUser) => withSessionAvatarColor({
+            ...(currentUser || {}),
+            ...userData,
+            avatarColor: currentUser?.avatarColor,
+          }));
+        })
+        .catch(() => {
+          if (isActive) clearSession();
+        });
+    };
+
+    const intervalId = window.setInterval(refreshSession, 15000);
+
+    return () => {
+      isActive = false;
+      window.clearInterval(intervalId);
+    };
+  }, [clearSession, user?.id]);
+
   const login = useCallback(
     async (credentials) => {
       const { token, user: userData } = await loginRequest(credentials);
@@ -105,11 +133,6 @@ export function AuthProvider({ children }) {
   const register = useCallback(
     async (payload) => {
       const { token, user: userData } = await registerRequest(payload);
-      if (userData?.type === 'Fournisseur' && userData?.role !== 'supplier') {
-        setStoredToken(null);
-        setUser(null);
-        return userData;
-      }
       applySession(token, userData, true);
       return userData;
     },

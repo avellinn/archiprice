@@ -1,4 +1,6 @@
 import mongoose from 'mongoose';
+import Demande from '../models/Demande.js';
+import PasswordResetToken from '../models/PasswordResetToken.js';
 
 const CONNECT_OPTIONS = {
   serverSelectionTimeoutMS: 10000,
@@ -39,6 +41,7 @@ async function connectDB() {
 
   try {
     await mongoose.connect(uri, CONNECT_OPTIONS);
+    await ensureCoreCollections();
     dbStatus = 'connected';
     console.log('[db] MongoDB connecté');
   } catch (err) {
@@ -49,6 +52,21 @@ async function connectDB() {
     }
     console.warn('[db] MongoDB indisponible — API démarrée en mode dégradé');
   }
+}
+
+async function ensureCoreCollections() {
+  const collections = [Demande, PasswordResetToken];
+
+  await Promise.all(collections.map(async (model) => {
+    try {
+      await model.createCollection();
+    } catch (err) {
+      if (err.codeName !== 'NamespaceExists' && err.code !== 48) {
+        throw err;
+      }
+    }
+    await model.syncIndexes();
+  }));
 }
 
 mongoose.connection.on('connected', () => {

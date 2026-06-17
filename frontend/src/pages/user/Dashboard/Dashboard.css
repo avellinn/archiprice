@@ -51,6 +51,19 @@
   overflow: hidden;
 }
 
+.stat-card--clickable {
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.stat-card--clickable:hover,
+.stat-card--clickable:focus-visible {
+  box-shadow: 0 16px 34px rgb(15 23 42 / 0.11);
+  outline: 1px solid #81868b;
+  outline-offset: 3px;
+  transform: translateY(-1px);
+}
+
 .stat-card span {
   display: block;
   color: #222223c6;
@@ -207,7 +220,7 @@
 .chart-line {
   fill: none;
   stroke: #ff943b;
-  stroke-width: 8;
+  stroke-width: 6;
   stroke-linecap: round;
 }
 

@@ -7,6 +7,8 @@ import { createProject } from '../services/projects';
 import { isNumericOnly, sanitizeNumericInput } from '../utils/formInput';
 import './Newproject.css';
 
+const CUSTOM_ROOM_VALUE = '__custom_room__';
+
 function parseAmount(value) {
   const amount = Number(String(value || '').replace(/[^\d.-]/g, ''));
   return Number.isFinite(amount) ? amount : 0;
@@ -40,6 +42,7 @@ export default function Newproject({ isOpen, onCancel, onCreated, roomTypes = []
   )).filter((room) => room?.value && room?.label);
   const [projectName, setProjectName] = useState('');
   const [roomType, setRoomType] = useState('');
+  const [customRoomType, setCustomRoomType] = useState('');
   const [budget, setBudget] = useState('');
   const [error, setError] = useState('');
   const [actionMessage, setActionMessage] = useState('');
@@ -50,6 +53,7 @@ export default function Newproject({ isOpen, onCancel, onCreated, roomTypes = []
   function resetForm() {
     setProjectName('');
     setRoomType('');
+    setCustomRoomType('');
     setBudget('');
     setError('');
   }
@@ -73,8 +77,15 @@ export default function Newproject({ isOpen, onCancel, onCreated, roomTypes = []
       return;
     }
 
-    if (!roomType || !budget.trim()) {
+    const effectiveRoomType = roomType === CUSTOM_ROOM_VALUE ? customRoomType.trim() : roomType;
+
+    if (!effectiveRoomType || !budget.trim()) {
       setError('Tous les champs sont requis');
+      return;
+    }
+
+    if (isNumericOnly(effectiveRoomType)) {
+      setError('Le type de pièce doit contenir du texte.');
       return;
     }
 
@@ -85,7 +96,7 @@ export default function Newproject({ isOpen, onCancel, onCreated, roomTypes = []
     try {
       const project = await createProject({
         name,
-        description: buildProjectDescription(roomType, budget.trim()),
+        description: buildProjectDescription(effectiveRoomType, budget.trim()),
       });
       setActionMessage('Projet créé avec succès.');
       resetForm();
@@ -146,8 +157,23 @@ export default function Newproject({ isOpen, onCancel, onCreated, roomTypes = []
                   {type.label}
                 </option>
               ))}
+              <option value={CUSTOM_ROOM_VALUE}>Autre</option>
             </select>
           </label>
+
+          {roomType === CUSTOM_ROOM_VALUE && (
+            <label className="modal-create-project__field">
+              Type de pièce personnalisé
+              <input
+                type="text"
+                value={customRoomType}
+                onChange={(event) => setCustomRoomType(event.target.value)}
+                placeholder="Ex. Dressing, studio, terrasse..."
+                maxLength={120}
+                required
+              />
+            </label>
+          )}
 
           <label className="modal-create-project__field">
             Estimation budget (FCFA)
@@ -175,7 +201,12 @@ export default function Newproject({ isOpen, onCancel, onCreated, roomTypes = []
           <Button type="button" variant="danger" onClick={handleCancel} disabled={submitting}>
             Annuler
           </Button>
-          <Button type="submit" variant="success" isLoading={submitting} disabled={!projectName.trim() || !budget.trim()}>
+          <Button
+            type="submit"
+            variant="success"
+            isLoading={submitting}
+            disabled={!projectName.trim() || !budget.trim() || (roomType === CUSTOM_ROOM_VALUE && !customRoomType.trim())}
+          >
             Valider
           </Button>
         </div>

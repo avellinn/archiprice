@@ -2,7 +2,7 @@ import './MaBoutique.css';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SupplierShopCard from '../../../components/SupplierShopCard';
-import { Alert } from '../../../components/ui';
+import { Alert, Loader } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
 import { deleteSupplierProduct, fetchSupplierWorkspace, subscribeSupplierWorkspaceChange } from '../../../services/supplier';
 
@@ -85,7 +85,7 @@ export default function MaBoutique() {
 
   return (
     <div className="supplier-shop-page">
-      {isLoading && <section className="supplier-shop-card">Chargement de la boutique...</section>}
+      {isLoading && <Loader label="Chargement de la boutique..." />}
       {error && (
         <Alert variant="danger" className="supplier-shop-alert" onClose={() => setError('')}>
           {error}

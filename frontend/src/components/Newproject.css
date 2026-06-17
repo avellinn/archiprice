@@ -11,9 +11,11 @@
 }
 
 .modal-create-project {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   width: min(520px, 100%);
   max-height: calc(100vh - 2rem);
-  overflow: hidden auto;
+  overflow: hidden;
   overscroll-behavior: contain;
   padding: 1.35rem;
   border-radius: 15px;
@@ -62,6 +64,9 @@
 .modal-create-project__fields {
   display: grid;
   gap: 1rem;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.25rem;
 }
 
 .modal-create-project__field {

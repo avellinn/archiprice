@@ -25,10 +25,10 @@ async function start() {
   await connectDB();
   await seedSuperAdmin();
 
-  server = app.listen(PORT, () => {
+  server = app.listen(PORT, '127.0.0.1', () => {
     console.log('[server] ─────────────────────────────────────');
-    console.log(`[server] API ArchiPrice → http://localhost:${PORT}`);
-    console.log(`[server] Health         → http://localhost:${PORT}/api/health`);
+    console.log(`[server] API ArchiPrice → http://127.0.0.1:${PORT}`);
+    console.log(`[server] Health         → http://127.0.0.1:${PORT}/api/health`);
     console.log('[server] Logs HTTP actifs (chaque requête s’affiche ici)');
     console.log('[server] ─────────────────────────────────────');
   });

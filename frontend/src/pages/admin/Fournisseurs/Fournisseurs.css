@@ -24,28 +24,6 @@
   font-weight: 900;
 }
 
-.admin-suppliers-header .admin-products-add,
-.admin-suppliers-header .admin-products-add.btn {
-  position: absolute;
-  bottom: 1.55rem;
-  right: 1.55rem;
-  left: auto;
-  border-color: #224b73 !important;
-  background: #224b73 !important;
-  background-color: #224b73 !important;
-  color: #fff !important;
-}
-
-.admin-suppliers-header .admin-products-add:hover,
-.admin-suppliers-header .admin-products-add:focus-visible,
-.admin-suppliers-header .admin-products-add.btn:hover,
-.admin-suppliers-header .admin-products-add.btn:focus-visible {
-  border-color: #1a3a59 !important;
-  background: #1a3a59 !important;
-  background-color: #1a3a59 !important;
-  color: #fff !important;
-}
-
 .admin-suppliers-search {
   justify-self: start;
   width: 100%;

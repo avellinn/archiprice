@@ -6,18 +6,17 @@ import GuestRoute from './components/GuestRoute';
 import ProtectedRoute from './components/ProtectedRoute';
 import SupplierRoute from './components/SupplierRoute';
 import SupplierShell from './components/SupplierShell';
-import CategoriesFiltres from './pages/admin/CategoriesFiltres/CategoriesFiltres';
 import BackofficeDashboard from './pages/admin/Dashboard/Dashboard';
-import Fournisseurs from './pages/admin/Fournisseurs/Fournisseurs';
-import NouvellesDemandes from './pages/admin/NouvellesDemandes/NouvellesDemandes';
-import Paramètres from './pages/admin/Paramètres/Paramètres';
 import Articles from './pages/admin/Articles/Articles';
+import Fournisseurs from './pages/admin/Fournisseurs/Fournisseurs';
+import Paramètres from './pages/admin/Paramètres/Paramètres';
 import Simulations from './pages/admin/Simulations/Simulations';
 import Support from './pages/admin/Support/Support';
 import Utilisateurs from './pages/admin/Utilisateurs/Utilisateurs';
 import Home from './pages/user/Home/Home';
 import Login from './pages/user/Login/Login';
 import Register from './pages/user/Register/Register';
+import ResetPassword from './pages/user/ResetPassword/ResetPassword';
 import Dashboard from './pages/user/Dashboard/Dashboard';
 import Catalogue from './pages/user/Catalogue/Catalogue';
 import Archives from './pages/user/Archives/Archives';
@@ -26,13 +25,12 @@ import Logout from './pages/user/Logout/Logout';
 import Workspace from './pages/user/Workspace/Workspace';
 import UserParametres from './pages/user/Parametres/Parametres';
 import UserSupport from './pages/user/Support/Support';
-import SupplierAnalysedon from './pages/supplier/Analysedon/Analysedon';
+import SupplierDashboard from './pages/supplier/Dashboard/Dashboard';
 import SupplierClients from './pages/supplier/Clients/Clients';
 import SupplierDemandesup from './pages/supplier/Demandesup/Demandesup';
 import SupplierFichiers from './pages/supplier/Fichiers/Fichiers';
 import SupplierMaBoutique from './pages/supplier/MaBoutique/MaBoutique';
 import SupplierParametres from './pages/supplier/Parametres/Parametres';
-import SupplierPending from './pages/supplier/Pending/Pending';
 import SupplierAjouterProduit from './pages/supplier/AjouterProduit/AjouterProduit';
 import SupplierProduits from './pages/supplier/Produits/Produits';
 import SupplierSupport from './pages/supplier/Support/Support';
@@ -59,7 +57,7 @@ function App() {
             </GuestRoute>
           }
         />
-        <Route path="/supplier/pending" element={<SupplierPending />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route
           element={
             <AdminRoute>
@@ -70,9 +68,9 @@ function App() {
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="/admin/dashboard" element={<BackofficeDashboard />} />
           <Route path="/admin/catalogue/products" element={<Articles />} />
-          <Route path="/admin/catalogue/filters" element={<CategoriesFiltres />} />
+          <Route path="/admin/catalogue/filters" element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="/admin/suppliers" element={<Fournisseurs />} />
-          <Route path="/admin/suppliers/requests" element={<NouvellesDemandes />} />
+          <Route path="/admin/suppliers/requests" element={<Navigate to="/admin/suppliers" replace />} />
           <Route path="/admin/users" element={<Utilisateurs />} />
           <Route path="/admin/simulations" element={<Simulations />} />
           <Route path="/admin/support" element={<Support />} />
@@ -91,7 +89,7 @@ function App() {
           }
         >
           <Route path="/supplier" element={<Navigate to="/supplier/dashboard" replace />} />
-          <Route path="/supplier/dashboard" element={<SupplierAnalysedon />} />
+          <Route path="/supplier/dashboard" element={<SupplierDashboard />} />
           <Route path="/supplier/shop" element={<SupplierMaBoutique />} />
           <Route path="/supplier/products" element={<SupplierProduits />} />
           <Route path="/supplier/products/new" element={<SupplierAjouterProduit />} />

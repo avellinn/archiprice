@@ -14,6 +14,7 @@ import { getAvatarColor, getDisplayName, getUserInitials } from '../utils/userDi
 const USER_PROFILE_KEY = 'archiprice_user_profile_preferences';
 const USER_PROFILE_EVENT = 'archiprice:user-profile-change';
 const USER_DISMISSED_NOTIFICATIONS_KEY = 'archiprice:user-dismissed-notifications';
+const NOTIFICATIONS_READ_EVENT = 'archiprice:notifications-read-change';
 const USER_SEARCH_ICONS = {
   '/dashboard': 'Dashboard',
   '/catalogue': 'Explore',
@@ -112,6 +113,21 @@ export default function AppShell() {
       refreshSupportNotifications();
     },
   }), [refreshSupportNotifications]);
+
+  useEffect(() => {
+    function handleDismissedNotificationsChange(event) {
+      if (event.type === 'storage' && event.key !== USER_DISMISSED_NOTIFICATIONS_KEY) return;
+      setDismissedNotificationKeys(readDismissedNotificationKeys());
+    }
+
+    window.addEventListener('storage', handleDismissedNotificationsChange);
+    window.addEventListener(NOTIFICATIONS_READ_EVENT, handleDismissedNotificationsChange);
+
+    return () => {
+      window.removeEventListener('storage', handleDismissedNotificationsChange);
+      window.removeEventListener(NOTIFICATIONS_READ_EVENT, handleDismissedNotificationsChange);
+    };
+  }, []);
 
   const sidebarSections = useMemo(
     () => [
@@ -217,6 +233,16 @@ export default function AppShell() {
       .filter((notification) => !dismissedNotificationKeys.includes(`demand-reply-${notification.id}-${notification.lastMessage.id}`))
       .sort((a, b) => new Date(b.lastMessage.createdAt || b.updatedAt || 0) - new Date(a.lastMessage.createdAt || a.updatedAt || 0));
   }, [adminData.supplierClientNotifications, dismissedNotificationKeys, user]);
+  const sidebarSectionsWithBadges = useMemo(() => (
+    sidebarSections.map((section) => ({
+      ...section,
+      items: section.items.map((item) => (
+        item.id === 'demande'
+          ? { ...item, badge: demandReplyNotifications.length || undefined }
+          : item
+      )),
+    }))
+  ), [demandReplyNotifications.length, sidebarSections]);
 
   function dismissVisibleNotifications() {
     const nextKeys = [
@@ -247,7 +273,9 @@ export default function AppShell() {
     >
       <Sidebar
         logo={<Logo variant="sidebar" />}
-        sections={sidebarSections}
+        logoTo="/dashboard"
+        logoLabel="Aller au dashboard"
+        sections={sidebarSectionsWithBadges}
         isOpen={!isSidebarCollapsed}
         onClose={() => setIsSidebarCollapsed(true)}
         user={{

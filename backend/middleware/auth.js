@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import Supplier from '../models/Supplier.js';
 
 async function protect(req, res, next) {
   let token;
@@ -44,14 +45,28 @@ async function protect(req, res, next) {
 
 // Fonction générique pour vérifier un rôle
 function requireRole(role) {
-  return (req, res, next) => {
+  return async (req, res, next) => {
     // protect a déjà placé req.user
     const userRole = String(req.user?.role || '').toLowerCase();
-    if (userRole === role) {
-      next();
-    } else {
+    if (userRole !== role) {
       res.status(403).json({ error: `Accès réservé aux ${role}s` });
+      return;
     }
+
+    if (role === 'supplier') {
+      try {
+        const supplier = await Supplier.findOne({ user: req.user._id });
+        if (!supplier || supplier.status === 'Supprimé') {
+          res.status(403).json({ error: 'Profil fournisseur introuvable — accès supplier interdit' });
+          return;
+        }
+      } catch {
+        res.status(500).json({ error: 'Vérification fournisseur impossible' });
+        return;
+      }
+    }
+
+    next();
   };
 }
 

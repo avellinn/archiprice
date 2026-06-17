@@ -50,7 +50,7 @@ Un user ne peut pas :
 
 Un supplier peut :
 
-- accéder à son espace seulement après validation admin ;
+- accéder directement à son espace après inscription ;
 - gérer le profil de sa boutique ;
 - créer, modifier et supprimer ses produits ;
 - uploader des fichiers/images depuis les flux prévus sans limite arbitraire côté interface admin/supplier, sous réserve des validations serveur ;
@@ -283,31 +283,6 @@ Règles :
 - un fournisseur désactivé ne peut plus gérer sa boutique ;
 - un fournisseur bloqué ou supprimé ne doit plus exposer ses produits au catalogue public.
 
-#### supplier_requests
-
-Stocke les demandes de partenariat fournisseur.
-
-Champs importants :
-
-- `companyName`
-- `email`
-- `phone`
-- `categories`
-- `status`
-- `user`
-- `supplier`
-- `reviewedBy`
-- `reviewedAt`
-- `rejectionReason`
-
-Workflow :
-
-1. inscription fournisseur ;
-2. création d'une demande ;
-3. affichage dans admin `NouvellesDemandes` ;
-4. validation ou refus ;
-5. création/liaison du profil supplier si validé.
-
 #### products
 
 Stocke les articles et catalogues.
@@ -328,12 +303,16 @@ Champs importants :
 - `supplierUser`
 - `images`
 - `publicationStatus`
+- `submittedAt`
+- `approvedAt`
+- `withdrawnAt`
 
 Règles :
 
 - les produits supplier appartiennent au supplier courant ;
-- les produits proposés par supplier doivent être validés par admin avant affichage public ;
-- le catalogue user n'affiche que les produits validés et disponibles selon les règles métier ;
+- les produits supplier nouvellement créés sont des brouillons ;
+- un supplier doit soumettre le produit avant que l'admin puisse le valider ;
+- le catalogue user n'affiche que les produits `publicationStatus: "Validé"` et disponibles selon les règles métier ;
 - les images sont stockées sur Cloudinary, pas sur le serveur.
 
 #### projects
@@ -499,13 +478,9 @@ Le seed est idempotent :
 ### Inscription Supplier
 
 1. Le visiteur choisit le type fournisseur.
-2. Le backend crée un compte user et une demande `supplier_requests`.
-3. L'utilisateur voit une page d'attente.
-4. L'admin valide ou refuse dans `NouvellesDemandes`.
-5. Si validé :
-   - le user passe en `role: "supplier"` ;
-   - un document `Supplier` est créé ou lié ;
-   - le fournisseur accède à `/supplier/dashboard`.
+2. Le backend crée un compte user avec `role: "supplier"`.
+3. Un document `Supplier` est créé ou lié.
+4. Le fournisseur accède directement à `/supplier/dashboard`.
 
 ### Catalogue Admin Vers User
 
@@ -522,11 +497,12 @@ Le seed est idempotent :
 3. Backend valide ownership et fichiers.
 4. Images envoyées vers Cloudinary.
 5. Product créé dans MongoDB avec `supplier` et `supplierUser`.
-6. Supplier publie le produit.
-7. Admin reçoit la proposition dans `Articles`.
-8. Admin valide ou refuse.
-9. Si validé, le produit devient visible dans le catalogue user.
-10. Si refusé, le supplier reçoit une notification avec justification.
+6. Product créé avec `publicationStatus: "Brouillon"`.
+7. Supplier publie le produit depuis `/supplier/products`.
+8. Backend passe le produit en `publicationStatus: "En attente"`.
+9. Admin reçoit l'article dans `Articles`.
+10. Admin valide, retire, refuse ou supprime.
+11. Si validé, le produit devient visible dans le catalogue user via `/api/catalogue/products`.
 
 ### Simulation User Vers Admin
 
@@ -646,7 +622,6 @@ Le backend publie des événements après les mutations :
 
 - création utilisateur ;
 - modification fournisseur ;
-- demande fournisseur ;
 - produit supplier ;
 - support ;
 - simulation ;
@@ -787,9 +762,6 @@ Les pages admin et supplier privilégient les listes cliquables avec détail en 
 - `POST /api/admin/suppliers`
 - `PUT /api/admin/suppliers/:id`
 - `DELETE /api/admin/suppliers/:id`
-- `GET /api/admin/supplier-requests`
-- `POST /api/admin/supplier-requests/:id/approve`
-- `POST /api/admin/supplier-requests/:id/reject`
 - `GET /api/admin/simulations`
 - `GET /api/admin/support-items`
 - `PATCH /api/admin/support-items/:id`
@@ -838,7 +810,6 @@ Les pages admin et supplier privilégient les listes cliquables avec détail en 
 
 Il contient notamment :
 
-- produits/articles ;
 - taxonomies ;
 - fournisseurs ;
 - support ;
@@ -848,6 +819,8 @@ Il contient notamment :
 Règle :
 
 - si une donnée est critique et partagée entre navigateurs, elle doit être persistée par API/MongoDB ;
+- les produits/articles catalogue ne doivent plus être persistés dans `adminData.products` ;
+- `adminData.products` est purgé/ignoré pour éviter les données statiques persistantes ;
 - `adminData.js` ne doit pas devenir la seule source de vérité durable.
 
 ### adminMongo.js
@@ -856,7 +829,7 @@ Règle :
 
 - users ;
 - suppliers ;
-- supplier requests ;
+- products/articles supplier ;
 - simulations ;
 - support.
 
@@ -887,7 +860,7 @@ Règle :
 Le workspace est considéré cohérent si :
 
 - un user, admin et supplier peuvent se connecter selon leur rôle ;
-- un supplier ne peut accéder à son espace qu'après validation admin ;
+- un supplier accède directement à son espace ;
 - un produit supplier créé avec images apparaît côté supplier ;
 - la proposition de publication arrive côté admin ;
 - après validation admin, le produit apparaît côté user catalogue ;

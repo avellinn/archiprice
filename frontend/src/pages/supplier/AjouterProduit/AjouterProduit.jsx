@@ -11,6 +11,7 @@ import {
   deleteSupplierProductImage,
   fetchSupplierWorkspace,
   updateSupplierProduct,
+  updateSupplierProductPublication,
 } from '../../../services/supplier';
 import { sanitizeNumericInput } from '../../../utils/formInput';
 import { getSupplierTranslations } from '../../../utils/supplierLanguage';
@@ -24,8 +25,6 @@ const INITIAL_PRODUCT_FORM = {
   type: '',
   range: '',
   supplier: '',
-  city: '',
-  neighborhood: '',
   collections: '',
   tags: '',
 };
@@ -39,14 +38,6 @@ function getSelectOptionValue(value, options = [], isCustom = false) {
   if (isCustom) return CUSTOM_OPTION_VALUE;
   if (!value) return '';
   return options.includes(value) ? value : CUSTOM_OPTION_VALUE;
-}
-
-function getProductImage(product) {
-  const image = Array.isArray(product.images) ? product.images[0] : product.image;
-
-  if (!image) return '';
-  if (typeof image === 'string') return image;
-  return image.secure_url || image.url || '';
 }
 
 function isServerApiError(error) {
@@ -72,7 +63,7 @@ export default function AjouterProduit() {
   const descriptionRef = useRef(null);
   const fileInputRef = useRef(null);
   const productIdToEdit = searchParams.get('edit') || '';
-  const [adminData, setAdminData] = useAdminData();
+  const [adminData] = useAdminData();
   const [productForm, setProductForm] = useState(INITIAL_PRODUCT_FORM);
   const [customTaxonomyFields, setCustomTaxonomyFields] = useState({});
   const [existingImages, setExistingImages] = useState([]);
@@ -103,15 +94,11 @@ export default function AjouterProduit() {
     rooms: getTaxonomyNames(adminData.taxonomies?.rooms),
     ranges: getTaxonomyNames(adminData.taxonomies?.ranges),
     availability: getTaxonomyNames(adminData.taxonomies?.availability),
-    cities: getTaxonomyNames(adminData.taxonomies?.cities),
-    neighborhoods: getTaxonomyNames(adminData.taxonomies?.neighborhoods),
   }), [adminData.taxonomies]);
   const categorySelectValue = getSelectOptionValue(productForm.category, taxonomyOptions.categories, customTaxonomyFields.category);
   const roomSelectValue = getSelectOptionValue(productForm.type, taxonomyOptions.rooms, customTaxonomyFields.type);
   const rangeSelectValue = getSelectOptionValue(productForm.range, taxonomyOptions.ranges, customTaxonomyFields.range);
   const availabilitySelectValue = getSelectOptionValue(productForm.availability, taxonomyOptions.availability, customTaxonomyFields.availability);
-  const citySelectValue = getSelectOptionValue(productForm.city, taxonomyOptions.cities, customTaxonomyFields.city);
-  const neighborhoodSelectValue = getSelectOptionValue(productForm.neighborhood, taxonomyOptions.neighborhoods, customTaxonomyFields.neighborhood);
 
   const previews = useMemo(() => files.map((file) => ({
     name: file.name,
@@ -170,9 +157,7 @@ export default function AjouterProduit() {
           availability: product.availability || '',
           type: product.room || '',
           range: product.range || '',
-        supplier: product.supplierName || product.supplierLabel || product.supplier || shopName,
-          city: product.city || '',
-          neighborhood: product.neighborhood || '',
+          supplier: product.supplierName || product.supplierLabel || product.supplier || shopName,
         });
         setExistingImages(product.images || []);
       })
@@ -315,43 +300,6 @@ export default function AjouterProduit() {
     }
   }
 
-  function submitProductToAdmin(product) {
-    setAdminData((currentData) => {
-      const currentProducts = Array.isArray(currentData.products) ? currentData.products : [];
-      const image = getProductImage(product);
-      const proposal = {
-        id: currentProducts.find((item) => item.sourceSupplierProductId === product.id)?.id || `supplier-product-${product.id}`,
-        sourceSupplierProductId: product.id,
-        supplierUserId: product.supplierUserId,
-        name: product.name,
-        description: product.description,
-        price: product.unitPrice,
-        image,
-        images: product.images || [],
-        category: product.category,
-        room: product.room,
-        range: product.range,
-        supplier: effectiveSupplierName,
-        vat: '20%',
-        visual: 'sofa',
-        city: productForm.city,
-        neighborhood: productForm.neighborhood,
-        availability: product.availability || productForm.availability,
-        publicationStatus: 'En attente',
-        publicationSource: 'supplier',
-        submittedAt: new Date().toISOString(),
-      };
-      const exists = currentProducts.some((item) => item.sourceSupplierProductId === product.id);
-
-      return {
-        ...currentData,
-        products: exists
-          ? currentProducts.map((item) => (item.sourceSupplierProductId === product.id ? proposal : item))
-          : [proposal, ...currentProducts],
-      };
-    });
-  }
-
   async function saveProduct(event) {
     event.preventDefault();
     setError('');
@@ -363,8 +311,6 @@ export default function AjouterProduit() {
       || !productForm.type.trim()
       || !productForm.range.trim()
       || !productForm.availability.trim()
-      || !productForm.city.trim()
-      || !productForm.neighborhood.trim()
       || !effectiveSupplierName
       || productForm.price === ''
       || (files.length === 0 && existingImages.length === 0)) {
@@ -382,8 +328,6 @@ export default function AjouterProduit() {
         room: productForm.type.trim(),
         range: productForm.range.trim(),
         availability: productForm.availability.trim(),
-        city: productForm.city.trim(),
-        neighborhood: productForm.neighborhood.trim(),
         unitPrice: productForm.price,
         unit: 'u',
       };
@@ -392,7 +336,11 @@ export default function AjouterProduit() {
         ? await updateSupplierProduct(productIdToEdit, payload, files)
         : await createSupplierProduct(payload, files);
 
-      submitProductToAdmin(savedProduct);
+      const savedProductId = savedProduct?.id || productIdToEdit;
+      if (savedProductId) {
+        await updateSupplierProductPublication(savedProductId, 'En attente');
+      }
+
       navigate('/supplier/products');
     } catch (apiError) {
       handleApiError(apiError, productText.saveError);
@@ -640,44 +588,6 @@ export default function AjouterProduit() {
                   value={productForm.range}
                   onChange={(event) => updateProductForm('range', event.target.value)}
                   placeholder="Saisir une gamme"
-                  required
-                />
-              )}
-            </label>
-            <label className="supplier-product-field">
-              <span>Ville</span>
-              <select required value={citySelectValue} onChange={(event) => updateTaxonomySelect('city', event.target.value)}>
-                <option value="">Choisir une ville</option>
-                {taxonomyOptions.cities.map((city) => (
-                  <option key={city} value={city}>{city}</option>
-                ))}
-                <option value={CUSTOM_OPTION_VALUE}>Autres</option>
-              </select>
-              {citySelectValue === CUSTOM_OPTION_VALUE && (
-                <input
-                  type="text"
-                  value={productForm.city}
-                  onChange={(event) => updateProductForm('city', event.target.value)}
-                  placeholder="Saisir une ville"
-                  required
-                />
-              )}
-            </label>
-            <label className="supplier-product-field">
-              <span>Quartier</span>
-              <select required value={neighborhoodSelectValue} onChange={(event) => updateTaxonomySelect('neighborhood', event.target.value)}>
-                <option value="">Choisir un quartier</option>
-                {taxonomyOptions.neighborhoods.map((neighborhood) => (
-                  <option key={neighborhood} value={neighborhood}>{neighborhood}</option>
-                ))}
-                <option value={CUSTOM_OPTION_VALUE}>Autres</option>
-              </select>
-              {neighborhoodSelectValue === CUSTOM_OPTION_VALUE && (
-                <input
-                  type="text"
-                  value={productForm.neighborhood}
-                  onChange={(event) => updateProductForm('neighborhood', event.target.value)}
-                  placeholder="Saisir un quartier"
                   required
                 />
               )}

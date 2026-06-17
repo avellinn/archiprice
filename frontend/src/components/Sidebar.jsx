@@ -23,6 +23,8 @@ export default function Sidebar({
   sections = [],
   activeItemId,
   onItemClick,
+  logoTo,
+  logoLabel = 'Aller au tableau de bord',
   user,
   userLink = '/workspace',
   userLinkLabel = 'Accéder à mon espace de travail',
@@ -45,6 +47,11 @@ export default function Sidebar({
     return initialState;
   });
   const [hoveredSubmenuId, setHoveredSubmenuId] = useState(null);
+  const logoContent = logoTo ? (
+    <Link to={logoTo} className="sidebar__logo-link" aria-label={logoLabel}>
+      {logo}
+    </Link>
+  ) : logo;
 
   const pathMap = useMemo(
     () => ({
@@ -168,8 +175,8 @@ export default function Sidebar({
     <aside className={`sidebar sidebar--${variant} ${isOpen ? 'sidebar--open' : 'sidebar--closed'}`}>
       <div className="sidebar__header">
         <div className="sidebar__header-content">
-          {logo && <div className="sidebar__logo">{logo}</div>}
-          {title && <div className="sidebar__title">{title}</div>}
+          {logo && <div className="sidebar__logo">{logoContent}</div>}
+          {title && variant !== 'admin' && <div className="sidebar__title">{title}</div>}
         </div>
         {isMobile && isOpen && onClose && (
           <button className="sidebar__close-btn" onClick={onClose} aria-label="Fermer le menu" type="button">

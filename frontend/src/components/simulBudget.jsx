@@ -1,4 +1,4 @@
-import { Alert, Button, Icon } from '../../../components/ui';
+import { Alert, Button, Icon } from './ui';
 import './simulBudget.css';
 
 export default function SimulBudget({

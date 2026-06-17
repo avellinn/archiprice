@@ -1,19 +1,12 @@
-import '../../user/Support/Support.css';
-import './Support.css';
+import '../../supplier/Support/Support.css';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Alert, Badge, Icon } from '../../../components/ui';
+import { Alert, Icon, Loader } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
 import { deleteAdminSupportItem, fetchAdminSupportItems, updateAdminSupportItem } from '../../../services/adminMongo';
 import SupportModal from './supportModal';
 
 const SUPPORT_REFRESH_INTERVAL = 10000;
-
-function getStatusTone(status) {
-  if (status === 'Ouvert') return 'danger';
-  if (status === 'En cours') return 'warning';
-  return 'success';
-}
 
 export default function Support() {
   const [searchParams] = useSearchParams();
@@ -131,9 +124,9 @@ export default function Support() {
   }
 
   return (
-    <main className="user-support-page admin-support-page">
-      <section className="user-support-panel admin-support-main">
-        <header className="user-support-header admin-support-header">
+    <main className="supplier-support-page">
+      <section className="supplier-support-panel">
+        <header className="supplier-support-header">
           <div>
             <span>Assistance</span>
             <h1>Support</h1>
@@ -141,22 +134,22 @@ export default function Support() {
         </header>
 
         {error && (
-          <Alert variant="danger" className="admin-support-alert" onClose={() => setError('')}>
+          <Alert variant="danger" onClose={() => setError('')}>
             {error}
           </Alert>
         )}
         {successMessage && (
-          <Alert variant="success" className="admin-support-alert" onClose={() => setSuccessMessage('')}>
+          <Alert variant="success" onClose={() => setSuccessMessage('')}>
             {successMessage}
           </Alert>
         )}
 
-        <section className="user-support-card admin-support-card">
+        <section className="supplier-support-card">
           <h2>Feedbacks reçus</h2>
           {isLoading ? (
-            <Alert variant="info">Chargement des feedbacks...</Alert>
+            <Loader label="Chargement des feedbacks..." />
           ) : feedbackItems.length ? (
-            <div className="user-support-list admin-support-list">
+            <div className="supplier-support-list">
               {feedbackItems.map((item) => (
                 <article
                   key={item.id}
@@ -174,10 +167,10 @@ export default function Support() {
                     <span>{item.user} · {item.date}</span>
                     <small>{item.description}</small>
                   </div>
-                  <Badge tone={getStatusTone(item.status)}>{item.status}</Badge>
+                  <b>{item.status}</b>
                   <button
                     type="button"
-                    className="user-support-list__delete"
+                    className="supplier-support-list__delete"
                     aria-label={`Supprimer ${item.subject}`}
                     onClick={(event) => {
                       event.stopPropagation();

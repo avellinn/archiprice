@@ -6,7 +6,7 @@
     "dev:api": "npm run dev --prefix backend",
     "dev:web": "npm run dev --prefix frontend",
     "install:all": "npm install --prefix backend && npm install --prefix frontend",
-    "clean": "rm -rf frontend/dist frontend/node_modules/.vite frontend/node_modules/.vite-temp frontend/node_modules/.tmp backend/node_modules/.cache",
+    "clean": "rm -rf frontend/dist frontend/coverage backend/coverage frontend/node_modules/.vite frontend/node_modules/.vite-temp frontend/node_modules/.tmp frontend/.eslintcache backend/node_modules/.cache",
     "env:migrate": "node scripts/migrate-env.js"
   }
 }

@@ -38,6 +38,15 @@
   color: #fff;
 }
 
+.user-support-header .btn:hover {
+  border-color: #1a3a59;   
+  background: #8c959e;     
+  color: #ffffff;            
+  cursor: pointer;        
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2); 
+}
+
+
 .user-support-card {
   display: grid;
   gap: 1rem;

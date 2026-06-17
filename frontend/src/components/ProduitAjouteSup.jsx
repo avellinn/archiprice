@@ -1,4 +1,4 @@
-import { Alert, Button, Icon } from './ui';
+import { Alert, Button, Icon, Loader } from './ui';
 import './ProduitAjouteSup.css';
 
 function formatFCFA(amount) {
@@ -9,8 +9,9 @@ function getPublicationState(product, adminProductsBySupplierSource) {
   const adminProduct = adminProductsBySupplierSource.get(product.id);
   const isValidated = adminProduct?.publicationStatus === 'Validé';
   const isPending = adminProduct?.publicationStatus === 'En attente';
+  const isRejected = adminProduct?.publicationStatus === 'Refusé';
 
-  return { adminProduct, isValidated, isPending };
+  return { adminProduct, isPending, isRejected, isValidated };
 }
 
 export default function ProduitAjouteSup({
@@ -29,7 +30,7 @@ export default function ProduitAjouteSup({
       <h2>Produits ajoutés</h2>
       {error && <Alert variant="danger">{error}</Alert>}
       {isLoading ? (
-        <p className="muted">Chargement des produits...</p>
+        <Loader label="Chargement des produits..." />
       ) : (
         <table className="supplier-products-table">
           <thead>
@@ -49,7 +50,14 @@ export default function ProduitAjouteSup({
               </tr>
             ) : (
               products.map((product) => {
-                const { isValidated, isPending } = getPublicationState(product, adminProductsBySupplierSource);
+                const { isPending, isRejected, isValidated } = getPublicationState(product, adminProductsBySupplierSource);
+                const publishLabel = isValidated
+                  ? 'Publié'
+                  : isPending
+                    ? 'En attente'
+                    : isRejected
+                      ? 'Republier'
+                      : 'Publier';
 
                 return (
                   <tr key={product.id}>
@@ -78,19 +86,19 @@ export default function ProduitAjouteSup({
                         <Button
                           type="button"
                           size="sm"
-                          variant={isPending ? 'outline' : 'primary'}
-                          className={isPending ? 'supplier-action-btn supplier-action-btn--pending' : 'supplier-action-btn supplier-action-btn--publish'}
+                          variant="primary"
+                          className="supplier-action-btn supplier-action-btn--publish"
                           disabled={isValidated || isPending}
                           onClick={() => onPublish(product)}
                         >
-                          {isPending ? 'En attente' : 'Publier'}
+                          {publishLabel}
                         </Button>
                         <Button
                           type="button"
                           size="sm"
                           variant="outline"
                           className="supplier-action-btn supplier-action-btn--withdraw"
-                          disabled={!isValidated}
+                          disabled={!isValidated && !isPending}
                           onClick={() => onWithdraw(product)}
                         >
                           Retirer

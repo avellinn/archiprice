@@ -4,7 +4,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import EspacePro from '../../../components/espacepro';
 import ModalBoutique from '../../../components/modalBoutique';
 import Newproject from '../../../components/Newproject';
-import { Alert, Button, Icon } from '../../../components/ui';
+import { Alert, Button, Icon, Loader } from '../../../components/ui';
 import WorkspaceMiniGrid from '../../../components/WorkspaceMiniGrid';
 import useAuth from '../../../context/useAuth';
 import { getApiErrorMessage } from '../../../services/api';
@@ -615,7 +615,7 @@ export default function Workspace() {
   function renderCardContent(card) {
     if (card.kind === 'projects') {
       if (isProjectsLoading) {
-        return <p>Chargement des projets...</p>;
+        return <Loader label="Chargement des projets..." />;
       }
 
       if (projectsError) {

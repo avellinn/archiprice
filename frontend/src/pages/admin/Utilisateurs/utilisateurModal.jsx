@@ -9,8 +9,9 @@ const ROLE_LABELS = {
 };
 
 function getUserRole(user) {
-  if (String(user?.role || '').toLowerCase() === 'admin' || user?.type === 'Admin') return 'admin';
-  if (String(user?.role || '').toLowerCase() === 'supplier' || user?.type === 'Fournisseur') return 'supplier';
+  const role = String(user?.role || '').toLowerCase();
+  if (role === 'admin') return 'admin';
+  if (role === 'supplier') return 'supplier';
   return 'user';
 }
 
@@ -118,6 +119,7 @@ export default function UtilisateurModal({
                 <span>Rôle</span>
                 <select value={form.role} onChange={(event) => onChange('role', event.target.value)}>
                   <option value="user">Utilisateur</option>
+                  <option value="supplier">Fournisseur</option>
                   <option value="admin">Admin</option>
                 </select>
               </label>

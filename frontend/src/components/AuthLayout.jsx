@@ -6,9 +6,7 @@ export default function AuthLayout({ title, subtitle, children, footer }) {
     <div className="auth-page">
       <div className="auth-card">
         <header className="auth-header">
-          <div className="auth-icon">
-            <Logo variant="auth" />
-          </div>
+          <Logo variant="auth" />
           <h1 className="auth-title">{title}</h1>
           <p className="auth-subtitle">{subtitle}</p>
           <hr className="auth-divider" />

@@ -5,17 +5,15 @@ import Icon from './Icon';
 import Logo from './Logo';
 import Sidebar from './Sidebar';
 import useAuth from '../context/useAuth';
-import { fetchAdminSupportItems, fetchAdminUsers, fetchSupplierRequests } from '../services/adminMongo';
+import { fetchAdminProducts, fetchAdminSupportItems, fetchAdminUsers } from '../services/adminMongo';
 import { syncAdminDataFromRemote, useAdminData } from '../services/adminData';
 import { connectRealtime } from '../services/realtime';
 import { getAdminTranslations } from '../utils/adminLanguage';
 import { getAvatarColor, getDisplayName, getUserInitials } from '../utils/userDisplay';
 const ADMIN_SEARCH_ICONS = {
   '/admin/dashboard': 'Dashboard',
-  '/admin/catalogue/products': 'Tag',
-  '/admin/catalogue/filters': 'Explore',
+  '/admin/catalogue/products': 'ReceiptLong',
   '/admin/suppliers': 'Workspaces',
-  '/admin/suppliers/requests': 'Notifications',
   '/admin/users': 'AccountCircle',
   '/admin/simulations': 'ReceiptLong',
   '/admin/support': 'Chat',
@@ -48,8 +46,8 @@ export default function AdminShell() {
   const [searchMessage, setSearchMessage] = useState('');
   const [adminData] = useAdminData();
   const adminText = getAdminTranslations(adminData);
-  const [pendingSupplierRequests, setPendingSupplierRequests] = useState([]);
   const [recentFeedbacks, setRecentFeedbacks] = useState([]);
+  const [pendingPublications, setPendingPublications] = useState([]);
   const [recentUsers, setRecentUsers] = useState([]);
   const [lastSeenUsersAt, setLastSeenUsersAt] = useState(() => (
     Number(window.localStorage.getItem('archiprice:admin-notifications-seen-at') || 0)
@@ -60,13 +58,12 @@ export default function AdminShell() {
 
   const refreshNotifications = useCallback(async () => {
     try {
-      const [requests, users, supportItems] = await Promise.all([
-        fetchSupplierRequests(),
+      const [users, supportItems, products] = await Promise.all([
         fetchAdminUsers(),
         fetchAdminSupportItems(),
+        fetchAdminProducts(),
       ]);
 
-      setPendingSupplierRequests(requests.filter((request) => request.status === 'pending'));
       setRecentUsers(
         users
           .filter((item) => String(item.role || '').toLowerCase() === 'user')
@@ -79,10 +76,16 @@ export default function AdminShell() {
           .sort((a, b) => new Date(b.createdAt || b.updatedAt || 0) - new Date(a.createdAt || a.updatedAt || 0))
           .slice(0, 8),
       );
+      setPendingPublications(
+        products
+          .filter((item) => item.publicationStatus === 'En attente')
+          .sort((a, b) => new Date(b.submittedAt || b.updatedAt || 0) - new Date(a.submittedAt || a.updatedAt || 0))
+          .slice(0, 8),
+      );
     } catch {
-      setPendingSupplierRequests([]);
       setRecentUsers([]);
       setRecentFeedbacks([]);
+      setPendingPublications([]);
     }
   }, []);
 
@@ -108,15 +111,6 @@ export default function AdminShell() {
     () => recentUsers.filter((item) => new Date(item.createdAt || 0).getTime() > lastSeenUsersAt),
     [lastSeenUsersAt, recentUsers],
   );
-  const pendingPublications = useMemo(() => (
-    (adminData?.products || []).filter((product) => product.publicationStatus === 'En attente')
-  ), [adminData?.products]);
-  const visibleSupplierRequests = useMemo(() => (
-    pendingSupplierRequests.filter((request) => !dismissedNotificationKeys.includes(`supplier-request-${request.id}`))
-  ), [dismissedNotificationKeys, pendingSupplierRequests]);
-  const visiblePublications = useMemo(() => (
-    pendingPublications.filter((product) => !dismissedNotificationKeys.includes(`publication-${product.id}`))
-  ), [dismissedNotificationKeys, pendingPublications]);
   const visibleRecentUsers = useMemo(() => (
     recentUsers.filter((item) => !dismissedNotificationKeys.includes(`user-${item.id}`))
   ), [dismissedNotificationKeys, recentUsers]);
@@ -132,14 +126,16 @@ export default function AdminShell() {
   const visibleFeedbacks = useMemo(() => (
     allFeedbackNotifications.filter((item) => !dismissedNotificationKeys.includes(`feedback-${item.id}`))
   ), [allFeedbackNotifications, dismissedNotificationKeys]);
+  const visiblePendingPublications = useMemo(() => (
+    pendingPublications.filter((item) => !dismissedNotificationKeys.includes(`publication-${item.id}`))
+  ), [dismissedNotificationKeys, pendingPublications]);
   const visibleNotificationKeys = useMemo(() => [
-    ...visibleSupplierRequests.map((request) => `supplier-request-${request.id}`),
-    ...visiblePublications.map((product) => `publication-${product.id}`),
     ...visibleRecentUsers.map((item) => `user-${item.id}`),
     ...visibleFeedbacks.map((item) => `feedback-${item.id}`),
-  ], [visibleFeedbacks, visiblePublications, visibleRecentUsers, visibleSupplierRequests]);
-  const notificationCount = visibleSupplierRequests.length + visibleUnseenRecentUsers.length + visiblePublications.length + visibleFeedbacks.length;
-  const visiblePanelNotificationCount = visibleSupplierRequests.length + visibleRecentUsers.length + visiblePublications.length + visibleFeedbacks.length;
+    ...visiblePendingPublications.map((item) => `publication-${item.id}`),
+  ], [visibleFeedbacks, visiblePendingPublications, visibleRecentUsers]);
+  const notificationCount = visibleUnseenRecentUsers.length + visibleFeedbacks.length + visiblePendingPublications.length;
+  const visiblePanelNotificationCount = visibleRecentUsers.length + visibleFeedbacks.length + visiblePendingPublications.length;
 
   const sidebarSections = useMemo(
     () => [
@@ -153,42 +149,16 @@ export default function AdminShell() {
             icon: <Icon name="Dashboard" />,
           },
           {
-            id: 'admin-catalogue',
-            label: adminText.sidebar.catalogue,
-            icon: <Icon name="Explore" />,
-            defaultOpen: true,
-            children: [
-              {
-                id: 'admin-products',
-                label: adminText.sidebar.articles,
-                path: '/admin/catalogue/products',
-              },
-              {
-                id: 'admin-catalogue-filters',
-                label: adminText.sidebar.filters,
-                path: '/admin/catalogue/filters',
-              },
-            ],
+            id: 'admin-articles',
+            label: adminText.sidebar.articles,
+            path: '/admin/catalogue/products',
+            icon: <Icon name="ReceiptLong" />,
           },
           {
             id: 'admin-suppliers',
             label: adminText.sidebar.suppliers,
+            path: '/admin/suppliers',
             icon: <Icon name="Workspaces" />,
-            defaultOpen: true,
-            children: [
-              {
-                id: 'admin-suppliers-list',
-                label: adminText.sidebar.suppliersList,
-                path: '/admin/suppliers',
-                exact: true,
-              },
-              {
-                id: 'admin-supplier-requests',
-                label: adminText.sidebar.requests,
-                path: '/admin/suppliers/requests',
-                badge: pendingSupplierRequests.length || undefined,
-              },
-            ],
           },
           {
             id: 'admin-users',
@@ -223,8 +193,18 @@ export default function AdminShell() {
         ],
       },
     ],
-    [adminText, pendingSupplierRequests.length],
+    [adminText],
   );
+  const sidebarSectionsWithBadges = useMemo(() => (
+    sidebarSections.map((section) => ({
+      ...section,
+      items: section.items.map((item) => (
+        item.id === 'admin-articles' && visiblePendingPublications.length > 0
+          ? { ...item, badge: visiblePendingPublications.length }
+          : item
+      )),
+    }))
+  ), [sidebarSections, visiblePendingPublications.length]);
 
   function handleSearchSubmit(payload = {}) {
     const query = payload.query ?? searchValue.trim();
@@ -289,9 +269,11 @@ export default function AdminShell() {
     >
       <Sidebar
         logo={<Logo variant="sidebar" />}
+        logoTo="/admin/dashboard"
+        logoLabel="Aller au dashboard admin"
         title="Backoffice"
         variant="admin"
-        sections={sidebarSections}
+        sections={sidebarSectionsWithBadges}
         isOpen={!isSidebarCollapsed}
         onClose={() => setIsSidebarCollapsed(true)}
         userLink="/admin/users"
@@ -339,19 +321,12 @@ export default function AdminShell() {
               <span>{adminText.notifications.empty}</span>
             ) : (
               <div className="notification-panel__list">
-                {visibleSupplierRequests.map((request) => (
-                  <Link key={request.id} to="/admin/suppliers/requests" className="notification-panel__item">
-                    <Icon name="Workspaces" size="sm" />
+                {visiblePendingPublications.map((item) => (
+                  <Link key={item.id} to="/admin/catalogue/products?publicationStatus=En%20attente" className="notification-panel__item">
+                    <Icon name="ReceiptLong" size="sm" />
                     <span>
-                      {adminText.notifications.supplierRequest} : <b>{request.companyName}</b>
-                    </span>
-                  </Link>
-                ))}
-                {visiblePublications.map((product) => (
-                  <Link key={product.id} to="/admin/catalogue/products" className="notification-panel__item">
-                    <Icon name="Tag" size="sm" />
-                    <span>
-                      {adminText.notifications.publication} : <b>{product.name}</b>
+                      {adminText.notifications.publication} : <b>{item.name}</b>
+                      <small>{item.supplierName || item.supplier || 'Fournisseur'}</small>
                     </span>
                   </Link>
                 ))}

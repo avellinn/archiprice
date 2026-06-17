@@ -25,8 +25,7 @@ Le projet suit une logique MVC côté backend et une séparation proche côté f
 Les modèles sont dans `backend/models/`.
 
 - `User.js` : authentification, identité, rôle (`user`, `admin`, `supplier`) et statut.
-- `Supplier.js` : profil métier fournisseur, boutique, coordonnées et état de validation.
-- `SupplierRequest.js` : demandes de partenariat fournisseur avant validation admin.
+- `Supplier.js` : profil métier fournisseur, boutique, coordonnées et statut.
 - `Product.js` : articles/catalogues, prix, catégories, images Cloudinary, propriétaire supplier et statut de publication.
 - `Project.js` : projets créés par les utilisateurs.
 - `Simulation.js` : estimations exportées et données de récapitulatif.
@@ -124,20 +123,17 @@ Les routes API sont centralisées dans `frontend/src/constants/api.js`.
 7. Les guards redirigent selon le rôle :
    - `user` vers `/dashboard` ;
    - `admin` vers `/admin/dashboard` ;
-   - `supplier` vers `/supplier/dashboard` ;
-   - supplier non validé vers `/supplier/pending`.
+   - `supplier` vers `/supplier/dashboard`.
 
-## Flux 2 — Demande Fournisseur
+## Flux 2 — Inscription Fournisseur
 
 1. Le visiteur choisit le type de compte fournisseur à l'inscription.
-2. Le backend crée une entrée `SupplierRequest`.
-3. Le compte attend la validation admin.
-4. L'admin voit la demande dans `pages/admin/NouvellesDemandes/`.
-5. Si la demande est approuvée :
-   - le backend crée ou active un `User` avec rôle `supplier` ;
-   - le backend crée ou complète un `Supplier` ;
-   - le supplier peut accéder à son espace.
-6. Si la demande est refusée, la justification est visible côté fournisseur.
+2. Le backend crée un `User` avec rôle `supplier`.
+3. Le backend crée ou complète un `Supplier`.
+4. `SupplierRoute` vérifie le rôle et `/api/supplier/me`.
+5. Le compte accède à l'espace fournisseur uniquement si le profil boutique existe.
+
+Important : `type: "Fournisseur"` ou une catégorie "Fournisseur" ne suffisent pas à ouvrir `/supplier/*`. L'accès supplier repose sur `role: "supplier"` plus un profil `Supplier` valide.
 
 ## Flux 3 — Données Supplier Vers Admin Fournisseurs
 
@@ -157,15 +153,17 @@ Les routes API sont centralisées dans `frontend/src/constants/api.js`.
 4. Le backend stream les images vers Cloudinary.
 5. MongoDB stocke les métadonnées Cloudinary dans `Product.images`.
 6. Le produit appartient au `supplierId` courant.
-7. Quand le supplier publie, le produit passe en attente de validation admin.
-8. L'admin voit la proposition dans `pages/admin/Articles/`.
-9. Si l'admin valide, le produit devient visible dans `pages/user/Catalogue/`.
-10. Si l'admin refuse, le supplier reçoit une notification avec justification.
+7. Le produit reste en `publicationStatus: "Brouillon"` tant que le supplier ne le publie pas.
+8. Quand le supplier publie, `services/supplier.js` appelle `PATCH /api/supplier/products/:id/publication` avec `publicationStatus: "En attente"`.
+9. L'admin voit l'article soumis dans `pages/admin/Articles/`, alimentée par `GET /api/admin/products`.
+10. Si l'admin valide via `PATCH /api/admin/products/:id`, le produit passe en `Validé`.
+11. Le catalogue user lit `GET /api/catalogue/products` et n'affiche que les produits `Validé`.
+12. Si l'admin retire, refuse ou supprime, le produit reste absent du catalogue public.
 
 ## Flux 5 — Catalogue User Et Simulation Budget
 
-1. Le catalogue user lit les articles validés.
-2. Les filtres viennent de la configuration admin : catégories, pièces, gammes, quartiers, fournisseurs.
+1. Le catalogue user lit les articles validés via `services/catalogueProducts.js`.
+2. Les filtres viennent des valeurs réellement présentes dans les articles validés : catégories, pièces, gammes, disponibilités.
 3. L'utilisateur ajoute des articles à sa simulation.
 4. La simulation budget live calcule :
    - budget cible ;
@@ -284,13 +282,14 @@ Les shells `AppShell.jsx`, `AdminShell.jsx` et `SupplierShell.jsx` se connectent
 - Un supplier ne voit que ses propres produits.
 - L'admin voit les données agrégées.
 - Le user ne voit que les articles validés.
+- Le user ne peut pas devenir supplier via `type` ou `category` : les guards frontend/backend s'appuient sur `role` et sur le profil `Supplier`.
 - Les composants UI génériques restent partagés.
 - Les pages gardent leur CSS dans leur dossier.
 - Les messages applicatifs doivent utiliser `Alert.jsx` et des modales React plutôt que les alertes navigateur.
 - Les actions de boutons dans les modales doivent produire un feedback visible avec `Alert.jsx`.
 - Les champs texte ne doivent pas accepter des valeurs composées uniquement de chiffres quand une chaîne descriptive est attendue.
 - Les champs numériques doivent filtrer ou valider les caractères non numériques.
-- Le dark mode doit passer par les variables `--app-*` du shell.
+- Le dark mode doit passer par les variables `--app-*` du shell. Pour le logo, les règles sont dans `Sidebar.css`, `Header.css` et `AuthLayout.css`, car `Logo.jsx`/`Logo.css` ont été supprimés.
 
 ## Où Modifier Quoi
 

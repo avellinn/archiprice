@@ -26,7 +26,7 @@ app.get('/', (_req, res) => {
     endpoints: {
       health: '/api/health',
       auth: '/api/auth/register | /api/auth/login | /api/auth/me',
-      supplierOnboarding: '/api/auth/register (accountType=supplier) | /api/admin/supplier-requests',
+      supplierOnboarding: '/api/auth/register (accountType=supplier)',
       supplierWorkspace: '/api/supplier/workspace',
       projects: '/api/projects',
       products: '/api/projects/:projectId/products',

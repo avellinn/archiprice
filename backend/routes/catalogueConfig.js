@@ -2,6 +2,7 @@ import express from 'express';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import Product from '../models/Product.js';
 import { publishCrudEvent } from '../services/realtimeService.js';
 
 const router = express.Router();
@@ -80,12 +81,44 @@ function sanitizeCatalogueConfig(config) {
     suppliers: stripLegacyStaticItems(config.suppliers),
     simulations: stripLegacyStaticItems(config.simulations),
     supportItems: stripLegacyStaticItems(config.supportItems),
+    products: [],
     regionalCoefficients: stripLegacyStaticItems(config.regionalCoefficients),
     supplierClientNotifications: stripLegacyStaticItems(config.supplierClientNotifications),
-    supplierPublicationNotices: stripLegacyStaticItems(config.supplierPublicationNotices),
     taxonomies: sanitizeTaxonomies(config.taxonomies),
     supplierSettings: sanitizeAccountSettings(config.supplierSettings),
     adminSettings: sanitizeAccountSettings(config.adminSettings),
+  };
+}
+
+function formatCatalogueProduct(product) {
+  const plain = product.toObject ? product.toObject() : product;
+  const supplier = plain.supplier && typeof plain.supplier === 'object' ? plain.supplier : null;
+  const supplierUser = plain.supplierUser && typeof plain.supplierUser === 'object' ? plain.supplierUser : null;
+  const supplierName = supplier?.companyName || supplier?.name || supplierUser?.name || supplierUser?.email || 'Fournisseur';
+  const image = (plain.images || [])[0]?.secure_url || '';
+
+  return {
+    id: String(plain._id),
+    sourceSupplierProductId: String(plain._id),
+    name: plain.name,
+    description: plain.description || '',
+    category: plain.category || '',
+    room: plain.room || '',
+    range: plain.range || '',
+    availability: plain.availability || '',
+    city: plain.city || supplier?.city || supplier?.region || '',
+    neighborhood: plain.neighborhood || supplier?.neighborhood || '',
+    unit: plain.unit || 'u',
+    unitPrice: plain.unitPrice || 0,
+    price: plain.unitPrice || 0,
+    supplier: supplierName,
+    supplierName,
+    shop: supplierName,
+    image,
+    images: plain.images || [],
+    publicationStatus: plain.publicationStatus || 'Brouillon',
+    createdAt: plain.createdAt,
+    updatedAt: plain.updatedAt,
   };
 }
 
@@ -124,6 +157,21 @@ router.put('/catalogue-config', async (req, res) => {
   await writeCatalogueConfig(nextConfig);
   publishCrudEvent('catalogue-config', 'updated', { updatedAt: nextConfig.__updatedAt });
   return res.json({ config: nextConfig });
+});
+
+router.get('/catalogue/products', async (_req, res) => {
+  const products = await Product.find({ publicationStatus: 'Validé' })
+    .populate('supplier', 'name companyName email city region neighborhood status')
+    .populate('supplierUser', 'name email status')
+    .sort({ updatedAt: -1 });
+  const visibleProducts = products.filter((product) => {
+    const supplier = product.supplier && typeof product.supplier === 'object' ? product.supplier : null;
+    const supplierUser = product.supplierUser && typeof product.supplierUser === 'object' ? product.supplierUser : null;
+    const status = supplier?.status || supplierUser?.status || 'Actif';
+    return !['Bloqué', 'Supprimé'].includes(status);
+  });
+
+  return res.json({ products: visibleProducts.map(formatCatalogueProduct) });
 });
 
 export default router;

@@ -9,106 +9,6 @@
   overflow-x: hidden;
 }
 
-.admin-users-management__header {
-  display: grid;
-  grid-template-columns: minmax(280px, 520px) minmax(160px, 190px) auto;
-  align-items: center;
-  gap: 1.6rem;
-  margin-bottom: 1.45rem;
-}
-
-.admin-users-management__header h1 {
-  margin: 0;
-  color: var(--app-heading-color);
-  font-size: 1.55rem;
-  font-weight: 900;
-}
-
-.admin-users-management__search,
-.admin-users-management__filter {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  border: 1px solid #e5eaf2;
-  border-radius: 8px;
-  background: var(--app-card-background);
-  box-shadow: 0 7px 18px rgb(15 23 42 / 0.04);
-}
-
-.admin-users-management__search {
-  position: relative;
-  gap: 0.55rem;
-  width: 100%;
-  max-width: 520px;
-}
-
-.admin-users-management__search svg {
-  position: absolute;
-  right: 0.75rem;
-  color: #98a2b3;
-}
-
-.admin-users-management__search input,
-.admin-users-management__filter select {
-  width: 100%;
-  border: 0;
-  background: transparent;
-  color: var(--app-text-color);
-  font: inherit;
-  font-size: 0.86rem;
-  font-weight: 800;
-  outline: 0;
-}
-
-.admin-users-management__search input {
-  height: 44px;
-  padding-right: 2.3rem;
-  padding-left: 1rem;
-}
-
-.admin-users-management__search input::placeholder {
-  color: #98a2b3;
-}
-
-.admin-users-management__filter {
-  gap: 0.25rem;
-  padding: 0 0.75rem;
-}
-
-.admin-users-management__filter span {
-  flex: 0 0 auto;
-  color: #344054;
-  font-size: 0.85rem;
-  font-weight: 900;
-}
-
-.admin-users-management__filter select {
-  min-width: 80px;
-  cursor: pointer;
-}
-
-.admin-users-management__header .admin-products-add,
-.admin-users-management__header .admin-products-add.btn {
-  position: absolute;
-  right: 1.55rem;
-  bottom: 1.55rem;
-  left: auto;
-  border-color: #224b73 !important;
-  background: #224b73 !important;
-  background-color: #224b73 !important;
-  color: #fff !important;
-}
-
-.admin-users-management__header .admin-products-add:hover,
-.admin-users-management__header .admin-products-add:focus-visible,
-.admin-users-management__header .admin-products-add.btn:hover,
-.admin-users-management__header .admin-products-add.btn:focus-visible {
-  border-color: #1a3a59 !important;
-  background: #1a3a59 !important;
-  background-color: #1a3a59 !important;
-  color: #fff !important;
-}
-
 .admin-users-management__notice {
   margin: -0.65rem 0 0.85rem;
   color: var(--app-muted-color);
@@ -126,6 +26,10 @@
 
 .admin-users-management__alert {
   margin: 0 0 1rem;
+}
+
+.admin-users-management__loader {
+  min-height: 360px;
 }
 
 .admin-users-management__list {
@@ -204,15 +108,13 @@
   outline-offset: -2px;
 }
 
-.admin-users-management__premium {
-  color: #1d73f8;
-  font-weight: 900;
-}
+
 
 .admin-users-management__actions {
   display: inline-flex;
   align-items: center;
   gap: 0.7rem;
+  
 }
 
 .admin-users-management__actions button {
@@ -221,10 +123,9 @@
   justify-content: center;
   width: 2rem;
   height: 2rem;
-  padding: 0;
   border: 1px solid var(--app-border-color);
   border-radius: 7px;
-  background: #224b73;
+  background: #e2e7ec00;
   color: var(--app-heading-color);
   cursor: pointer;
   transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
@@ -266,6 +167,39 @@
 
 .admin-users-management__actions .is-link {
   color: #405f8e;
+}
+
+.admin-users-management__actions .is-activate {
+  color: #0f766e;
+}
+
+.admin-users-management__actions .is-activate:hover,
+.admin-users-management__actions .is-activate:focus-visible {
+  border-color: #99f6e4;
+  background: #f0fdfa;
+  color: #0f766e;
+}
+
+.admin-users-management__actions .is-unblock {
+  color: #16a34a;
+}
+
+.admin-users-management__actions .is-unblock:hover,
+.admin-users-management__actions .is-unblock:focus-visible {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.admin-users-management__actions .is-restore {
+  color: #7c3aed;
+}
+
+.admin-users-management__actions .is-restore:hover,
+.admin-users-management__actions .is-restore:focus-visible {
+  border-color: #ddd6fe;
+  background: #f5f3ff;
+  color: #6d28d9;
 }
 
 .admin-users-management__requests {
@@ -477,8 +411,6 @@
   border-bottom: 0;
 }
 
-.dashboard-shell.is-theme-dark .admin-users-management__search,
-.dashboard-shell.is-theme-dark .admin-users-management__filter,
 .dashboard-shell.is-theme-dark .admin-users-management__card {
   border-color: var(--app-border-color);
   background: var(--app-card-background);
@@ -496,8 +428,7 @@
   border-color: var(--app-border-color);
 }
 
-.dashboard-shell.is-theme-dark .admin-users-management__table th,
-.dashboard-shell.is-theme-dark .admin-users-management__filter span {
+.dashboard-shell.is-theme-dark .admin-users-management__table th {
   color: var(--app-heading-color);
 }
 

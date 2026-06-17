@@ -1,28 +1,15 @@
 import './Fournisseurs.css';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Alert, Badge, Button, Icon, Table } from '../../../components/ui';
+import { Alert, Badge, Icon, Loader, Table } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
 import {
-  createAdminSupplier,
   deleteAdminSupplier,
   fetchAdminSuppliers,
   updateAdminSupplier,
 } from '../../../services/adminMongo';
 import FournisseurModal from './fournisseurModal';
-
-const EMPTY_SUPPLIER = {
-  id: '',
-  name: '',
-  companyName: '',
-  contact: '',
-  email: '',
-  phone: '',
-  region: '',
-  status: 'Actif',
-  products: 0,
-};
 
 function normalizeSupplierForWorkspace(supplier) {
   return {
@@ -115,7 +102,6 @@ export default function Fournisseurs() {
   const [, updateAdminData] = useAdminData();
   const [suppliers, setSuppliers] = useState([]);
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
-  const [isCreatingSupplier, setIsCreatingSupplier] = useState(false);
   const [editForm, setEditForm] = useState({
     name: '',
     email: '',
@@ -177,16 +163,7 @@ export default function Fournisseurs() {
   const selectedSupplier = useMemo(() => (
     suppliers.find((supplier) => supplier.id === selectedSupplierId) || null
   ), [selectedSupplierId, suppliers]);
-  const modalSupplier = isCreatingSupplier ? {
-    ...EMPTY_SUPPLIER,
-    name: editForm.name || 'Nouveau fournisseur',
-    companyName: editForm.name || 'Nouveau fournisseur',
-    contact: editForm.email || '',
-    email: editForm.email || '',
-    phone: editForm.phone || '',
-    region: editForm.region || '',
-    status: editForm.status || 'Actif',
-  } : selectedSupplier;
+  const modalSupplier = selectedSupplier;
 
   async function upsertSupplier(supplier) {
     try {
@@ -196,16 +173,6 @@ export default function Fournisseurs() {
           const nextSuppliers = currentSuppliers.map((item) => (
             item.id === updatedSupplier.id ? updatedSupplier : item
           ));
-          updateAdminData((currentData) => ({
-            ...currentData,
-            ...getSyncedSupplierData(currentData, nextSuppliers),
-          }));
-          return nextSuppliers;
-        });
-      } else {
-        const createdSupplier = await createAdminSupplier(supplier);
-        setSuppliers((currentSuppliers) => {
-          const nextSuppliers = [createdSupplier, ...currentSuppliers];
           updateAdminData((currentData) => ({
             ...currentData,
             ...getSyncedSupplierData(currentData, nextSuppliers),
@@ -288,26 +255,12 @@ export default function Fournisseurs() {
   }
 
   function openSupplierDetail(supplier) {
-    setIsCreatingSupplier(false);
     setSelectedSupplierId(supplier.id);
     fillSupplierForm(supplier);
   }
 
-  function openCreateSupplier() {
-    setSelectedSupplierId('');
-    setIsCreatingSupplier(true);
-    setEditForm({
-      name: '',
-      email: '',
-      phone: '',
-      region: '',
-      status: 'Actif',
-    });
-  }
-
   function closeSupplierDetail() {
     setSelectedSupplierId('');
-    setIsCreatingSupplier(false);
     setEditForm({
       name: '',
       email: '',
@@ -327,22 +280,6 @@ export default function Fournisseurs() {
   async function submitSupplierDetail(event) {
     event.preventDefault();
     if (!modalSupplier) return;
-
-    if (isCreatingSupplier) {
-      const email = editForm.email.trim();
-      await upsertSupplier({
-        name: editForm.name.trim(),
-        companyName: editForm.name.trim(),
-        contact: email || undefined,
-        email: email || undefined,
-        phone: editForm.phone.trim(),
-        region: editForm.region.trim(),
-        status: editForm.status,
-        products: 0,
-      });
-      closeSupplierDetail();
-      return;
-    }
 
     if (!selectedSupplier) return;
 
@@ -463,36 +400,30 @@ export default function Fournisseurs() {
 
   return (
     <div className="admin-suppliers-page">
-      <header className="admin-suppliers-header">
-
-
-        
-
-        <Button type="button" icon={<Icon name="Add" size="sm" />} className="admin-products-add" onClick={openCreateSupplier}>
-          Ajouter un fournisseur
-        </Button>
-      </header>
-
       {error && (
         <Alert variant="danger" className="admin-suppliers-alert" onClose={() => setError('')}>
           {error}
         </Alert>
       )}
 
-      <Table
-        className="admin-suppliers-list"
-        columns={supplierColumns}
-        data={isLoading ? [] : filteredSuppliers}
-        getRowId={(supplier, index) => supplier.id || `${supplier.name}-${index}`}
-        onRowClick={openSupplierDetail}
-        emptyLabel={isLoading ? 'Chargement des fournisseurs Mongo...' : 'Aucun fournisseur trouvé.'}
-      />
+      {isLoading ? (
+        <Loader label="Chargement des fournisseurs..." />
+      ) : (
+        <Table
+          className="admin-suppliers-list"
+          columns={supplierColumns}
+          data={filteredSuppliers}
+          getRowId={(supplier, index) => supplier.id || `${supplier.name}-${index}`}
+          onRowClick={openSupplierDetail}
+          emptyLabel="Aucun fournisseur trouvé."
+        />
+      )}
 
       {modalSupplier && (
         <FournisseurModal
           supplier={modalSupplier}
           form={editForm}
-          isCreating={isCreatingSupplier}
+          isCreating={false}
           onChange={updateEditForm}
           onClose={closeSupplierDetail}
           onSubmit={submitSupplierDetail}

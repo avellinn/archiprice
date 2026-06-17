@@ -1,16 +1,44 @@
 import './Simulations.css';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Alert, Table } from '../../../components/ui';
+import { Alert, Button, Icon, Loader, Table } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
 import { fetchAdminSimulations } from '../../../services/adminMongo';
 import { fetchExportedDocuments, subscribeExportedDocumentsChange } from '../../../services/exportedDocuments';
 import { fetchProjects, subscribeProjectsChange } from '../../../services/projects';
-import { Badge } from '../PageShell';
 import SimulationModal from './simulationModal';
+
+const HIDDEN_SIMULATIONS_KEY = 'archiprice:admin-hidden-simulations';
 
 function formatFCFA(amount) {
   return `${new Intl.NumberFormat('fr-FR').format(Number(amount || 0))} FCFA`;
+}
+
+function readHiddenSimulationIds() {
+  try {
+    return JSON.parse(window.localStorage.getItem(HIDDEN_SIMULATIONS_KEY) || '[]').map(String);
+  } catch {
+    return [];
+  }
+}
+
+function writeHiddenSimulationIds(ids) {
+  try {
+    window.localStorage.setItem(HIDDEN_SIMULATIONS_KEY, JSON.stringify(ids));
+  } catch {
+    // La liste reste manipulable en mémoire si le stockage navigateur est indisponible.
+  }
+}
+
+function mergeSimulationSources(items) {
+  const simulationsById = new Map();
+
+  items.forEach((item) => {
+    if (!item?.id || simulationsById.has(item.id)) return;
+    simulationsById.set(item.id, item);
+  });
+
+  return [...simulationsById.values()];
 }
 
 function formatExportDate(value) {
@@ -28,6 +56,8 @@ function formatExportDate(value) {
 function mapExportToSimulation(document) {
   return {
     id: `exported-${document.id}`,
+    sourceType: 'export',
+    sourceId: document.id,
     user: document.userName || 'Utilisateur ArchiPrice',
     email: document.userEmail || 'Compte user',
     avatar: 'AP',
@@ -51,6 +81,8 @@ function mapExportToSimulation(document) {
 function mapProjectToSimulation(project) {
   return {
     id: `project-${project.id}`,
+    sourceType: 'project',
+    sourceId: project.id,
     user: project.clientName || project.userName || 'Utilisateur ArchiPrice',
     email: project.userEmail || 'Projet workspace',
     avatar: 'PW',
@@ -72,7 +104,10 @@ export default function Simulations() {
   const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [hiddenSimulationIds, setHiddenSimulationIds] = useState(readHiddenSimulationIds);
   const [selectedSimulation, setSelectedSimulation] = useState(null);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -119,11 +154,20 @@ export default function Simulations() {
     };
   }, []);
 
-  const synchronizedSimulations = useMemo(() => ([
+  const synchronizedSimulations = useMemo(() => mergeSimulationSources([
     ...projects.map(mapProjectToSimulation),
     ...exportedDocuments.map(mapExportToSimulation),
-    ...simulations,
-  ]), [exportedDocuments, projects, simulations]);
+    ...simulations.map((simulation) => ({
+      ...simulation,
+      sourceType: simulation.sourceType || simulation.source || 'simulation',
+      sourceId: simulation.sourceId || simulation.projectId || simulation.id,
+    })),
+  ]).filter((simulation) => !hiddenSimulationIds.includes(String(simulation.id))), [
+    exportedDocuments,
+    hiddenSimulationIds,
+    projects,
+    simulations,
+  ]);
 
   const filteredSimulations = useMemo(() => {
     const normalizedSearch = (searchParams.get('q') || '').trim().toLowerCase();
@@ -151,6 +195,27 @@ export default function Simulations() {
     );
   }
 
+  function hideSimulation(simulation) {
+    const nextHiddenIds = Array.from(new Set([...hiddenSimulationIds, String(simulation.id)]));
+    setHiddenSimulationIds(nextHiddenIds);
+    writeHiddenSimulationIds(nextHiddenIds);
+    if (selectedSimulation?.id === simulation.id) setSelectedSimulation(null);
+    setSuccessMessage('Simulation retirée de la vue admin.');
+  }
+
+  function resetSimulationView() {
+    setIsResetConfirmOpen(true);
+  }
+
+  function confirmResetSimulations() {
+    const nextHiddenIds = synchronizedSimulations.map((simulation) => String(simulation.id));
+    setHiddenSimulationIds(nextHiddenIds);
+    writeHiddenSimulationIds(nextHiddenIds);
+    setSelectedSimulation(null);
+    setIsResetConfirmOpen(false);
+    setSuccessMessage('Liste des simulations réinitialisée.');
+  }
+
   const simulationColumns = [
     {
       key: 'user',
@@ -161,29 +226,77 @@ export default function Simulations() {
     { key: 'total', label: 'Budget total' },
     { key: 'products', label: 'Articles' },
     {
-      key: 'status',
-      label: 'Statut',
-      render: (status) => (
-        <Badge tone={status === 'Succès' ? 'success' : status === 'Projet créé' ? 'neutral' : 'danger'}>
-          {status}
-        </Badge>
+      key: 'actions',
+      label: '',
+      render: (_value, simulation) => (
+        <button
+          type="button"
+          className="admin-simulations-delete"
+          title="Retirer de la vue"
+          aria-label={`Retirer la simulation de ${simulation.user || 'cet utilisateur'}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            hideSimulation(simulation);
+          }}
+        >
+          <Icon name="Delete" size="sm" />
+        </button>
       ),
     },
   ];
 
   return (
     <div className="admin-simulations-page">
+      <header className="admin-simulations-header">
+        <div />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          icon={<Icon name="History" size="sm" />}
+          onClick={resetSimulationView}
+          disabled={synchronizedSimulations.length === 0}
+          
+        >
+          Réinitialiser
+        </Button>
+      </header>
+
       {error && <Alert variant="danger" className="admin-simulations-alert">{error}</Alert>}
+      {successMessage && (
+        <Alert variant="success" className="admin-simulations-alert" onClose={() => setSuccessMessage('')}>
+          {successMessage}
+        </Alert>
+      )}
+
+      {isResetConfirmOpen && (
+        <Alert
+          variant="warning"
+          title="Réinitialiser les simulations"
+          className="admin-simulations-confirm-alert"
+          onClose={() => setIsResetConfirmOpen(false)}
+        >
+          <span>Supprimer toute la liste des simulations ? Cette action est irréversible dans la vue admin.</span>
+          <span className="admin-simulations-confirm-alert__actions">
+            <button type="button" onClick={() => setIsResetConfirmOpen(false)}>Annuler</button>
+            <button type="button" onClick={confirmResetSimulations}>Supprimer</button>
+          </span>
+        </Alert>
+      )}
 
       <section className="admin-simulations-card" aria-label="Liste des simulations">
-        <Table
-          className="admin-simulations-list"
-          columns={simulationColumns}
-          data={isLoading ? [] : filteredSimulations}
-          getRowId={(simulation, index) => simulation.id || `${simulation.email || 'simulation'}-${index}`}
-          onRowClick={setSelectedSimulation}
-          emptyLabel={isLoading ? 'Chargement des simulations Mongo...' : 'Aucune simulation trouvée.'}
-        />
+        {isLoading ? (
+          <Loader label="Chargement des simulations..." />
+        ) : (
+          <Table
+            className="admin-simulations-list"
+            columns={simulationColumns}
+            data={filteredSimulations}
+            getRowId={(simulation, index) => simulation.id || `${simulation.email || 'simulation'}-${index}`}
+            onRowClick={setSelectedSimulation}
+            emptyLabel="Aucune simulation trouvée."
+          />
+        )}
       </section>
 
       {selectedSimulation && (

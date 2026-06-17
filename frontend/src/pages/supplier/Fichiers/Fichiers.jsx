@@ -1,6 +1,6 @@
 import './Fichiers.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Button, Icon } from '../../../components/ui';
+import { Alert, Button, Icon, Loader } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
 import { deleteSupplierProductImage, fetchSupplierWorkspace, subscribeSupplierWorkspaceChange } from '../../../services/supplier';
 
@@ -36,6 +36,22 @@ function getProductFiles(products = []) {
       };
     }).filter((file) => file.url);
   });
+}
+
+function removeFileFromWorkspace(workspace, file) {
+  return {
+    ...workspace,
+    products: (workspace?.products || []).map((product) => {
+      if (String(product.id || product._id || '') !== String(file.productId || '')) return product;
+
+      return {
+        ...product,
+        images: (product.images || []).filter((image) => (
+          String(image?.public_id || '') !== String(file.publicId || '')
+        )),
+      };
+    }),
+  };
 }
 
 export default function Fichiers() {
@@ -113,13 +129,13 @@ export default function Fichiers() {
     setFiles((currentFiles) => currentFiles.filter((file, index) => `local-${file.name}-${index}` !== fileId));
   }
 
-  async function confirmProductImageDelete() {
-    const file = pendingImageDelete;
+  async function deleteProductImage(file) {
     if (!file.productId || !file.publicId) return;
 
     setDeletingFileId(file.id);
     setError('');
     setPendingImageDelete(null);
+    setWorkspace((currentWorkspace) => removeFileFromWorkspace(currentWorkspace, file));
 
     try {
       const updatedProduct = await deleteSupplierProductImage(file.productId, file.publicId);
@@ -132,13 +148,20 @@ export default function Fichiers() {
       }));
     } catch (apiError) {
       setError(getApiErrorMessage(apiError, "Impossible de supprimer l'image."));
+      loadWorkspace();
     } finally {
       setDeletingFileId('');
     }
   }
 
+  function confirmProductImageDelete() {
+    if (pendingImageDelete) {
+      deleteProductImage(pendingImageDelete);
+    }
+  }
+
   function removeProductImage(file) {
-    setPendingImageDelete(file);
+    deleteProductImage(file);
   }
 
   async function confirmResetFiles() {
@@ -148,17 +171,19 @@ export default function Fichiers() {
     setError('');
     setSuccessMessage('');
     setIsResetConfirmOpen(false);
+    setFiles([]);
+    setWorkspace((currentWorkspace) => uploadedFilesToDelete.reduce(removeFileFromWorkspace, currentWorkspace));
 
     try {
-      await Promise.allSettled(uploadedFilesToDelete.map((file) => (
+      await Promise.all(uploadedFilesToDelete.map((file) => (
         deleteSupplierProductImage(file.productId, file.publicId)
       )));
-      setFiles([]);
       const nextWorkspace = await fetchSupplierWorkspace();
       setWorkspace(nextWorkspace);
       setSuccessMessage('Tous les fichiers ont été réinitialisés.');
     } catch (apiError) {
       setError(getApiErrorMessage(apiError, 'Impossible de réinitialiser les fichiers.'));
+      loadWorkspace();
     } finally {
       setDeletingFileId('');
     }
@@ -193,7 +218,7 @@ export default function Fichiers() {
           onChange={handleFilesChange}
         />
 
-        {isLoading && <p className="supplier-files-status">Chargement des fichiers...</p>}
+        {isLoading && <Loader className="supplier-files-status" label="Chargement des fichiers..." />}
         {error && (
           <Alert variant="danger" className="supplier-files-status" onClose={() => setError('')}>
             {error}

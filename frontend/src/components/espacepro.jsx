@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Icon from './Icon';
-import { Alert, Button } from './ui';
+import { Alert, Button, Loader } from './ui';
 import useAuth from '../context/useAuth';
 import { getApiErrorMessage } from '../services/api';
 import { addExportedDocument } from '../services/exportedDocuments';
@@ -280,7 +280,7 @@ export default function EspacePro({
   return (
     <div className="espacepro">
       <aside className="espacepro__projects" aria-label="Tous les projets créés">
-        {isProjectsLoading && <p>Chargement des projets...</p>}
+        {isProjectsLoading && <Loader label="Chargement des projets..." />}
         {projectsError && <Alert variant="danger" className="espacepro__alert">{projectsError}</Alert>}
         {!isProjectsLoading && !projectsError && projects.length === 0 && (
           <p>Aucun projet créé pour le moment.</p>
@@ -336,7 +336,7 @@ export default function EspacePro({
           <span>Articles choisis</span>
         </div>
 
-        {visibleIsProductsLoading && <p className="espacepro__empty">Chargement des articles...</p>}
+        {visibleIsProductsLoading && <Loader className="espacepro__empty" label="Chargement des articles..." />}
         {productsError && <Alert variant="danger" className="espacepro__alert">{productsError}</Alert>}
         {!visibleIsProductsLoading && !productsError && visibleProjectProducts.length === 0 && (
           <p className="espacepro__empty">Aucun article choisi pour ce projet.</p>
@@ -397,7 +397,7 @@ export default function EspacePro({
                       handleDownloadRecap();
                     }}
                   >
-                    {getProjectRecapFileName(selectedProject)}
+                    Télécharger le recap  {getProjectRecapFileName(selectedProject)}
                   </a>
                   <button
                     type="button"

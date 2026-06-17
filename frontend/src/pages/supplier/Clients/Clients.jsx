@@ -1,6 +1,6 @@
 import './Clients.css';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Badge, Icon, Table, Text } from '../../../components/ui';
+import { Alert, Badge, Icon, Table } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
 import { useAdminData } from '../../../services/adminData';
 import { fetchSupplierWorkspace } from '../../../services/supplier';

@@ -115,7 +115,7 @@
   display: grid;
   min-height: 0;
   gap: 0.75rem;
-  max-height: min(50vh, 420px);
+  max-height: none;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 1rem calc(1.25rem + 4px) 1.25rem 1.25rem;
@@ -142,7 +142,7 @@
 
 .modal-boutique__shop--selected {
   border-color: #d7d7d7;
-  background: rgba(121, 169, 102, 0.636);
+  background: rgba(121, 169, 102, 0.394);
   box-shadow: inset 4px 0 0 #767471a4;
   
 }
