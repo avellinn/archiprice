@@ -112,6 +112,20 @@ const ICONS = {
       <path key="explore-needle" d="m15.5 8.5-2.1 4.9-4.9 2.1 2.1-4.9z" />,
     ],
   },
+  Filter: {
+    paths: [
+      <path key="filter-top" d="M4 6h16" />,
+      <path key="filter-mid" d="M7 12h10" />,
+      <path key="filter-bot" d="M10 18h4" />,
+    ],
+  },
+  Wallet: {
+    paths: [
+      <rect key="wallet-body" x="3" y="6" width="18" height="13" rx="2" />,
+      <path key="wallet-slot" d="M3 10h18" />,
+      <path key="wallet-clasp" d="M16 14h3v2h-3z" />,
+    ],
+  },
   Folder: {
     paths: [
       <path key="folder" d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
@@ -226,6 +240,7 @@ const NAME_ALIASES = {
   download: 'Download',
   edit: 'Edit',
   explore: 'Explore',
+  filter: 'Filter',
   folder: 'Folder',
   history: 'History',
   info: 'Info',
@@ -239,6 +254,7 @@ const NAME_ALIASES = {
   upload: 'Upload',
   visibility: 'Visibility',
   visibilityOff: 'VisibilityOff',
+  wallet: 'Wallet',
   workspaces: 'Workspaces',
 };
 

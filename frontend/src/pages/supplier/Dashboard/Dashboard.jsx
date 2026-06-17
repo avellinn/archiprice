@@ -1,10 +1,11 @@
 import './Dashboard.css';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import DonutChartCard from '../../../components/DonutChart';
 import { Button, Icon, Loader, Text } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
+import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { useAdminData } from '../../../services/adminData';
 import { getApiErrorMessage } from '../../../services/api';
 import { fetchSupplierWorkspace, subscribeSupplierWorkspaceChange } from '../../../services/supplier';
@@ -223,37 +224,25 @@ export default function Dashboard() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
-  function loadWorkspace() {
-    let cancelled = false;
-
+  const loadWorkspace = useCallback(() => {
     fetchSupplierWorkspace()
       .then((data) => {
-        if (!cancelled) {
-          setWorkspace(data);
-          setError('');
-        }
+        setWorkspace(data);
+        setError('');
       })
       .catch((apiError) => {
-        if (!cancelled) setError(getApiErrorMessage(apiError, 'Impossible de charger les analyses fournisseur.'));
+        setError(getApiErrorMessage(apiError, 'Impossible de charger les analyses fournisseur.'));
       })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-
-    return () => { cancelled = true; };
-  }
+      .finally(() => setIsLoading(false));
+  }, []);
 
   useEffect(() => {
-    const cancelLoad = loadWorkspace();
-    const unsubscribe = subscribeSupplierWorkspaceChange(() => {
-      loadWorkspace();
-    });
+    loadWorkspace();
+    const unsubscribe = subscribeSupplierWorkspaceChange(loadWorkspace);
+    return unsubscribe;
+  }, [loadWorkspace]);
 
-    return () => {
-      cancelLoad();
-      unsubscribe();
-    };
-  }, []);
+  useRealtimeRefresh(loadWorkspace, ['supplier-products', 'suppliers', 'admin-products']);
 
   const supplierProfile = workspace?.supplier || null;
   const hiddenDemandItemsKey = getHiddenDemandItemsKey(user, supplierProfile);
@@ -263,7 +252,6 @@ export default function Dashboard() {
   );
 
   const products = useMemo(() => workspace?.products || [], [workspace]);
-  const adminProducts = useMemo(() => adminData.products || [], [adminData.products]);
   const demands = useMemo(() => (
     (adminData.supplierClientNotifications || [])
       .filter((notification) => notification.type === 'Demande')
@@ -275,9 +263,9 @@ export default function Dashboard() {
       .filter((notification) => isDemandForSupplier(notification, user, supplierProfile))
   ), [adminData.supplierClientNotifications, supplierProfile, user]);
   const stats = useMemo(() => {
-    const active = products.filter((product) => isEffectivelyPublished(product, adminProducts)).length;
+    const active = products.filter((product) => isEffectivelyPublished(product)).length;
     const published = products.filter((product) => (
-      isEffectivelyPublished(product, adminProducts) || isPending(product)
+      isEffectivelyPublished(product) || isPending(product)
     )).length;
     const total = products.length;
 
@@ -287,7 +275,7 @@ export default function Dashboard() {
       published,
       clients: clients.length,
     };
-  }, [adminProducts, clients.length, products]);
+  }, [clients.length, products]);
 
   const dashboardSearchTerm = searchParams.get('q')?.trim().toLowerCase() || '';
   const history = products
@@ -487,7 +475,7 @@ export default function Dashboard() {
                         {product.name}
                       </Text>
                       <Text as="span" variant="bold" size="sm">
-                        {getEffectiveProductStatusLabel(product, adminProducts)} ·{' '}
+                        {getEffectiveProductStatusLabel(product)} ·{' '}
                         {formatDate(product.updatedAt || product.createdAt)}
                       </Text>
                     </div>

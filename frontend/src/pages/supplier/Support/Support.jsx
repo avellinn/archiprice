@@ -1,8 +1,9 @@
 import './Support.css';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import ModalSupport from '../../../components/modalsupport';
 import { Alert, Button, Icon } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
+import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { getApiErrorMessage } from '../../../services/api';
 import { fetchSupplierWorkspace } from '../../../services/supplier';
 import { createSupportFeedback, fetchMySupportItems } from '../../../services/support';
@@ -58,31 +59,21 @@ export default function SupplierSupport() {
     ))
   ), [hiddenSupportItemIds, remoteSupportItems]);
 
-  useEffect(() => {
-    let cancelled = false;
+  const loadSupportItems = useCallback(() => {
+    fetchSupplierWorkspace()
+      .then((workspace) => setSupplierProfile(workspace?.supplier || null))
+      .catch(() => {});
 
-    function loadSupportItems() {
-      fetchSupplierWorkspace()
-        .then((workspace) => {
-          if (!cancelled) setSupplierProfile(workspace?.supplier || null);
-        })
-        .catch(() => {});
-
-      fetchMySupportItems()
-        .then((items) => {
-          if (!cancelled) setRemoteSupportItems(items);
-        })
-        .catch(() => {});
-    }
-
-    loadSupportItems();
-    const refreshTimer = window.setInterval(loadSupportItems, 15000);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(refreshTimer);
-    };
+    fetchMySupportItems()
+      .then(setRemoteSupportItems)
+      .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    loadSupportItems();
+  }, [loadSupportItems]);
+
+  useRealtimeRefresh(loadSupportItems, ['support-items', 'suppliers']);
 
   function hideSupportItem(itemId) {
     const nextHiddenItemIds = Array.from(new Set([...hiddenSupportItemIds, String(itemId)]));

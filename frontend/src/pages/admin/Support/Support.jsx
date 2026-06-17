@@ -1,12 +1,11 @@
 import '../../supplier/Support/Support.css';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Alert, Icon, Loader } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
+import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { deleteAdminSupportItem, fetchAdminSupportItems, updateAdminSupportItem } from '../../../services/adminMongo';
 import SupportModal from './supportModal';
-
-const SUPPORT_REFRESH_INTERVAL = 10000;
 
 export default function Support() {
   const [searchParams] = useSearchParams();
@@ -17,33 +16,23 @@ export default function Support() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [replyDrafts, setReplyDrafts] = useState({});
 
-  useEffect(() => {
-    let cancelled = false;
-
-    function loadSupportItems({ silent = false } = {}) {
-      fetchAdminSupportItems()
-        .then((list) => {
-          if (!cancelled) {
-            setRemoteSupportItems(list);
-            setError('');
-          }
-        })
-        .catch((apiError) => {
-          if (!cancelled && !silent) setError(getApiErrorMessage(apiError, 'Impossible de charger les demandes support Mongo.'));
-        })
-        .finally(() => {
-          if (!cancelled) setIsLoading(false);
-        });
-    }
-
-    loadSupportItems();
-    const refreshTimer = window.setInterval(() => loadSupportItems({ silent: true }), SUPPORT_REFRESH_INTERVAL);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(refreshTimer);
-    };
+  const loadSupportItems = useCallback(({ silent = false } = {}) => {
+    fetchAdminSupportItems()
+      .then((list) => {
+        setRemoteSupportItems(list);
+        setError('');
+      })
+      .catch((apiError) => {
+        if (!silent) setError(getApiErrorMessage(apiError, 'Impossible de charger les demandes support Mongo.'));
+      })
+      .finally(() => setIsLoading(false));
   }, []);
+
+  useEffect(() => {
+    loadSupportItems();
+  }, [loadSupportItems]);
+
+  useRealtimeRefresh(() => loadSupportItems({ silent: true }), ['support-items']);
 
   const feedbackItems = useMemo(() => {
     const normalizedSearch = (searchParams.get('q') || '').trim().toLowerCase();

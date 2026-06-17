@@ -7,6 +7,7 @@ import Newproject from '../../../components/Newproject';
 import { Alert, Button, Icon, Loader } from '../../../components/ui';
 import WorkspaceMiniGrid from '../../../components/WorkspaceMiniGrid';
 import useAuth from '../../../context/useAuth';
+import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
 import { deleteProject, fetchProjects, updateProject } from '../../../services/projects';
@@ -303,39 +304,33 @@ export default function Workspace() {
     normalizeRoomOptions(adminData.taxonomies?.rooms || [])
   ), [adminData.taxonomies?.rooms]);
 
-  useEffect(() => {
-    let cancelled = false;
+  const loadProjects = useCallback(() => {
+    setIsProjectsLoading(true);
 
     fetchProjects()
       .then((list) => {
-        if (!cancelled) {
-          setProjects(list);
-          setProjectsError('');
-          const projectIdFromUrl = searchParams.get('projectId');
-          if (projectIdFromUrl) {
-            setSelectedProjectId(projectIdFromUrl);
-          }
-          if (searchParams.get('mode') === 'projects' || projectIdFromUrl) {
-            setActiveCardId('catalogue-projects');
-          }
+        setProjects(list);
+        setProjectsError('');
+        const projectIdFromUrl = searchParams.get('projectId');
+        if (projectIdFromUrl) {
+          setSelectedProjectId(projectIdFromUrl);
+        }
+        if (searchParams.get('mode') === 'projects' || projectIdFromUrl) {
+          setActiveCardId('catalogue-projects');
         }
       })
       .catch(() => {
-        if (!cancelled) {
-          setProjects([]);
-          setProjectsError('Impossible de charger les projets récents.');
-        }
+        setProjects([]);
+        setProjectsError('Impossible de charger les projets récents.');
       })
-      .finally(() => {
-        if (!cancelled) {
-          setIsProjectsLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
+      .finally(() => setIsProjectsLoading(false));
   }, [searchParams]);
+
+  useEffect(() => {
+    loadProjects();
+  }, [loadProjects]);
+
+  useRealtimeRefresh(loadProjects, ['projects', 'project-products']);
 
   const selectedProject = projects.find((project) => project.id === selectedProjectId) || projects[0];
   const workspaceSearchTerm = searchParams.get('q')?.trim().toLowerCase() || '';

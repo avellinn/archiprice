@@ -3,12 +3,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Alert, Badge, Icon, Loader, Table } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
+import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import {
   deleteAdminProduct,
   fetchAdminProducts,
   updateAdminProduct,
 } from '../../../services/adminMongo';
-import { connectRealtime } from '../../../services/realtime';
 
 function formatFCFA(amount) {
   return `${new Intl.NumberFormat('fr-FR').format(Number(amount || 0))} FCFA`;
@@ -65,12 +65,7 @@ export default function Articles() {
 
   useEffect(() => loadProducts(), [loadProducts]);
 
-  useEffect(() => connectRealtime({
-    onEvent: (event) => {
-      if (event?.type === 'connected') return;
-      loadProducts();
-    },
-  }), [loadProducts]);
+  useRealtimeRefresh(loadProducts, ['admin-products', 'supplier-products']);
 
   const filteredProducts = useMemo(() => {
     const query = searchParams.get('q')?.trim().toLowerCase() || '';

@@ -1,9 +1,10 @@
 import './Produits.css';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ProduitAjouteSup from '../../../components/ProduitAjouteSup';
 import { Button, Icon } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
+import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { useAdminData } from '../../../services/adminData';
 import {
   deleteSupplierProduct,
@@ -21,38 +22,26 @@ export default function Produits() {
   const [isLoading, setIsLoading] = useState(true);
   const [deletingProductId, setDeletingProductId] = useState('');
 
-  function loadProducts() {
-    let cancelled = false;
-
+  const loadProducts = useCallback(() => {
     fetchSupplierProducts()
       .then((items) => {
-        if (cancelled) return;
         setProducts(items || []);
         setError('');
       })
       .catch((apiError) => {
-        if (cancelled) return;
         setProducts([]);
         setError(getApiErrorMessage(apiError, 'Impossible de charger les produits.'));
       })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-
-    return () => { cancelled = true; };
-  }
+      .finally(() => setIsLoading(false));
+  }, []);
 
   useEffect(() => {
-    const cancelLoad = loadProducts();
-    const unsubscribe = subscribeSupplierWorkspaceChange(() => {
-      loadProducts();
-    });
+    loadProducts();
+    const unsubscribe = subscribeSupplierWorkspaceChange(loadProducts);
+    return unsubscribe;
+  }, [loadProducts]);
 
-    return () => {
-      cancelLoad();
-      unsubscribe();
-    };
-  }, []);
+  useRealtimeRefresh(loadProducts, ['supplier-products', 'admin-products']);
 
   const query = searchParams.get('q')?.trim().toLowerCase() || '';
   const filteredProducts = useMemo(() => (

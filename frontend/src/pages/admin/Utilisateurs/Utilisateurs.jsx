@@ -1,8 +1,9 @@
 import './Utilisateurs.css';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Alert, Badge, Icon, Loader, Table } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
+import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { useAdminData } from '../../../services/adminData';
 import {
   deleteAdminUser,
@@ -150,35 +151,31 @@ export default function Utilisateurs() {
     status: 'Actif',
   });
 
-  useEffect(() => {
-    let cancelled = false;
-
+  const loadUsers = useCallback(() => {
     Promise.all([fetchAdminUsers(), fetchAdminSuppliers()])
       .then(([userList, supplierList]) => {
-        if (!cancelled) {
-          const activeSuppliers = supplierList.filter((supplier) => supplier.status !== 'Supprimé');
-          const mergedUsers = mergeUsersWithSuppliers(userList, activeSuppliers);
-          setRawUsers(userList);
-          setSuppliers(activeSuppliers);
-          updateAdminData((currentData) => ({
-            ...currentData,
-            users: mergedUsers.map(normalizeUserForWorkspace),
-            suppliers: activeSuppliers,
-          }));
-          setError('');
-        }
+        const activeSuppliers = supplierList.filter((supplier) => supplier.status !== 'Supprimé');
+        const mergedUsers = mergeUsersWithSuppliers(userList, activeSuppliers);
+        setRawUsers(userList);
+        setSuppliers(activeSuppliers);
+        updateAdminData((currentData) => ({
+          ...currentData,
+          users: mergedUsers.map(normalizeUserForWorkspace),
+          suppliers: activeSuppliers,
+        }));
+        setError('');
       })
       .catch((apiError) => {
-        if (!cancelled) setError(getApiErrorMessage(apiError, 'Impossible de charger les utilisateurs Mongo.'));
+        setError(getApiErrorMessage(apiError, 'Impossible de charger les utilisateurs Mongo.'));
       })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+      .finally(() => setIsLoading(false));
   }, [updateAdminData]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
+
+  useRealtimeRefresh(loadUsers, ['users', 'suppliers']);
 
   const users = useMemo(() => mergeUsersWithSuppliers(rawUsers, suppliers), [rawUsers, suppliers]);
   const filteredUsers = useMemo(() => {

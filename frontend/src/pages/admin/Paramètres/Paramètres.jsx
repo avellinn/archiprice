@@ -79,11 +79,9 @@ export default function Paramètres() {
   const cityOptions = getUniqueValues([
     ...(adminData.taxonomies?.cities || []).map((item) => item.name),
     ...(adminData.regionalCoefficients || []).map((item) => item.city),
-    ...(adminData.products || []).map((product) => product.city),
   ]);
   const neighborhoodOptions = getUniqueValues([
     ...(adminData.taxonomies?.neighborhoods || []).map((item) => item.name),
-    ...(adminData.products || []).map((product) => product.neighborhood),
   ]);
 
   function updateAdminProfile(field, value) {

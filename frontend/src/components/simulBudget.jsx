@@ -11,9 +11,21 @@ export default function SimulBudget({
   normalizeBudgetInput,
   onBudgetChange,
   onValidate,
+  onInteract,
+  onMinimize,
 }) {
   return (
-    <aside className="catalogue-budget-panel" aria-label="Simulation budget live">
+    <aside className="catalogue-budget-panel catalogue-budget-panel--expanded" aria-label="Simulation budget live">
+      <div className="catalogue-budget-panel__toolbar">
+        <button
+          type="button"
+          className="catalogue-panel-minimize"
+          aria-label="Réduire la simulation budget"
+          onClick={onMinimize}
+        >
+          <Icon name="ChevronRight" size="sm" />
+        </button>
+      </div>
       <div className="catalogue-budget-card">
         <span className="catalogue-eyebrow">Simulation budget live</span>
         <h2>Budget</h2>
@@ -25,7 +37,10 @@ export default function SimulBudget({
             inputMode="numeric"
             value={formatBudgetInputValue(budgetTarget)}
             placeholder="Définir le budget"
-            onChange={(event) => onBudgetChange(normalizeBudgetInput(event.target.value))}
+            onChange={(event) => {
+              onInteract?.();
+              onBudgetChange(normalizeBudgetInput(event.target.value));
+            }}
           />
         </label>
 
@@ -65,7 +80,10 @@ export default function SimulBudget({
           variant="success"
           fullWidth
           icon={<Icon name="Check" size="sm" />}
-          onClick={onValidate}
+          onClick={() => {
+            onInteract?.();
+            onValidate();
+          }}
           disabled={selectedCount === 0}
         >
           Valider

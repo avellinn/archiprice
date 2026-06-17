@@ -1,9 +1,10 @@
 import './Dashboard.css';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import DonutChartCard from '../../../components/DonutChart';
 import { Button, Icon, Text } from '../../../components/ui';
+import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { useAdminData } from '../../../services/adminData';
 import { fetchAdminProducts, fetchAdminSimulations, fetchAdminSupportItems, fetchAdminUsers } from '../../../services/adminMongo';
 import {
@@ -202,71 +203,50 @@ export default function Dashboard() {
   const [adminUsers, setAdminUsers] = useState([]);
   const [exportedDocuments, setExportedDocuments] = useState(() => fetchExportedDocuments());
 
+  const loadSupportItems = useCallback(() => {
+    fetchAdminSupportItems()
+      .then((items) => setSupportItems(items.filter((item) => item.tab === 'feedback')))
+      .catch(() => setSupportItems([]));
+  }, []);
+
+  const loadProducts = useCallback(() => {
+    fetchAdminProducts()
+      .then(setAdminProducts)
+      .catch(() => setAdminProducts([]));
+  }, []);
+
+  const loadSimulations = useCallback(() => {
+    fetchAdminSimulations()
+      .then(setMongoSimulations)
+      .catch(() => setMongoSimulations([]));
+  }, []);
+
+  const loadUsers = useCallback(() => {
+    fetchAdminUsers()
+      .then(setAdminUsers)
+      .catch(() => setAdminUsers([]));
+  }, []);
+
   useEffect(() => {
-    let cancelled = false;
-
-    function loadSupportItems() {
-      fetchAdminSupportItems()
-        .then((items) => {
-          if (!cancelled) setSupportItems(items.filter((item) => item.tab === 'feedback'));
-        })
-        .catch(() => {
-          if (!cancelled) setSupportItems([]);
-        });
-    }
-
     loadSupportItems();
-    const refreshTimer = window.setInterval(loadSupportItems, 10000);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(refreshTimer);
-    };
-  }, []);
+  }, [loadSupportItems]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    function loadProducts() {
-      fetchAdminProducts()
-        .then((items) => {
-          if (!cancelled) setAdminProducts(items);
-        })
-        .catch(() => {
-          if (!cancelled) setAdminProducts([]);
-        });
-    }
-
     loadProducts();
-    const refreshTimer = window.setInterval(loadProducts, 10000);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(refreshTimer);
-    };
-  }, []);
+  }, [loadProducts]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    function loadSimulations() {
-      fetchAdminSimulations()
-        .then((items) => {
-          if (!cancelled) setMongoSimulations(items);
-        })
-        .catch(() => {
-          if (!cancelled) setMongoSimulations([]);
-        });
-    }
-
     loadSimulations();
-    const refreshTimer = window.setInterval(loadSimulations, 10000);
+  }, [loadSimulations]);
 
-    return () => {
-      cancelled = true;
-      window.clearInterval(refreshTimer);
-    };
-  }, []);
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
+
+  useRealtimeRefresh(loadSupportItems, ['support-items']);
+  useRealtimeRefresh(loadProducts, ['admin-products', 'supplier-products']);
+  useRealtimeRefresh(loadSimulations, ['simulations', 'projects']);
+  useRealtimeRefresh(loadUsers, ['users', 'suppliers']);
 
   useEffect(() => {
     let cancelled = false;
@@ -297,28 +277,6 @@ export default function Dashboard() {
 
     window.addEventListener('storage', refreshHiddenSimulations);
     return () => window.removeEventListener('storage', refreshHiddenSimulations);
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    function loadUsers() {
-      fetchAdminUsers()
-        .then((items) => {
-          if (!cancelled) setAdminUsers(items);
-        })
-        .catch(() => {
-          if (!cancelled) setAdminUsers([]);
-        });
-    }
-
-    loadUsers();
-    const refreshTimer = window.setInterval(loadUsers, 10000);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(refreshTimer);
-    };
   }, []);
 
   useEffect(() => subscribeExportedDocumentsChange(setExportedDocuments), []);

@@ -1,8 +1,9 @@
 import './MaBoutique.css';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SupplierShopCard from '../../../components/SupplierShopCard';
 import { Alert, Loader } from '../../../components/ui';
+import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { getApiErrorMessage } from '../../../services/api';
 import { deleteSupplierProduct, fetchSupplierWorkspace, subscribeSupplierWorkspaceChange } from '../../../services/supplier';
 
@@ -13,37 +14,25 @@ export default function MaBoutique() {
   const [isLoading, setIsLoading] = useState(true);
   const [pendingProductDelete, setPendingProductDelete] = useState(null);
 
-  function loadWorkspace() {
-    let cancelled = false;
-
+  const loadWorkspace = useCallback(() => {
     fetchSupplierWorkspace()
       .then((data) => {
-        if (!cancelled) {
-          setWorkspace(data);
-          setError('');
-        }
+        setWorkspace(data);
+        setError('');
       })
       .catch((apiError) => {
-        if (!cancelled) setError(getApiErrorMessage(apiError, 'Impossible de charger la boutique.'));
+        setError(getApiErrorMessage(apiError, 'Impossible de charger la boutique.'));
       })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-
-    return () => { cancelled = true; };
-  }
+      .finally(() => setIsLoading(false));
+  }, []);
 
   useEffect(() => {
-    const cancelLoad = loadWorkspace();
-    const unsubscribe = subscribeSupplierWorkspaceChange(() => {
-      loadWorkspace();
-    });
+    loadWorkspace();
+    const unsubscribe = subscribeSupplierWorkspaceChange(loadWorkspace);
+    return unsubscribe;
+  }, [loadWorkspace]);
 
-    return () => {
-      cancelLoad();
-      unsubscribe();
-    };
-  }, []);
+  useRealtimeRefresh(loadWorkspace, ['supplier-products', 'admin-products', 'suppliers']);
 
   const supplier = workspace?.supplier;
   const shopName = supplier?.companyName

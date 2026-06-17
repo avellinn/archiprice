@@ -1,6 +1,6 @@
 {
-  "__version": 281,
-  "__updatedAt": 1781686132250,
+  "__version": 295,
+  "__updatedAt": 1781704039615,
   "__staticPurgeVersion": 2,
   "users": [
     {
@@ -15,366 +15,93 @@
       "inscription": "08/06/2026",
       "status": "Actif",
       "createdAt": "2026-06-08T07:39:42.774Z",
-      "updatedAt": "2026-06-16T09:42:38.316Z"
+      "updatedAt": "2026-06-17T11:32:54.017Z"
     },
     {
-      "id": "6a29731d68fb805f51cdc174",
+      "id": "6a328621472eeae0102e3c54",
       "supplierId": "",
-      "name": "Avellin",
+      "name": "avel",
       "email": "avellinadjai@gmail.com",
       "phone": "",
       "role": "user",
-      "type": "Décoration",
+      "type": "Architecture",
       "simulations": 0,
-      "inscription": "10/06/2026",
+      "inscription": "17/06/2026",
       "status": "Actif",
-      "createdAt": "2026-06-10T14:22:21.575Z",
-      "updatedAt": "2026-06-10T16:26:56.654Z"
+      "createdAt": "2026-06-17T11:33:53.703Z",
+      "updatedAt": "2026-06-17T11:33:53.703Z"
     },
     {
-      "id": "6a297a1968fb805f51cdc17c",
-      "supplierId": "6a297a1968fb805f51cdc17d",
-      "name": "Lookthis",
+      "id": "6a3286a1472eeae0102e3c55",
+      "supplierId": "6a328e8b472eeae0102e3c5d",
+      "name": "kool",
       "email": "hospiceavell@gmail.com",
-      "phone": "2164566",
+      "phone": "46613202215",
       "role": "supplier",
       "type": "Fournisseur",
       "simulations": 0,
-      "inscription": "10/06/2026",
+      "inscription": "17/06/2026",
       "status": "Actif",
-      "createdAt": "2026-06-10T14:52:09.360Z",
-      "updatedAt": "2026-06-11T12:27:06.383Z"
+      "createdAt": "2026-06-17T11:36:01.289Z",
+      "updatedAt": "2026-06-17T11:36:01.289Z"
     },
     {
-      "id": "6a297e1268fb805f51cdc185",
-      "supplierId": "",
+      "id": "6a32876e472eeae0102e3c56",
+      "supplierId": "6a32876f472eeae0102e3c57",
       "name": "test",
-      "email": "test@gmail.com",
-      "phone": "",
-      "role": "user",
-      "type": "BTP / Construction",
-      "simulations": 0,
-      "inscription": "10/06/2026",
-      "status": "Actif",
-      "createdAt": "2026-06-10T15:09:06.999Z",
-      "updatedAt": "2026-06-10T15:09:06.999Z"
-    },
-    {
-      "id": "6a2bdfe484e03391da4ae1ac",
-      "supplierId": "6a2bdfe484e03391da4ae1ad",
-      "name": "Leace",
-      "email": "hospeacechrist@gmail.com",
-      "phone": "12120000",
+      "email": "test@gamil.com",
+      "phone": "+22997456511",
       "role": "supplier",
       "type": "Fournisseur",
       "simulations": 0,
-      "inscription": "12/06/2026",
+      "inscription": "17/06/2026",
       "status": "Actif",
-      "createdAt": "2026-06-12T10:31:00.100Z",
-      "updatedAt": "2026-06-12T10:34:46.305Z"
+      "createdAt": "2026-06-17T11:39:26.612Z",
+      "updatedAt": "2026-06-17T11:39:26.612Z"
     }
   ],
   "products": [],
   "suppliers": [
     {
-      "id": "6a2bdfe484e03391da4ae1ad",
-      "userId": "6a2bdfe484e03391da4ae1ac",
-      "name": "Leace",
-      "companyName": "Leace",
-      "contact": "hospeacechrist@gmail.com",
-      "email": "hospeacechrist@gmail.com",
-      "phone": "12120000",
-      "region": "Cotonou",
-      "status": "Actif",
-      "products": 2,
-      "categories": [
-        "Immobilier",
-        "Immobilier",
-        "Immobilier",
-        "Immobilier"
-      ],
-      "isRecommended": true
-    },
-    {
-      "id": "6a297a1968fb805f51cdc17d",
-      "userId": "6a297a1968fb805f51cdc17c",
-      "name": "Lookthis",
-      "companyName": "Lookthis",
+      "id": "6a328e8b472eeae0102e3c5d",
+      "userId": "6a328e8a472eeae0102e3c5c",
+      "name": "kool",
+      "companyName": "kool",
       "contact": "hospiceavell@gmail.com",
       "email": "hospiceavell@gmail.com",
-      "phone": "2164566",
-      "region": "Bénin",
+      "phone": "46613202215",
+      "region": "CADJEHOUN",
       "status": "Actif",
-      "products": 2,
+      "products": 0,
       "categories": [
-        "Décoration"
+        "Architecture",
+        "Architecture",
+        "Architecture",
+        "Architecture"
       ],
-      "isRecommended": true
+      "isRecommended": false
+    },
+    {
+      "id": "6a32876f472eeae0102e3c57",
+      "userId": "",
+      "name": "test",
+      "companyName": "test",
+      "contact": "test@gamil.com",
+      "email": "test@gamil.com",
+      "phone": "+22997456511",
+      "region": "CADJEHOUN",
+      "status": "Actif",
+      "products": 1,
+      "categories": [
+        "Architecture",
+        "Architecture",
+        "Architecture",
+        "Architecture"
+      ],
+      "isRecommended": false
     }
   ],
   "supplierClientNotifications": [
-    {
-      "id": "supplier-client-6a297a1968fb805f51cdc17d-6a29731d68fb805f51cdc174-1781103957500",
-      "supplierId": "6a297a1968fb805f51cdc17d",
-      "supplierName": "Lookthis",
-      "supplierContact": "hospiceavell@gmail.com",
-      "clientId": "6a29731d68fb805f51cdc174",
-      "clientName": "Avellin",
-      "clientProfession": "Décoration",
-      "clientEmail": "avellinadjai@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a29758b68fb805f51cdc175",
-      "projectName": "Bureau",
-      "simulationTotal": 5253600,
-      "simulationTotalLabel": "5 253 600 FCFA",
-      "articleCount": 12,
-      "categories": [
-        "Déco",
-        "Textiles",
-        "Éclairage"
-      ],
-      "articleImages": [
-        {
-          "name": "Garde brosse",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/an6lndp2q8wchxrdhjzu?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/an6lndp2q8wchxrdhjzu"
-        },
-        {
-          "name": "Rideaux Velours",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jbvookoeyyjj3uivdxfz?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/jbvookoeyyjj3uivdxfz"
-        },
-        {
-          "name": "Suspension Lumen",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hjb7vmppnerh3ddwj0fx?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/hjb7vmppnerh3ddwj0fx"
-        },
-        {
-          "name": "Suspension Lumen",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hjb7vmppnerh3ddwj0fx?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/hjb7vmppnerh3ddwj0fx"
-        },
-        {
-          "name": "Garde brosse",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/an6lndp2q8wchxrdhjzu?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/an6lndp2q8wchxrdhjzu"
-        },
-        {
-          "name": "Rideaux Velours",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jbvookoeyyjj3uivdxfz?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/jbvookoeyyjj3uivdxfz"
-        },
-        {
-          "name": "Garde brosse",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/an6lndp2q8wchxrdhjzu?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/an6lndp2q8wchxrdhjzu"
-        },
-        {
-          "name": "Rideaux Velours",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jbvookoeyyjj3uivdxfz?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/jbvookoeyyjj3uivdxfz"
-        },
-        {
-          "name": "Suspension Lumen",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hjb7vmppnerh3ddwj0fx?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/hjb7vmppnerh3ddwj0fx"
-        },
-        {
-          "name": "Garde brosse",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/an6lndp2q8wchxrdhjzu?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/an6lndp2q8wchxrdhjzu"
-        },
-        {
-          "name": "Rideaux Velours",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jbvookoeyyjj3uivdxfz?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/jbvookoeyyjj3uivdxfz"
-        },
-        {
-          "name": "Suspension Lumen",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hjb7vmppnerh3ddwj0fx?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/hjb7vmppnerh3ddwj0fx"
-        }
-      ],
-      "selectedArticles": [
-        {
-          "id": "6a29760068fb805f51cdc176",
-          "name": "Garde brosse",
-          "category": "Déco",
-          "unitPrice": 19800,
-          "images": [
-            {
-              "name": "Garde brosse",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/an6lndp2q8wchxrdhjzu?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/an6lndp2q8wchxrdhjzu"
-            }
-          ]
-        },
-        {
-          "id": "6a29760068fb805f51cdc177",
-          "name": "Rideaux Velours",
-          "category": "Textiles",
-          "unitPrice": 1056000,
-          "images": [
-            {
-              "name": "Rideaux Velours",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jbvookoeyyjj3uivdxfz?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/jbvookoeyyjj3uivdxfz"
-            }
-          ]
-        },
-        {
-          "id": "6a29760068fb805f51cdc178",
-          "name": "Suspension Lumen",
-          "category": "Éclairage",
-          "unitPrice": 237600,
-          "images": [
-            {
-              "name": "Suspension Lumen",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hjb7vmppnerh3ddwj0fx?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/hjb7vmppnerh3ddwj0fx"
-            }
-          ]
-        },
-        {
-          "id": "6a29775168fb805f51cdc17b",
-          "name": "Suspension Lumen",
-          "category": "Éclairage",
-          "unitPrice": 237600,
-          "images": [
-            {
-              "name": "Suspension Lumen",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hjb7vmppnerh3ddwj0fx?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/hjb7vmppnerh3ddwj0fx"
-            }
-          ]
-        },
-        {
-          "id": "6a29775168fb805f51cdc179",
-          "name": "Garde brosse",
-          "category": "Déco",
-          "unitPrice": 19800,
-          "images": [
-            {
-              "name": "Garde brosse",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/an6lndp2q8wchxrdhjzu?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/an6lndp2q8wchxrdhjzu"
-            }
-          ]
-        },
-        {
-          "id": "6a29775168fb805f51cdc17a",
-          "name": "Rideaux Velours",
-          "category": "Textiles",
-          "unitPrice": 1056000,
-          "images": [
-            {
-              "name": "Rideaux Velours",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jbvookoeyyjj3uivdxfz?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/jbvookoeyyjj3uivdxfz"
-            }
-          ]
-        },
-        {
-          "id": "6a297c2968fb805f51cdc17f",
-          "name": "Garde brosse",
-          "category": "Déco",
-          "unitPrice": 19800,
-          "images": [
-            {
-              "name": "Garde brosse",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/an6lndp2q8wchxrdhjzu?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/an6lndp2q8wchxrdhjzu"
-            }
-          ]
-        },
-        {
-          "id": "6a297c2968fb805f51cdc180",
-          "name": "Rideaux Velours",
-          "category": "Textiles",
-          "unitPrice": 1056000,
-          "images": [
-            {
-              "name": "Rideaux Velours",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jbvookoeyyjj3uivdxfz?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/jbvookoeyyjj3uivdxfz"
-            }
-          ]
-        },
-        {
-          "id": "6a297c2968fb805f51cdc181",
-          "name": "Suspension Lumen",
-          "category": "Éclairage",
-          "unitPrice": 237600,
-          "images": [
-            {
-              "name": "Suspension Lumen",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hjb7vmppnerh3ddwj0fx?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/hjb7vmppnerh3ddwj0fx"
-            }
-          ]
-        },
-        {
-          "id": "6a297d4768fb805f51cdc182",
-          "name": "Garde brosse",
-          "category": "Déco",
-          "unitPrice": 19800,
-          "images": [
-            {
-              "name": "Garde brosse",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/an6lndp2q8wchxrdhjzu?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/an6lndp2q8wchxrdhjzu"
-            }
-          ]
-        },
-        {
-          "id": "6a297d4768fb805f51cdc183",
-          "name": "Rideaux Velours",
-          "category": "Textiles",
-          "unitPrice": 1056000,
-          "images": [
-            {
-              "name": "Rideaux Velours",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jbvookoeyyjj3uivdxfz?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/jbvookoeyyjj3uivdxfz"
-            }
-          ]
-        },
-        {
-          "id": "6a297d4768fb805f51cdc184",
-          "name": "Suspension Lumen",
-          "category": "Éclairage",
-          "unitPrice": 237600,
-          "images": [
-            {
-              "name": "Suspension Lumen",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hjb7vmppnerh3ddwj0fx?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/hjb7vmppnerh3ddwj0fx"
-            }
-          ]
-        }
-      ],
-      "type": "Demande",
-      "message": "Bonjour",
-      "messages": [
-        {
-          "id": "message-1781103957501",
-          "senderRole": "user",
-          "senderName": "Avellin",
-          "message": "Bonjour",
-          "createdAt": "2026-06-10T15:05:57.500Z"
-        },
-        {
-          "id": "message-1781108574783",
-          "senderRole": "supplier",
-          "senderName": "Lookthis",
-          "message": "Comment ça va ?",
-          "createdAt": "2026-06-10T16:22:54.778Z"
-        }
-      ],
-      "status": "Répondu",
-      "createdAt": "2026-06-10T15:05:57.500Z",
-      "updatedAt": "2026-06-10T16:22:54.778Z"
-    },
     {
       "id": "supplier-client-6a2956a068fb805f51cdc170-6a29731d68fb805f51cdc174-1781103679301",
       "supplierId": "6a2956a068fb805f51cdc170",

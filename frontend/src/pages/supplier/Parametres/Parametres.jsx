@@ -92,13 +92,11 @@ export default function Parametres() {
   const cityOptions = useMemo(() => getUniqueValues([
     ...(adminData.taxonomies?.cities || []).map((item) => item.name),
     ...(adminData.regionalCoefficients || []).map((item) => item.city),
-    ...(adminData.products || []).map((product) => product.city),
-  ]), [adminData.products, adminData.regionalCoefficients, adminData.taxonomies?.cities]);
+  ]), [adminData.regionalCoefficients, adminData.taxonomies?.cities]);
 
   const neighborhoodOptions = useMemo(() => getUniqueValues([
     ...(adminData.taxonomies?.neighborhoods || []).map((item) => item.name),
-    ...(adminData.products || []).map((product) => product.neighborhood),
-  ]), [adminData.products, adminData.taxonomies?.neighborhoods]);
+  ]), [adminData.taxonomies?.neighborhoods]);
 
   function updateShopProfile(field, value) {
     setShopProfile((currentProfile) => ({

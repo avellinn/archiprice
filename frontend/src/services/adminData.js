@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import api from './api';
+import { REALTIME_EVENT } from './realtime';
 
 const ADMIN_DATA_KEY = 'archiprice_admin_data';
 const ADMIN_DATA_EVENT = 'archiprice-admin-data';
@@ -363,12 +364,24 @@ export function useAdminData() {
       }
     }
 
+    function handleRealtimeSync(event) {
+      const payload = event?.detail;
+      if (!payload || payload.type === 'connected') return;
+
+      const entity = String(payload.entity || '');
+      if (['catalogue-config', 'suppliers', 'users', 'simulations'].includes(entity)) {
+        syncRemoteAdminData();
+      }
+    }
+
     syncRemoteAdminData();
+    window.addEventListener(REALTIME_EVENT, handleRealtimeSync);
     const intervalId = window.setInterval(syncRemoteAdminData, ADMIN_DATA_REMOTE_POLL_INTERVAL);
 
     return () => {
       cancelled = true;
       window.clearInterval(intervalId);
+      window.removeEventListener(REALTIME_EVENT, handleRealtimeSync);
     };
   }, [applyRemoteAdminData]);
 

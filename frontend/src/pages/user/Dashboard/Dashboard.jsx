@@ -1,9 +1,10 @@
 import './Dashboard.css';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import DonutChartCard from '../../../components/DonutChart';
 import { Button, Icon, Text } from '../../../components/ui';
+import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import {
   fetchExportedDocuments,
   subscribeExportedDocumentsChange,
@@ -101,21 +102,17 @@ export default function Dashboard() {
   const [projects, setProjects] = useState([]);
   const [exportedDocuments, setExportedDocuments] = useState(() => fetchExportedDocuments());
 
-  useEffect(() => {
-    let cancelled = false;
-
+  const loadProjects = useCallback(() => {
     fetchProjects()
-      .then((list) => {
-        if (!cancelled) setProjects(list);
-      })
-      .catch(() => {
-        if (!cancelled) setProjects([]);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+      .then(setProjects)
+      .catch(() => setProjects([]));
   }, []);
+
+  useEffect(() => {
+    loadProjects();
+  }, [loadProjects]);
+
+  useRealtimeRefresh(loadProjects, ['projects', 'project-products']);
 
   useEffect(() => subscribeExportedDocumentsChange(setExportedDocuments), []);
 

@@ -1,8 +1,9 @@
 import './Fournisseurs.css';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Alert, Badge, Icon, Loader, Table } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
+import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { useAdminData } from '../../../services/adminData';
 import {
   deleteAdminSupplier,
@@ -113,39 +114,33 @@ export default function Fournisseurs() {
   const [error, setError] = useState('');
   const [searchTerm] = useState('');
 
-  useEffect(() => {
-    let cancelled = false;
-
+  const loadSuppliers = useCallback(() => {
     fetchAdminSuppliers()
       .then((list) => {
-        if (!cancelled) {
-          const activeSuppliers = list.filter((supplier) => supplier.status !== 'Supprimé');
-          setSuppliers(activeSuppliers);
-          updateAdminData((currentData) => ({
-            ...currentData,
-            ...getSyncedSupplierData(currentData, activeSuppliers),
-          }));
-          setError('');
-        }
+        const activeSuppliers = list.filter((supplier) => supplier.status !== 'Supprimé');
+        setSuppliers(activeSuppliers);
+        updateAdminData((currentData) => ({
+          ...currentData,
+          ...getSyncedSupplierData(currentData, activeSuppliers),
+        }));
+        setError('');
       })
       .catch((apiError) => {
-        if (!cancelled) {
-          setSuppliers([]);
-          updateAdminData((currentData) => ({
-            ...currentData,
-            ...getSyncedSupplierData(currentData, []),
-          }));
-          setError(getApiErrorMessage(apiError, 'Impossible de charger les fournisseurs Mongo.'));
-        }
+        setSuppliers([]);
+        updateAdminData((currentData) => ({
+          ...currentData,
+          ...getSyncedSupplierData(currentData, []),
+        }));
+        setError(getApiErrorMessage(apiError, 'Impossible de charger les fournisseurs Mongo.'));
       })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+      .finally(() => setIsLoading(false));
   }, [updateAdminData]);
+
+  useEffect(() => {
+    loadSuppliers();
+  }, [loadSuppliers]);
+
+  useRealtimeRefresh(loadSuppliers, ['suppliers']);
 
   const filteredSuppliers = useMemo(() => {
     const query = [searchTerm, searchParams.get('q') || ''].join(' ').trim().toLowerCase();

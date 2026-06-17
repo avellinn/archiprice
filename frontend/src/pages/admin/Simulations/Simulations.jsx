@@ -1,8 +1,9 @@
 import './Simulations.css';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Alert, Button, Icon, Loader, Table } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
+import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { fetchAdminSimulations } from '../../../services/adminMongo';
 import { fetchExportedDocuments, subscribeExportedDocumentsChange } from '../../../services/exportedDocuments';
 import { fetchProjects, subscribeProjectsChange } from '../../../services/projects';
@@ -109,50 +110,38 @@ export default function Simulations() {
   const [selectedSimulation, setSelectedSimulation] = useState(null);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-
+  const loadSimulations = useCallback(() => {
     fetchAdminSimulations()
       .then((list) => {
-        if (!cancelled) {
-          setSimulations(list);
-          setError('');
-        }
+        setSimulations(list);
+        setError('');
       })
       .catch((apiError) => {
-        if (!cancelled) setError(getApiErrorMessage(apiError, 'Impossible de charger les simulations Mongo.'));
+        setError(getApiErrorMessage(apiError, 'Impossible de charger les simulations Mongo.'));
       })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+      .finally(() => setIsLoading(false));
   }, []);
+
+  const loadProjects = useCallback(() => {
+    fetchProjects()
+      .then(setProjects)
+      .catch(() => setProjects([]));
+  }, []);
+
+  useEffect(() => {
+    loadSimulations();
+  }, [loadSimulations]);
+
+  useRealtimeRefresh(loadSimulations, ['simulations']);
+  useRealtimeRefresh(loadProjects, ['projects', 'project-products']);
 
   useEffect(() => subscribeExportedDocumentsChange(setExportedDocuments), []);
 
   useEffect(() => {
-    let cancelled = false;
-
-    fetchProjects()
-      .then((list) => {
-        if (!cancelled) setProjects(list);
-      })
-      .catch(() => {
-        if (!cancelled) setProjects([]);
-      });
-
-    const unsubscribe = subscribeProjectsChange((list) => {
-      if (!cancelled) setProjects(list);
-    });
-
-    return () => {
-      cancelled = true;
-      unsubscribe();
-    };
-  }, []);
+    loadProjects();
+    const unsubscribe = subscribeProjectsChange(setProjects);
+    return unsubscribe;
+  }, [loadProjects]);
 
   const synchronizedSimulations = useMemo(() => mergeSimulationSources([
     ...projects.map(mapProjectToSimulation),
