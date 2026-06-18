@@ -28,6 +28,16 @@ export const API_ROUTES = {
   },
   catalogue: {
     products: '/api/catalogue/products',
+    product: (id) => `/api/catalogue/products/${id}`,
+    filters: '/api/catalogue/filters',
+  },
+  simulations: {
+    create: '/api/simulations',
+  },
+  demandes: {
+    listMine: '/api/demandes/me',
+    create: '/api/demandes',
+    messages: (id) => `/api/demandes/${id}/messages`,
   },
   support: {
     listMine: '/api/support-items/me',

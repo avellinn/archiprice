@@ -16,18 +16,17 @@ export default function SimulBudget({
 }) {
   return (
     <aside className="catalogue-budget-panel catalogue-budget-panel--expanded" aria-label="Simulation budget live">
-      <div className="catalogue-budget-panel__toolbar">
-        <button
-          type="button"
-          className="catalogue-panel-minimize"
-          aria-label="Réduire la simulation budget"
-          onClick={onMinimize}
-        >
-          <Icon name="ChevronRight" size="sm" />
-        </button>
-      </div>
       <div className="catalogue-budget-card">
-        <span className="catalogue-eyebrow">Simulation budget live</span>
+        <div className="catalogue-budget-panel__toolbar">
+          <button
+            type="button"
+            className="catalogue-panel-minimize"
+            aria-label="Réduire la simulation budget"
+            onClick={onMinimize}
+          >
+            <Icon name="ChevronRight" size="sm" />
+          </button>
+        </div>
         <h2>Budget</h2>
 
         <label className="catalogue-budget-field">
@@ -71,9 +70,7 @@ export default function SimulBudget({
             : `${selectedCount} article(s) ajouté(s) au panier budget.`}
         </p>
 
-        {validationError && (
-          <Alert variant="danger" className="catalogue-summary-error">{validationError}</Alert>
-        )}
+        {validationError && <Alert variant="danger">{validationError}</Alert>}
 
         <Button
           type="button"

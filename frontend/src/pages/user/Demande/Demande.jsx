@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Alert, Icon } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
 import { useAdminData } from '../../../services/adminData';
+import { fetchMyDemandes, replyToDemande } from '../../../services/demandes';
 import { isNumericOnly } from '../../../utils/formInput';
 
 const HIDDEN_DEMAND_ITEMS_KEY = 'archiprice:user-demand-hidden-items';
@@ -170,6 +171,7 @@ export default function Demande() {
   const [replyError, setReplyError] = useState('');
   const [actionMessage, setActionMessage] = useState('');
   const [selectedDemandId, setSelectedDemandId] = useState('');
+  const [apiDemandes, setApiDemandes] = useState([]);
   const [readNotificationKeys, setReadNotificationKeys] = useState(readDismissedNotificationKeys);
 
   const userEmail = user?.email || '';
@@ -177,6 +179,20 @@ export default function Demande() {
   const userName = user?.name || user?.fullName || userEmail || 'Client ArchiPrice';
   const hiddenDemandItemsKey = getHiddenDemandItemsKey(userId, userEmail);
   const [hiddenDemandIds, setHiddenDemandIds] = useState(() => readHiddenDemandItems(hiddenDemandItemsKey));
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchMyDemandes()
+      .then((demandes) => {
+        if (!cancelled) setApiDemandes(demandes);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!hiddenDemandItemsKey) return undefined;
@@ -209,7 +225,7 @@ export default function Demande() {
   }, []);
 
   const demands = useMemo(() => (
-    groupDemandsByShop((adminData.supplierClientNotifications || [])
+    groupDemandsByShop((apiDemandes.length > 0 ? apiDemandes : adminData.supplierClientNotifications || [])
       .filter((notification) => notification.type === 'Demande')
       .filter((notification) => !hiddenDemandIds.includes(getDemandGroupId(notification)))
       .filter((notification) => (
@@ -220,7 +236,7 @@ export default function Demande() {
         ...notification,
         createdAtLabel: formatDateTime(notification.createdAt),
       }))
-  ), [adminData.supplierClientNotifications, hiddenDemandIds, userEmail, userId, userName]);
+  ), [adminData.supplierClientNotifications, apiDemandes, hiddenDemandIds, userEmail, userId, userName]);
 
   function hideDemand(itemId) {
     const nextHiddenIds = Array.from(new Set([...hiddenDemandIds, String(itemId)]));
@@ -240,35 +256,47 @@ export default function Demande() {
       return;
     }
 
-    const now = new Date().toISOString();
-    updateAdminData((currentData) => ({
-      ...currentData,
-      supplierClientNotifications: (currentData.supplierClientNotifications || []).map((notification) => {
-        if (notification.id !== replyDemandId) return notification;
+    replyToDemande(replyDemandId, comment)
+      .then((updatedDemande) => {
+        setApiDemandes((currentDemandes) => currentDemandes.map((demande) => (
+          demande.id === updatedDemande.id ? updatedDemande : demande
+        )));
+        setReplyText('');
+        setReplyDemandId('');
+        setReplyError('');
+        setActionMessage('Message envoyé.');
+      })
+      .catch(() => {
+        const now = new Date().toISOString();
+        updateAdminData((currentData) => ({
+          ...currentData,
+          supplierClientNotifications: (currentData.supplierClientNotifications || []).map((notification) => {
+            if (notification.id !== replyDemandId) return notification;
 
-        return {
-          ...notification,
-          status: 'Répondu',
-          messages: normalizeDemandMessages(notification, userName).concat([
-            {
-              id: `message-${Date.now()}`,
-              senderRole: 'user',
-              senderName: userName,
-              message: comment,
-              createdAt: now,
-            },
-          ]),
-          updatedAt: now,
-        };
-      }),
-    }));
-    setReplyText('');
-    setReplyDemandId('');
-    setReplyError('');
-    setActionMessage('Message envoyé.');
+            return {
+              ...notification,
+              status: 'Répondu',
+              messages: normalizeDemandMessages(notification, userName).concat([
+                {
+                  id: `message-${Date.now()}`,
+                  senderRole: 'user',
+                  senderName: userName,
+                  message: comment,
+                  createdAt: now,
+                },
+              ]),
+              updatedAt: now,
+            };
+          }),
+        }));
+        setReplyText('');
+        setReplyDemandId('');
+        setReplyError('');
+        setActionMessage('Message envoyé.');
+      });
   }
 
-  const demandNotifications = adminData.supplierClientNotifications || [];
+  const demandNotifications = apiDemandes.length > 0 ? apiDemandes : adminData.supplierClientNotifications || [];
   const selectedDemand = demands.find((item) => item.id === selectedDemandId);
   const unreadDemandCount = demands.filter((item) => (
     hasUnreadSupplierReply(item, readNotificationKeys, demandNotifications)

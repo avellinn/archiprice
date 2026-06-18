@@ -23,6 +23,8 @@ import Archives from './pages/user/Archives/Archives';
 import Demande from './pages/user/Demande/Demande';
 import Logout from './pages/user/Logout/Logout';
 import Workspace from './pages/user/Workspace/Workspace';
+import EspacePro from './pages/user/EspacePro/EspacePro';
+import FicheProduits from './pages/user/FicheProduits/ficheProduits';
 import UserParametres from './pages/user/Parametres/Parametres';
 import UserSupport from './pages/user/Support/Support';
 import SupplierDashboard from './pages/supplier/Dashboard/Dashboard';
@@ -108,7 +110,9 @@ function App() {
         >
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/catalogue" element={<Catalogue />} />
+          <Route path="/fiche-produits/:productId" element={<FicheProduits />} />
           <Route path="/workspace" element={<Workspace />} />
+          <Route path="/espacepro" element={<EspacePro />} />
           <Route path="/demande" element={<Demande />} />
           <Route path="/archives" element={<Archives />} />
           <Route path="/factures" element={<Navigate to="/archives" replace />} />

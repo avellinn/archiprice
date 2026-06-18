@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import Icon from './Icon';
-import { Alert, Button, Loader } from './ui';
-import useAuth from '../context/useAuth';
-import { getApiErrorMessage } from '../services/api';
-import { addExportedDocument } from '../services/exportedDocuments';
-import { fetchProducts } from '../services/products';
-import { downloadProjectRecapPdf } from '../services/projects';
-import { API_ROUTES } from '../constants/api';
-import './espacepro.css';
+import Icon from '../../../components/Icon';
+import { Alert, Button, Loader } from '../../../components/ui';
+import useAuth from '../../../context/useAuth';
+import { getApiErrorMessage } from '../../../services/api';
+import { addExportedDocument } from '../../../services/exportedDocuments';
+import { fetchProducts } from '../../../services/products';
+import { downloadProjectRecapPdf } from '../../../services/projects';
+import { API_ROUTES } from '../../../constants/api';
+import './EspaceProWorkspace.css';
 
 function formatDate(value) {
   if (!value) return '-';
@@ -109,6 +109,7 @@ export default function EspacePro({
   deletingProjectId,
   onProductsChange,
   onArticleShopOpen,
+  onReturn,
 }) {
   const { user } = useAuth();
   const effectiveSelectedProjectId = selectedProjectId || projects[0]?.id || '';
@@ -280,6 +281,18 @@ export default function EspacePro({
   return (
     <div className="espacepro">
       <aside className="espacepro__projects" aria-label="Tous les projets créés">
+        <div className="espacepro__projects-toolbar">
+          <span>Projets</span>
+          <button
+            type="button"
+            className="espacepro__return-button"
+            aria-label="Retour à la page précédente"
+            title="Retour"
+            onClick={onReturn}
+          >
+            <Icon name="ArrowLeft" size="sm" />
+          </button>
+        </div>
         {isProjectsLoading && <Loader label="Chargement des projets..." />}
         {projectsError && <Alert variant="danger" className="espacepro__alert">{projectsError}</Alert>}
         {!isProjectsLoading && !projectsError && projects.length === 0 && (
@@ -362,7 +375,9 @@ export default function EspacePro({
                 handleArticleImageClick();
               }}
             >
-              {!activeArticleImage && <span>{activeArticle.name.slice(0, 2).toUpperCase()}</span>}
+              <span>
+                {activeArticleImage ? activeArticle.name : activeArticle.name.slice(0, 2).toUpperCase()}
+              </span>
               <small>
                 {activeArticleImages.length > 1
                   ? `${(activeImageIndex % activeArticleImages.length) + 1}/${activeArticleImages.length}`

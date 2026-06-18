@@ -41,7 +41,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if ([401, 403].includes(error.response?.status)) {
+    if ([401, 403].includes(error.response?.status) && !error.config?.skipUnauthorizedHandler) {
       clearStoredToken();
       onUnauthorized?.();
     }

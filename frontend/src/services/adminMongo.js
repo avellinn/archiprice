@@ -61,9 +61,24 @@ export async function fetchAdminSimulations() {
   return data.simulations || [];
 }
 
+export async function createAdminSimulation(payload) {
+  const { data } = await api.post(API_ROUTES.admin.simulations, payload);
+  return data.simulation;
+}
+
 export async function updateAdminSimulation(simulationId, payload) {
   const { data } = await api.patch(API_ROUTES.admin.simulation(simulationId), payload);
   return data.simulation;
+}
+
+export async function deleteAdminSimulation(simulationId) {
+  const { data } = await api.delete(API_ROUTES.admin.simulation(simulationId));
+  return data;
+}
+
+export async function resetAdminSimulations() {
+  const { data } = await api.delete(API_ROUTES.admin.simulations);
+  return data;
 }
 
 export async function fetchAdminSupportItems() {

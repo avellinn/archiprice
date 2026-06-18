@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Alert, Icon } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
 import { useAdminData } from '../../../services/adminData';
+import { fetchMyDemandes, replyToDemande } from '../../../services/demandes';
 import { fetchSupplierWorkspace } from '../../../services/supplier';
 import { isNumericOnly } from '../../../utils/formInput';
 
@@ -230,14 +231,17 @@ export default function Demandesup() {
   const [replyError, setReplyError] = useState('');
   const [actionMessage, setActionMessage] = useState('');
   const [selectedDemandId, setSelectedDemandId] = useState('');
+  const [apiDemandes, setApiDemandes] = useState([]);
   const [readNotificationKeys, setReadNotificationKeys] = useState(readDismissedNotificationKeys);
 
   useEffect(() => {
     let cancelled = false;
 
-    fetchSupplierWorkspace()
-      .then((workspace) => {
-        if (!cancelled) setSupplierProfile(workspace?.supplier || null);
+    Promise.allSettled([fetchSupplierWorkspace(), fetchMyDemandes()])
+      .then(([workspaceResult, demandesResult]) => {
+        if (cancelled) return;
+        if (workspaceResult.status === 'fulfilled') setSupplierProfile(workspaceResult.value?.supplier || null);
+        if (demandesResult.status === 'fulfilled') setApiDemandes(demandesResult.value);
       })
       .catch(() => {});
 
@@ -277,7 +281,7 @@ export default function Demandesup() {
   }, []);
 
   const demands = useMemo(() => (
-    groupDemandsByClient((adminData.supplierClientNotifications || [])
+    groupDemandsByClient((apiDemandes.length > 0 ? apiDemandes : adminData.supplierClientNotifications || [])
       .filter((notification) => notification.type === 'Demande')
       .filter((notification) => isDemandForSupplier(notification, user, supplierProfile))
       .filter((notification) => !hiddenDemandIds.includes(getSupplierDemandGroupId(notification))))
@@ -285,7 +289,7 @@ export default function Demandesup() {
         ...notification,
         createdAtLabel: formatDateTime(notification.createdAt),
       }))
-  ), [adminData.supplierClientNotifications, hiddenDemandIds, supplierProfile, user]);
+  ), [adminData.supplierClientNotifications, apiDemandes, hiddenDemandIds, supplierProfile, user]);
 
   function hideDemand(itemId) {
     const nextHiddenIds = Array.from(new Set([...hiddenDemandIds, String(itemId)]));
@@ -305,7 +309,6 @@ export default function Demandesup() {
       return;
     }
 
-    const now = new Date().toISOString();
     const supplierName = supplierProfile?.companyName
       || supplierProfile?.name
       || user?.companyName
@@ -313,34 +316,47 @@ export default function Demandesup() {
       || user?.name
       || 'Boutique';
 
-    updateAdminData((currentData) => ({
-      ...currentData,
-      supplierClientNotifications: (currentData.supplierClientNotifications || []).map((notification) => {
-        if (notification.id !== replyDemandId) return notification;
+    replyToDemande(replyDemandId, comment)
+      .then((updatedDemande) => {
+        setApiDemandes((currentDemandes) => currentDemandes.map((demande) => (
+          demande.id === updatedDemande.id ? updatedDemande : demande
+        )));
+        setReplyText('');
+        setReplyDemandId('');
+        setReplyError('');
+        setActionMessage('Message envoyé.');
+      })
+      .catch(() => {
+        const now = new Date().toISOString();
+        updateAdminData((currentData) => ({
+          ...currentData,
+          supplierClientNotifications: (currentData.supplierClientNotifications || []).map((notification) => {
+            if (notification.id !== replyDemandId) return notification;
 
-        return {
-          ...notification,
-          status: 'Répondu',
-          messages: normalizeDemandMessages(notification).concat([
-            {
-              id: `message-${Date.now()}`,
-              senderRole: 'supplier',
-              senderName: supplierName,
-              message: comment,
-              createdAt: now,
-            },
-          ]),
-          updatedAt: now,
-        };
-      }),
-    }));
-    setReplyText('');
-    setReplyDemandId('');
-    setReplyError('');
-    setActionMessage('Message envoyé.');
+            return {
+              ...notification,
+              status: 'Répondu',
+              messages: normalizeDemandMessages(notification).concat([
+                {
+                  id: `message-${Date.now()}`,
+                  senderRole: 'supplier',
+                  senderName: supplierName,
+                  message: comment,
+                  createdAt: now,
+                },
+              ]),
+              updatedAt: now,
+            };
+          }),
+        }));
+        setReplyText('');
+        setReplyDemandId('');
+        setReplyError('');
+        setActionMessage('Message envoyé.');
+      });
   }
 
-  const demandNotifications = adminData.supplierClientNotifications || [];
+  const demandNotifications = apiDemandes.length > 0 ? apiDemandes : adminData.supplierClientNotifications || [];
   const selectedDemand = demands.find((item) => item.id === selectedDemandId);
   const unreadDemandCount = demands.filter((item) => (
     hasUnreadClientMessage(item, readNotificationKeys, demandNotifications)

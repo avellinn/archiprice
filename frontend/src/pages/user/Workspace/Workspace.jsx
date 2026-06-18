@@ -1,15 +1,14 @@
 import './Workspace.css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import EspacePro from '../../../components/espacepro';
 import ModalBoutique from '../../../components/modalBoutique';
 import Newproject from '../../../components/Newproject';
 import { Alert, Button, Icon, Loader } from '../../../components/ui';
-import WorkspaceMiniGrid from '../../../components/WorkspaceMiniGrid';
 import useAuth from '../../../context/useAuth';
 import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
+import { createDemande } from '../../../services/demandes';
 import { deleteProject, fetchProjects, updateProject } from '../../../services/projects';
 import { isNumericOnly, sanitizeNumericInput } from '../../../utils/formInput';
 
@@ -273,7 +272,6 @@ export default function Workspace() {
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [isShopSelectorOpen, setIsShopSelectorOpen] = useState(false);
   const [selectedShopName, setSelectedShopName] = useState('');
-  const [activeCardId, setActiveCardId] = useState('');
   const [editingProject, setEditingProject] = useState(null);
   const [editProjectName, setEditProjectName] = useState('');
   const [editRoomType, setEditRoomType] = useState('');
@@ -315,9 +313,6 @@ export default function Workspace() {
         if (projectIdFromUrl) {
           setSelectedProjectId(projectIdFromUrl);
         }
-        if (searchParams.get('mode') === 'projects' || projectIdFromUrl) {
-          setActiveCardId('catalogue-projects');
-        }
       })
       .catch(() => {
         setProjects([]);
@@ -327,8 +322,16 @@ export default function Workspace() {
   }, [searchParams]);
 
   useEffect(() => {
-    loadProjects();
+    const timer = window.setTimeout(loadProjects, 0);
+    return () => window.clearTimeout(timer);
   }, [loadProjects]);
+
+  useEffect(() => {
+    const projectIdFromUrl = searchParams.get('projectId');
+    if (searchParams.get('mode') === 'projects' || projectIdFromUrl) {
+      navigate(projectIdFromUrl ? `/espacepro?projectId=${projectIdFromUrl}` : '/espacepro', { replace: true });
+    }
+  }, [navigate, searchParams]);
 
   useRealtimeRefresh(loadProjects, ['projects', 'project-products']);
 
@@ -344,9 +347,6 @@ export default function Workspace() {
     ));
   }, [projects, workspaceSearchTerm]);
   const workspaceCards = useMemo(() => WORKSPACE_CARDS, []);
-  const activeCard = activeCardId
-    ? workspaceCards.find((card) => card.id === activeCardId)
-    : null;
   const projectShops = useMemo(
     () => {
       const adminShops = (adminData.suppliers || [])
@@ -382,10 +382,6 @@ export default function Workspace() {
       categories,
     };
   }, [selectedProject, selectedProjectProducts]);
-  const handleProductsChange = useCallback((products) => {
-    setSelectedProjectProducts(products);
-  }, []);
-
   function closeModal() {
     setIsModalOpen(false);
     setProjectLaunchNotice('');
@@ -490,10 +486,6 @@ export default function Workspace() {
           setSelectedProjectId(nextProjects[0]?.id || '');
         }
 
-        if (nextProjects.length === 0) {
-          setActiveCardId('');
-        }
-
         return nextProjects;
       });
     } catch (error) {
@@ -513,6 +505,11 @@ export default function Workspace() {
       return;
     }
 
+    if (card.kind === 'projects') {
+      navigate(selectedProjectId ? `/espacepro?projectId=${selectedProjectId}` : '/espacepro');
+      return;
+    }
+
     if (card.intent === 'create') {
       setProjectLaunchNotice('');
       setIsModalOpen(true);
@@ -524,23 +521,6 @@ export default function Workspace() {
       setIsModalOpen(true);
       return;
     }
-
-    setActiveCardId(card.id);
-  }
-
-  function handleMiniCardClick(card) {
-    if (card.intent === 'create') {
-      setProjectLaunchNotice('');
-      setIsModalOpen(true);
-      return;
-    }
-
-    handleCardAction(card);
-  }
-
-  function handleBackToCards() {
-    setActiveCardId('');
-    setIsShopSelectorOpen(false);
   }
 
   function handleCardKeyDown(event, card) {
@@ -551,11 +531,10 @@ export default function Workspace() {
   }
 
   function handleRecentProjectClick(projectId) {
-    setSelectedProjectId(projectId);
-    setActiveCardId('catalogue-projects');
+    navigate(`/espacepro?projectId=${projectId}`);
   }
 
-  function handleShopSelect(shop, message = '') {
+  async function handleShopSelect(shop, message = '') {
     if (!shop?.name) return;
 
     setSelectedShopName(shop.name);
@@ -568,13 +547,22 @@ export default function Workspace() {
       message,
     });
 
-    updateAdminData((currentData) => ({
-      ...currentData,
-      supplierClientNotifications: [
-        notification,
-        ...(currentData.supplierClientNotifications || []),
-      ],
-    }));
+    try {
+      await createDemande({
+        supplierId: shop.id || shop._id || '',
+        supplierName: shop.name || shop.companyName || '',
+        supplierContact: shop.contact || shop.email || '',
+        message,
+      });
+    } catch {
+      updateAdminData((currentData) => ({
+        ...currentData,
+        supplierClientNotifications: [
+          notification,
+          ...(currentData.supplierClientNotifications || []),
+        ],
+      }));
+    }
   }
 
   function getMiniCardMetric(card) {
@@ -609,10 +597,6 @@ export default function Workspace() {
 
   function renderCardContent(card) {
     if (card.kind === 'projects') {
-      if (isProjectsLoading) {
-        return <Loader label="Chargement des projets..." />;
-      }
-
       if (projectsError) {
         return <Alert variant="danger">{projectsError}</Alert>;
       }
@@ -694,54 +678,23 @@ export default function Workspace() {
 
   return (
     <div className="workspace-page">
+      {isProjectsLoading && <Loader className="workspace-page__loader" />}
+      {!isProjectsLoading && (
       <section className="workspace-hub" aria-label="Mon espace de travail">
-        {activeCard ? (
-          <>
-            {pendingProjectDelete && (
-              <Alert
-                variant="warning"
-                title="Suppression de projet"
-                className="workspace-confirm-alert"
-                onClose={() => setPendingProjectDelete(null)}
-              >
-                <span>Supprimer définitivement le projet "{pendingProjectDelete.name}" ?</span>
-                <span className="workspace-confirm-alert__actions">
-                  <button type="button" onClick={() => setPendingProjectDelete(null)}>Annuler</button>
-                  <button type="button" onClick={confirmProjectDelete}>Supprimer</button>
-                </span>
-              </Alert>
-            )}
-            <button
-              type="button"
-              className="workspace-back-button"
-              aria-label="Retour aux cartes"
-              onClick={handleBackToCards}
-            >
-              <Icon name="ArrowLeft" size="sm" />
-            </button>
-
-            <WorkspaceMiniGrid
-              cards={workspaceCards}
-              activeCardId={activeCard.id}
-              getMetric={getMiniCardMetric}
-              onCardClick={handleMiniCardClick}
-            />
-
-            <EspacePro
-              projects={filteredProjects}
-              isProjectsLoading={isProjectsLoading}
-              projectsError={projectsError}
-              selectedProjectId={selectedProjectId}
-              onProjectSelect={setSelectedProjectId}
-              onProjectEdit={openEditProject}
-              onProjectDelete={handleProjectDelete}
-              deletingProjectId={deletingProjectId}
-              onProductsChange={handleProductsChange}
-              onArticleShopOpen={() => setIsShopSelectorOpen(true)}
-            />
-
-          </>
-        ) : (
+        {pendingProjectDelete && (
+          <Alert
+            variant="warning"
+            title="Suppression de projet"
+            className="workspace-confirm-alert"
+            onClose={() => setPendingProjectDelete(null)}
+          >
+            <span>Supprimer définitivement le projet "{pendingProjectDelete.name}" ?</span>
+            <span className="workspace-confirm-alert__actions">
+              <button type="button" onClick={() => setPendingProjectDelete(null)}>Annuler</button>
+              <button type="button" onClick={confirmProjectDelete}>Supprimer</button>
+            </span>
+          </Alert>
+        )}
           <div className="workspace-card-grid">
             {workspaceCards.map((card) => (
               <article
@@ -785,8 +738,8 @@ export default function Workspace() {
               </article>
             ))}
           </div>
-        )}
       </section>
+      )}
 
       <Newproject
         isOpen={isModalOpen}

@@ -63,7 +63,7 @@ function createLocalProject(payload) {
 
 export async function fetchProjects() {
   try {
-    const { data } = await api.get(API_ROUTES.projects.list);
+    const { data } = await api.get(API_ROUTES.projects.list, { skipUnauthorizedHandler: true });
     return mergeProjects(data.projects || [], readLocalProjects());
   } catch {
     return readLocalProjects();
@@ -94,7 +94,7 @@ export function subscribeProjectsChange(callback) {
 
 export async function createProject(payload) {
   try {
-    const { data } = await api.post(API_ROUTES.projects.list, payload);
+    const { data } = await api.post(API_ROUTES.projects.list, payload, { skipUnauthorizedHandler: true });
     const nextProjects = mergeProjects([data.project], readLocalProjects());
     writeLocalProjects(nextProjects);
     return data.project;
@@ -138,7 +138,7 @@ export async function updateProject(id, payload) {
   }
 
   try {
-    const { data } = await api.put(API_ROUTES.projects.detail(id), payload);
+    const { data } = await api.put(API_ROUTES.projects.detail(id), payload, { skipUnauthorizedHandler: true });
     const localProjects = readLocalProjects().map((project) => (
       project.id === id ? data.project : project
     ));

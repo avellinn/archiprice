@@ -154,14 +154,13 @@ export default function Utilisateurs() {
   const loadUsers = useCallback(() => {
     Promise.all([fetchAdminUsers(), fetchAdminSuppliers()])
       .then(([userList, supplierList]) => {
-        const activeSuppliers = supplierList.filter((supplier) => supplier.status !== 'Supprimé');
-        const mergedUsers = mergeUsersWithSuppliers(userList, activeSuppliers);
+        const mergedUsers = mergeUsersWithSuppliers(userList, supplierList);
         setRawUsers(userList);
-        setSuppliers(activeSuppliers);
+        setSuppliers(supplierList);
         updateAdminData((currentData) => ({
           ...currentData,
           users: mergedUsers.map(normalizeUserForWorkspace),
-          suppliers: activeSuppliers,
+          suppliers: supplierList,
         }));
         setError('');
       })

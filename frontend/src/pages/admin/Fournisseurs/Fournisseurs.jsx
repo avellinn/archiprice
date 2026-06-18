@@ -117,11 +117,10 @@ export default function Fournisseurs() {
   const loadSuppliers = useCallback(() => {
     fetchAdminSuppliers()
       .then((list) => {
-        const activeSuppliers = list.filter((supplier) => supplier.status !== 'Supprimé');
-        setSuppliers(activeSuppliers);
+        setSuppliers(list);
         updateAdminData((currentData) => ({
           ...currentData,
-          ...getSyncedSupplierData(currentData, activeSuppliers),
+          ...getSyncedSupplierData(currentData, list),
         }));
         setError('');
       })
@@ -211,7 +210,9 @@ export default function Fournisseurs() {
 
   async function deleteSupplier(supplierId) {
     const previousSuppliers = suppliers;
-    const nextSuppliers = suppliers.filter((supplier) => supplier.id !== supplierId);
+    const nextSuppliers = suppliers.map((supplier) => (
+      supplier.id === supplierId ? { ...supplier, status: 'Supprimé' } : supplier
+    ));
     setSuppliers(nextSuppliers);
     if (selectedSupplierId === supplierId) setSelectedSupplierId('');
     updateAdminData((currentData) => ({
@@ -229,6 +230,13 @@ export default function Fournisseurs() {
       }));
       setError(getApiErrorMessage(apiError, 'La suppression du fournisseur a échoué.'));
     }
+  }
+
+  async function restoreSupplier(supplier) {
+    await upsertSupplier({
+      ...supplier,
+      status: 'Actif',
+    });
   }
 
   function getSupplierName(supplier) {
@@ -306,7 +314,8 @@ export default function Fournisseurs() {
         >
           <Icon name="Edit" size="sm" />
         </button>
-        <button
+        {supplier.status !== 'Supprimé' && (
+          <button
           type="button"
           title={supplier.status === 'Actif' ? 'Désactiver' : 'Activer'}
           aria-label={supplier.status === 'Actif' ? `Désactiver ${supplierName}` : `Activer ${supplierName}`}
@@ -317,7 +326,9 @@ export default function Fournisseurs() {
         >
           <Icon name="Visibility" size="sm" />
         </button>
-        <button
+        )}
+        {supplier.status !== 'Supprimé' && (
+          <button
           type="button"
           title="Bloquer"
           aria-label={`Bloquer ${supplierName}`}
@@ -328,7 +339,9 @@ export default function Fournisseurs() {
         >
           <Icon name="VisibilityOff" size="sm" />
         </button>
-        <button
+        )}
+        {supplier.status !== 'Supprimé' && (
+          <button
           type="button"
           className={supplier.isRecommended ? 'is-recommended' : ''}
           title={supplier.isRecommended ? 'Retirer des boutiques recommandées' : 'Recommander'}
@@ -340,7 +353,22 @@ export default function Fournisseurs() {
         >
           <Icon name="Check" size="sm" />
         </button>
-        <button
+        )}
+        {supplier.status === 'Supprimé' ? (
+          <button
+            type="button"
+            className="is-restore"
+            title="Restaurer"
+            aria-label={`Restaurer ${supplierName}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              restoreSupplier(supplier);
+            }}
+          >
+            <Icon name="History" size="sm" />
+          </button>
+        ) : (
+          <button
           type="button"
           className="is-danger"
           title="Supprimer"
@@ -352,6 +380,7 @@ export default function Fournisseurs() {
         >
           <Icon name="Delete" size="sm" />
         </button>
+        )}
       </span>
     );
   }

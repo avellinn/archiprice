@@ -1,0 +1,63 @@
+.espacepro-page {
+  display: grid;
+  align-content: stretch;
+  gap: 1rem;
+  min-height: calc(100vh - 56px);
+  padding: 1rem 1.25rem 1.25rem;
+  background: #f0f0f0;
+}
+
+.espacepro-page__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.espacepro-page__header button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--app-border-color);
+  border-radius: 8px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  cursor: pointer;
+}
+
+.espacepro-page__header span {
+  color: var(--app-muted-color);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.espacepro-page__header h1 {
+  margin: 0.1rem 0 0;
+  color: var(--app-heading-color);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.espacepro-page__alert {
+  max-width: 760px;
+}
+
+.espacepro-page__alert-actions {
+  display: inline-flex;
+  gap: 0.5rem;
+  margin-left: 0.75rem;
+}
+
+.espacepro-page__alert-actions button {
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 8px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  cursor: pointer;
+}
+
+.espacepro-page__loader {
+  min-height: calc(100vh - 170px);
+}

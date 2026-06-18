@@ -7,6 +7,7 @@ import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
 import { fetchSupplierWorkspace, notifySupplierWorkspaceChange, updateSupplierProfile } from '../../../services/supplier';
 import { getSupplierTranslations, SUPPLIER_LANGUAGE_LABELS } from '../../../utils/supplierLanguage';
+import { buildCityOptions, buildNeighborhoodOptions } from '../../../utils/locationOptions';
 
 const TIMEZONES = [
   '(GMT +01:00) Afrique centrale et de l’Ouest',
@@ -14,10 +15,6 @@ const TIMEZONES = [
   '(GMT +02:00) Afrique australe',
 ];
 const LANGUAGES = Object.values(SUPPLIER_LANGUAGE_LABELS);
-
-function getUniqueValues(values) {
-  return [...new Set(values.map((value) => String(value || '').trim()).filter(Boolean))];
-}
 
 function normalizeSupplierForWorkspace(supplier) {
   return {
@@ -27,6 +24,8 @@ function normalizeSupplierForWorkspace(supplier) {
     email: supplier.email || '',
     phone: supplier.phone || '',
     region: supplier.region || '',
+    city: supplier.city || supplier.region || '',
+    neighborhood: supplier.neighborhood || '',
     status: supplier.status || 'Actif',
     products: supplier.products || 0,
     categories: supplier.categories || [],
@@ -79,6 +78,12 @@ export default function Parametres() {
           email: supplier.email || workspace?.user?.email || user?.email || '',
           phone: supplier.phone || workspace?.user?.phone || user?.phone || '',
         });
+        setSettings((currentSettings) => ({
+          ...currentSettings,
+          companyName: supplier.companyName || supplier.name || currentSettings.companyName,
+          city: supplier.city || supplier.region || currentSettings.city,
+          neighborhood: supplier.neighborhood || currentSettings.neighborhood,
+        }));
       })
       .catch(() => {
         // Si l'API fournisseur n'est pas encore disponible, les données du compte connecté restent utilisées.
@@ -89,14 +94,12 @@ export default function Parametres() {
     };
   }, [user]);
 
-  const cityOptions = useMemo(() => getUniqueValues([
-    ...(adminData.taxonomies?.cities || []).map((item) => item.name),
-    ...(adminData.regionalCoefficients || []).map((item) => item.city),
-  ]), [adminData.regionalCoefficients, adminData.taxonomies?.cities]);
-
-  const neighborhoodOptions = useMemo(() => getUniqueValues([
-    ...(adminData.taxonomies?.neighborhoods || []).map((item) => item.name),
-  ]), [adminData.taxonomies?.neighborhoods]);
+  const cityOptions = useMemo(() => (
+    [...new Set([...buildCityOptions(adminData), settings.city].filter(Boolean))]
+  ), [adminData, settings.city]);
+  const neighborhoodOptions = useMemo(() => (
+    [...new Set([...buildNeighborhoodOptions(adminData), settings.neighborhood].filter(Boolean))]
+  ), [adminData, settings.neighborhood]);
 
   function updateShopProfile(field, value) {
     setShopProfile((currentProfile) => ({
@@ -130,6 +133,8 @@ export default function Parametres() {
       phone: nextShopProfile.phone,
       contact: nextShopProfile.email,
       region: nextSettings.city || nextSettings.location,
+      city: nextSettings.city,
+      neighborhood: nextSettings.neighborhood,
     })
       .then((supplier) => {
         if (!supplier) return;

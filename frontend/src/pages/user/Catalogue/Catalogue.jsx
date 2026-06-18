@@ -15,6 +15,8 @@ import { addExportedDocument } from '../../../services/exportedDocuments';
 import { createProduct, fetchProducts } from '../../../services/products';
 import { createProject, fetchProjects, updateProject } from '../../../services/projects';
 import SimulBudget from '../../../components/simulBudget';
+import { createSimulation } from '../../../services/simulations';
+import { buildCatalogueLocationFilters } from '../../../utils/locationOptions';
 
 const VISUAL_TONES = {
   sofa: 'linen',
@@ -146,6 +148,16 @@ function isPublishedCatalogueProduct(product) {
   return !product.publicationStatus || product.publicationStatus === 'Validé';
 }
 
+function buildFieldFilter(products, field, allLabel) {
+  const values = [...new Set(
+    products
+      .map((product) => String(product?.[field] || '').trim())
+      .filter(Boolean),
+  )].sort((left, right) => left.localeCompare(right, 'fr'));
+
+  return [allLabel, ...values];
+}
+
 const FILTER_COLLAPSE_MS = 60_000;
 const BUDGET_INACTIVITY_MS = 5 * 60_000;
 
@@ -206,7 +218,7 @@ function Filterpanel({
   onRangeChange,
   onCityChange,
   onNeighborhoodChange,
-  onWorkspaceReturn,
+  
   onInteract,
   onMinimize,
 }) {
@@ -220,17 +232,7 @@ function Filterpanel({
   return (
     <aside className="catalogue-filter-panel catalogue-filter-panel--expanded" aria-label="Filtres du catalogue">
       <div className="catalogue-filter-panel__header">
-        <div>
-          <button
-            type="button"
-            className="catalogue-workspace-return"
-            onClick={onWorkspaceReturn}
-          >
-            <Icon name="ArrowLeft" size="sm" />
-          </button>
-          <span className="catalogue-eyebrow" />
-          <h1>Filtres</h1>
-        </div>
+        
         <button
           type="button"
           className="catalogue-panel-minimize"
@@ -263,13 +265,10 @@ function slugify(value) {
 }
 
 function buildProductCategories(products = []) {
-  const fallbackImages = products.map((product) => {
+  const fallbackImages = products.flatMap((product) => {
     const images = Array.isArray(product?.images) ? product.images : [];
-    const firstImage = images[0] || product?.image;
-    if (!firstImage) return '';
-    if (typeof firstImage === 'string') return firstImage;
-    return firstImage.secure_url || firstImage.url || '';
-  }).filter(Boolean);
+    return [product?.image, ...images].map(getImageUrl).filter(Boolean);
+  });
 
   const categoryMap = new Map();
 
@@ -278,11 +277,10 @@ function buildProductCategories(products = []) {
     if (!label) return;
 
     const id = slugify(label);
-    const images = Array.isArray(product.images) ? product.images : [];
-    const firstImage = images[0] || product.image;
-    const image = typeof firstImage === 'string'
-      ? firstImage
-      : (firstImage?.secure_url || firstImage?.url || '');
+    const images = [
+      product.image,
+      ...(Array.isArray(product.images) ? product.images : []),
+    ].map(getImageUrl).filter(Boolean);
     const current = categoryMap.get(id);
 
     if (!current) {
@@ -290,13 +288,16 @@ function buildProductCategories(products = []) {
         id,
         label,
         value: label,
-        image: image || fallbackImages[0] || '',
+        images: [...new Set(images.length > 0 ? images : fallbackImages.slice(0, 4))],
       });
       return;
     }
 
-    if (!current.image && image) {
-      categoryMap.set(id, { ...current, image });
+    if (images.length > 0) {
+      categoryMap.set(id, {
+        ...current,
+        images: [...new Set([...(current.images || []), ...images])].slice(0, 5),
+      });
     }
   });
 
@@ -304,38 +305,7 @@ function buildProductCategories(products = []) {
 }
 
 function CatalogueCategories({ products = [], activeCategory = '', onSelect }) {
-  const scrollRef = useRef(null);
-  const isPausedRef = useRef(false);
   const categories = useMemo(() => buildProductCategories(products), [products]);
-  const carouselCategories = useMemo(
-    () => (categories.length > 1 ? [...categories, ...categories] : categories),
-    [categories],
-  );
-
-  useEffect(() => {
-    const container = scrollRef.current;
-    if (!container || categories.length <= 1) return undefined;
-
-    let animationId = 0;
-
-    function tick() {
-      if (!isPausedRef.current && container) {
-        container.scrollLeft += 0.45;
-        const loopWidth = container.scrollWidth / 2;
-        if (loopWidth > 0 && container.scrollLeft >= loopWidth) {
-          container.scrollLeft -= loopWidth;
-        }
-      }
-      animationId = window.requestAnimationFrame(tick);
-    }
-
-    animationId = window.requestAnimationFrame(tick);
-    return () => window.cancelAnimationFrame(animationId);
-  }, [categories.length]);
-
-  function scrollBy(delta) {
-    scrollRef.current?.scrollBy({ left: delta, behavior: 'smooth' });
-  }
 
   function handleSelect(category) {
     const value = category?.value || category?.label || '';
@@ -350,18 +320,11 @@ function CatalogueCategories({ products = [], activeCategory = '', onSelect }) {
 
   return (
     <section
-      className="catalogue-categories catalogue-categories--carousel"
+      className="catalogue-categories"
       aria-label="Catégories"
-      onMouseEnter={() => { isPausedRef.current = true; }}
-      onMouseLeave={() => { isPausedRef.current = false; }}
     >
-      {categories.length > 4 && (
-        <button type="button" className="catalogue-categories__arrow catalogue-categories__arrow--left" onClick={() => scrollBy(-240)} aria-label="Défiler les catégories vers la gauche">
-          <Icon name="ArrowLeft" size="sm" />
-        </button>
-      )}
-      <div className="catalogue-categories__scroll" ref={scrollRef}>
-        {carouselCategories.map((category, index) => (
+      <div className="catalogue-categories__scroll">
+        {categories.map((category, index) => (
           <button
             type="button"
             key={`${category.id}-${index}`}
@@ -369,43 +332,55 @@ function CatalogueCategories({ products = [], activeCategory = '', onSelect }) {
               'catalogue-categories__item',
               activeCategory === category.value || activeCategory === category.label ? 'is-active' : '',
             ].filter(Boolean).join(' ')}
+            style={{ '--category-index': index }}
             onClick={() => handleSelect(category)}
           >
             <span
               className={[
                 'catalogue-categories__thumb',
-                category.image ? 'catalogue-categories__thumb--has-image' : '',
+                category.images?.length ? 'catalogue-categories__thumb--has-image' : '',
               ].filter(Boolean).join(' ')}
+              style={{ '--category-cycle': `${Math.max(category.images?.length || 1, 1) * 3.8}s` }}
               aria-hidden="true"
             >
-              {category.image ? (
-                <img src={category.image} alt="" loading="lazy" />
-              ) : null}
+              {(category.images || []).map((image, imageIndex) => (
+                <img
+                  src={image}
+                  alt=""
+                  loading="lazy"
+                  key={`${image}-${imageIndex}`}
+                  style={{ '--category-image-index': imageIndex }}
+                />
+              ))}
             </span>
             <span className="catalogue-categories__label">{category.label}</span>
           </button>
         ))}
       </div>
-      {categories.length > 4 && (
-        <button type="button" className="catalogue-categories__arrow catalogue-categories__arrow--right" onClick={() => scrollBy(240)} aria-label="Défiler les catégories vers la droite">
-          <Icon name="ArrowRight" size="sm" />
-        </button>
-      )}
     </section>
   );
 }
 
 /* ── CardArticle (inline) ── */
 
-function ArticleImage({ image, tone, label, className = '', children }) {
+function ArticleImage({ image, tone, label, className = '', onClick, children }) {
   return (
     <div
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
       className={[
         'catalogue-product-photo',
         `catalogue-product-photo--${tone}`,
         image ? 'has-image' : '',
+        onClick ? 'catalogue-product-photo--clickable' : '',
         className,
       ].filter(Boolean).join(' ')}
+      onClick={onClick}
+      onKeyDown={(event) => {
+        if (!onClick || (event.key !== 'Enter' && event.key !== ' ')) return;
+        event.preventDefault();
+        onClick(event);
+      }}
     >
       {image && <img src={image} alt="" loading="lazy" />}
       <span>{label}</span>
@@ -419,9 +394,11 @@ function CardArticle({
   isSelected,
   priceRange,
   onOpen,
+  onDetailsOpen,
   onToggle,
 }) {
   const images = Array.isArray(product.images) ? product.images : [];
+
 
   function handleKeyDown(event) {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -438,7 +415,15 @@ function CardArticle({
       onClick={() => onOpen(product.id)}
       onKeyDown={handleKeyDown}
     >
-      <ArticleImage image={product.image} tone={product.tone} label={product.category}>
+      <ArticleImage
+        image={product.image}
+        tone={product.tone}
+        label={product.category}
+        onClick={(event) => {
+          event.stopPropagation();
+          onDetailsOpen(product.id);
+        }}
+      >
         {images.length > 1 && (
           <small className="catalogue-product-photo__count">
             {images.length} images
@@ -500,6 +485,17 @@ function ArticleFullscreen({
   onToggle,
 }) {
   const images = Array.isArray(product.images) ? product.images : [];
+  const canNavigate = images.length > 1;
+
+  function showPreviousImage() {
+    if (!canNavigate) return;
+    onImageSelect((imageIndex - 1 + images.length) % images.length);
+  }
+
+  function showNextImage() {
+    if (!canNavigate) return;
+    onImageSelect((imageIndex + 1) % images.length);
+  }
 
   return (
     <div className="catalogue-fullscreen" role="dialog" aria-modal="true" aria-label={product.name}>
@@ -514,6 +510,17 @@ function ArticleFullscreen({
 
       <article className="catalogue-fullscreen__card">
         <div className="catalogue-fullscreen__media">
+          {canNavigate && (
+            <button
+              type="button"
+              className="catalogue-fullscreen__nav catalogue-fullscreen__nav--prev"
+              onClick={showPreviousImage}
+              aria-label="Image précédente"
+            >
+              <Icon name="ChevronLeft" />
+            </button>
+          )}
+
           <ArticleImage
             image={image}
             tone={product.tone}
@@ -536,10 +543,21 @@ function ArticleFullscreen({
 
             {images.length > 1 && (
               <small className="catalogue-product-photo__count">
-                {images.length} images
+                {imageIndex + 1}/{images.length}
               </small>
             )}
           </ArticleImage>
+
+          {canNavigate && (
+            <button
+              type="button"
+              className="catalogue-fullscreen__nav catalogue-fullscreen__nav--next"
+              onClick={showNextImage}
+              aria-label="Image suivante"
+            >
+              <Icon name="ChevronRight" />
+            </button>
+          )}
 
           <ThumbGrid product={product} activeIndex={imageIndex} onSelect={onImageSelect} />
         </div>
@@ -571,7 +589,7 @@ export default function Catalogue() {
   const [catalogueProducts, setCatalogueProducts] = useState([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [productsError, setProductsError] = useState('');
-  const [isFilterExpanded, setIsFilterExpanded] = useState(true);
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false);
   const [isBudgetExpanded, setIsBudgetExpanded] = useState(true);
   const pageRef = useRef(null);
   const filterCollapseTimerRef = useRef(null);
@@ -596,7 +614,8 @@ export default function Catalogue() {
   }, []);
 
   useEffect(() => {
-    loadCatalogueProducts();
+    const timer = window.setTimeout(loadCatalogueProducts, 0);
+    return () => window.clearTimeout(timer);
   }, [loadCatalogueProducts]);
 
   useRealtimeRefresh(
@@ -667,33 +686,23 @@ export default function Catalogue() {
     };
   }, [activeProjectId, products, searchParams]);
 
-  const filters = useMemo(() => ({
-    categories: ['Tout', ...adminData.taxonomies.categories.map((category) => category.name)],
-    rooms: ['Toutes', ...adminData.taxonomies.rooms.map((room) => room.name)],
-    ranges: ['Toutes', ...adminData.taxonomies.ranges.map((range) => range.name)],
-    cities: [
-      'Toutes',
-      ...new Set([
-        ...(adminData.taxonomies.cities || []).map((city) => city.name),
-        ...catalogueProducts
-          .filter(isPublishedCatalogueProduct)
-          .filter((product) => isSupplierVisibleForCatalogue(product, adminData))
-          .map((product) => product.city)
-          .filter(Boolean),
-      ]),
-    ],
-    neighborhoods: [
-      'Tous',
-      ...new Set([
-        ...(adminData.taxonomies.neighborhoods || []).map((neighborhood) => neighborhood.name),
-        ...catalogueProducts
-          .filter(isPublishedCatalogueProduct)
-          .filter((product) => isSupplierVisibleForCatalogue(product, adminData))
-          .map((product) => product.neighborhood)
-          .filter(Boolean),
-      ]),
-    ],
-  }), [adminData, catalogueProducts]);
+  const publishedCatalogueProducts = useMemo(() => (
+    catalogueProducts
+      .filter(isPublishedCatalogueProduct)
+      .filter((product) => isSupplierVisibleForCatalogue(product, adminData))
+  ), [adminData, catalogueProducts]);
+
+  const filters = useMemo(() => {
+    const locationFilters = buildCatalogueLocationFilters({ products: publishedCatalogueProducts });
+
+    return {
+      categories: buildFieldFilter(publishedCatalogueProducts, 'category', 'Tout'),
+      rooms: buildFieldFilter(publishedCatalogueProducts, 'room', 'Toutes'),
+      ranges: buildFieldFilter(publishedCatalogueProducts, 'range', 'Toutes'),
+      cities: locationFilters.cities,
+      neighborhoods: locationFilters.neighborhoods,
+    };
+  }, [publishedCatalogueProducts]);
 
   const roomOptions = useMemo(() => (
     (adminData.taxonomies?.rooms || [])
@@ -859,15 +868,25 @@ export default function Catalogue() {
   function toggleProduct(productId) {
     setValidationError('');
     setIsRecapVisible(false);
-    const nextIds = selectedProductIds.includes(productId)
-      ? selectedProductIds.filter((id) => id !== productId)
-      : [...selectedProductIds, productId];
+    const isAdding = !selectedProductIds.includes(productId);
+    const nextIds = isAdding
+      ? [...selectedProductIds, productId]
+      : selectedProductIds.filter((id) => id !== productId);
     setSelectedProductIds(nextIds);
+
+    if (isAdding && activeProjectId) {
+      setIsBudgetExpanded(true);
+      resetBudgetInactivityTimer();
+    }
   }
 
   function openFullscreenProduct(productId) {
     setFullscreenProductId(productId);
     setFullscreenImageIndex(0);
+  }
+
+  function openProductDetails(productId) {
+    navigate(`/fiche-produits/${productId}`);
   }
 
   function handleCategorySelect(category) {
@@ -909,7 +928,12 @@ export default function Catalogue() {
   }
 
   function handleGateCancel() {
-    navigate('/workspace', { replace: true });
+    if (window.history.state?.idx > 0) {
+      navigate(-1);
+      return;
+    }
+
+    navigate('/dashboard', { replace: true });
   }
 
   function handleProjectGateCreated(project) {
@@ -990,7 +1014,34 @@ export default function Catalogue() {
         })),
       });
 
-      navigate(`/workspace?mode=projects&projectId=${project.id}`, { replace: true });
+      try {
+        await createSimulation({
+          user: user?.name || user?.fullName || user?.email || 'Utilisateur ArchiPrice',
+          email: user?.email || '',
+          date: generatedAt,
+          projectId: project.id,
+          projectName: project.name,
+          reference: `SIM-${project.id}`,
+          sourceType: 'project-validation',
+          sourceId: project.id,
+          total: formatFCFA(budgetSummary.max),
+          products: selectedProducts.length,
+          status: 'Succès',
+          city: [...new Set(selectedProducts.map((product) => product.city).filter(Boolean))].join(', ') || project.name,
+          coefficient: '1,00',
+          avatar: String(user?.name || user?.email || 'AP').slice(0, 2).toUpperCase(),
+          items: selectedProducts.map((product) => ({
+            name: product.name,
+            quantity: '1',
+            price: formatFCFA(product.maxPrice),
+            total: formatFCFA(product.maxPrice),
+          })),
+        });
+      } catch {
+        // La validation projet reste effective même si l'enregistrement simulation échoue.
+      }
+
+      navigate(`/espacepro?projectId=${project.id}`, { replace: true });
     } catch (error) {
       setValidationError(getApiErrorMessage(error, 'Impossible de confirmer la validation'));
     } finally {
@@ -1078,6 +1129,7 @@ export default function Catalogue() {
                   isSelected={isSelected}
                   priceRange={priceRange}
                   onOpen={openFullscreenProduct}
+                  onDetailsOpen={openProductDetails}
                   onToggle={toggleProduct}
                 />
               );

@@ -7,11 +7,6 @@ import { Button, Icon, Text } from '../../../components/ui';
 import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { useAdminData } from '../../../services/adminData';
 import { fetchAdminProducts, fetchAdminSimulations, fetchAdminSupportItems, fetchAdminUsers } from '../../../services/adminMongo';
-import {
-  fetchExportedDocuments,
-  subscribeExportedDocumentsChange,
-} from '../../../services/exportedDocuments';
-import { fetchProjects, subscribeProjectsChange } from '../../../services/projects';
 
 const HIDDEN_SIMULATIONS_KEY = 'archiprice:admin-hidden-simulations';
 
@@ -83,22 +78,6 @@ function readHiddenSimulationIds() {
   }
 }
 
-function formatFCFA(amount) {
-  return `${new Intl.NumberFormat('fr-FR').format(Number(amount || 0))} FCFA`;
-}
-
-function formatExportDate(value) {
-  if (!value) return '-';
-
-  return new Intl.DateTimeFormat('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value));
-}
-
 function isAvailable(product) {
   return String(product.availability || '').toLowerCase() === 'disponible';
 }
@@ -131,36 +110,6 @@ function mergeSimulationSources(items) {
   });
 
   return [...simulationsById.values()];
-}
-
-function mapExportToSimulation(document) {
-  return {
-    ...document,
-    id: `exported-${document.id}`,
-    sourceType: 'export',
-    sourceId: document.id,
-    user: document.userName || 'Utilisateur ArchiPrice',
-    email: document.userEmail || 'Compte user',
-    status: document.status || 'Succès',
-    date: formatExportDate(document.exportedAt),
-    total: formatFCFA(document.amount),
-    products: document.itemCount || document.items?.length || 0,
-  };
-}
-
-function mapProjectToSimulation(project) {
-  return {
-    id: `project-${project.id}`,
-    sourceType: 'project',
-    sourceId: project.id,
-    user: project.clientName || project.userName || 'Utilisateur ArchiPrice',
-    email: project.userEmail || 'Projet workspace',
-    date: formatExportDate(project.updatedAt || project.createdAt),
-    total: formatFCFA(project.budget || project.amount || project.total || 0),
-    products: project.itemCount || project.items?.length || 0,
-    status: project.status === 'draft' ? 'Projet créé' : project.status || 'Projet créé',
-    projectName: project.name || 'Projet sans nom',
-  };
 }
 
 function getActivityRows(products = [], supportItems = [], simulations = []) {
@@ -198,10 +147,8 @@ export default function Dashboard() {
   const [supportItems, setSupportItems] = useState([]);
   const [adminProducts, setAdminProducts] = useState([]);
   const [mongoSimulations, setMongoSimulations] = useState([]);
-  const [projects, setProjects] = useState([]);
   const [hiddenSimulationIds, setHiddenSimulationIds] = useState(readHiddenSimulationIds);
   const [adminUsers, setAdminUsers] = useState([]);
-  const [exportedDocuments, setExportedDocuments] = useState(() => fetchExportedDocuments());
 
   const loadSupportItems = useCallback(() => {
     fetchAdminSupportItems()
@@ -245,29 +192,8 @@ export default function Dashboard() {
 
   useRealtimeRefresh(loadSupportItems, ['support-items']);
   useRealtimeRefresh(loadProducts, ['admin-products', 'supplier-products']);
-  useRealtimeRefresh(loadSimulations, ['simulations', 'projects']);
+  useRealtimeRefresh(loadSimulations, ['simulations']);
   useRealtimeRefresh(loadUsers, ['users', 'suppliers']);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    fetchProjects()
-      .then((list) => {
-        if (!cancelled) setProjects(list);
-      })
-      .catch(() => {
-        if (!cancelled) setProjects([]);
-      });
-
-    const unsubscribe = subscribeProjectsChange((list) => {
-      if (!cancelled) setProjects(list);
-    });
-
-    return () => {
-      cancelled = true;
-      unsubscribe();
-    };
-  }, []);
 
   useEffect(() => {
     function refreshHiddenSimulations(event) {
@@ -279,17 +205,13 @@ export default function Dashboard() {
     return () => window.removeEventListener('storage', refreshHiddenSimulations);
   }, []);
 
-  useEffect(() => subscribeExportedDocumentsChange(setExportedDocuments), []);
-
   const synchronizedSimulations = useMemo(() => ([
-    ...projects.map(mapProjectToSimulation),
-    ...exportedDocuments.map(mapExportToSimulation),
     ...mongoSimulations.map((simulation) => ({
       ...simulation,
       sourceType: simulation.sourceType || simulation.source || 'simulation',
       sourceId: simulation.sourceId || simulation.projectId || simulation.id,
     })),
-  ]), [exportedDocuments, mongoSimulations, projects]);
+  ]), [mongoSimulations]);
 
   const visibleSimulations = useMemo(() => (
     mergeSimulationSources(synchronizedSimulations)

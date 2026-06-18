@@ -266,8 +266,7 @@ body.theme-dark .header .logo {
 }
 
 .header__icon-btn:hover {
-  background-color: var(--app-panel-background);
-}
+background-color: rgba(165, 162, 162, 0.132);}
 
 .header__icon-btn svg {
   width: 1.25rem;
@@ -324,7 +323,7 @@ body.theme-dark .header .logo {
 }
 
 .header__user:hover {
-  background-color: var(--app-panel-background);
+  background-color: rgba(165, 162, 162, 0.132);
 }
 
 .header__user-avatar {
@@ -354,6 +353,7 @@ body.theme-dark .header .logo {
 .header__user-chevron {
   width: 14px;
   height: 14px;
+  margin-top: -10px;
   margin-left: var(--spacing-xs);
   color: var(--app-muted-color);
 }

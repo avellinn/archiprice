@@ -71,7 +71,7 @@ function createLocalProduct(payload) {
 
 export async function fetchProducts(projectId) {
   try {
-    const { data } = await api.get(API_ROUTES.products.list(projectId));
+    const { data } = await api.get(API_ROUTES.products.list(projectId), { skipUnauthorizedHandler: true });
     return mergeProducts(data.products || [], getLocalProducts(projectId));
   } catch {
     return getLocalProducts(projectId);
@@ -80,7 +80,7 @@ export async function fetchProducts(projectId) {
 
 export async function createProduct(projectId, payload) {
   try {
-    const { data } = await api.post(API_ROUTES.products.list(projectId), payload);
+    const { data } = await api.post(API_ROUTES.products.list(projectId), payload, { skipUnauthorizedHandler: true });
     setLocalProducts(projectId, mergeProducts([data.product], getLocalProducts(projectId)));
     return data.product;
   } catch {

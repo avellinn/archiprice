@@ -4,16 +4,10 @@ import { useSearchParams } from 'react-router-dom';
 import { Alert, Button, Icon, Loader, Table } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
 import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
-import { fetchAdminSimulations } from '../../../services/adminMongo';
-import { fetchExportedDocuments, subscribeExportedDocumentsChange } from '../../../services/exportedDocuments';
-import { fetchProjects, subscribeProjectsChange } from '../../../services/projects';
+import { fetchAdminSimulations, deleteAdminSimulation, resetAdminSimulations } from '../../../services/adminMongo';
 import SimulationModal from './simulationModal';
 
 const HIDDEN_SIMULATIONS_KEY = 'archiprice:admin-hidden-simulations';
-
-function formatFCFA(amount) {
-  return `${new Intl.NumberFormat('fr-FR').format(Number(amount || 0))} FCFA`;
-}
 
 function readHiddenSimulationIds() {
   try {
@@ -42,73 +36,16 @@ function mergeSimulationSources(items) {
   return [...simulationsById.values()];
 }
 
-function formatExportDate(value) {
-  if (!value) return '-';
-
-  return new Intl.DateTimeFormat('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value));
-}
-
-function mapExportToSimulation(document) {
-  return {
-    id: `exported-${document.id}`,
-    sourceType: 'export',
-    sourceId: document.id,
-    user: document.userName || 'Utilisateur ArchiPrice',
-    email: document.userEmail || 'Compte user',
-    avatar: 'AP',
-    date: formatExportDate(document.exportedAt),
-    total: formatFCFA(document.amount),
-    products: document.itemCount || document.items?.length || 0,
-    status: document.status || 'Succès',
-    city: document.city || document.projectName || '-',
-    coefficient: document.coefficient || '1,00',
-    items: (document.items || []).map((item) => ({
-      name: item.name,
-      quantity: item.quantity || 1,
-      price: item.price || formatFCFA(item.rawPrice),
-      total: item.total || formatFCFA(item.rawPrice),
-      imageUrl: item.imageUrl || item.images?.[0]?.secure_url || item.images?.[0]?.url || '',
-      images: item.images || [],
-    })),
-  };
-}
-
-function mapProjectToSimulation(project) {
-  return {
-    id: `project-${project.id}`,
-    sourceType: 'project',
-    sourceId: project.id,
-    user: project.clientName || project.userName || 'Utilisateur ArchiPrice',
-    email: project.userEmail || 'Projet workspace',
-    avatar: 'PW',
-    date: formatExportDate(project.updatedAt || project.createdAt),
-    total: formatFCFA(project.budget || project.amount || project.total || 0),
-    products: project.itemCount || project.items?.length || 0,
-    status: project.status === 'draft' ? 'Projet créé' : project.status || 'Projet créé',
-    city: project.city || project.name || '-',
-    coefficient: project.coefficient || '1,00',
-    items: project.items || [],
-    projectName: project.name || 'Projet sans nom',
-  };
-}
-
 export default function Simulations() {
   const [searchParams] = useSearchParams();
   const [simulations, setSimulations] = useState([]);
-  const [exportedDocuments, setExportedDocuments] = useState(() => fetchExportedDocuments());
-  const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [hiddenSimulationIds, setHiddenSimulationIds] = useState(readHiddenSimulationIds);
   const [selectedSimulation, setSelectedSimulation] = useState(null);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const loadSimulations = useCallback(() => {
     fetchAdminSimulations()
@@ -122,39 +59,20 @@ export default function Simulations() {
       .finally(() => setIsLoading(false));
   }, []);
 
-  const loadProjects = useCallback(() => {
-    fetchProjects()
-      .then(setProjects)
-      .catch(() => setProjects([]));
-  }, []);
-
   useEffect(() => {
     loadSimulations();
   }, [loadSimulations]);
 
   useRealtimeRefresh(loadSimulations, ['simulations']);
-  useRealtimeRefresh(loadProjects, ['projects', 'project-products']);
-
-  useEffect(() => subscribeExportedDocumentsChange(setExportedDocuments), []);
-
-  useEffect(() => {
-    loadProjects();
-    const unsubscribe = subscribeProjectsChange(setProjects);
-    return unsubscribe;
-  }, [loadProjects]);
 
   const synchronizedSimulations = useMemo(() => mergeSimulationSources([
-    ...projects.map(mapProjectToSimulation),
-    ...exportedDocuments.map(mapExportToSimulation),
     ...simulations.map((simulation) => ({
       ...simulation,
       sourceType: simulation.sourceType || simulation.source || 'simulation',
       sourceId: simulation.sourceId || simulation.projectId || simulation.id,
     })),
   ]).filter((simulation) => !hiddenSimulationIds.includes(String(simulation.id))), [
-    exportedDocuments,
     hiddenSimulationIds,
-    projects,
     simulations,
   ]);
 
@@ -184,25 +102,47 @@ export default function Simulations() {
     );
   }
 
-  function hideSimulation(simulation) {
-    const nextHiddenIds = Array.from(new Set([...hiddenSimulationIds, String(simulation.id)]));
+  async function hideSimulation(simulation) {
+    const simulationId = String(simulation.id);
+
+    try {
+      if (!simulationId.startsWith('project-')) {
+        await deleteAdminSimulation(simulationId);
+      }
+    } catch (apiError) {
+      setError(getApiErrorMessage(apiError, 'Impossible de supprimer la simulation.'));
+      return;
+    }
+
+    const nextHiddenIds = Array.from(new Set([...hiddenSimulationIds, simulationId]));
     setHiddenSimulationIds(nextHiddenIds);
     writeHiddenSimulationIds(nextHiddenIds);
     if (selectedSimulation?.id === simulation.id) setSelectedSimulation(null);
     setSuccessMessage('Simulation retirée de la vue admin.');
+    loadSimulations();
   }
 
   function resetSimulationView() {
     setIsResetConfirmOpen(true);
   }
 
-  function confirmResetSimulations() {
-    const nextHiddenIds = synchronizedSimulations.map((simulation) => String(simulation.id));
-    setHiddenSimulationIds(nextHiddenIds);
-    writeHiddenSimulationIds(nextHiddenIds);
-    setSelectedSimulation(null);
-    setIsResetConfirmOpen(false);
-    setSuccessMessage('Liste des simulations réinitialisée.');
+  async function confirmResetSimulations() {
+    setIsResetting(true);
+    setError('');
+
+    try {
+      await resetAdminSimulations();
+      writeHiddenSimulationIds([]);
+      setHiddenSimulationIds([]);
+      setSelectedSimulation(null);
+      setIsResetConfirmOpen(false);
+      setSuccessMessage('Liste des simulations réinitialisée et synchronisée avec la base de données.');
+      loadSimulations();
+    } catch (apiError) {
+      setError(getApiErrorMessage(apiError, 'Impossible de réinitialiser les simulations.'));
+    } finally {
+      setIsResetting(false);
+    }
   }
 
   const simulationColumns = [
@@ -267,8 +207,10 @@ export default function Simulations() {
         >
           <span>Supprimer toute la liste des simulations ? Cette action est irréversible dans la vue admin.</span>
           <span className="admin-simulations-confirm-alert__actions">
-            <button type="button" onClick={() => setIsResetConfirmOpen(false)}>Annuler</button>
-            <button type="button" onClick={confirmResetSimulations}>Supprimer</button>
+            <button type="button" onClick={() => setIsResetConfirmOpen(false)} disabled={isResetting}>Annuler</button>
+            <button type="button" onClick={confirmResetSimulations} disabled={isResetting}>
+              {isResetting ? 'Réinitialisation...' : 'Supprimer'}
+            </button>
           </span>
         </Alert>
       )}

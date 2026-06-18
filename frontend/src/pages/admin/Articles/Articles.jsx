@@ -232,9 +232,7 @@ export default function Articles() {
           <span className="admin-articles-eyebrow">Catalogue fournisseur</span>
           <h1>Articles</h1>
         </div>
-        <Badge tone={pendingPublicationCount > 0 ? 'warning' : 'neutral'} className="admin-articles-notification-badge">
-          {pendingPublicationCount} nouvelle(s) publication(s)
-        </Badge>
+        
       </header>
 
       {error && (

@@ -149,7 +149,7 @@ export default function Login() {
       footer={
         <>
           Vous n&apos;avez pas de compte ?{' '}
-          <Link to="/register" className="auth-link">
+          <Link to="/" className="auth-link">
             Créer un compte
           </Link>
         </>

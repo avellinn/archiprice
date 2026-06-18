@@ -31,9 +31,9 @@
     "projects info";
   column-gap: 0;
   row-gap: 0;
-  height: calc(100% - 132px);
-  min-height: 0;
-  margin-top: 2.75rem;
+  height: calc(100vh - 88px);
+  min-height: 760px;
+  margin-top: 0;
   overflow: hidden;
 }
 
@@ -85,6 +85,47 @@
   grid-area: projects;
   border-right-width: 5px;
   padding: var(--espacepro-projects-padding);
+}
+
+.espacepro__projects-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.55rem;
+  padding: 0.35rem 0.25rem 0.55rem;
+  background: var(--espacepro-projects-bg);
+}
+
+.espacepro__projects-toolbar span {
+  color: var(--app-heading-color);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.espacepro__return-button {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--app-border-color);
+  border-radius: 8px;
+  background: var(--app-card-background);
+  color: var(--app-heading-color);
+  cursor: pointer;
+}
+
+.espacepro__return-button:hover,
+.espacepro__return-button:focus-visible {
+  border-color: #433f8f;
+  color: #433f8f;
+  box-shadow: 0 8px 18px rgb(67 63 143 / 0.14);
+  outline: 0;
 }
 
 .espacepro__articles {
@@ -304,9 +345,13 @@
 
 .espacepro__article-image span {
   position: relative;
-  z-index: 2;
-  font-size: 3rem;
-  font-weight: 900;
+  z-index: 3;
+  max-width: min(680px, 84%);
+  color: currentColor;
+  font-size: clamp(2rem, 5vw, 3.6rem);
+  font-weight: 700;
+  line-height: 1.08;
+  text-align: center;
 }
 
 .espacepro__article-image small {
@@ -338,18 +383,26 @@
   color: #fff;
 }
 
+.espacepro__article-image.espacepro__article-image--has-photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(90deg, rgb(0 0 0 / 0.34), rgb(0 0 0 / 0.02) 20%, rgb(0 0 0 / 0.02) 80%, rgb(0 0 0 / 0.34)),
+    linear-gradient(180deg, rgb(0 0 0 / 0.06), rgb(0 0 0 / 0.12));
+  pointer-events: none;
+}
+
 .espacepro__article-image.espacepro__article-image--has-photo i {
   min-height: 100%;
   z-index: 1;
   opacity: 1;
-  background:
-    linear-gradient(180deg, rgb(15 23 42 / 0.02), rgb(15 23 42 / 0.16)),
-    var(--article-image-url);
+  background: var(--article-image-url);
   background-position: center;
   background-repeat: no-repeat;
-  background-size: 100% 100%, contain;
+  background-size: cover;
   transform: none;
-  
 }
 
 .espacepro__article-image--1 {

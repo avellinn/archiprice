@@ -126,7 +126,9 @@ function stripLegacyAccountSettings(accountSettings = {}) {
 function stripLegacyTaxonomies(taxonomies = {}) {
   return Object.keys(DEFAULT_ADMIN_DATA.taxonomies).reduce((nextTaxonomies, key) => ({
     ...nextTaxonomies,
-    [key]: stripLegacyStaticItems(taxonomies[key] || []),
+    [key]: ['cities', 'neighborhoods'].includes(key)
+      ? []
+      : stripLegacyStaticItems(taxonomies[key] || []),
   }), {});
 }
 
