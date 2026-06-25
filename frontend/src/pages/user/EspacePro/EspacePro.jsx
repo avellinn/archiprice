@@ -8,8 +8,9 @@ import useAuth from '../../../context/useAuth';
 import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
+import { upsertSupplierClientNotification } from '../../../services/clientNotifications';
 import { createDemande } from '../../../services/demandes';
-import { deleteProject, fetchProjects } from '../../../services/projects';
+import { deleteProject, fetchProjects, resetProjects } from '../../../services/projects';
 
 function formatFCFA(amount) {
   return `${new Intl.NumberFormat('fr-FR').format(Number(amount || 0))} FCFA`;
@@ -86,6 +87,27 @@ function buildSupplierClientNotification({ shop, user, project, simulation, prod
   };
 }
 
+function isActiveProject(project) {
+  return !['archived', 'completed', 'done'].includes(String(project?.status || '').toLowerCase());
+}
+
+function getLatestActiveProject(projects = []) {
+  return projects
+    .filter(isActiveProject)
+    .sort((left, right) => (
+      new Date(right.updatedAt || right.createdAt || 0) - new Date(left.updatedAt || left.createdAt || 0)
+    ))[0] || projects[0] || null;
+}
+
+function getShopDemandMessage({ shop, project, products = [] }) {
+  const shopName = shop?.name || shop?.companyName || 'cette boutique';
+  const projectName = project?.name || 'mon projet';
+
+  return products.length > 0
+    ? `Demande boutique pour ${projectName}: ${products.length} article(s) sélectionné(s) chez ${shopName}.`
+    : `Demande boutique pour ${projectName} chez ${shopName}.`;
+}
+
 export default function EspaceProPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -100,6 +122,8 @@ export default function EspaceProPage() {
   const [selectedShopName, setSelectedShopName] = useState('');
   const [deletingProjectId, setDeletingProjectId] = useState('');
   const [pendingProjectDelete, setPendingProjectDelete] = useState(null);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  const [isResettingProjects, setIsResettingProjects] = useState(false);
 
   const loadProjects = useCallback(() => {
     setIsProjectsLoading(true);
@@ -109,7 +133,10 @@ export default function EspaceProPage() {
         setProjectsError('');
         const projectIdFromUrl = searchParams.get('projectId');
         if (projectIdFromUrl) setSelectedProjectId(projectIdFromUrl);
-        if (!projectIdFromUrl && list[0]?.id) setSelectedProjectId(list[0].id);
+        if (!projectIdFromUrl) {
+          const latestActiveProject = getLatestActiveProject(list);
+          if (latestActiveProject?.id) setSelectedProjectId(latestActiveProject.id);
+        }
       })
       .catch(() => {
         setProjects([]);
@@ -125,7 +152,8 @@ export default function EspaceProPage() {
 
   useRealtimeRefresh(loadProjects, ['projects', 'project-products']);
 
-  const selectedProject = projects.find((project) => project.id === selectedProjectId) || projects[0];
+  const latestActiveProject = useMemo(() => getLatestActiveProject(projects), [projects]);
+  const selectedProject = projects.find((project) => project.id === selectedProjectId) || latestActiveProject;
   const projectShops = useMemo(() => {
     const adminShops = (adminData.suppliers || [])
       .filter((supplier) => supplier.isRecommended && supplier.status !== 'Supprimé')
@@ -197,36 +225,74 @@ export default function EspaceProPage() {
     }
   }
 
+  async function confirmProjectsReset() {
+    setIsResettingProjects(true);
+    setProjectsError('');
+    try {
+      await resetProjects();
+      setProjects([]);
+      setSelectedProjectId('');
+      setSelectedProjectProducts([]);
+      setSearchParams({}, { replace: true });
+      setIsResetConfirmOpen(false);
+    } catch (error) {
+      setProjectsError(getApiErrorMessage(error, 'Impossible de réinitialiser les projets'));
+    } finally {
+      setIsResettingProjects(false);
+    }
+  }
+
   async function handleShopSelect(shop, message = '') {
     if (!shop?.name) return;
 
     setSelectedShopName(shop.name);
+    const demandMessage = message.trim() || getShopDemandMessage({
+      shop,
+      project: selectedProject,
+      products: selectedProjectProducts,
+    });
     const notification = buildSupplierClientNotification({
       shop,
       user,
       project: selectedProject,
       simulation: selectedProjectPurchaseSimulation,
       products: selectedProjectProducts,
-      message,
+      message: demandMessage,
     });
 
     try {
-      await createDemande({
+      const demande = await createDemande({
         supplierId: shop.id || shop._id || '',
         supplierName: shop.name || shop.companyName || '',
         supplierContact: shop.contact || shop.email || '',
-        message,
+        projectId: selectedProject?.id || '',
+        projectName: selectedProject?.name || '',
+        message: demandMessage,
+      });
+      upsertSupplierClientNotification(updateAdminData, {
+        ...notification,
+        id: demande.id || notification.id,
+        sourceNotificationId: demande.id || notification.id,
+        messages: demande.messages || notification.messages,
+        status: demande.status || notification.status,
+        createdAt: demande.createdAt || notification.createdAt,
+        updatedAt: demande.updatedAt || notification.updatedAt,
       });
     } catch {
-      updateAdminData((currentData) => ({
-        ...currentData,
-        supplierClientNotifications: [
-          notification,
-          ...(currentData.supplierClientNotifications || []),
-        ],
-      }));
+      upsertSupplierClientNotification(updateAdminData, notification);
     }
   }
+
+  useEffect(() => {
+    if (searchParams.get('shop') === '1' && selectedProject?.id) {
+      const timer = window.setTimeout(() => {
+        setIsShopSelectorOpen(true);
+        setSearchParams({ projectId: selectedProject.id }, { replace: true });
+      }, 0);
+      return () => window.clearTimeout(timer);
+    }
+    return undefined;
+  }, [searchParams, selectedProject?.id, setSearchParams]);
 
   return (
     <main className="espacepro-page">
@@ -240,12 +306,31 @@ export default function EspaceProPage() {
           variant="warning"
           title="Suppression de projet"
           className="espacepro-page__alert"
+          autoCloseMs={0}
           onClose={() => setPendingProjectDelete(null)}
         >
           <span>Supprimer définitivement le projet "{pendingProjectDelete.name}" ?</span>
           <span className="espacepro-page__alert-actions">
             <button type="button" onClick={() => setPendingProjectDelete(null)}>Annuler</button>
             <button type="button" onClick={confirmProjectDelete}>Supprimer</button>
+          </span>
+        </Alert>
+      )}
+
+      {isResetConfirmOpen && (
+        <Alert
+          variant="warning"
+          title="Réinitialiser les projets"
+          className="espacepro-page__alert"
+          onClose={() => setIsResetConfirmOpen(false)}
+          autoCloseMs={0}
+        >
+          <span>Supprimer définitivement tous les projets et leurs articles associés ?</span>
+          <span className="espacepro-page__alert-actions">
+            <button type="button" onClick={() => setIsResetConfirmOpen(false)}>Annuler</button>
+            <button type="button" disabled={isResettingProjects} onClick={confirmProjectsReset}>
+              {isResettingProjects ? 'Réinitialisation…' : 'Réinitialiser'}
+            </button>
           </span>
         </Alert>
       )}
@@ -265,6 +350,13 @@ export default function EspaceProPage() {
           onProductsChange={setSelectedProjectProducts}
           onArticleShopOpen={() => setIsShopSelectorOpen(true)}
           onReturn={handleReturn}
+          onProjectCreate={() => navigate('/catalogue', {
+            state: {
+              forceProjectGate: true,
+              from: { pathname: '/espacepro', search: selectedProjectId ? `?projectId=${selectedProjectId}` : '' },
+            },
+          })}
+          onProjectsReset={() => setIsResetConfirmOpen(true)}
         />
       )}
 
@@ -280,6 +372,7 @@ export default function EspaceProPage() {
         onClose={() => setIsShopSelectorOpen(false)}
         onSelectShop={handleShopSelect}
       />
+
     </main>
   );
 }

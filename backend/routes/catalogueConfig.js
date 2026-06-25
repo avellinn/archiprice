@@ -68,7 +68,7 @@ function sanitizeAccountSettings(accountSettings = {}) {
 function sanitizeTaxonomies(taxonomies = {}) {
   return Object.entries(taxonomies || {}).reduce((nextTaxonomies, [key, items]) => ({
     ...nextTaxonomies,
-    [key]: stripLegacyStaticItems(items),
+    [key]: ['cities', 'neighborhoods'].includes(key) ? [] : stripLegacyStaticItems(items),
   }), {});
 }
 
@@ -103,6 +103,7 @@ function formatCatalogueProduct(product) {
     name: plain.name,
     description: plain.description || '',
     category: plain.category || '',
+    subcategory: plain.subcategory || '',
     room: plain.room || '',
     range: plain.range || '',
     availability: plain.availability || '',
@@ -111,15 +112,33 @@ function formatCatalogueProduct(product) {
     unit: plain.unit || 'u',
     unitPrice: plain.unitPrice || 0,
     price: plain.unitPrice || 0,
+    priceExcludingTax: plain.priceExcludingTax,
+    vatRate: plain.vatRate ?? 0,
+    minimumOrderQuantity: plain.minimumOrderQuantity ?? 1,
+    dimensions: plain.dimensions || {},
+    supplierId: supplier?._id ? String(supplier._id) : String(plain.supplier || ''),
+    supplierUserId: supplierUser?._id ? String(supplierUser._id) : '',
+    supplierContact: supplier?.contact || supplier?.email || '',
+    supplierPhone: supplier?.phone || '',
+    supplierStatus: supplier?.status || supplierUser?.status || 'Actif',
     supplier: supplierName,
     supplierName,
     shop: supplierName,
     image,
     images: plain.images || [],
     publicationStatus: plain.publicationStatus || 'Brouillon',
+    approvedAt: plain.approvedAt,
     createdAt: plain.createdAt,
     updatedAt: plain.updatedAt,
   };
+}
+
+function getUniqueValues(values = []) {
+  return [...new Set(
+    values
+      .map((value) => String(value || '').trim())
+      .filter(Boolean),
+  )].sort((left, right) => left.localeCompare(right, 'fr'));
 }
 
 async function readCatalogueConfig() {
@@ -161,17 +180,67 @@ router.put('/catalogue-config', async (req, res) => {
 
 router.get('/catalogue/products', async (_req, res) => {
   const products = await Product.find({ publicationStatus: 'Validé' })
-    .populate('supplier', 'name companyName email city region neighborhood status')
+    .populate('supplier', 'name companyName email contact phone city region neighborhood status')
     .populate('supplierUser', 'name email status')
     .sort({ updatedAt: -1 });
   const visibleProducts = products.filter((product) => {
     const supplier = product.supplier && typeof product.supplier === 'object' ? product.supplier : null;
     const supplierUser = product.supplierUser && typeof product.supplierUser === 'object' ? product.supplierUser : null;
+    if (!supplierUser) return false;
     const status = supplier?.status || supplierUser?.status || 'Actif';
     return !['Bloqué', 'Supprimé'].includes(status);
   });
 
   return res.json({ products: visibleProducts.map(formatCatalogueProduct) });
+});
+
+router.get('/catalogue/products/:productId', async (req, res) => {
+  const product = await Product.findOne({
+    _id: req.params.productId,
+    publicationStatus: 'Validé',
+  })
+    .populate('supplier', 'name companyName email contact phone city region neighborhood status')
+    .populate('supplierUser', 'name email status');
+
+  if (!product) return res.status(404).json({ error: 'Article introuvable' });
+
+  const supplier = product.supplier && typeof product.supplier === 'object' ? product.supplier : null;
+  const supplierUser = product.supplierUser && typeof product.supplierUser === 'object' ? product.supplierUser : null;
+  if (!supplierUser) {
+    return res.status(404).json({ error: 'Article introuvable' });
+  }
+  const status = supplier?.status || supplierUser?.status || 'Actif';
+  if (['Bloqué', 'Supprimé'].includes(status)) {
+    return res.status(404).json({ error: 'Article introuvable' });
+  }
+
+  return res.json({ product: formatCatalogueProduct(product) });
+});
+
+router.get('/catalogue/filters', async (_req, res) => {
+  const products = await Product.find({ publicationStatus: 'Validé' })
+    .populate('supplier', 'name companyName email city region neighborhood status')
+    .populate('supplierUser', 'name email status')
+    .sort({ updatedAt: -1 });
+  const visibleProducts = products
+    .filter((product) => {
+      const supplier = product.supplier && typeof product.supplier === 'object' ? product.supplier : null;
+      const supplierUser = product.supplierUser && typeof product.supplierUser === 'object' ? product.supplierUser : null;
+      if (!supplierUser) return false;
+      const status = supplier?.status || supplierUser?.status || 'Actif';
+      return !['Bloqué', 'Supprimé'].includes(status);
+    })
+    .map(formatCatalogueProduct);
+
+  return res.json({
+    filters: {
+      categories: ['Tout', ...getUniqueValues(visibleProducts.map((product) => product.category))],
+      rooms: ['Toutes', ...getUniqueValues(visibleProducts.map((product) => product.room))],
+      ranges: ['Toutes', ...getUniqueValues(visibleProducts.map((product) => product.range))],
+      cities: ['Toutes', ...getUniqueValues(visibleProducts.map((product) => product.city))],
+      neighborhoods: ['Tous', ...getUniqueValues(visibleProducts.map((product) => product.neighborhood))],
+    },
+  });
 });
 
 export default router;

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { REALTIME_EVENT } from '../services/realtime';
 
 /**
@@ -7,20 +7,47 @@ import { REALTIME_EVENT } from '../services/realtime';
  * @param {string[]|null} entities - entités à écouter ; null = toutes les entités CRUD
  */
 export default function useRealtimeRefresh(refresh, entities = null) {
+  const refreshRef = useRef(refresh);
+  const entitiesKey = Array.isArray(entities) ? [...entities].sort().join('|') : '*';
+
   useEffect(() => {
-    if (typeof refresh !== 'function') return undefined;
+    refreshRef.current = refresh;
+  }, [refresh]);
+
+  useEffect(() => {
+    if (typeof refreshRef.current !== 'function') return undefined;
+    const acceptedEntities = entitiesKey === '*' ? null : new Set(entitiesKey.split('|'));
+    let debounceTimer;
+
+    function scheduleRefresh() {
+      window.clearTimeout(debounceTimer);
+      debounceTimer = window.setTimeout(() => refreshRef.current?.(), 120);
+    }
 
     function handleRealtimeEvent(event) {
       const payload = event?.detail;
       if (!payload || payload.type === 'connected') return;
 
       const entity = String(payload.entity || '');
-      if (Array.isArray(entities) && entities.length > 0 && !entities.includes(entity)) return;
+      if (acceptedEntities && !acceptedEntities.has(entity)) return;
 
-      refresh();
+      scheduleRefresh();
+    }
+
+    function handleVisibility() {
+      if (document.visibilityState === 'visible') scheduleRefresh();
     }
 
     window.addEventListener(REALTIME_EVENT, handleRealtimeEvent);
-    return () => window.removeEventListener(REALTIME_EVENT, handleRealtimeEvent);
-  }, [refresh, entities]);
+    window.addEventListener('focus', scheduleRefresh);
+    window.addEventListener('archiprice:dashboard-refresh', scheduleRefresh);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.clearTimeout(debounceTimer);
+      window.removeEventListener(REALTIME_EVENT, handleRealtimeEvent);
+      window.removeEventListener('focus', scheduleRefresh);
+      window.removeEventListener('archiprice:dashboard-refresh', scheduleRefresh);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [entitiesKey]);
 }

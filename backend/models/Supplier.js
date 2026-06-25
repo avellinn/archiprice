@@ -1,5 +1,21 @@
 import mongoose from 'mongoose';
 
+const mediaSchema = new mongoose.Schema({
+  secure_url: { type: String, required: true, trim: true },
+  public_id: { type: String, required: true, trim: true },
+  resourceType: { type: String, enum: ['image', 'video', 'raw'], default: 'image' },
+  metadata: {
+    originalName: { type: String, trim: true },
+    mimeType: { type: String, trim: true },
+    bytes: { type: Number, min: 0 },
+    width: { type: Number, min: 0 },
+    height: { type: Number, min: 0 },
+    format: { type: String, trim: true },
+    provider: { type: String, default: 'cloudinary' },
+    folder: { type: String, default: 'archiprice/supplier-media' },
+  },
+}, { timestamps: true });
+
 const supplierSchema = new mongoose.Schema(
   {
     user: {
@@ -55,6 +71,7 @@ const supplierSchema = new mongoose.Schema(
         provider: { type: String, default: 'cloudinary' },
       },
     },
+    media: { type: [mediaSchema], default: [] },
     region: {
       type: String,
       trim: true,

@@ -8,8 +8,9 @@ import useAuth from '../context/useAuth';
 import { fetchAdminProducts, fetchAdminSupportItems, fetchAdminUsers } from '../services/adminMongo';
 import { syncAdminDataFromRemote, useAdminData } from '../services/adminData';
 import { connectRealtime } from '../services/realtime';
-import { getAdminTranslations } from '../utils/adminLanguage';
+import { getAdminLanguage, getAdminTranslations } from '../utils/adminLanguage';
 import { getAvatarColor, getDisplayName, getUserInitials } from '../utils/userDisplay';
+import { useWorkspaceLanguage } from '../utils/workspaceLanguage';
 const ADMIN_SEARCH_ICONS = {
   '/admin/dashboard': 'Dashboard',
   '/admin/catalogue/products': 'ReceiptLong',
@@ -21,6 +22,7 @@ const ADMIN_SEARCH_ICONS = {
 };
 
 const ADMIN_DISMISSED_NOTIFICATIONS_KEY = 'archiprice:admin-dismissed-notifications';
+const THEME_STORAGE_KEY = 'archiprice:theme';
 
 function readDismissedNotificationKeys(storageKey) {
   try {
@@ -34,18 +36,27 @@ function writeDismissedNotificationKeys(storageKey, keys) {
   window.localStorage.setItem(storageKey, JSON.stringify([...new Set(keys)]));
 }
 
+function readThemePreference() {
+  try {
+    return window.localStorage.getItem(THEME_STORAGE_KEY) === 'dark';
+  } catch {
+    return false;
+  }
+}
+
 export default function AdminShell() {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isThemeDark, setIsThemeDark] = useState(false);
+  const [isThemeDark, setIsThemeDark] = useState(readThemePreference);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [searchMessage, setSearchMessage] = useState('');
   const [adminData] = useAdminData();
   const adminText = getAdminTranslations(adminData);
+  useWorkspaceLanguage(getAdminLanguage(adminData));
   const [recentFeedbacks, setRecentFeedbacks] = useState([]);
   const [pendingPublications, setPendingPublications] = useState([]);
   const [recentUsers, setRecentUsers] = useState([]);
@@ -55,6 +66,20 @@ export default function AdminShell() {
   const [dismissedNotificationKeys, setDismissedNotificationKeys] = useState(() => (
     readDismissedNotificationKeys(ADMIN_DISMISSED_NOTIFICATIONS_KEY)
   ));
+
+  useEffect(() => {
+    document.body.classList.toggle('theme-dark', isThemeDark);
+    window.localStorage.setItem(THEME_STORAGE_KEY, isThemeDark ? 'dark' : 'light');
+  }, [isThemeDark]);
+
+  useEffect(() => {
+    const syncTheme = (event) => {
+      if (event.key && event.key !== THEME_STORAGE_KEY) return;
+      setIsThemeDark(readThemePreference());
+    };
+    window.addEventListener('storage', syncTheme);
+    return () => window.removeEventListener('storage', syncTheme);
+  }, []);
 
   const refreshNotifications = useCallback(async () => {
     try {
@@ -124,7 +149,10 @@ export default function AdminShell() {
       .slice(0, 8);
   }, [recentFeedbacks]);
   const visibleFeedbacks = useMemo(() => (
-    allFeedbackNotifications.filter((item) => !dismissedNotificationKeys.includes(`feedback-${item.id}`))
+    allFeedbackNotifications.filter((item) => (
+      (item.unreadForAdmin > 0 || item.status === 'Ouvert')
+      && !dismissedNotificationKeys.includes(`feedback-${item.id}`)
+    ))
   ), [allFeedbackNotifications, dismissedNotificationKeys]);
   const visiblePendingPublications = useMemo(() => (
     pendingPublications.filter((item) => !dismissedNotificationKeys.includes(`publication-${item.id}`))
@@ -201,10 +229,12 @@ export default function AdminShell() {
       items: section.items.map((item) => (
         item.id === 'admin-articles' && visiblePendingPublications.length > 0
           ? { ...item, badge: visiblePendingPublications.length }
-          : item
+          : item.id === 'admin-support' && visibleFeedbacks.length > 0
+            ? { ...item, badge: visibleFeedbacks.length }
+            : item
       )),
     }))
-  ), [sidebarSections, visiblePendingPublications.length]);
+  ), [sidebarSections, visibleFeedbacks.length, visiblePendingPublications.length]);
 
   function handleSearchSubmit(payload = {}) {
     const query = payload.query ?? searchValue.trim();

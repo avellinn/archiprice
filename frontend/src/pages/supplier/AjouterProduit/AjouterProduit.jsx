@@ -3,6 +3,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Alert, Button, Icon, ServerError } from '../../../components/ui';
 import { UPLOAD_LIMIT_LABEL } from '../../../constants/uploads';
+import {
+  PRODUCT_CATEGORIES,
+  getProductCategory,
+  getProductSubcategory,
+  getSaleUnit,
+} from '../../../constants/productTaxonomy';
 import useAuth from '../../../context/useAuth';
 import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
@@ -20,15 +26,37 @@ const INITIAL_PRODUCT_FORM = {
   name: '',
   description: '',
   category: '',
+  subcategory: '',
   price: '',
+  vatRate: '18',
+  unit: '',
+  minimumOrderQuantity: '1',
   availability: '',
   type: '',
   range: '',
   supplier: '',
   collections: '',
   tags: '',
+  dimensions: {
+    length: '',
+    width: '',
+    thickness: '',
+    weight: '',
+  },
 };
 const CUSTOM_OPTION_VALUE = '__custom__';
+const VAT_RATE_OPTIONS = [0, 5, 10, 18];
+
+function calculateTaxInclusivePrice(price, vatRate) {
+  const basePrice = Number(price || 0);
+  const taxRate = Number(vatRate || 0);
+  if (!Number.isFinite(basePrice) || !Number.isFinite(taxRate)) return 0;
+  return Math.round(basePrice * (1 + (taxRate / 100)) * 100) / 100;
+}
+
+function formatPriceValue(value) {
+  return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(Number(value || 0));
+}
 
 function getTaxonomyNames(items = []) {
   return items.map((item) => item.name).filter(Boolean);
@@ -43,6 +71,23 @@ function getSelectOptionValue(value, options = [], isCustom = false) {
 function isServerApiError(error) {
   const status = Number(error?.response?.status || 0);
   return status >= 500 || (!error?.response && Boolean(error?.request));
+}
+
+function normalizeDimensions(dimensions = {}) {
+  if (typeof dimensions === 'string') {
+    try {
+      return normalizeDimensions(JSON.parse(dimensions));
+    } catch {
+      return INITIAL_PRODUCT_FORM.dimensions;
+    }
+  }
+
+  return {
+    length: dimensions?.length || '',
+    width: dimensions?.width || '',
+    thickness: dimensions?.thickness || '',
+    weight: dimensions?.weight || '',
+  };
 }
 
 const DESCRIPTION_TOOLS = [
@@ -90,12 +135,10 @@ export default function AjouterProduit() {
     : shopName;
 
   const taxonomyOptions = useMemo(() => ({
-    categories: getTaxonomyNames(adminData.taxonomies?.categories),
     rooms: getTaxonomyNames(adminData.taxonomies?.rooms),
     ranges: getTaxonomyNames(adminData.taxonomies?.ranges),
     availability: getTaxonomyNames(adminData.taxonomies?.availability),
   }), [adminData.taxonomies]);
-  const categorySelectValue = getSelectOptionValue(productForm.category, taxonomyOptions.categories, customTaxonomyFields.category);
   const roomSelectValue = getSelectOptionValue(productForm.type, taxonomyOptions.rooms, customTaxonomyFields.type);
   const rangeSelectValue = getSelectOptionValue(productForm.range, taxonomyOptions.ranges, customTaxonomyFields.range);
   const availabilitySelectValue = getSelectOptionValue(productForm.availability, taxonomyOptions.availability, customTaxonomyFields.availability);
@@ -105,6 +148,19 @@ export default function AjouterProduit() {
     url: URL.createObjectURL(file),
   })), [files]);
   const totalImageCount = existingImages.length + files.length;
+  const selectedCategory = useMemo(() => getProductCategory(productForm.category), [productForm.category]);
+  const selectedSubcategory = useMemo(
+    () => getProductSubcategory(productForm.category, productForm.subcategory),
+    [productForm.category, productForm.subcategory],
+  );
+  const allowedUnitOptions = useMemo(() => (
+    (selectedSubcategory?.allowedUnits || []).map(getSaleUnit).filter(Boolean)
+  ), [selectedSubcategory]);
+  const taxInclusivePrice = useMemo(
+    () => calculateTaxInclusivePrice(productForm.price, productForm.vatRate),
+    [productForm.price, productForm.vatRate],
+  );
+  const selectedUnitLabel = getSaleUnit(productForm.unit)?.label || productForm.unit;
 
   function handleApiError(apiError, fallback) {
     const message = getApiErrorMessage(apiError, fallback);
@@ -148,16 +204,25 @@ export default function AjouterProduit() {
           return;
         }
 
+        const storedSubcategory = getProductSubcategory(product.category, product.subcategory);
+        const storedUnit = storedSubcategory?.allowedUnits.includes(product.unit)
+          ? product.unit
+          : (storedSubcategory?.defaultUnit || '');
         setProductForm({
           ...INITIAL_PRODUCT_FORM,
           name: product.name || '',
           description: product.description || '',
           category: product.category || '',
-          price: product.unitPrice || '',
+          subcategory: storedSubcategory?.name || '',
+          vatRate: String(product.vatRate ?? 18),
+          unit: storedUnit,
+          minimumOrderQuantity: String(product.minimumOrderQuantity ?? 1),
+          price: product.priceExcludingTax ?? product.unitPrice ?? '',
           availability: product.availability || '',
           type: product.room || '',
           range: product.range || '',
           supplier: product.supplierName || product.supplierLabel || product.supplier || shopName,
+          dimensions: normalizeDimensions(product.dimensions),
         });
         setExistingImages(product.images || []);
       })
@@ -182,12 +247,43 @@ export default function AjouterProduit() {
     }));
   }
 
+  function updateProductDimension(field, value) {
+    setServerError(null);
+    setProductForm((currentForm) => ({
+      ...currentForm,
+      dimensions: {
+        ...currentForm.dimensions,
+        [field]: value,
+      },
+    }));
+  }
+
   function updateTaxonomySelect(field, value) {
     setCustomTaxonomyFields((currentFields) => ({
       ...currentFields,
       [field]: value === CUSTOM_OPTION_VALUE,
     }));
     updateProductForm(field, value === CUSTOM_OPTION_VALUE ? '' : value);
+  }
+
+  function updateProductCategory(categoryName) {
+    setServerError(null);
+    setProductForm((currentForm) => ({
+      ...currentForm,
+      category: categoryName,
+      subcategory: '',
+      unit: '',
+    }));
+  }
+
+  function updateProductSubcategory(subcategoryName) {
+    const subcategory = getProductSubcategory(productForm.category, subcategoryName);
+    setServerError(null);
+    setProductForm((currentForm) => ({
+      ...currentForm,
+      subcategory: subcategory?.name || '',
+      unit: subcategory?.defaultUnit || '',
+    }));
   }
 
   function updateDescriptionSelection(transformSelection) {
@@ -308,11 +404,14 @@ export default function AjouterProduit() {
     if (!productForm.name.trim()
       || !productForm.description.trim()
       || !productForm.category.trim()
+      || !productForm.subcategory.trim()
       || !productForm.type.trim()
       || !productForm.range.trim()
       || !productForm.availability.trim()
       || !effectiveSupplierName
       || productForm.price === ''
+      || !productForm.unit
+      || productForm.minimumOrderQuantity === ''
       || (files.length === 0 && existingImages.length === 0)) {
       setError(productText.requiredError);
       return;
@@ -325,11 +424,16 @@ export default function AjouterProduit() {
         name: productForm.name.trim(),
         description: productForm.description.trim(),
         category: productForm.category.trim(),
+        subcategory: productForm.subcategory.trim(),
         room: productForm.type.trim(),
         range: productForm.range.trim(),
         availability: productForm.availability.trim(),
-        unitPrice: productForm.price,
-        unit: 'u',
+        priceExcludingTax: productForm.price,
+        vatRate: productForm.vatRate,
+        unitPrice: taxInclusivePrice,
+        unit: productForm.unit,
+        minimumOrderQuantity: productForm.minimumOrderQuantity,
+        dimensions: JSON.stringify(normalizeDimensions(productForm.dimensions)),
       };
 
       const savedProduct = productIdToEdit
@@ -484,29 +588,36 @@ export default function AjouterProduit() {
 
             <label className="supplier-product-field">
               <span>{productText.category}</span>
-              <select required value={categorySelectValue} onChange={(event) => updateTaxonomySelect('category', event.target.value)}>
+              <select required value={selectedCategory?.name || ''} onChange={(event) => updateProductCategory(event.target.value)}>
                 <option value="">{productText.categoryPlaceholder}</option>
-                {taxonomyOptions.categories.map((category) => (
-                  <option key={category} value={category}>{category}</option>
+                {PRODUCT_CATEGORIES.map((category) => (
+                  <option key={category.name} value={category.name}>{category.name}</option>
                 ))}
-                <option value={CUSTOM_OPTION_VALUE}>Autres</option>
               </select>
-              {categorySelectValue === CUSTOM_OPTION_VALUE && (
-                <input
-                  type="text"
-                  value={productForm.category}
-                  onChange={(event) => updateProductForm('category', event.target.value)}
-                  placeholder="Saisir une catégorie"
-                  required
-                />
-              )}
+            </label>
+
+            <label className="supplier-product-field">
+              <span>Sous-catégorie</span>
+              <select
+                required
+                disabled={!selectedCategory}
+                value={selectedSubcategory?.name || ''}
+                onChange={(event) => updateProductSubcategory(event.target.value)}
+              >
+                <option value="">Sélectionner une sous-catégorie</option>
+                {(selectedCategory?.subcategories || []).map((subcategory) => (
+                  <option key={subcategory.name} value={subcategory.name}>{subcategory.name}</option>
+                ))}
+              </select>
+              <small>La sous-catégorie détermine les unités de vente autorisées.</small>
             </label>
           </section>
 
           <section className="supplier-product-editor-card supplier-product-price-card">
+            <h2>Prix et unité</h2>
             <label className="supplier-product-field supplier-product-price-field">
-              <span>{productText.price}</span>
-              <div>
+              <span>Prix HT <em>*</em></span>
+              <div className="supplier-product-price-control">
                 <input
                   type="text"
                   value={productForm.price}
@@ -518,7 +629,64 @@ export default function AjouterProduit() {
                 <b>FCFA</b>
               </div>
             </label>
-            
+
+            <label className="supplier-product-field">
+              <span>TVA <em>*</em></span>
+              <select
+                required
+                value={productForm.vatRate}
+                onChange={(event) => updateProductForm('vatRate', event.target.value)}
+              >
+                {VAT_RATE_OPTIONS.map((rate) => <option key={rate} value={rate}>{rate}%</option>)}
+              </select>
+            </label>
+
+            <div className="supplier-product-field supplier-product-price-field">
+              <span>Prix TTC</span>
+              <div className="supplier-product-price-control supplier-product-price-control--readonly">
+                <output aria-live="polite">{formatPriceValue(taxInclusivePrice)}</output>
+                <b>FCFA</b>
+              </div>
+              <small>Calculé automatiquement à partir du prix HT et de la TVA.</small>
+            </div>
+
+            <label className="supplier-product-field">
+              <span>Unité de vente <em>*</em></span>
+              <select
+                required
+                disabled={!selectedSubcategory}
+                value={productForm.unit}
+                onChange={(event) => updateProductForm('unit', event.target.value)}
+              >
+                {!selectedSubcategory && <option value="">Sélectionnez d’abord une sous-catégorie</option>}
+                {allowedUnitOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+              <small>Seules les unités compatibles avec {selectedSubcategory?.name || 'la sous-catégorie'} sont proposées.</small>
+            </label>
+
+            <p className="supplier-product-unit-examples">
+              <Icon name="Info" size="sm" />
+              <span>
+                {selectedSubcategory
+                  ? `Unités autorisées : ${allowedUnitOptions.map((unit) => unit.label).join(', ')}. Unité par défaut : ${getSaleUnit(selectedSubcategory.defaultUnit)?.label}.`
+                  : 'Sélectionnez une sous-catégorie pour afficher ses unités autorisées.'}
+              </span>
+            </p>
+
+            <label className="supplier-product-field supplier-product-price-field">
+              <span>Quantité minimale de vente <em>*</em></span>
+              <div className="supplier-product-price-control">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  required
+                  value={productForm.minimumOrderQuantity}
+                  onChange={(event) => updateProductForm('minimumOrderQuantity', sanitizeNumericInput(event.target.value))}
+                />
+                <b>{selectedUnitLabel}</b>
+              </div>
+              <small>Quantité minimale que les clients peuvent commander.</small>
+            </label>
           </section>
         </main>
 
@@ -592,6 +760,47 @@ export default function AjouterProduit() {
                 />
               )}
             </label>
+            <fieldset className="supplier-product-field supplier-product-dimensions">
+              <legend>Dimension</legend>
+              <div className="supplier-product-dimensions__grid">
+                <label>
+                  <span>Longueur</span>
+                  <input
+                    type="text"
+                    value={productForm.dimensions.length}
+                    onChange={(event) => updateProductDimension('length', event.target.value)}
+                    placeholder="Ex: 120 cm"
+                  />
+                </label>
+                <label>
+                  <span>Largeur</span>
+                  <input
+                    type="text"
+                    value={productForm.dimensions.width}
+                    onChange={(event) => updateProductDimension('width', event.target.value)}
+                    placeholder="Ex: 60 cm"
+                  />
+                </label>
+                <label>
+                  <span>Épaisseur</span>
+                  <input
+                    type="text"
+                    value={productForm.dimensions.thickness}
+                    onChange={(event) => updateProductDimension('thickness', event.target.value)}
+                    placeholder="Ex: 8 mm"
+                  />
+                </label>
+                <label>
+                  <span>Poids</span>
+                  <input
+                    type="text"
+                    value={productForm.dimensions.weight}
+                    onChange={(event) => updateProductDimension('weight', event.target.value)}
+                    placeholder="Ex: 12 kg"
+                  />
+                </label>
+              </div>
+            </fieldset>
           </section>
 
           <div className="supplier-product-editor-submit">

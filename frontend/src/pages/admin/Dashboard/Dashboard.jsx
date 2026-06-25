@@ -5,8 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import DonutChartCard from '../../../components/DonutChart';
 import { Button, Icon, Text } from '../../../components/ui';
 import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
-import { useAdminData } from '../../../services/adminData';
-import { fetchAdminProducts, fetchAdminSimulations, fetchAdminSupportItems, fetchAdminUsers } from '../../../services/adminMongo';
+import { fetchAdminProducts, fetchAdminSimulations, fetchAdminSuppliers, fetchAdminSupportItems, fetchAdminUsers } from '../../../services/adminMongo';
 
 const HIDDEN_SIMULATIONS_KEY = 'archiprice:admin-hidden-simulations';
 
@@ -143,12 +142,12 @@ function getActivityRows(products = [], supportItems = [], simulations = []) {
 export default function Dashboard() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [adminData] = useAdminData();
   const [supportItems, setSupportItems] = useState([]);
   const [adminProducts, setAdminProducts] = useState([]);
   const [mongoSimulations, setMongoSimulations] = useState([]);
   const [hiddenSimulationIds, setHiddenSimulationIds] = useState(readHiddenSimulationIds);
   const [adminUsers, setAdminUsers] = useState([]);
+  const [adminSuppliers, setAdminSuppliers] = useState([]);
 
   const loadSupportItems = useCallback(() => {
     fetchAdminSupportItems()
@@ -169,9 +168,15 @@ export default function Dashboard() {
   }, []);
 
   const loadUsers = useCallback(() => {
-    fetchAdminUsers()
-      .then(setAdminUsers)
-      .catch(() => setAdminUsers([]));
+    Promise.all([fetchAdminUsers(), fetchAdminSuppliers()])
+      .then(([users, suppliers]) => {
+        setAdminUsers(users);
+        setAdminSuppliers(suppliers);
+      })
+      .catch(() => {
+        setAdminUsers([]);
+        setAdminSuppliers([]);
+      });
   }, []);
 
   useEffect(() => {
@@ -222,7 +227,7 @@ export default function Dashboard() {
 
   const stats = useMemo(() => {
     const products = adminProducts;
-    const suppliers = adminData.suppliers || [];
+    const suppliers = adminSuppliers;
     const simulations = visibleSimulations;
 
     return {
@@ -236,7 +241,7 @@ export default function Dashboard() {
       openSupport: supportItems.filter(isOpenSupport).length,
       totalUsers: simpleUsers.length,
     };
-  }, [adminData.suppliers, adminProducts, simpleUsers.length, supportItems, visibleSimulations]);
+  }, [adminProducts, adminSuppliers, simpleUsers.length, supportItems, visibleSimulations]);
 
   const dashboardSearchTerm = searchParams.get('q')?.trim().toLowerCase() || '';
   const history = useMemo(() => getActivityRows(adminProducts, supportItems, visibleSimulations).filter((item) => (
@@ -245,7 +250,7 @@ export default function Dashboard() {
     || String(item.status || '').toLowerCase().includes(dashboardSearchTerm)
   )), [adminProducts, dashboardSearchTerm, supportItems, visibleSimulations]);
   const userMonthActivity = useMemo(() => buildMonthActivity(simpleUsers), [simpleUsers]);
-  const supplierMonthActivity = useMemo(() => buildMonthActivity(adminData.suppliers || []), [adminData.suppliers]);
+  const supplierMonthActivity = useMemo(() => buildMonthActivity(adminSuppliers), [adminSuppliers]);
   const userActivityChart = useMemo(() => buildActivityPath(userMonthActivity), [userMonthActivity]);
   const supplierActivityChart = useMemo(() => buildActivityPath(supplierMonthActivity), [supplierMonthActivity]);
   const userStrokeWidth = simpleUsers.length > 0

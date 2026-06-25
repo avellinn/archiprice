@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { API_ROUTES } from '../constants/api';
 import api from './api';
 import { REALTIME_EVENT } from './realtime';
 
 const ADMIN_DATA_KEY = 'archiprice_admin_data';
 const ADMIN_DATA_EVENT = 'archiprice-admin-data';
 const ADMIN_DATA_CHANNEL = 'archiprice-admin-data-channel';
-const ADMIN_DATA_POLL_INTERVAL = 500;
-const ADMIN_DATA_REMOTE_POLL_INTERVAL = 2500;
-const ADMIN_DATA_REMOTE_ROUTE = '/api/catalogue-config';
+// Les événements SSE, storage et BroadcastChannel assurent la synchronisation immédiate.
+// Le polling distant n'est qu'un filet de sécurité afin d'éviter une requête globale
+// toutes les 2,5 secondes dans chaque onglet.
+const ADMIN_DATA_REMOTE_POLL_INTERVAL = 60000;
 const ADMIN_DATA_STATIC_PURGE_VERSION = 2;
 
 export const DEFAULT_ADMIN_DATA = {
@@ -229,12 +231,12 @@ function persistSyncedAdminData(data) {
 }
 
 export async function fetchRemoteAdminData() {
-  const { data } = await api.get(ADMIN_DATA_REMOTE_ROUTE);
+  const { data } = await api.get(API_ROUTES.catalogueConfig);
   return data.config ? mergeAdminData(data.config) : null;
 }
 
 export async function saveRemoteAdminData(data) {
-  const response = await api.put(ADMIN_DATA_REMOTE_ROUTE, { config: mergeAdminData(data) });
+  const response = await api.put(API_ROUTES.catalogueConfig, { config: mergeAdminData(data) });
   return mergeAdminData(response.data.config);
 }
 
@@ -274,10 +276,6 @@ export function saveAdminData(data) {
   notifyAdminDataChange(nextData);
 
   return nextData;
-}
-
-export function createAdminId(prefix) {
-  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 }
 
 export function useAdminData() {
@@ -327,8 +325,6 @@ export function useAdminData() {
     }
 
     let channel;
-    const intervalId = window.setInterval(syncAdminData, ADMIN_DATA_POLL_INTERVAL);
-
     window.addEventListener('storage', handleAdminDataEvent);
     window.addEventListener(ADMIN_DATA_EVENT, handleAdminDataEvent);
     window.addEventListener('focus', handleAdminDataEvent);
@@ -341,7 +337,6 @@ export function useAdminData() {
     }
 
     return () => {
-      window.clearInterval(intervalId);
       window.removeEventListener('storage', handleAdminDataEvent);
       window.removeEventListener(ADMIN_DATA_EVENT, handleAdminDataEvent);
       window.removeEventListener('focus', handleAdminDataEvent);
@@ -378,12 +373,14 @@ export function useAdminData() {
 
     syncRemoteAdminData();
     window.addEventListener(REALTIME_EVENT, handleRealtimeSync);
+    window.addEventListener('focus', syncRemoteAdminData);
     const intervalId = window.setInterval(syncRemoteAdminData, ADMIN_DATA_REMOTE_POLL_INTERVAL);
 
     return () => {
       cancelled = true;
       window.clearInterval(intervalId);
       window.removeEventListener(REALTIME_EVENT, handleRealtimeSync);
+      window.removeEventListener('focus', syncRemoteAdminData);
     };
   }, [applyRemoteAdminData]);
 

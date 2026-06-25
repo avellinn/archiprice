@@ -6,7 +6,9 @@ import useAuth from '../../../context/useAuth';
 import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { getApiErrorMessage } from '../../../services/api';
 import { fetchSupplierWorkspace } from '../../../services/supplier';
-import { createSupportFeedback, fetchMySupportItems } from '../../../services/support';
+import { createSupportFeedback, fetchMySupportItems, markSupportItemRead, replyToSupportItem, subscribeSupportChange } from '../../../services/support';
+import { useAdminData } from '../../../services/adminData';
+import { getSupplierTranslations } from '../../../utils/supplierLanguage';
 import SupportModal from '../../admin/Support/supportModal';
 
 const HIDDEN_SUPPORT_ITEMS_KEY = 'archiprice:supplier-support-hidden-items';
@@ -34,6 +36,9 @@ function writeHiddenSupportItems(itemIds) {
 
 export default function SupplierSupport() {
   const { user } = useAuth();
+  const [adminData] = useAdminData();
+  const translations = getSupplierTranslations(adminData);
+  const text = translations.support;
   const [supplierProfile, setSupplierProfile] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [message, setMessage] = useState('');
@@ -41,6 +46,7 @@ export default function SupplierSupport() {
   const [remoteSupportItems, setRemoteSupportItems] = useState([]);
   const [hiddenSupportItemIds, setHiddenSupportItemIds] = useState(readHiddenSupportItems);
   const [selectedFeedback, setSelectedFeedback] = useState(null);
+  const [replyDrafts, setReplyDrafts] = useState({});
 
   const supplierEmail = supplierProfile?.email || user?.email || '';
   const supplierName = supplierProfile?.companyName
@@ -74,6 +80,7 @@ export default function SupplierSupport() {
   }, [loadSupportItems]);
 
   useRealtimeRefresh(loadSupportItems, ['support-items', 'suppliers']);
+  useEffect(() => subscribeSupportChange(loadSupportItems), [loadSupportItems]);
 
   function hideSupportItem(itemId) {
     const nextHiddenItemIds = Array.from(new Set([...hiddenSupportItemIds, String(itemId)]));
@@ -81,6 +88,11 @@ export default function SupplierSupport() {
     writeHiddenSupportItems(nextHiddenItemIds);
     if (selectedFeedback?.id === itemId) setSelectedFeedback(null);
     setMessage('Feedback supprimé de votre liste.');
+  }
+
+  function openFeedback(item) {
+    setSelectedFeedback(item);
+    if (Number(item.unreadForOwner) > 0) markSupportItemRead(item.id).catch(() => {});
   }
 
   async function submitFeedback(comment) {
@@ -100,10 +112,31 @@ export default function SupplierSupport() {
       });
       setRemoteSupportItems((currentItems) => [remoteFeedback, ...currentItems]);
       setIsModalOpen(false);
-      setMessage('Merci pour votre Feedback');
+      setMessage(text.sent);
       setError('');
     } catch (apiError) {
       setError(getApiErrorMessage(apiError, "L'envoi du feedback a échoué. Vérifiez que le backend est démarré."));
+    }
+  }
+
+  async function replyToFeedback(patch) {
+    if (!selectedFeedback?.id || !patch?.reply) return;
+
+    try {
+      const remoteFeedback = await replyToSupportItem(selectedFeedback.id, patch.reply);
+      setRemoteSupportItems((currentItems) => currentItems.map((item) => (
+        item.id === remoteFeedback.id ? remoteFeedback : item
+      )));
+      setReplyDrafts((currentDrafts) => {
+        const nextDrafts = { ...currentDrafts };
+        delete nextDrafts[selectedFeedback.id];
+        return nextDrafts;
+      });
+      setSelectedFeedback(remoteFeedback);
+      setMessage(text.replySent);
+      setError('');
+    } catch (apiError) {
+      setError(getApiErrorMessage(apiError, "L'envoi de la réponse a échoué."));
     }
   }
 
@@ -112,11 +145,11 @@ export default function SupplierSupport() {
       <section className="supplier-support-panel">
         <header className="supplier-support-header">
           <div>
-            <span>Assistance boutique</span>
-            <h1>Support</h1>
+            <span>{text.eyebrow}</span>
+            <h1>{text.title}</h1>
           </div>
           <Button type="button" icon={<Icon name="Chat" size="sm" />} onClick={() => setIsModalOpen(true)}>
-            Laisser un commentaire
+            {text.leaveComment}
           </Button>
         </header>
 
@@ -132,7 +165,7 @@ export default function SupplierSupport() {
         )}
 
         <section className="supplier-support-card">
-          <h2>Feedbacks boutique</h2>
+          <h2>{text.listTitle}</h2>
           {supplierFeedbacks.length ? (
             <div className="supplier-support-list">
               {supplierFeedbacks.map((item) => (
@@ -140,23 +173,23 @@ export default function SupplierSupport() {
                   key={item.id}
                   role="button"
                   tabIndex={0}
-                  onClick={() => setSelectedFeedback(item)}
+                  onClick={() => openFeedback(item)}
                   onKeyDown={(event) => {
                     if (event.key !== 'Enter' && event.key !== ' ') return;
                     event.preventDefault();
-                    setSelectedFeedback(item);
+                    openFeedback(item);
                   }}
                 >
                   <div>
                     <strong>{item.subject}</strong>
                     <span>{item.date}</span>
-                    {item.reply && <small>Réponse admin : {item.reply}</small>}
+                    {item.reply && <small>{text.adminReply} : {item.reply}</small>}
                   </div>
                   <b>{item.status}</b>
                   <button
                     type="button"
                     className="supplier-support-list__delete"
-                    title="Supprimer de ma liste"
+                    title={text.delete}
                     aria-label={`Supprimer ${item.subject} de ma liste`}
                     onClick={(event) => {
                       event.stopPropagation();
@@ -169,15 +202,16 @@ export default function SupplierSupport() {
               ))}
             </div>
           ) : (
-            <Alert variant="info">Aucun feedback fournisseur envoyé pour le moment.</Alert>
+            <Alert variant="info">{text.empty}</Alert>
           )}
         </section>
       </section>
 
       {isModalOpen && (
         <ModalSupport
-          title="Laisser un commentaire"
-          placeholder="Partagez votre feedback sur votre espace fournisseur."
+          title={text.leaveComment}
+          placeholder={text.placeholder}
+          labels={{ ...text, ...translations.common }}
           onCancel={() => setIsModalOpen(false)}
           onSubmit={submitFeedback}
         />
@@ -185,12 +219,17 @@ export default function SupplierSupport() {
 
       {selectedFeedback && (
         <SupportModal
+          labels={translations.common}
           item={selectedFeedback}
-          replyDraft={selectedFeedback.reply || ''}
-          onReplyChange={() => {}}
+          replyDraft={replyDrafts[selectedFeedback.id] ?? ''}
+          onReplyChange={(value) => {
+            setReplyDrafts((currentDrafts) => ({
+              ...currentDrafts,
+              [selectedFeedback.id]: value,
+            }));
+          }}
           onClose={() => setSelectedFeedback(null)}
-          onUpdate={() => {}}
-          canReply={false}
+          onUpdate={replyToFeedback}
         />
       )}
     </main>

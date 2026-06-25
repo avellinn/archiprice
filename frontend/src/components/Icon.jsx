@@ -67,12 +67,6 @@ const ICONS = {
       <path key="close-2" d="m6 6 12 12" />,
     ],
   },
-  Copy: {
-    paths: [
-      <rect key="copy-back" x="8" y="8" width="11" height="11" rx="2" />,
-      <path key="copy-front" d="M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1" />,
-    ],
-  },
   DarkMode: {
     paths: [<path key="moon" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />],
   },
@@ -151,12 +145,6 @@ const ICONS = {
       <path key="sun-rays" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />,
     ],
   },
-  Link: {
-    paths: [
-      <path key="link-left" d="M10 13a5 5 0 0 0 7.07 0l2-2a5 5 0 0 0-7.07-7.07l-1.15 1.15" />,
-      <path key="link-right" d="M14 11a5 5 0 0 0-7.07 0l-2 2A5 5 0 0 0 12 20.07l1.15-1.15" />,
-    ],
-  },
   Logout: {
     paths: [
       <path key="logout-door" d="M10 17 15 12 10 7" />,
@@ -181,17 +169,24 @@ const ICONS = {
       <path key="search-line" d="m16 16 4 4" />,
     ],
   },
+  Send: {
+    paths: [
+      <path key="send-body" d="M22 2 11 13" />,
+      <path key="send-wing" d="m22 2-7 20-4-9-9-4z" />,
+    ],
+  },
+  Storefront: {
+    paths: [
+      <path key="store-awning" d="M4 10V5h16v5" />,
+      <path key="store-roof" d="M3 10h18l-2-5H5z" />,
+      <path key="store-body" d="M5 10v9h14v-9" />,
+      <path key="store-door" d="M9 19v-5h6v5" />,
+    ],
+  },
   Tag: {
     paths: [
       <path key="tag-shape" d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z" />,
       <circle key="tag-dot" cx="8" cy="8" r="1.6" />,
-    ],
-  },
-  Upload: {
-    paths: [
-      <path key="upload-line" d="M12 21V10" />,
-      <path key="upload-arrow" d="m7 15 5-5 5 5" />,
-      <path key="upload-tray" d="M5 5h14" />,
     ],
   },
   Visibility: {
@@ -235,7 +230,6 @@ const NAME_ALIASES = {
   close: 'Close',
   dashboard: 'Dashboard',
   darkMode: 'DarkMode',
-  copy: 'Copy',
   delete: 'Delete',
   download: 'Download',
   edit: 'Edit',
@@ -245,13 +239,13 @@ const NAME_ALIASES = {
   history: 'History',
   info: 'Info',
   lightMode: 'LightMode',
-  link: 'Link',
   logout: 'Logout',
   notifications: 'Notifications',
   receiptLong: 'ReceiptLong',
   search: 'Search',
+  send: 'Send',
+  storefront: 'Storefront',
   tag: 'Tag',
-  upload: 'Upload',
   visibility: 'Visibility',
   visibilityOff: 'VisibilityOff',
   wallet: 'Wallet',

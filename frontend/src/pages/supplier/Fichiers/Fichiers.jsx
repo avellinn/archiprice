@@ -2,7 +2,14 @@ import './Fichiers.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Button, Icon, Loader } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
-import { deleteSupplierProductImage, fetchSupplierWorkspace, subscribeSupplierWorkspaceChange } from '../../../services/supplier';
+import {
+  deleteSupplierFile,
+  fetchSupplierFiles,
+  fetchSupplierWorkspace,
+  resetSupplierFiles,
+  subscribeSupplierWorkspaceChange,
+  uploadSupplierFiles,
+} from '../../../services/supplier';
 
 function getImageUrl(image) {
   if (!image) return '';
@@ -33,45 +40,32 @@ function getProductFiles(products = []) {
         type: metadata.mimeType || 'Image produit',
         size: metadata.bytes,
         url: getImageUrl(image),
+        isProductImage: true,
       };
     }).filter((file) => file.url);
   });
 }
 
-function removeFileFromWorkspace(workspace, file) {
-  return {
-    ...workspace,
-    products: (workspace?.products || []).map((product) => {
-      if (String(product.id || product._id || '') !== String(file.productId || '')) return product;
-
-      return {
-        ...product,
-        images: (product.images || []).filter((image) => (
-          String(image?.public_id || '') !== String(file.publicId || '')
-        )),
-      };
-    }),
-  };
-}
-
 export default function Fichiers() {
   const fileInputRef = useRef(null);
-  const [files, setFiles] = useState([]);
+  const [cloudFiles, setCloudFiles] = useState([]);
   const [workspace, setWorkspace] = useState(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [deletingFileId, setDeletingFileId] = useState('');
-  const [pendingImageDelete, setPendingImageDelete] = useState(null);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [hiddenCloudinaryFileIds, setHiddenCloudinaryFileIds] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   function loadWorkspace() {
     let cancelled = false;
 
-    fetchSupplierWorkspace()
-      .then((data) => {
+    Promise.all([fetchSupplierWorkspace(), fetchSupplierFiles()])
+      .then(([data, remoteFiles]) => {
         if (!cancelled) {
           setWorkspace(data);
+          setCloudFiles(remoteFiles);
           setError('');
         }
       })
@@ -98,92 +92,79 @@ export default function Fichiers() {
   }, []);
 
   const uploadedFiles = useMemo(() => getProductFiles(workspace?.products || []), [workspace?.products]);
-  const localFiles = useMemo(() => files.map((file, index) => ({
-    id: `local-${file.name}-${index}`,
-    productName: 'Import manuel',
-    name: file.name,
-    type: file.type || 'Fichier local',
-    size: file.size,
-    url: file.type?.startsWith('image/') ? URL.createObjectURL(file) : '',
-    isLocal: true,
-  })), [files]);
-  const visibleFiles = [...uploadedFiles, ...localFiles];
-
-  useEffect(() => () => {
-    localFiles.forEach((file) => {
-      if (file.url) URL.revokeObjectURL(file.url);
-    });
-  }, [localFiles]);
+  const independentCloudFiles = useMemo(() => cloudFiles.map((file) => ({
+    id: String(file._id || file.id || file.public_id),
+    productName: 'Médiathèque Cloudinary',
+    name: file.metadata?.originalName || file.public_id || 'Fichier',
+    type: file.metadata?.mimeType || file.resourceType || 'Média',
+    size: file.metadata?.bytes,
+    url: file.secure_url || '',
+    resourceType: file.resourceType || 'image',
+    isIndependent: true,
+  })), [cloudFiles]);
+  const allCloudFiles = [...independentCloudFiles, ...uploadedFiles];
+  const visibleFiles = allCloudFiles.filter((file) => !hiddenCloudinaryFileIds.includes(file.id));
 
   function openFilePicker() {
     fileInputRef.current?.click();
   }
 
-  function handleFilesChange(event) {
+  async function handleFilesChange(event) {
     const selectedFiles = Array.from(event.target.files || []);
-    setFiles((currentFiles) => [...currentFiles, ...selectedFiles]);
     event.target.value = '';
+    if (!selectedFiles.length) return;
+    setIsUploading(true);
+    setError('');
+    try {
+      setCloudFiles(await uploadSupplierFiles(selectedFiles));
+      setSuccessMessage(`${selectedFiles.length} fichier(s) stocké(s) sur Cloudinary.`);
+    } catch (apiError) {
+      setError(getApiErrorMessage(apiError, "Impossible d'envoyer les fichiers sur Cloudinary."));
+    } finally {
+      setIsUploading(false);
+    }
   }
 
-  function removeLocalFile(fileId) {
-    setFiles((currentFiles) => currentFiles.filter((file, index) => `local-${file.name}-${index}` !== fileId));
+  function hideProductImage(file) {
+    setDeletingFileId(file.id);
+    setError('');
+    setHiddenCloudinaryFileIds((currentIds) => [...new Set([...currentIds, file.id])]);
+    window.setTimeout(() => {
+      setDeletingFileId('');
+    }, 120);
   }
 
-  async function deleteProductImage(file) {
-    if (!file.productId || !file.publicId) return;
+  async function removeFile(file) {
+    if (file.isProductImage) {
+      hideProductImage(file);
+      setSuccessMessage("L'image produit est masquée de cette médiathèque, sans modifier le produit.");
+      return;
+    }
 
     setDeletingFileId(file.id);
     setError('');
-    setPendingImageDelete(null);
-    setWorkspace((currentWorkspace) => removeFileFromWorkspace(currentWorkspace, file));
-
     try {
-      const updatedProduct = await deleteSupplierProductImage(file.productId, file.publicId);
-
-      setWorkspace((currentWorkspace) => ({
-        ...currentWorkspace,
-        products: (currentWorkspace?.products || []).map((product) => (
-          product.id === updatedProduct.id ? updatedProduct : product
-        )),
-      }));
+      setCloudFiles(await deleteSupplierFile(file.id));
+      setSuccessMessage('Fichier supprimé définitivement de la médiathèque.');
     } catch (apiError) {
-      setError(getApiErrorMessage(apiError, "Impossible de supprimer l'image."));
-      loadWorkspace();
+      setError(getApiErrorMessage(apiError, 'Impossible de supprimer ce fichier.'));
     } finally {
       setDeletingFileId('');
     }
   }
 
-  function confirmProductImageDelete() {
-    if (pendingImageDelete) {
-      deleteProductImage(pendingImageDelete);
-    }
-  }
-
-  function removeProductImage(file) {
-    deleteProductImage(file);
-  }
-
   async function confirmResetFiles() {
-    const uploadedFilesToDelete = uploadedFiles.filter((file) => file.productId && file.publicId);
-
     setDeletingFileId('all');
     setError('');
     setSuccessMessage('');
     setIsResetConfirmOpen(false);
-    setFiles([]);
-    setWorkspace((currentWorkspace) => uploadedFilesToDelete.reduce(removeFileFromWorkspace, currentWorkspace));
-
     try {
-      await Promise.all(uploadedFilesToDelete.map((file) => (
-        deleteSupplierProductImage(file.productId, file.publicId)
-      )));
-      const nextWorkspace = await fetchSupplierWorkspace();
-      setWorkspace(nextWorkspace);
-      setSuccessMessage('Tous les fichiers ont été réinitialisés.');
+      setCloudFiles(await resetSupplierFiles());
+      setSuccessMessage(
+        'Médiathèque vidée. Les images liées aux produits restent intactes sur Cloudinary.',
+      );
     } catch (apiError) {
-      setError(getApiErrorMessage(apiError, 'Impossible de réinitialiser les fichiers.'));
-      loadWorkspace();
+      setError(getApiErrorMessage(apiError, 'Impossible de réinitialiser la médiathèque.'));
     } finally {
       setDeletingFileId('');
     }
@@ -215,27 +196,15 @@ export default function Fichiers() {
           type="file"
           multiple
           className="supplier-files-input"
+          accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,application/pdf"
           onChange={handleFilesChange}
         />
 
         {isLoading && <Loader className="supplier-files-status" label="Chargement des fichiers..." />}
+        {isUploading && <Loader className="supplier-files-status" label="Envoi vers Cloudinary..." />}
         {error && (
           <Alert variant="danger" className="supplier-files-status" onClose={() => setError('')}>
             {error}
-          </Alert>
-        )}
-        {pendingImageDelete && (
-          <Alert
-            variant="warning"
-            className="supplier-files-status supplier-files-confirm-alert"
-            title="Supprimer l'image"
-            onClose={() => setPendingImageDelete(null)}
-          >
-            <span>Supprimer l'image "{pendingImageDelete.name}" ?</span>
-            <span className="supplier-files-confirm-alert__actions">
-              <button type="button" onClick={() => setPendingImageDelete(null)}>Annuler</button>
-              <button type="button" onClick={confirmProductImageDelete}>Supprimer</button>
-            </span>
           </Alert>
         )}
         {isResetConfirmOpen && (
@@ -243,9 +212,13 @@ export default function Fichiers() {
             variant="warning"
             className="supplier-files-status supplier-files-confirm-alert"
             title="Réinitialiser les fichiers"
+            autoCloseMs={0}
             onClose={() => setIsResetConfirmOpen(false)}
           >
-            <span>Vider tous les fichiers de cette page ?</span>
+            <span>
+              Supprimer définitivement les fichiers indépendants ? Les images utilisées par les produits
+              resteront intactes.
+            </span>
             <span className="supplier-files-confirm-alert__actions">
               <button type="button" onClick={() => setIsResetConfirmOpen(false)}>Annuler</button>
               <button type="button" onClick={confirmResetFiles}>Réinitialiser</button>
@@ -284,35 +257,36 @@ export default function Fichiers() {
             {visibleFiles.map((file) => (
               <article key={file.id} className="supplier-file-card">
                 <div className="supplier-file-card__preview">
-                  {file.url ? <img src={file.url} alt={file.name} /> : <Icon name="Folder" size="lg" />}
+                  {file.url && file.resourceType === 'video' ? (
+                    <video src={file.url} controls preload="metadata" aria-label={file.name} />
+                  ) : file.url && String(file.type).startsWith('image/') ? (
+                    <img src={file.url} alt={file.name} />
+                  ) : file.url && String(file.type).includes('pdf') ? (
+                    <a href={file.url} target="_blank" rel="noreferrer" aria-label={`Ouvrir ${file.name}`}>
+                      <Icon name="Folder" size="lg" />
+                    </a>
+                  ) : file.url ? (
+                    <img src={file.url} alt={file.name} />
+                  ) : (
+                    <Icon name="Folder" size="lg" />
+                  )}
                 </div>
                 <div className="supplier-file-card__body">
                   <strong>{file.name}</strong>
                   <span>{file.productName}</span>
                   <small>{file.type} · {formatFileSize(file.size)}</small>
                 </div>
-                {file.isLocal && <span className="supplier-file-card__badge">Sélectionné</span>}
-                {file.isLocal && (
-                  <button
-                    type="button"
-                    className="supplier-file-card__delete"
-                    title="Supprimer le fichier"
-                    onClick={() => removeLocalFile(file.id)}
-                  >
-                    <Icon name="Delete" size="sm" />
-                  </button>
-                )}
-                {!file.isLocal && file.publicId && (
-                  <button
-                    type="button"
-                    className="supplier-file-card__delete"
-                    title="Supprimer l'image"
-                    disabled={deletingFileId === file.id}
-                    onClick={() => removeProductImage(file)}
-                  >
-                    <Icon name="Delete" size="sm" />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className="supplier-file-card__delete"
+                  title={file.isProductImage
+                    ? 'Masquer de cette vue sans modifier le produit'
+                    : 'Supprimer définitivement de la médiathèque'}
+                  disabled={deletingFileId === file.id}
+                  onClick={() => removeFile(file)}
+                >
+                  <Icon name="Delete" size="sm" />
+                </button>
               </article>
             ))}
           </div>
@@ -323,9 +297,7 @@ export default function Fichiers() {
             <Button type="button" variant="outline" size="sm" onClick={openFilePicker}>
               Charger des fichiers
             </Button>
-            {files.length > 0 && (
-              <small>{files.length} fichier(s) sélectionné(s). Import illimité.</small>
-            )}
+            <small>Les fichiers importés restent disponibles sur Cloudinary.</small>
           </div>
         )}
       </section>

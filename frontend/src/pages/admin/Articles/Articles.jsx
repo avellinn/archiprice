@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Alert, Badge, Icon, Loader, Table } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
 import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
+import { getSaleUnit } from '../../../constants/productTaxonomy';
 import {
   deleteAdminProduct,
   fetchAdminProducts,
@@ -75,19 +76,18 @@ export default function Articles() {
       ? products.filter((product) => String(product.publicationStatus || '').toLowerCase() === publicationStatus)
       : products;
 
-    if (!query) return productsByStatus;
+    const visibleProducts = productsByStatus.filter((product) => product.supplierStatus !== 'Supprimé' && product.supplierUserId);
 
-    return productsByStatus.filter((product) => (
+    if (!query) return visibleProducts;
+
+    return visibleProducts.filter((product) => (
       String(product.name || '').toLowerCase().includes(query)
       || String(product.category || '').toLowerCase().includes(query)
+      || String(product.subcategory || '').toLowerCase().includes(query)
       || String(product.supplierName || product.supplier || '').toLowerCase().includes(query)
       || String(product.publicationStatus || '').toLowerCase().includes(query)
     ));
   }, [products, searchParams]);
-  const pendingPublicationCount = useMemo(() => (
-    products.filter((product) => product.publicationStatus === 'En attente').length
-  ), [products]);
-
   async function updatePublication(product, publicationStatus) {
     setBusyProductId(product.id);
     setError('');
@@ -189,7 +189,7 @@ export default function Articles() {
           {product.image ? <img src={product.image} alt="" /> : <i aria-hidden="true" />}
           <span>
             <strong>{product.name}</strong>
-            <small>{product.category || 'Catégorie non renseignée'}</small>
+            <small>{[product.category, product.subcategory].filter(Boolean).join(' › ') || 'Catégorie non renseignée'}</small>
           </span>
         </span>
       ),
@@ -202,7 +202,7 @@ export default function Articles() {
     {
       key: 'unitPrice',
       label: 'Prix',
-      render: (price) => formatFCFA(price),
+      render: (_price, product) => `${formatFCFA(product.priceExcludingTax ?? product.unitPrice)} / ${(getSaleUnit(product.unit)?.label || product.unit || 'unité').toLocaleLowerCase('fr')}`,
     },
     {
       key: 'publicationStatus',
@@ -292,7 +292,7 @@ export default function Articles() {
                 </a>
                 <div>
                   <strong>{selectedProduct.name || 'Article sans nom'}</strong>
-                  <span>{selectedProduct.category || 'Catégorie non renseignée'}</span>
+                  <span>{[selectedProduct.category, selectedProduct.subcategory].filter(Boolean).join(' › ') || 'Catégorie non renseignée'}</span>
                   {getProductImage(selectedProduct) && (
                     <a href={getProductImage(selectedProduct)} target="_blank" rel="noreferrer">
                       Voir image Cloudinary

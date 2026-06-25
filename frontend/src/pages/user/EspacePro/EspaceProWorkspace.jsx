@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Icon from '../../../components/Icon';
 import { Alert, Button, Loader } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
 import { getApiErrorMessage } from '../../../services/api';
-import { addExportedDocument } from '../../../services/exportedDocuments';
+import { addExportedDocument, removeExportedDocument } from '../../../services/exportedDocuments';
 import { fetchProducts } from '../../../services/products';
 import { downloadProjectRecapPdf } from '../../../services/projects';
 import { API_ROUTES } from '../../../constants/api';
+import { createExportedProductSnapshot } from '../../../utils/productPresentation';
 import './EspaceProWorkspace.css';
 
 function formatDate(value) {
@@ -90,11 +92,10 @@ function getProjectRecapHref(project) {
 
 function getRecapRows(products) {
   return products.map((product) => ({
+    ...createExportedProductSnapshot(product),
     name: product.name || 'Article sans nom',
     category: product.category || 'Catégorie non renseignée',
     price: parseAmount(product.unitPrice),
-    imageUrl: getProductImages(product)[0] || '',
-    images: getProductImages(product),
   }));
 }
 
@@ -110,8 +111,11 @@ export default function EspacePro({
   onProductsChange,
   onArticleShopOpen,
   onReturn,
+  onProjectCreate,
+  onProjectsReset,
 }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const effectiveSelectedProjectId = selectedProjectId || projects[0]?.id || '';
   const selectedProject = projects.find((project) => project.id === effectiveSelectedProjectId) || projects[0];
   const projectMetadata = extractProjectMetadata(selectedProject);
@@ -130,9 +134,7 @@ export default function EspacePro({
   const activeArticle = visibleProjectProducts.length > 0
     ? visibleProjectProducts[activeArticleIndex % visibleProjectProducts.length]
     : null;
-  const activeArticlePosition = visibleProjectProducts.length > 0
-    ? (activeArticleIndex % visibleProjectProducts.length) + 1
-    : 0;
+
   const activeArticleImages = getProductImages(activeArticle);
   const activeArticleImage = activeArticleImages.length > 0
     ? activeArticleImages[activeImageIndex % activeArticleImages.length]
@@ -200,23 +202,18 @@ export default function EspacePro({
   }
 
   function handleArticleImageClick() {
-    if (activeArticleImages.length > 1) {
-      const nextImageIndex = activeImageIndex + 1;
-      if (nextImageIndex < activeArticleImages.length) {
-        setActiveImageIndex(nextImageIndex);
-        return;
-      }
-
-      setActiveImageIndex(0);
-      if (visibleProjectProducts.length > 1) {
-        setActiveArticleIndex((currentIndex) => (currentIndex + 1) % visibleProjectProducts.length);
-      }
-      return;
-    }
-
-    if (visibleProjectProducts.length <= 1) return;
-    setActiveImageIndex(0);
-    setActiveArticleIndex((currentIndex) => (currentIndex + 1) % visibleProjectProducts.length);
+    if (!activeArticle?.id) return;
+    const targetProductId = activeArticle.catalogueProductId || activeArticle.sourceProductId || activeArticle.id;
+    const query = effectiveSelectedProjectId ? `?projectId=${effectiveSelectedProjectId}` : '';
+    navigate(`/fiche-produits/${targetProductId}${query}`, {
+      state: {
+        product: activeArticle,
+        from: {
+          pathname: '/espacepro',
+          search: effectiveSelectedProjectId ? `?projectId=${effectiveSelectedProjectId}` : '',
+        },
+      },
+    });
   }
 
   function handleArticleCardClick() {
@@ -238,22 +235,15 @@ export default function EspacePro({
     setIsRecapDownloading(true);
     setRecapError('');
 
+    let exportedDocument = null;
     try {
-      const { blob, fileName } = await downloadProjectRecapPdf(selectedProject.id);
-      const fileUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = fileUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(fileUrl);
-      addExportedDocument({
+      const expectedFileName = getProjectRecapFileName(selectedProject);
+      exportedDocument = addExportedDocument({
         projectId: selectedProject.id,
         projectName: selectedProject.name,
         userName: user?.name || user?.fullName || user?.email || 'Utilisateur ArchiPrice',
         userEmail: user?.email || '',
-        fileName,
+        fileName: expectedFileName,
         reference: getProjectReference(selectedProject),
         amount: articleSimulation.total,
         itemCount: articleSimulation.count,
@@ -261,6 +251,7 @@ export default function EspacePro({
         city: projectMetadata.roomType,
         coefficient: '1,00',
         items: recapRows.map((row) => ({
+          ...row,
           name: row.name,
           category: row.category,
           quantity: 1,
@@ -271,7 +262,18 @@ export default function EspacePro({
           images: row.images,
         })),
       });
+      const exportUrl = `${window.location.origin}/export-pdf/${encodeURIComponent(exportedDocument.id)}`;
+      const { blob, fileName } = await downloadProjectRecapPdf(selectedProject.id, { exportUrl });
+      const fileUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(fileUrl);
     } catch (error) {
+      if (exportedDocument?.id) removeExportedDocument(exportedDocument.id);
       setRecapError(getApiErrorMessage(error, 'Impossible de générer le PDF'));
     } finally {
       setIsRecapDownloading(false);
@@ -291,6 +293,25 @@ export default function EspacePro({
             onClick={onReturn}
           >
             <Icon name="ArrowLeft" size="sm" />
+          </button>
+
+          <button
+            type="button"
+            className="espacepro__return-button espacepro__add-button"
+            aria-label="Créer un nouveau projet"
+            title="Add"
+            onClick={onProjectCreate}
+          >
+            <Icon name="Add" size="sm" />
+          </button>
+
+          <button
+            type="button"
+            className="espacepro__reset-button"
+            disabled={projects.length === 0}
+            onClick={onProjectsReset}
+          >
+            Réinitialiser
           </button>
         </div>
         {isProjectsLoading && <Loader label="Chargement des projets..." />}
@@ -346,7 +367,7 @@ export default function EspacePro({
 
       <section className="espacepro__articles" aria-label="Articles choisis">
         <div className="espacepro__articles-header">
-          <span>Articles choisis</span>
+          <span>Articles</span>
         </div>
 
         {visibleIsProductsLoading && <Loader className="espacepro__empty" label="Chargement des articles..." />}
@@ -375,14 +396,8 @@ export default function EspacePro({
                 handleArticleImageClick();
               }}
             >
-              <span>
-                {activeArticleImage ? activeArticle.name : activeArticle.name.slice(0, 2).toUpperCase()}
-              </span>
-              <small>
-                {activeArticleImages.length > 1
-                  ? `${(activeImageIndex % activeArticleImages.length) + 1}/${activeArticleImages.length}`
-                  : `${activeArticlePosition}/${visibleProjectProducts.length}`}
-              </small>
+
+
               <i
                 aria-hidden="true"
                 style={{
@@ -461,16 +476,16 @@ export default function EspacePro({
               <div>
                 <dt>Budget</dt>
                 <dd>{formatOptionalCurrency(projectMetadata.budget)}</dd>
-              </div>   
-                      
+              </div>
+
             </dl>
-            
+
           ) : (
             <p>Aucun projet sélectionné.</p>
           )}
         </section>
  <footer className="espacepro__rer">
-              
+
                 </footer>
       </aside>
 

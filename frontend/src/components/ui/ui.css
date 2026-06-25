@@ -1,4 +1,3 @@
-.ui-card,
 .ui-table-card {
   border: 1px solid var(--app-border-color);
   border-radius: 12px;
@@ -82,32 +81,4 @@
 .ui-badge--neutral {
   background: rgb(100 116 139 / 0.14);
   color: var(--app-muted-color);
-}
-
-.ui-pagination {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-}
-
-.ui-pagination button {
-  display: inline-grid;
-  min-width: 30px;
-  height: 30px;
-  place-items: center;
-  padding: 0 0.35rem;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--app-text-color);
-  font: inherit;
-  font-size: 0.86rem;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.ui-pagination button:hover,
-.ui-pagination button.is-active {
-  background: #eff6ff;
-  color: #1d73f8;
 }

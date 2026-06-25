@@ -46,8 +46,8 @@ Dernière passe du 2026-06-10 :
 - clarification du dark mode global et des variables `--app-*` ;
 - clarification de l'usage obligatoire de `Alert.jsx` pour les messages applicatifs et les actions de boutons dans les modales ;
 - documentation du canal realtime `/api/realtime`.
-- extraction de `.catalogue-product-main` vers `frontend/src/pages/user/Catalogue/catalgrid.jsx` et `catalgrid.css` ;
-- conservation de `ModalCreateProject.jsx` comme wrapper de compatibilité vers `Newproject.jsx` ;
+- regroupement de la grille, des catégories et des filtres dans `Catalogue.jsx` afin de supprimer les anciens composants orphelins ;
+- utilisation directe de `Newproject.jsx` sans wrapper de compatibilité ;
 - ajout de l'option `Autre` au champ `Type de pièce` de la modale de création de projet ;
 - ajout de l'option `Autre` éditable aux champs option du formulaire admin article ;
 - retrait de la colonne `Statut` dans la page admin `Simulations` ;
@@ -57,7 +57,17 @@ Dernière passe du 2026-06-10 :
 - restauration de la validation admin des produits supplier avant affichage dans le catalogue user ;
 - vérification des artefacts : aucun `dist`, cache Vite ou fichier temporaire persistant avant build ; après vérification, `npm run clean` supprime les artefacts générés.
 
-Le build frontend produit uniquement l'avertissement connu de chunk Vite supérieur à `500 kB`.
+Le build frontend est validé sans avertissement de chunk supérieur à `500 kB` depuis la mise en place du chargement différé des pages.
+
+## Nettoyage du 19 juin 2026
+
+- graphe d'imports vérifié depuis `frontend/src/main.jsx` et `backend/server.js` : aucun fichier JS, JSX ou CSS orphelin restant ;
+- suppression de 16 anciens composants, wrappers, styles et services sans consommateur ;
+- suppression de trois variantes de logo inutilisées ; `log.png` reste l'unique asset de marque ;
+- suppression des artefacts régénérables via `npm run clean` ;
+- chargement différé des pages avec `React.lazy` et `Suspense` dans `App.jsx` ;
+- bundle principal ramené d'environ `961 kB` à `368 kB` avant gzip, sans avertissement de chunk supérieur à `500 kB` ;
+- documentation alignée sur les chemins réellement actifs.
 
 ## Nettoyage Standard
 
@@ -158,13 +168,12 @@ Toutes les pages admin sont regroupées dans `frontend/src/pages/admin/` :
 - `Simulations/Simulations.jsx`
 - `Support/Support.jsx`
 - `Paramètres/Paramètres.jsx`
-- `PageShell.jsx`
 
 `Support.jsx` regroupe tickets, feedback et signalements prix.
 
 `Paramètres.jsx` regroupe configuration simulations et coefficients régionaux.
 
-`PageShell.jsx` centralise les blocs UI communs aux pages admin et réexporte certains composants du design system partagé.
+Les pages admin utilisent directement le design system partagé dans `frontend/src/components/ui/`.
 
 Les données backoffice locales et dynamiques sont centralisées dans `frontend/src/services/adminData.js`.
 
@@ -174,7 +183,7 @@ Les pages admin n'utilisent plus les alertes navigateur pour les messages métie
 
 Toutes les pages fournisseur sont regroupées dans `frontend/src/pages/supplier/` :
 
-- `Analysedon/Analysedon.jsx`
+- `Dashboard/Dashboard.jsx`
 - `MaBoutique/MaBoutique.jsx`
 - `Produits/Produits.jsx`
 - `AjouterProduit/AjouterProduit.jsx`
@@ -184,9 +193,20 @@ Toutes les pages fournisseur sont regroupées dans `frontend/src/pages/supplier/
 - `Support/Support.jsx`
 - `Parametres/Parametres.jsx`
 
-Le fichier historique `Dashboard.jsx` a été supprimé lors d'une passe précédente : le routeur pointe directement vers `Analysedon/Analysedon.jsx`. La page catalogue supplier a aussi été retirée du routeur ; les produits fournisseur sont gérés via `Produits`, `AjouterProduit`, `MaBoutique` et `Fichiers`.
+Le routeur pointe vers `Dashboard/Dashboard.jsx`. La page catalogue supplier a été retirée du routeur ; les produits fournisseur sont gérés via `Produits`, `AjouterProduit`, `MaBoutique` et `Fichiers`.
 
-Les pages `Demande` et `Demandesup` gèrent les conversations user/boutique. Les conversations sont affichées en liste cliquable, groupées par boutique ou client/projet et utilisent `Alert.jsx` pour les actions de réponse et suppression.
+Les pages `Demande` et `Demandesup` gèrent les conversations user/boutique. Les conversations sont affichées en liste cliquable, groupées par boutique ou client/projet. Un clic marque le message comme lu (badge « Message lu », texte regular). Les alertes d'action utilisent `Alert` en toast (3,5s).
+
+### Catalogue et Archives
+
+- Première visite catalogue : création de projet obligatoire via `Newproject.jsx` (`deferCreation`).
+- Après création : accès catalogue **48h** sans nouveau projet (`archiprice:catalogue_project_created_at:{userId}`).
+- Chaque projet créé est copié dans **Archives** via `upsertProjectArchive` (localStorage scopé par userId).
+
+### Admin — comptes inexistants
+
+- Statut soft-delete (`Supprimé`) ou entrée absente de MongoDB → badge **Inexistant**.
+- Suppression définitive disponible (API ou purge cache admin si orphelin).
 
 ### Composants Partagés
 
@@ -194,10 +214,7 @@ Les pages `Demande` et `Demandesup` gèrent les conversations user/boutique. Les
 - `components/ui/Text.jsx`
 - `components/ui/Icon.jsx`
 - `components/ui/Badge.jsx`
-- `components/ui/Card.jsx`
-- `components/ui/DataTable.jsx`
 - `components/ui/EmptyState.jsx`
-- `components/ui/Pagination.jsx`
 - `components/ui/Alert.jsx`
 - `components/ui/Table.jsx`
 - `components/ui/ServerError.jsx`
@@ -205,14 +222,13 @@ Les pages `Demande` et `Demandesup` gèrent les conversations user/boutique. Les
 - `Sidebar.jsx`
 - `Avatar.jsx`
 - `DonutChart.jsx`
-- `ModalCreateProject.jsx`
 - `PasswordInput.jsx`
-- `WorkspaceMiniGrid.jsx`
-- `espacepro.jsx`
+- `Newproject.jsx`
+- `EspaceProWorkspace.jsx`
 
-Le composant `Logo.jsx` a été supprimé. Les layouts utilisent directement `frontend/src/assets/images/log.png`.
+`Logo.jsx` centralise l'affichage de l'unique asset `frontend/src/assets/images/log.png`.
 
-`Alert.jsx` est obligatoire pour les retours applicatifs. Les boutons d'action des modales doivent afficher une confirmation ou une erreur via `Alert`, avec fermeture automatique après 4 secondes quand `onClose` est fourni.
+`Alert.jsx` est obligatoire pour les retours applicatifs. Par défaut, les alertes avec `onClose` s'affichent en toast fixe (portal `document.body`, sans décalage de layout) et se ferment automatiquement après **3,5 secondes**. Utiliser `layout="inline"` pour les alertes persistantes intégrées au contenu (modales, formulaires, états vides).
 
 ## Backend Actuel
 

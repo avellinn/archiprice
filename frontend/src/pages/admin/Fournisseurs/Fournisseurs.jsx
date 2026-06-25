@@ -8,6 +8,7 @@ import { useAdminData } from '../../../services/adminData';
 import {
   deleteAdminSupplier,
   fetchAdminSuppliers,
+  permanentDeleteAdminSupplier,
   updateAdminSupplier,
 } from '../../../services/adminMongo';
 import FournisseurModal from './fournisseurModal';
@@ -98,6 +99,39 @@ function getSyncedSupplierData(currentData, suppliers) {
   };
 }
 
+function normalizeStatusKey(status) {
+  return String(status || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function isDeletedStatus(status) {
+  return normalizeStatusKey(status) === 'supprime';
+}
+
+function isMissingSupplier(supplier) {
+  return Boolean(supplier?.isMissingFromDb)
+    || isDeletedStatus(supplier?.status)
+    || normalizeStatusKey(supplier?.status) === 'inexistant';
+}
+
+function buildMissingSuppliers(cachedSuppliers = [], apiSuppliers = []) {
+  const apiIds = new Set(apiSuppliers.map((supplier) => String(supplier.id || supplier._id)));
+
+  return cachedSuppliers
+    .filter((supplier) => {
+      const supplierId = String(supplier?.id || supplier?._id || '');
+      return supplierId && !apiIds.has(supplierId);
+    })
+    .map((supplier) => ({
+      ...normalizeSupplierForWorkspace(supplier),
+      status: 'Inexistant',
+      isMissingFromDb: true,
+    }));
+}
+
 export default function Fournisseurs() {
   const [searchParams] = useSearchParams();
   const [, updateAdminData] = useAdminData();
@@ -112,16 +146,21 @@ export default function Fournisseurs() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [orphanedSuppliers, setOrphanedSuppliers] = useState([]);
   const [searchTerm] = useState('');
 
   const loadSuppliers = useCallback(() => {
     fetchAdminSuppliers()
       .then((list) => {
         setSuppliers(list);
-        updateAdminData((currentData) => ({
-          ...currentData,
-          ...getSyncedSupplierData(currentData, list),
-        }));
+        updateAdminData((currentData) => {
+          const missingSuppliers = buildMissingSuppliers(currentData.suppliers, list);
+          setOrphanedSuppliers(missingSuppliers);
+          return {
+            ...currentData,
+            ...getSyncedSupplierData(currentData, list),
+          };
+        });
         setError('');
       })
       .catch((apiError) => {
@@ -141,22 +180,29 @@ export default function Fournisseurs() {
 
   useRealtimeRefresh(loadSuppliers, ['suppliers']);
 
+  const allSuppliers = useMemo(() => {
+    const mergedIds = new Set(suppliers.map((supplier) => String(supplier.id)));
+    const extraMissingSuppliers = orphanedSuppliers.filter((supplier) => !mergedIds.has(String(supplier.id)));
+    return [...suppliers, ...extraMissingSuppliers];
+  }, [orphanedSuppliers, suppliers]);
+
   const filteredSuppliers = useMemo(() => {
     const query = [searchTerm, searchParams.get('q') || ''].join(' ').trim().toLowerCase();
-    if (!query) return suppliers;
 
-    return suppliers.filter((supplier) => (
+    if (!query) return allSuppliers;
+
+    return allSuppliers.filter((supplier) => (
       String(supplier.companyName || supplier.name || '').toLowerCase().includes(query)
       || String(supplier.contact || '').toLowerCase().includes(query)
       || String(supplier.email || '').toLowerCase().includes(query)
       || String(supplier.phone || '').toLowerCase().includes(query)
       || String(supplier.region || '').toLowerCase().includes(query)
     ));
-  }, [searchParams, searchTerm, suppliers]);
+  }, [allSuppliers, searchParams, searchTerm]);
 
   const selectedSupplier = useMemo(() => (
-    suppliers.find((supplier) => supplier.id === selectedSupplierId) || null
-  ), [selectedSupplierId, suppliers]);
+    allSuppliers.find((supplier) => supplier.id === selectedSupplierId) || null
+  ), [allSuppliers, selectedSupplierId]);
   const modalSupplier = selectedSupplier;
 
   async function upsertSupplier(supplier) {
@@ -239,6 +285,42 @@ export default function Fournisseurs() {
     });
   }
 
+  async function permanentDeleteSupplier(supplierId) {
+    const previousSuppliers = suppliers;
+    const previousOrphans = orphanedSuppliers;
+    const currentSupplier = allSuppliers.find((supplier) => supplier.id === supplierId);
+
+    if (currentSupplier?.isMissingFromDb) {
+      setOrphanedSuppliers((current) => current.filter((supplier) => supplier.id !== supplierId));
+      updateAdminData((currentData) => ({
+        ...currentData,
+        suppliers: (currentData.suppliers || []).filter((supplier) => String(supplier.id) !== String(supplierId)),
+        users: (currentData.users || []).filter((user) => String(user.supplierId) !== String(supplierId)),
+      }));
+      if (selectedSupplierId === supplierId) closeSupplierDetail();
+      return;
+    }
+
+    setSuppliers((current) => current.filter((supplier) => supplier.id !== supplierId));
+    updateAdminData((currentData) => ({
+      ...currentData,
+      suppliers: currentData.suppliers.filter((supplier) => supplier.id !== supplierId),
+    }));
+
+    try {
+      await permanentDeleteAdminSupplier(supplierId);
+      if (selectedSupplierId === supplierId) closeSupplierDetail();
+    } catch (apiError) {
+      setSuppliers(previousSuppliers);
+      setOrphanedSuppliers(previousOrphans);
+      updateAdminData((currentData) => ({
+        ...currentData,
+        ...getSyncedSupplierData(currentData, previousSuppliers),
+      }));
+      setError(getApiErrorMessage(apiError, 'La suppression définitive du fournisseur a échoué.'));
+    }
+  }
+
   function getSupplierName(supplier) {
     return supplier?.companyName || supplier?.name || 'Fournisseur';
   }
@@ -300,9 +382,11 @@ export default function Fournisseurs() {
 
   function renderSupplierActions(supplier) {
     const supplierName = getSupplierName(supplier);
+    const isMissing = isMissingSupplier(supplier);
 
     return (
       <span className="admin-suppliers-actions">
+        {!isMissing && (
         <button
           type="button"
           title="Modifier nom, email, téléphone et statut"
@@ -314,7 +398,8 @@ export default function Fournisseurs() {
         >
           <Icon name="Edit" size="sm" />
         </button>
-        {supplier.status !== 'Supprimé' && (
+        )}
+        {!isMissing && (
           <button
           type="button"
           title={supplier.status === 'Actif' ? 'Désactiver' : 'Activer'}
@@ -327,7 +412,7 @@ export default function Fournisseurs() {
           <Icon name="Visibility" size="sm" />
         </button>
         )}
-        {supplier.status !== 'Supprimé' && (
+        {!isMissing && (
           <button
           type="button"
           title="Bloquer"
@@ -340,7 +425,7 @@ export default function Fournisseurs() {
           <Icon name="VisibilityOff" size="sm" />
         </button>
         )}
-        {supplier.status !== 'Supprimé' && (
+        {!isMissing && (
           <button
           type="button"
           className={supplier.isRecommended ? 'is-recommended' : ''}
@@ -354,7 +439,21 @@ export default function Fournisseurs() {
           <Icon name="Check" size="sm" />
         </button>
         )}
-        {supplier.status === 'Supprimé' ? (
+        {isMissing ? (
+          <button
+            type="button"
+            className="is-danger"
+            title="Supprimer définitivement"
+            aria-label={`Supprimer définitivement ${supplierName}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              permanentDeleteSupplier(supplier.id);
+            }}
+          >
+            <Icon name="Delete" size="sm" />
+            <span className="visually-hidden">Supprimer définitivement</span>
+          </button>
+        ) : isDeletedStatus(supplier.status) ? (
           <button
             type="button"
             className="is-restore"
@@ -381,6 +480,21 @@ export default function Fournisseurs() {
           <Icon name="Delete" size="sm" />
         </button>
         )}
+        {isDeletedStatus(supplier.status) && !isMissing && (
+          <button
+            type="button"
+            className="is-danger"
+            title="Supprimer définitivement"
+            aria-label={`Supprimer définitivement ${supplierName}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              permanentDeleteSupplier(supplier.id);
+            }}
+          >
+            <Icon name="Delete" size="sm" />
+            <span className="visually-hidden">Supprimer définitivement</span>
+          </button>
+        )}
       </span>
     );
   }
@@ -404,16 +518,26 @@ export default function Fournisseurs() {
     {
       key: 'status',
       label: 'Statut',
-      render: (status) => (
-        <Badge tone={status === 'Actif' ? 'success' : status === 'Bloqué' ? 'warning' : 'danger'}>
-          {status || 'Actif'}
-        </Badge>
-      ),
+      render: (status, supplier) => {
+        const missing = isMissingSupplier(supplier);
+        const tone = missing
+          ? 'neutral'
+          : status === 'Actif'
+            ? 'success'
+            : status === 'Bloqué'
+              ? 'warning'
+              : 'danger';
+        const label = missing ? 'Inexistant' : status || 'Actif';
+        return <Badge tone={tone}>{label}</Badge>;
+      },
     },
     {
       key: 'products',
       label: 'Articles liés',
-      render: (products) => products || 0,
+      render: (products, supplier) => {
+        if (isMissingSupplier(supplier)) return '-';
+        return products || 0;
+      },
     },
     {
       key: 'actions',

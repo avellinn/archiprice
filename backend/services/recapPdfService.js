@@ -93,7 +93,7 @@ function fillRectCommand(x, y, width, height, color = '0.94 0.98 1') {
   return `q ${color} rg ${x} ${y} ${width} ${height} re f Q`;
 }
 
-function buildPageContent({ project, user, products, pageProducts, pageIndex, pageCount, totals }) {
+function buildPageContent({ project, user, products, pageProducts, pageIndex, pageCount, totals, exportUrl }) {
   const metadata = extractProjectMetadata(project);
   const generatedAt = new Intl.DateTimeFormat('fr-FR', {
     dateStyle: 'medium',
@@ -125,7 +125,7 @@ function buildPageContent({ project, user, products, pageProducts, pageIndex, pa
     textCommand('Article', 60, 540, 8, 'F2'),
     textCommand('Categorie', 270, 540, 8, 'F2'),
     textCommand('Prix unitaire', 390, 540, 8, 'F2'),
-    textCommand('Image', 505, 540, 8, 'F2'),
+    textCommand('Document', 492, 540, 8, 'F2'),
   ];
 
   let y = 510;
@@ -138,13 +138,13 @@ function buildPageContent({ project, user, products, pageProducts, pageIndex, pa
     });
     commands.push(textCommand(product.category || 'Non renseigne', 270, y, 9));
     commands.push(textCommand(formatFCFA(product.unitPrice), 390, y, 9, 'F2'));
-    if (product.imageUrl) {
+    if (exportUrl) {
       commands.push('0.1 0.3 0.8 RG');
-      commands.push(textCommand('Voir image', 505, y, 8));
+      commands.push(textCommand('Voir fiche', 495, y, 8));
       commands.push('0.07 0.14 0.24 RG');
       links.push({
-        url: product.imageUrl,
-        rect: [503, y - 3, 546, y + 10],
+        url: exportUrl,
+        rect: [493, y - 3, 546, y + 10],
       });
     } else {
       commands.push(textCommand('-', 505, y, 9));
@@ -203,7 +203,7 @@ function buildPdf(objects) {
   return Buffer.from(parts.join(''), 'binary');
 }
 
-function generateProjectRecapPdf({ project, products, user }) {
+function generateProjectRecapPdf({ project, products, user, exportUrl = '' }) {
   const normalizedProducts = products.map((product) => ({
     name: product.name,
     category: product.category,
@@ -224,6 +224,7 @@ function generateProjectRecapPdf({ project, products, user }) {
       pageIndex: index,
       pageCount: chunks.length,
       totals,
+      exportUrl,
     }));
   let nextObjectNumber = 3;
   const pageRefs = pages.map((page) => {

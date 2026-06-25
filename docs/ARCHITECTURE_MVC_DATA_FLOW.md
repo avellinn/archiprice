@@ -4,6 +4,8 @@ Date : 2026-06-08
 
 Ce document explique comment ArchiPrice organise le code et comment les données circulent entre MongoDB, l'API Express et les interfaces React `user`, `admin` et `supplier`.
 
+Le référentiel `shared/productTaxonomy.mjs` est la source unique des catégories produit, sous-catégories, unités autorisées et unités par défaut. Le formulaire fournisseur en dérive ses sélecteurs et l'API réapplique la même validation avant création, modification, soumission ou validation administrative.
+
 ## Vue D'Ensemble
 
 ArchiPrice est un monorepo fullstack :
@@ -198,7 +200,7 @@ Extension actuelle :
 ## Flux 7 — Workspace Et Boutiques
 
 1. Le workspace affiche les projets user.
-2. Les articles choisis apparaissent dans `espacepro.jsx`.
+2. Les articles choisis apparaissent dans `EspaceProWorkspace.jsx`.
 3. Les images viennent des métadonnées Cloudinary stockées dans les produits.
 4. Le bouton "Où acheter" ouvre un modal de boutiques.
 5. Les boutiques viennent de `Supplier` validés, donc de la page admin `Fournisseurs`.
@@ -289,7 +291,7 @@ Les shells `AppShell.jsx`, `AdminShell.jsx` et `SupplierShell.jsx` se connectent
 - Les actions de boutons dans les modales doivent produire un feedback visible avec `Alert.jsx`.
 - Les champs texte ne doivent pas accepter des valeurs composées uniquement de chiffres quand une chaîne descriptive est attendue.
 - Les champs numériques doivent filtrer ou valider les caractères non numériques.
-- Le dark mode doit passer par les variables `--app-*` du shell. Pour le logo, les règles sont dans `Sidebar.css`, `Header.css` et `AuthLayout.css`, car `Logo.jsx`/`Logo.css` ont été supprimés.
+- Le dark mode doit passer par les variables `--app-*` du shell. `Logo.jsx` reste la source de rendu commune de `log.png`, avec les adaptations visuelles dans les CSS des layouts.
 
 ## Où Modifier Quoi
 

@@ -34,10 +34,15 @@ async function downloadProjectRecapPdf(req, res) {
     return res.status(400).json({ error: 'Aucun article à exporter pour ce projet' });
   }
 
+  const requestedExportUrl = String(req.query.exportUrl || '').trim();
+  const exportUrl = /^https?:\/\//i.test(requestedExportUrl) && requestedExportUrl.length <= 2048
+    ? requestedExportUrl
+    : '';
   const pdfBuffer = generateProjectRecapPdf({
     project,
     products,
     user: req.user,
+    exportUrl,
   });
 
   const fileName = `${getSafeFileName(project.name)}-recapitulatif.pdf`;

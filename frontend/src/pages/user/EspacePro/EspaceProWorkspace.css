@@ -31,8 +31,8 @@
     "projects info";
   column-gap: 0;
   row-gap: 0;
-  height: calc(100vh - 88px);
-  min-height: 760px;
+  height: 100%;
+  min-height: 0;
   margin-top: 0;
   overflow: hidden;
 }
@@ -100,6 +100,10 @@
   background: var(--espacepro-projects-bg);
 }
 
+.espacepro__projects-toolbar .espacepro__return-button:first-of-type {
+  margin-left: auto;
+}
+
 .espacepro__projects-toolbar span {
   color: var(--app-heading-color);
   font-size: 0.78rem;
@@ -126,6 +130,30 @@
   color: #433f8f;
   box-shadow: 0 8px 18px rgb(67 63 143 / 0.14);
   outline: 0;
+}
+
+.espacepro__add-button {
+  width: 30px;
+  height: 30px;
+}
+
+.espacepro__reset-button {
+  flex: 0 0 auto;
+  min-height: 28px;
+  padding: 0 0.55rem;
+  border: 1px solid rgba(220, 38, 38, 0.22);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.78);
+  color: #303030d6;
+  font: inherit;
+  font-size: 0.66rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.espacepro__reset-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .espacepro__articles {
@@ -168,7 +196,7 @@
 }
 
 .espacepro__project-row--active {
-  background: #433f8fcf;
+  background: #5c6795;
   color: #ffffff;
 }
 
@@ -266,7 +294,7 @@
   grid-template-columns: 1fr 1fr;
   margin: 0.75rem;
   border-radius: 12px;
-  background: #433f8fcf;
+  background: #5c6795;
   text-align: center;
 }
 
@@ -401,7 +429,7 @@
   background: var(--article-image-url);
   background-position: center;
   background-repeat: no-repeat;
-  background-size: cover;
+  background-size: contain;
   transform: none;
 }
 
@@ -778,9 +806,9 @@
       "projects"
       "articles"
       "info";
-    height: auto;
+    height: 100%;
     min-height: 0;
-    overflow: visible;
+    overflow: hidden;
     row-gap: 0.5rem;
   }
 
@@ -788,7 +816,7 @@
   .espacepro__articles,
   .espacepro__info {
     height: auto;
-    max-height: none;
+    max-height: 100%;
     border: 1px solid var(--app-border-color);
     border-radius: 12px;
   }

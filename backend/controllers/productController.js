@@ -19,14 +19,33 @@ function formatProduct(product) {
   return {
     id: product._id,
     projectId: product.project,
+    catalogueProductId: product.catalogueProductId || '',
+    sourceProductId: product.catalogueProductId || '',
     name: product.name,
     description: product.description,
     category: product.category,
+    subcategory: product.subcategory || '',
     unit: product.unit,
     unitPrice: product.unitPrice,
+    priceExcludingTax: product.priceExcludingTax ?? product.unitPrice,
+    vatRate: product.vatRate ?? 0,
+    minimumOrderQuantity: product.minimumOrderQuantity ?? 1,
+    dimensions: product.dimensions || {},
     images: product.images || [],
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
+  };
+}
+
+function parseDimensions(value) {
+  if (!value) return {};
+  if (typeof value !== 'object') return {};
+
+  return {
+    length: String(value.length || '').trim(),
+    width: String(value.width || '').trim(),
+    thickness: String(value.thickness || '').trim(),
+    weight: String(value.weight || '').trim(),
   };
 }
 
@@ -44,7 +63,7 @@ async function getProducts(req, res) {
 
 async function createProduct(req, res) {
   const { projectId } = req.params;
-  const { name, description, category, unit, unitPrice, images } = req.body;
+  const { name, description, category, subcategory, unit, unitPrice, priceExcludingTax, vatRate, minimumOrderQuantity, images, dimensions, catalogueProductId } = req.body;
 
   const project = await findOwnedProject(projectId, req.user._id);
   if (!project) {
@@ -68,8 +87,14 @@ async function createProduct(req, res) {
     name: name.trim(),
     description: description?.trim() || undefined,
     category: category?.trim() || undefined,
+    subcategory: subcategory?.trim() || undefined,
     unit,
     unitPrice: price,
+    priceExcludingTax: Number(priceExcludingTax ?? price),
+    vatRate: Number(vatRate ?? 0),
+    minimumOrderQuantity: Number(minimumOrderQuantity ?? 1),
+    dimensions: parseDimensions(dimensions),
+    catalogueProductId: catalogueProductId ? String(catalogueProductId) : undefined,
     images: Array.isArray(images) ? images : [],
     project: projectId,
   });
@@ -102,7 +127,7 @@ async function updateProduct(req, res) {
     return res.status(404).json({ error: 'Produit introuvable' });
   }
 
-  const { name, description, category, unit, unitPrice, images } = req.body;
+  const { name, description, category, subcategory, unit, unitPrice, priceExcludingTax, vatRate, minimumOrderQuantity, images, dimensions, catalogueProductId } = req.body;
 
   if (name !== undefined) {
     if (!name?.trim()) {
@@ -117,6 +142,10 @@ async function updateProduct(req, res) {
 
   if (category !== undefined) {
     product.category = category?.trim() || undefined;
+  }
+
+  if (subcategory !== undefined) {
+    product.subcategory = subcategory?.trim() || undefined;
   }
 
   if (unit !== undefined) {
@@ -134,8 +163,20 @@ async function updateProduct(req, res) {
     product.unitPrice = price;
   }
 
+  if (priceExcludingTax !== undefined) product.priceExcludingTax = Number(priceExcludingTax);
+  if (vatRate !== undefined) product.vatRate = Number(vatRate);
+  if (minimumOrderQuantity !== undefined) product.minimumOrderQuantity = Number(minimumOrderQuantity);
+
   if (images !== undefined) {
     product.images = Array.isArray(images) ? images : [];
+  }
+
+  if (dimensions !== undefined) {
+    product.dimensions = parseDimensions(dimensions);
+  }
+
+  if (catalogueProductId !== undefined) {
+    product.catalogueProductId = catalogueProductId ? String(catalogueProductId) : undefined;
   }
 
   await product.save();

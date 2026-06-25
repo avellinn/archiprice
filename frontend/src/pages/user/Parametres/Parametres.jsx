@@ -1,9 +1,12 @@
 import './Parametres.css';
+import '../../supplier/Parametres/Parametres.css';
 import { useRef, useMemo, useState } from 'react';
 import { Alert, Icon } from '../../../components/ui';
-import { PasswordSettingsModal } from '../../../components/ui/modals';
+import { PasswordSettingsModal, SupplierPolicyModal } from '../../../components/ui/modals';
 import useAuth from '../../../context/useAuth';
 import { getApiErrorMessage } from '../../../services/api';
+import { useAdminData } from '../../../services/adminData';
+import { getSyncedPolicies } from '../../../services/policies';
 import { getUserTranslations, USER_LANGUAGE_LABELS } from '../../../utils/userLanguage';
 import { getAvatarColor, getDisplayName, getRandomAvatarColor, getUserInitials } from '../../../utils/userDisplay';
 
@@ -31,6 +34,7 @@ function writeStoredProfile(profile) {
 
 export default function Parametres() {
   const { user, updateProfile: updateAccountProfile, changePassword } = useAuth();
+  const [adminData] = useAdminData();
   const fileInputRef = useRef(null);
   const storedProfile = useMemo(() => readStoredProfile(), []);
   const [profile, setProfile] = useState({
@@ -47,8 +51,10 @@ export default function Parametres() {
   const [editingField, setEditingField] = useState(null);
   const [editDraft, setEditDraft] = useState('');
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
   const [profileAlert, setProfileAlert] = useState(null);
   const profileText = getUserTranslations(profile.language).profile;
+  const policies = useMemo(() => getSyncedPolicies(adminData), [adminData]);
 
   const avatarInitials = getUserInitials({ ...user, name: profile.name }).toUpperCase();
   const removedAvatarInitial = (avatarInitials.slice(0, 1) || getUserInitials(user).slice(0, 1) || 'U').toUpperCase();
@@ -224,6 +230,8 @@ export default function Parametres() {
           </select>
         </label>
 
+
+
         <div className="user-profile-row">
           <div className="user-profile-row__content">
             <strong>Mot de passe</strong>
@@ -239,6 +247,14 @@ export default function Parametres() {
             <Icon name="Edit" size="sm" />
           </button>
         </div>
+
+        <button type="button" className="user-profile-row user-profile-row--button" onClick={() => setIsPolicyModalOpen(true)}>
+          <div className="user-profile-row__content">
+            <strong>Politique</strong>
+            <span>Consulter les politiques synchronisées par l'administration</span>
+          </div>
+          <Icon name="ChevronRight" size="sm" />
+        </button>
 
        
       </section>
@@ -283,6 +299,18 @@ export default function Parametres() {
           onSubmit={async (payload) => {
             await changePassword(payload);
             setProfileAlert({ variant: 'success', message: 'Mot de passe mis à jour.' });
+          }}
+        />
+      )}
+
+      {isPolicyModalOpen && (
+        <SupplierPolicyModal
+          policies={policies}
+          language={profile.language}
+          onClose={() => setIsPolicyModalOpen(false)}
+          onSave={() => {
+            setProfileAlert({ variant: 'success', message: 'Politiques consultées.' });
+            setIsPolicyModalOpen(false);
           }}
         />
       )}

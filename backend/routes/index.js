@@ -9,6 +9,8 @@ import uploadsRouter from './uploads.js';
 import supplierRouter from './supplier.js';
 import realtimeRouter from './realtime.js';
 import supportItemsRouter from './supportItems.js';
+import demandesRouter from './demandes.js';
+import simulationsRouter from './simulations.js';
 
 const router = express.Router();
 
@@ -22,5 +24,7 @@ router.use('/projects/:projectId/products', productsRouter);
 router.use('/admin', adminRouter);
 router.use('/supplier', supplierRouter);
 router.use('/support-items', supportItemsRouter);
+router.use('/demandes', demandesRouter);
+router.use('/simulations', simulationsRouter);
 
 export default router;

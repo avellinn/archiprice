@@ -1,6 +1,6 @@
 {
-  "__version": 295,
-  "__updatedAt": 1781704039615,
+  "__version": 690,
+  "__updatedAt": 1782382804787,
   "__staticPurgeVersion": 2,
   "users": [
     {
@@ -15,292 +15,655 @@
       "inscription": "08/06/2026",
       "status": "Actif",
       "createdAt": "2026-06-08T07:39:42.774Z",
-      "updatedAt": "2026-06-17T11:32:54.017Z"
+      "updatedAt": "2026-06-25T10:13:52.600Z"
     },
     {
-      "id": "6a328621472eeae0102e3c54",
-      "supplierId": "",
-      "name": "avel",
-      "email": "avellinadjai@gmail.com",
-      "phone": "",
-      "role": "user",
-      "type": "Architecture",
-      "simulations": 0,
-      "inscription": "17/06/2026",
-      "status": "Actif",
-      "createdAt": "2026-06-17T11:33:53.703Z",
-      "updatedAt": "2026-06-17T11:33:53.703Z"
-    },
-    {
-      "id": "6a3286a1472eeae0102e3c55",
-      "supplierId": "6a328e8b472eeae0102e3c5d",
-      "name": "kool",
-      "email": "hospiceavell@gmail.com",
-      "phone": "46613202215",
+      "id": "supplier-6a399cb4a01076c19519cb80",
+      "supplierId": "6a399cb4a01076c19519cb80",
+      "name": "mine",
+      "email": "mine@gmail.com",
+      "phone": "551523156130",
       "role": "supplier",
       "type": "Fournisseur",
       "simulations": 0,
-      "inscription": "17/06/2026",
+      "inscription": "",
       "status": "Actif",
-      "createdAt": "2026-06-17T11:36:01.289Z",
-      "updatedAt": "2026-06-17T11:36:01.289Z"
-    },
-    {
-      "id": "6a32876e472eeae0102e3c56",
-      "supplierId": "6a32876f472eeae0102e3c57",
-      "name": "test",
-      "email": "test@gamil.com",
-      "phone": "+22997456511",
-      "role": "supplier",
-      "type": "Fournisseur",
-      "simulations": 0,
-      "inscription": "17/06/2026",
-      "status": "Actif",
-      "createdAt": "2026-06-17T11:39:26.612Z",
-      "updatedAt": "2026-06-17T11:39:26.612Z"
+      "createdAt": "2026-06-22T20:36:04.677Z",
+      "updatedAt": "2026-06-23T18:09:34.903Z"
     }
   ],
   "products": [],
   "suppliers": [
     {
-      "id": "6a328e8b472eeae0102e3c5d",
-      "userId": "6a328e8a472eeae0102e3c5c",
-      "name": "kool",
-      "companyName": "kool",
-      "contact": "hospiceavell@gmail.com",
-      "email": "hospiceavell@gmail.com",
-      "phone": "46613202215",
-      "region": "CADJEHOUN",
-      "status": "Actif",
-      "products": 0,
+      "logo": {
+        "metadata": {
+          "provider": "cloudinary"
+        }
+      },
+      "_id": "6a399cb4a01076c19519cb80",
+      "user": null,
+      "name": "mine",
+      "companyName": "mine",
+      "email": "mine@gmail.com",
+      "contact": "mine@gmail.com",
+      "phone": "551523156130",
       "categories": [
-        "Architecture",
-        "Architecture",
-        "Architecture",
-        "Architecture"
+        "Fournisseur"
       ],
-      "isRecommended": false
-    },
-    {
-      "id": "6a32876f472eeae0102e3c57",
-      "userId": "",
-      "name": "test",
-      "companyName": "test",
-      "contact": "test@gamil.com",
-      "email": "test@gamil.com",
-      "phone": "+22997456511",
-      "region": "CADJEHOUN",
+      "region": "Bénin",
+      "city": "Bénin",
+      "neighborhood": "usui",
       "status": "Actif",
-      "products": 1,
-      "categories": [
-        "Architecture",
-        "Architecture",
-        "Architecture",
-        "Architecture"
-      ],
-      "isRecommended": false
+      "products": 2,
+      "isRecommended": false,
+      "media": [],
+      "createdAt": "2026-06-22T20:36:04.677Z",
+      "updatedAt": "2026-06-23T18:09:34.903Z",
+      "__v": 1,
+      "id": "6a399cb4a01076c19519cb80",
+      "userId": ""
     }
   ],
   "supplierClientNotifications": [
     {
-      "id": "supplier-client-6a2956a068fb805f51cdc170-6a29731d68fb805f51cdc174-1781103679301",
-      "supplierId": "6a2956a068fb805f51cdc170",
-      "supplierName": "Avelin",
-      "supplierContact": "avellinadjai@gmail.com",
-      "clientId": "6a29731d68fb805f51cdc174",
-      "clientName": "Avellin",
-      "clientProfession": "Décoration",
-      "clientEmail": "avellinadjai@gmail.com",
+      "id": "6a3becc7d38ef779d9600576",
+      "supplierId": "6a33d63f2e88d7fb9b1d02f2",
+      "supplierName": "noon",
+      "supplierContact": "229 0197456511",
+      "clientId": "6a3be331d38ef779d96002f6",
+      "clientName": "miic",
+      "clientProfession": "Architecte",
+      "clientEmail": "miic@gmail.com",
       "clientPhone": "Non renseigné",
-      "projectId": "6a29758b68fb805f51cdc175",
-      "projectName": "Bureau",
-      "simulationTotal": 3940200,
-      "simulationTotalLabel": "3 940 200 FCFA",
-      "articleCount": 9,
+      "projectId": "6a3be8fcd38ef779d9600306",
+      "projectName": "hgyu",
+      "simulationTotal": 6303990,
+      "simulationTotalLabel": "6 303 990 FCFA",
+      "articleCount": 2,
       "categories": [
-        "Déco",
-        "Textiles",
-        "Éclairage"
-      ],
-      "articleImages": [
-        {
-          "name": "Garde brosse",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/an6lndp2q8wchxrdhjzu?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/an6lndp2q8wchxrdhjzu"
-        },
-        {
-          "name": "Rideaux Velours",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jbvookoeyyjj3uivdxfz?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/jbvookoeyyjj3uivdxfz"
-        },
-        {
-          "name": "Suspension Lumen",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hjb7vmppnerh3ddwj0fx?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/hjb7vmppnerh3ddwj0fx"
-        },
-        {
-          "name": "Suspension Lumen",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hjb7vmppnerh3ddwj0fx?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/hjb7vmppnerh3ddwj0fx"
-        },
-        {
-          "name": "Garde brosse",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/an6lndp2q8wchxrdhjzu?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/an6lndp2q8wchxrdhjzu"
-        },
-        {
-          "name": "Rideaux Velours",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jbvookoeyyjj3uivdxfz?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/jbvookoeyyjj3uivdxfz"
-        },
-        {
-          "name": "Garde brosse",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/an6lndp2q8wchxrdhjzu?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/an6lndp2q8wchxrdhjzu"
-        },
-        {
-          "name": "Rideaux Velours",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jbvookoeyyjj3uivdxfz?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/jbvookoeyyjj3uivdxfz"
-        },
-        {
-          "name": "Suspension Lumen",
-          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hjb7vmppnerh3ddwj0fx?_a=BAMAPqhK0",
-          "public_id": "archiprice/products/hjb7vmppnerh3ddwj0fx"
-        }
+        "Sanitaire",
+        "Mobilier"
       ],
       "selectedArticles": [
         {
-          "id": "6a29760068fb805f51cdc176",
-          "name": "Garde brosse",
-          "category": "Déco",
-          "unitPrice": 19800,
-          "images": [
-            {
-              "name": "Garde brosse",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/an6lndp2q8wchxrdhjzu?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/an6lndp2q8wchxrdhjzu"
-            }
-          ]
+          "id": "6a3be8fdd38ef779d9600308",
+          "name": "JBGYIU",
+          "category": "Sanitaire",
+          "unitPrice": 528990
         },
         {
-          "id": "6a29760068fb805f51cdc177",
-          "name": "Rideaux Velours",
-          "category": "Textiles",
-          "unitPrice": 1056000,
-          "images": [
-            {
-              "name": "Rideaux Velours",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jbvookoeyyjj3uivdxfz?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/jbvookoeyyjj3uivdxfz"
-            }
-          ]
-        },
-        {
-          "id": "6a29760068fb805f51cdc178",
-          "name": "Suspension Lumen",
-          "category": "Éclairage",
-          "unitPrice": 237600,
-          "images": [
-            {
-              "name": "Suspension Lumen",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hjb7vmppnerh3ddwj0fx?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/hjb7vmppnerh3ddwj0fx"
-            }
-          ]
-        },
-        {
-          "id": "6a29775168fb805f51cdc17b",
-          "name": "Suspension Lumen",
-          "category": "Éclairage",
-          "unitPrice": 237600,
-          "images": [
-            {
-              "name": "Suspension Lumen",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hjb7vmppnerh3ddwj0fx?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/hjb7vmppnerh3ddwj0fx"
-            }
-          ]
-        },
-        {
-          "id": "6a29775168fb805f51cdc179",
-          "name": "Garde brosse",
-          "category": "Déco",
-          "unitPrice": 19800,
-          "images": [
-            {
-              "name": "Garde brosse",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/an6lndp2q8wchxrdhjzu?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/an6lndp2q8wchxrdhjzu"
-            }
-          ]
-        },
-        {
-          "id": "6a29775168fb805f51cdc17a",
-          "name": "Rideaux Velours",
-          "category": "Textiles",
-          "unitPrice": 1056000,
-          "images": [
-            {
-              "name": "Rideaux Velours",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jbvookoeyyjj3uivdxfz?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/jbvookoeyyjj3uivdxfz"
-            }
-          ]
-        },
-        {
-          "id": "6a297c2968fb805f51cdc17f",
-          "name": "Garde brosse",
-          "category": "Déco",
-          "unitPrice": 19800,
-          "images": [
-            {
-              "name": "Garde brosse",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/an6lndp2q8wchxrdhjzu?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/an6lndp2q8wchxrdhjzu"
-            }
-          ]
-        },
-        {
-          "id": "6a297c2968fb805f51cdc180",
-          "name": "Rideaux Velours",
-          "category": "Textiles",
-          "unitPrice": 1056000,
-          "images": [
-            {
-              "name": "Rideaux Velours",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/jbvookoeyyjj3uivdxfz?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/jbvookoeyyjj3uivdxfz"
-            }
-          ]
-        },
-        {
-          "id": "6a297c2968fb805f51cdc181",
-          "name": "Suspension Lumen",
-          "category": "Éclairage",
-          "unitPrice": 237600,
-          "images": [
-            {
-              "name": "Suspension Lumen",
-              "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/hjb7vmppnerh3ddwj0fx?_a=BAMAPqhK0",
-              "public_id": "archiprice/products/hjb7vmppnerh3ddwj0fx"
-            }
-          ]
+          "id": "6a3be8fdd38ef779d9600307",
+          "name": "Stalonne",
+          "category": "Mobilier",
+          "unitPrice": 5775000
         }
       ],
       "type": "Demande",
-      "message": "Bonjour",
+      "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez noon.",
       "messages": [
         {
-          "id": "message-1781103679302",
+          "id": "6a3becc7d38ef779d9600577",
           "senderRole": "user",
-          "senderName": "Avellin",
-          "message": "Bonjour",
-          "createdAt": "2026-06-10T15:01:19.301Z"
+          "senderName": "miic",
+          "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez noon.",
+          "createdAt": "2026-06-24T14:42:15.903Z",
+          "updatedAt": "2026-06-24T14:42:15.903Z"
         }
       ],
       "status": "Nouveau",
-      "createdAt": "2026-06-10T15:01:19.301Z"
+      "createdAt": "2026-06-24T14:42:15.903Z",
+      "sourceNotificationId": "6a3becc7d38ef779d9600576",
+      "updatedAt": "2026-06-24T14:42:15.903Z"
+    },
+    {
+      "id": "6a3bec71d38ef779d960051c",
+      "supplierId": "6a33d63f2e88d7fb9b1d02f2",
+      "supplierName": "noon",
+      "supplierContact": "229 0197456511",
+      "clientId": "6a3be331d38ef779d96002f6",
+      "clientName": "miic",
+      "clientProfession": "Architecte",
+      "clientEmail": "miic@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a3be8fcd38ef779d9600306",
+      "projectName": "hgyu",
+      "simulationTotal": 6303990,
+      "simulationTotalLabel": "6 303 990 FCFA",
+      "articleCount": 2,
+      "categories": [
+        "Sanitaire",
+        "Mobilier"
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a3be8fdd38ef779d9600308",
+          "name": "JBGYIU",
+          "category": "Sanitaire",
+          "unitPrice": 528990
+        },
+        {
+          "id": "6a3be8fdd38ef779d9600307",
+          "name": "Stalonne",
+          "category": "Mobilier",
+          "unitPrice": 5775000
+        }
+      ],
+      "type": "Demande",
+      "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez noon.",
+      "messages": [
+        {
+          "id": "6a3bec71d38ef779d960051d",
+          "senderRole": "user",
+          "senderName": "miic",
+          "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez noon.",
+          "createdAt": "2026-06-24T14:40:49.416Z",
+          "updatedAt": "2026-06-24T14:40:49.416Z"
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-24T14:40:49.417Z",
+      "sourceNotificationId": "6a3bec71d38ef779d960051c",
+      "updatedAt": "2026-06-24T14:40:49.417Z"
+    },
+    {
+      "id": "6a3bec6cd38ef779d96004c9",
+      "supplierId": "6a33ff7daaff3061a5dcf1a2",
+      "supplierName": "jinuiop",
+      "supplierContact": "hospiceavell@gmail.com",
+      "clientId": "6a3be331d38ef779d96002f6",
+      "clientName": "miic",
+      "clientProfession": "Architecte",
+      "clientEmail": "miic@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a3be8fcd38ef779d9600306",
+      "projectName": "hgyu",
+      "simulationTotal": 6303990,
+      "simulationTotalLabel": "6 303 990 FCFA",
+      "articleCount": 2,
+      "categories": [
+        "Sanitaire",
+        "Mobilier"
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a3be8fdd38ef779d9600308",
+          "name": "JBGYIU",
+          "category": "Sanitaire",
+          "unitPrice": 528990
+        },
+        {
+          "id": "6a3be8fdd38ef779d9600307",
+          "name": "Stalonne",
+          "category": "Mobilier",
+          "unitPrice": 5775000
+        }
+      ],
+      "type": "Demande",
+      "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
+      "messages": [
+        {
+          "id": "6a3bec6cd38ef779d96004ca",
+          "senderRole": "user",
+          "senderName": "miic",
+          "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
+          "createdAt": "2026-06-24T14:40:44.356Z",
+          "updatedAt": "2026-06-24T14:40:44.356Z"
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-24T14:40:44.356Z",
+      "sourceNotificationId": "6a3bec6cd38ef779d96004c9",
+      "updatedAt": "2026-06-24T14:40:44.356Z"
+    },
+    {
+      "id": "6a3bec27d38ef779d960047d",
+      "supplierId": "6a33d63f2e88d7fb9b1d02f2",
+      "supplierName": "noon",
+      "supplierContact": "229 0197456511",
+      "clientId": "6a3be331d38ef779d96002f6",
+      "clientName": "miic",
+      "clientProfession": "Architecte",
+      "clientEmail": "miic@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a3be8fcd38ef779d9600306",
+      "projectName": "hgyu",
+      "simulationTotal": 6303990,
+      "simulationTotalLabel": "6 303 990 FCFA",
+      "articleCount": 2,
+      "categories": [
+        "Sanitaire",
+        "Mobilier"
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a3be8fdd38ef779d9600308",
+          "name": "JBGYIU",
+          "category": "Sanitaire",
+          "unitPrice": 528990
+        },
+        {
+          "id": "6a3be8fdd38ef779d9600307",
+          "name": "Stalonne",
+          "category": "Mobilier",
+          "unitPrice": 5775000
+        }
+      ],
+      "type": "Demande",
+      "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez noon.",
+      "messages": [
+        {
+          "id": "6a3bec27d38ef779d960047e",
+          "senderRole": "user",
+          "senderName": "miic",
+          "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez noon.",
+          "createdAt": "2026-06-24T14:39:35.031Z",
+          "updatedAt": "2026-06-24T14:39:35.031Z"
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-24T14:39:35.031Z",
+      "sourceNotificationId": "6a3bec27d38ef779d960047d",
+      "updatedAt": "2026-06-24T14:39:35.031Z"
+    },
+    {
+      "id": "6a3beb87d38ef779d9600438",
+      "supplierId": "6a33ff7daaff3061a5dcf1a2",
+      "supplierName": "jinuiop",
+      "supplierContact": "hospiceavell@gmail.com",
+      "clientId": "6a3be331d38ef779d96002f6",
+      "clientName": "miic",
+      "clientProfession": "Architecte",
+      "clientEmail": "miic@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a3be8fcd38ef779d9600306",
+      "projectName": "hgyu",
+      "simulationTotal": 6303990,
+      "simulationTotalLabel": "6 303 990 FCFA",
+      "articleCount": 2,
+      "categories": [
+        "Sanitaire",
+        "Mobilier"
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a3be8fdd38ef779d9600308",
+          "name": "JBGYIU",
+          "category": "Sanitaire",
+          "unitPrice": 528990
+        },
+        {
+          "id": "6a3be8fdd38ef779d9600307",
+          "name": "Stalonne",
+          "category": "Mobilier",
+          "unitPrice": 5775000
+        }
+      ],
+      "type": "Demande",
+      "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
+      "messages": [
+        {
+          "id": "6a3beb87d38ef779d9600439",
+          "senderRole": "user",
+          "senderName": "miic",
+          "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
+          "createdAt": "2026-06-24T14:36:55.671Z",
+          "updatedAt": "2026-06-24T14:36:55.671Z"
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-24T14:36:55.671Z",
+      "sourceNotificationId": "6a3beb87d38ef779d9600438",
+      "updatedAt": "2026-06-24T14:36:55.671Z"
+    },
+    {
+      "id": "6a3beb60d38ef779d96003fa",
+      "supplierId": "6a33ff7daaff3061a5dcf1a2",
+      "supplierName": "jinuiop",
+      "supplierContact": "hospiceavell@gmail.com",
+      "clientId": "6a3be331d38ef779d96002f6",
+      "clientName": "miic",
+      "clientProfession": "Architecte",
+      "clientEmail": "miic@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a3be8fcd38ef779d9600306",
+      "projectName": "hgyu",
+      "simulationTotal": 6303990,
+      "simulationTotalLabel": "6 303 990 FCFA",
+      "articleCount": 2,
+      "categories": [
+        "Sanitaire",
+        "Mobilier"
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a3be8fdd38ef779d9600308",
+          "name": "JBGYIU",
+          "category": "Sanitaire",
+          "unitPrice": 528990
+        },
+        {
+          "id": "6a3be8fdd38ef779d9600307",
+          "name": "Stalonne",
+          "category": "Mobilier",
+          "unitPrice": 5775000
+        }
+      ],
+      "type": "Demande",
+      "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
+      "messages": [
+        {
+          "id": "6a3beb60d38ef779d96003fb",
+          "senderRole": "user",
+          "senderName": "miic",
+          "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
+          "createdAt": "2026-06-24T14:36:16.127Z",
+          "updatedAt": "2026-06-24T14:36:16.127Z"
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-24T14:36:16.127Z",
+      "sourceNotificationId": "6a3beb60d38ef779d96003fa",
+      "updatedAt": "2026-06-24T14:36:16.127Z"
+    },
+    {
+      "id": "6a3bea9bd38ef779d96003c3",
+      "supplierId": "6a33d63f2e88d7fb9b1d02f2",
+      "supplierName": "noon",
+      "supplierContact": "229 0197456511",
+      "clientId": "6a3be331d38ef779d96002f6",
+      "clientName": "miic",
+      "clientProfession": "Architecte",
+      "clientEmail": "miic@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a3be8fcd38ef779d9600306",
+      "projectName": "hgyu",
+      "simulationTotal": 6303990,
+      "simulationTotalLabel": "6 303 990 FCFA",
+      "articleCount": 2,
+      "categories": [
+        "Sanitaire",
+        "Mobilier"
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a3be8fdd38ef779d9600308",
+          "name": "JBGYIU",
+          "category": "Sanitaire",
+          "unitPrice": 528990
+        },
+        {
+          "id": "6a3be8fdd38ef779d9600307",
+          "name": "Stalonne",
+          "category": "Mobilier",
+          "unitPrice": 5775000
+        }
+      ],
+      "type": "Demande",
+      "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez noon.",
+      "messages": [
+        {
+          "id": "6a3bea9bd38ef779d96003c4",
+          "senderRole": "user",
+          "senderName": "miic",
+          "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez noon.",
+          "createdAt": "2026-06-24T14:32:59.458Z",
+          "updatedAt": "2026-06-24T14:32:59.458Z"
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-24T14:32:59.458Z",
+      "sourceNotificationId": "6a3bea9bd38ef779d96003c3",
+      "updatedAt": "2026-06-24T14:32:59.458Z"
+    },
+    {
+      "id": "6a3bea7ed38ef779d9600393",
+      "supplierId": "6a33ff7daaff3061a5dcf1a2",
+      "supplierName": "jinuiop",
+      "supplierContact": "hospiceavell@gmail.com",
+      "clientId": "6a3be331d38ef779d96002f6",
+      "clientName": "miic",
+      "clientProfession": "Architecte",
+      "clientEmail": "miic@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a3be8fcd38ef779d9600306",
+      "projectName": "hgyu",
+      "simulationTotal": 6303990,
+      "simulationTotalLabel": "6 303 990 FCFA",
+      "articleCount": 2,
+      "categories": [
+        "Sanitaire",
+        "Mobilier"
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a3be8fdd38ef779d9600308",
+          "name": "JBGYIU",
+          "category": "Sanitaire",
+          "unitPrice": 528990
+        },
+        {
+          "id": "6a3be8fdd38ef779d9600307",
+          "name": "Stalonne",
+          "category": "Mobilier",
+          "unitPrice": 5775000
+        }
+      ],
+      "type": "Demande",
+      "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
+      "messages": [
+        {
+          "id": "6a3bea7ed38ef779d9600394",
+          "senderRole": "user",
+          "senderName": "miic",
+          "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
+          "createdAt": "2026-06-24T14:32:30.273Z",
+          "updatedAt": "2026-06-24T14:32:30.273Z"
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-24T14:32:30.273Z",
+      "sourceNotificationId": "6a3bea7ed38ef779d9600393",
+      "updatedAt": "2026-06-24T14:32:30.273Z"
+    },
+    {
+      "id": "6a3bea60d38ef779d960036a",
+      "supplierId": "6a33d63f2e88d7fb9b1d02f2",
+      "supplierName": "noon",
+      "supplierContact": "229 0197456511",
+      "clientId": "6a3be331d38ef779d96002f6",
+      "clientName": "miic",
+      "clientProfession": "Architecte",
+      "clientEmail": "miic@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a3be8fcd38ef779d9600306",
+      "projectName": "hgyu",
+      "simulationTotal": 6303990,
+      "simulationTotalLabel": "6 303 990 FCFA",
+      "articleCount": 2,
+      "categories": [
+        "Sanitaire",
+        "Mobilier"
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a3be8fdd38ef779d9600308",
+          "name": "JBGYIU",
+          "category": "Sanitaire",
+          "unitPrice": 528990
+        },
+        {
+          "id": "6a3be8fdd38ef779d9600307",
+          "name": "Stalonne",
+          "category": "Mobilier",
+          "unitPrice": 5775000
+        }
+      ],
+      "type": "Demande",
+      "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez noon.",
+      "messages": [
+        {
+          "id": "6a3bea60d38ef779d960036b",
+          "senderRole": "user",
+          "senderName": "miic",
+          "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez noon.",
+          "createdAt": "2026-06-24T14:32:00.883Z",
+          "updatedAt": "2026-06-24T14:32:00.883Z"
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-24T14:32:00.883Z",
+      "sourceNotificationId": "6a3bea60d38ef779d960036a",
+      "updatedAt": "2026-06-24T14:32:00.883Z"
+    },
+    {
+      "id": "6a3bea27d38ef779d960032a",
+      "supplierId": "6a33ff7daaff3061a5dcf1a2",
+      "supplierName": "jinuiop",
+      "supplierContact": "hospiceavell@gmail.com",
+      "clientId": "6a3be331d38ef779d96002f6",
+      "clientName": "miic",
+      "clientProfession": "Architecte",
+      "clientEmail": "miic@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a3be8fcd38ef779d9600306",
+      "projectName": "hgyu",
+      "simulationTotal": 6303990,
+      "simulationTotalLabel": "6 303 990 FCFA",
+      "articleCount": 2,
+      "categories": [
+        "Sanitaire",
+        "Mobilier"
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a3be8fdd38ef779d9600308",
+          "name": "JBGYIU",
+          "category": "Sanitaire",
+          "unitPrice": 528990
+        },
+        {
+          "id": "6a3be8fdd38ef779d9600307",
+          "name": "Stalonne",
+          "category": "Mobilier",
+          "unitPrice": 5775000
+        }
+      ],
+      "type": "Demande",
+      "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
+      "messages": [
+        {
+          "id": "6a3bea27d38ef779d960032b",
+          "senderRole": "user",
+          "senderName": "miic",
+          "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
+          "createdAt": "2026-06-24T14:31:03.222Z",
+          "updatedAt": "2026-06-24T14:31:03.222Z"
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-24T14:31:03.222Z",
+      "sourceNotificationId": "6a3bea27d38ef779d960032a",
+      "updatedAt": "2026-06-24T14:31:03.222Z"
+    },
+    {
+      "id": "6a3bea20d38ef779d9600319",
+      "supplierId": "6a33d63f2e88d7fb9b1d02f2",
+      "supplierName": "noon",
+      "supplierContact": "229 0197456511",
+      "clientId": "6a3be331d38ef779d96002f6",
+      "clientName": "miic",
+      "clientProfession": "Architecte",
+      "clientEmail": "miic@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a3be8fcd38ef779d9600306",
+      "projectName": "hgyu",
+      "simulationTotal": 6303990,
+      "simulationTotalLabel": "6 303 990 FCFA",
+      "articleCount": 2,
+      "categories": [
+        "Sanitaire",
+        "Mobilier"
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a3be8fdd38ef779d9600308",
+          "name": "JBGYIU",
+          "category": "Sanitaire",
+          "unitPrice": 528990
+        },
+        {
+          "id": "6a3be8fdd38ef779d9600307",
+          "name": "Stalonne",
+          "category": "Mobilier",
+          "unitPrice": 5775000
+        }
+      ],
+      "type": "Demande",
+      "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez noon.",
+      "messages": [
+        {
+          "id": "6a3bea20d38ef779d960031a",
+          "senderRole": "user",
+          "senderName": "miic",
+          "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez noon.",
+          "createdAt": "2026-06-24T14:30:56.873Z",
+          "updatedAt": "2026-06-24T14:30:56.873Z"
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-24T14:30:56.873Z",
+      "sourceNotificationId": "6a3bea20d38ef779d9600319",
+      "updatedAt": "2026-06-24T14:30:56.873Z"
+    },
+    {
+      "id": "6a3bea19d38ef779d960030a",
+      "supplierId": "6a33ff7daaff3061a5dcf1a2",
+      "supplierName": "jinuiop",
+      "supplierContact": "hospiceavell@gmail.com",
+      "clientId": "6a3be331d38ef779d96002f6",
+      "clientName": "miic",
+      "clientProfession": "Architecte",
+      "clientEmail": "miic@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a3be8fcd38ef779d9600306",
+      "projectName": "hgyu",
+      "simulationTotal": 6303990,
+      "simulationTotalLabel": "6 303 990 FCFA",
+      "articleCount": 2,
+      "categories": [
+        "Sanitaire",
+        "Mobilier"
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a3be8fdd38ef779d9600308",
+          "name": "JBGYIU",
+          "category": "Sanitaire",
+          "unitPrice": 528990
+        },
+        {
+          "id": "6a3be8fdd38ef779d9600307",
+          "name": "Stalonne",
+          "category": "Mobilier",
+          "unitPrice": 5775000
+        }
+      ],
+      "type": "Demande",
+      "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
+      "messages": [
+        {
+          "id": "6a3bea19d38ef779d960030b",
+          "senderRole": "user",
+          "senderName": "miic",
+          "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
+          "createdAt": "2026-06-24T14:30:49.296Z",
+          "updatedAt": "2026-06-24T14:30:49.296Z"
+        }
+      ],
+      "status": "Nouveau",
+      "createdAt": "2026-06-24T14:30:49.296Z",
+      "sourceNotificationId": "6a3bea19d38ef779d960030a",
+      "updatedAt": "2026-06-24T14:30:49.296Z"
     }
   ],
   "taxonomies": {
@@ -397,60 +760,8 @@
         "count": 0
       }
     ],
-    "cities": [
-      {
-        "id": "cities-1781085703354-408406",
-        "name": "Porto-Novo",
-        "count": 0
-      },
-      {
-        "id": "cities-1781085676337-2ffe8a",
-        "name": "Cotonou",
-        "count": 0
-      },
-      {
-        "id": "cities-1781085662523-ee7516",
-        "name": "Abomey-calavi",
-        "count": 0
-      }
-    ],
-    "neighborhoods": [
-      {
-        "id": "neighborhoods-1781097974319-95a5ff",
-        "name": "Cadjèhoun",
-        "count": 0
-      },
-      {
-        "id": "neighborhoods-1781085647943-51762e",
-        "name": "Ouando",
-        "count": 0
-      },
-      {
-        "id": "neighborhoods-1781085615768-b327aa",
-        "name": "Godomey",
-        "count": 0
-      },
-      {
-        "id": "neighborhoods-1781085587874-02df89",
-        "name": "Vêdoko",
-        "count": 0
-      },
-      {
-        "id": "neighborhoods-1781085574793-b36ddc",
-        "name": "Akpakpa",
-        "count": 0
-      },
-      {
-        "id": "neighborhoods-1781085564300-23238c",
-        "name": "Saint-Michel",
-        "count": 0
-      },
-      {
-        "id": "neighborhoods-1781085525710-0ba438",
-        "name": "Fidjrossè",
-        "count": 0
-      }
-    ]
+    "cities": [],
+    "neighborhoods": []
   },
   "simulations": [],
   "supportItems": [],
@@ -464,24 +775,81 @@
   "supplierSettings": {
     "profile": {},
     "shopProfile": {
-      "name": "Lookthis",
-      "email": "",
-      "phone": "2164566"
+      "name": "mine",
+      "email": "mine@gmail.com",
+      "phone": "551523156130"
     },
+    "settings": {
+      "location": "Bénin",
+      "companyName": "mine",
+      "address": "",
+      "neighborhood": "usui",
+      "city": "Bénin",
+      "timezone": "(GMT +02:00) Afrique australe",
+      "language": "Français"
+    },
+    "savedAt": "2026-06-23T11:12:13.123Z"
+  },
+  "adminSettings": {
+    "profile": {
+      "name": "Super Admin",
+      "email": "",
+      "phone": ""
+    },
+    "shopProfile": {},
     "settings": {
       "location": "Bénin",
       "companyName": "",
       "address": "",
       "neighborhood": "",
       "city": "",
-      "timezone": "(GMT +02:00) Afrique australe",
+      "timezone": "(GMT +00:00) Greenwich",
       "language": "Français"
     },
-    "savedAt": "2026-06-11T12:27:10.692Z"
-  },
-  "adminSettings": {
-    "profile": {},
-    "shopProfile": {},
-    "settings": {}
+    "policies": [
+      {
+        "id": "admin-policy-1782141944460-beb81642b6c65",
+        "icon": "ReceiptLong",
+        "title": "français",
+        "summary": "dbhjd",
+        "content": "rifihnrijehjferfr",
+        "translations": {
+          "en": {
+            "title": "my english",
+            "summary": "engliish",
+            "content": "english"
+          }
+        }
+      },
+      {
+        "id": "admin-policy-cgu",
+        "icon": "ReceiptLong",
+        "title": "CONDITIONS GÉNÉRALES D'UTILISATION",
+        "summary": "Cadre d’utilisation de la plateforme ArchiPrice par les comptes user, supplier et admin.",
+        "content": "Les utilisateurs accèdent aux services ArchiPrice selon leur rôle. Les actions sensibles sont journalisées et les données métier restent protégées."
+      },
+      {
+        "id": "admin-policy-privacy",
+        "icon": "Info",
+        "title": "POLITIQUE DE CONFIDENTIALITÉ",
+        "summary": "Traitement et protection des données des comptes, projets, simulations, fournisseurs et catalogues.",
+        "content": "Les données sont exploitées pour fournir les fonctionnalités de simulation, de validation fournisseur, de catalogue et de support."
+      },
+      {
+        "id": "admin-policy-suppliers",
+        "icon": "Workspaces",
+        "title": "CONDITIONS FOURNISSEURS",
+        "summary": "Règles de validation, publication, refus et retrait des articles proposés par les fournisseurs.",
+        "content": "Les fournisseurs soumettent leurs articles à validation. L’admin peut approuver, refuser ou masquer les contenus non conformes."
+      },
+      {
+        "id": "admin-policy-legal",
+        "icon": "Folder",
+        "title": "MENTIONS LÉGALES",
+        "summary": "Informations légales et responsabilité opérationnelle de la plateforme ArchiPrice.",
+        "content": "ArchiPrice conserve les informations nécessaires à la traçabilité des actions, aux audits et à la continuité des services."
+      }
+    ],
+    "savedAt": "2026-06-23T11:15:10.721Z"
   }
 }

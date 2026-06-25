@@ -1,5 +1,5 @@
 export const API_ROUTES = {
-  health: '/api/health',
+  catalogueConfig: '/api/catalogue-config',
   auth: {
     register: '/api/auth/register',
     login: '/api/auth/login',
@@ -25,11 +25,11 @@ export const API_ROUTES = {
     product: (id) => `/api/supplier/products/${id}`,
     productPublication: (id) => `/api/supplier/products/${id}/publication`,
     productImages: (id) => `/api/supplier/products/${id}/images`,
+    files: '/api/supplier/files',
   },
   catalogue: {
     products: '/api/catalogue/products',
     product: (id) => `/api/catalogue/products/${id}`,
-    filters: '/api/catalogue/filters',
   },
   simulations: {
     create: '/api/simulations',
@@ -38,17 +38,22 @@ export const API_ROUTES = {
     listMine: '/api/demandes/me',
     create: '/api/demandes',
     messages: (id) => `/api/demandes/${id}/messages`,
+    read: (id) => `/api/demandes/${id}/read`,
   },
   support: {
     listMine: '/api/support-items/me',
     create: '/api/support-items',
+    messages: (id) => `/api/support-items/${id}/messages`,
+    read: (id) => `/api/support-items/${id}/read`,
   },
   admin: {
     users: '/api/admin/users',
     user: (id) => `/api/admin/users/${id}`,
     userRole: (id) => `/api/admin/users/${id}/role`,
+    permanentDeleteUser: (id) => `/api/admin/users/${id}/permanent`,
     suppliers: '/api/admin/suppliers',
     supplier: (id) => `/api/admin/suppliers/${id}`,
+    permanentDeleteSupplier: (id) => `/api/admin/suppliers/${id}/permanent`,
     products: '/api/admin/products',
     product: (id) => `/api/admin/products/${id}`,
     simulations: '/api/admin/simulations',

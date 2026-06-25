@@ -137,7 +137,8 @@
   color: #64748b;
 }
 
-.supplier-file-card__preview img {
+.supplier-file-card__preview img,
+.supplier-file-card__preview video {
   display: block;
   width: 100%;
   height: 100%;

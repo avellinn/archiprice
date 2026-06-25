@@ -22,6 +22,26 @@ const upload = multer({
   },
 });
 
+const MAX_MEDIA_SIZE = 20 * 1024 * 1024;
+const ALLOWED_MEDIA_MIME_TYPES = new Set([
+  ...ALLOWED_IMAGE_MIME_TYPES,
+  'video/mp4',
+  'video/webm',
+  'application/pdf',
+]);
+
+const mediaUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_MEDIA_SIZE },
+  fileFilter(_req, file, cb) {
+    if (!ALLOWED_MEDIA_MIME_TYPES.has(file.mimetype)) {
+      cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', file.fieldname));
+      return;
+    }
+    cb(null, true);
+  },
+});
+
 function handleMulterError(err, _req, res, next) {
   if (!err) {
     next();
@@ -41,4 +61,4 @@ function handleMulterError(err, _req, res, next) {
   next(err);
 }
 
-export { MAX_IMAGE_SIZE, upload, handleMulterError };
+export { upload, mediaUpload, handleMulterError };

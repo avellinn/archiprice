@@ -5,9 +5,15 @@ import { Alert, Icon, Loader } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
 import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { deleteAdminSupportItem, fetchAdminSupportItems, updateAdminSupportItem } from '../../../services/adminMongo';
+import { subscribeSupportChange } from '../../../services/support';
 import SupportModal from './supportModal';
+import { useAdminData } from '../../../services/adminData';
+import { getAdminTranslations } from '../../../utils/adminLanguage';
 
 export default function Support() {
+  const [adminData] = useAdminData();
+  const translations = getAdminTranslations(adminData);
+  const text = translations.support;
   const [searchParams] = useSearchParams();
   const [remoteSupportItems, setRemoteSupportItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,6 +39,7 @@ export default function Support() {
   }, [loadSupportItems]);
 
   useRealtimeRefresh(() => loadSupportItems({ silent: true }), ['support-items']);
+  useEffect(() => subscribeSupportChange(() => loadSupportItems({ silent: true })), [loadSupportItems]);
 
   const feedbackItems = useMemo(() => {
     const normalizedSearch = (searchParams.get('q') || '').trim().toLowerCase();
@@ -76,7 +83,7 @@ export default function Support() {
     try {
       await deleteAdminSupportItem(item.id);
       setError('');
-      setSuccessMessage('Feedback supprimé.');
+      setSuccessMessage(text.deleted);
     } catch (apiError) {
       setRemoteSupportItems(previousRemoteItems);
       setError(getApiErrorMessage(apiError, 'La suppression du feedback a échoué.'));
@@ -104,7 +111,7 @@ export default function Support() {
         return nextDrafts;
       });
       setError('');
-      setSuccessMessage(patch.reply !== undefined ? 'Réponse envoyée.' : 'Feedback mis à jour.');
+      setSuccessMessage(patch.reply !== undefined ? text.replySent : text.updated);
     } catch (apiError) {
       setRemoteSupportItems(previousRemoteItems);
       setSelectedItem(selectedItem);
@@ -117,8 +124,8 @@ export default function Support() {
       <section className="supplier-support-panel">
         <header className="supplier-support-header">
           <div>
-            <span>Assistance</span>
-            <h1>Support</h1>
+            <span>{text.eyebrow}</span>
+            <h1>{text.title}</h1>
           </div>
         </header>
 
@@ -134,9 +141,9 @@ export default function Support() {
         )}
 
         <section className="supplier-support-card">
-          <h2>Feedbacks reçus</h2>
+          <h2>{text.listTitle}</h2>
           {isLoading ? (
-            <Loader label="Chargement des feedbacks..." />
+            <Loader label={text.loading} />
           ) : feedbackItems.length ? (
             <div className="supplier-support-list">
               {feedbackItems.map((item) => (
@@ -172,13 +179,14 @@ export default function Support() {
               ))}
             </div>
           ) : (
-            <Alert variant="info">Aucun feedback reçu.</Alert>
+            <Alert variant="info">{text.empty}</Alert>
           )}
         </section>
       </section>
 
       {selectedItem && (
         <SupportModal
+          labels={translations.common}
           item={selectedItem}
           replyDraft={replyDraft}
           onReplyChange={(value) => {

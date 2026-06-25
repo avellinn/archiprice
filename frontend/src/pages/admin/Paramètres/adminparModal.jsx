@@ -1,6 +1,7 @@
 import './adminparModal.css';
 import { useState } from 'react';
 import { Alert, Icon } from '../../../components/ui';
+import { localizePolicy } from '../../../services/policies';
 
 function makePolicyId() {
   return `admin-policy-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -12,6 +13,7 @@ const EMPTY_POLICY = {
   title: '',
   summary: '',
   content: '',
+  translations: { en: { title: '', summary: '', content: '' } },
 };
 
 export function AdminProfileModal({ adminProfile, onChange, onClose, onSave }) {
@@ -157,11 +159,14 @@ export function AdminLocationModal({
   );
 }
 
-export function AdminPolicyModal({ policies, onPoliciesChange, onClose }) {
+export function AdminPolicyModal({ policies, onPoliciesChange, onClose, language = 'fr' }) {
   const [activePolicyId, setActivePolicyId] = useState(null);
   const [editingPolicy, setEditingPolicy] = useState(null);
   const [actionMessage, setActionMessage] = useState('');
-  const activePolicy = policies.find((policy) => policy.id === activePolicyId);
+  const activePolicy = localizePolicy(
+    policies.find((policy) => policy.id === activePolicyId),
+    language,
+  );
 
   function openCreatePolicy() {
     setActivePolicyId(null);
@@ -171,7 +176,13 @@ export function AdminPolicyModal({ policies, onPoliciesChange, onClose }) {
   function openEditPolicy(policy, event) {
     event.stopPropagation();
     setActivePolicyId(null);
-    setEditingPolicy({ ...policy });
+    setEditingPolicy({
+      ...policy,
+      translations: {
+        ...(policy.translations || {}),
+        en: { title: '', summary: '', content: '', ...(policy.translations?.en || {}) },
+      },
+    });
   }
 
   function deletePolicy(policyId, event) {
@@ -188,6 +199,16 @@ export function AdminPolicyModal({ policies, onPoliciesChange, onClose }) {
     }));
   }
 
+  function updateEnglishPolicy(field, value) {
+    setEditingPolicy((currentPolicy) => ({
+      ...currentPolicy,
+      translations: {
+        ...(currentPolicy.translations || {}),
+        en: { ...(currentPolicy.translations?.en || {}), [field]: value },
+      },
+    }));
+  }
+
   function saveEditingPolicy(event) {
     event.preventDefault();
     const nextPolicy = {
@@ -195,6 +216,14 @@ export function AdminPolicyModal({ policies, onPoliciesChange, onClose }) {
       title: editingPolicy.title.trim(),
       summary: editingPolicy.summary.trim(),
       content: editingPolicy.content.trim(),
+      translations: {
+        ...(editingPolicy.translations || {}),
+        en: {
+          title: editingPolicy.translations?.en?.title?.trim() || '',
+          summary: editingPolicy.translations?.en?.summary?.trim() || '',
+          content: editingPolicy.translations?.en?.content?.trim() || '',
+        },
+      },
     };
 
     if (!nextPolicy.title) return;
@@ -246,6 +275,19 @@ export function AdminPolicyModal({ policies, onPoliciesChange, onClose }) {
               <span>Contenu</span>
               <textarea rows={8} value={editingPolicy.content} onChange={(event) => updateEditingPolicy('content', event.target.value)} />
             </label>
+            <h3>Version anglaise</h3>
+            <label>
+              <span>Titre anglais</span>
+              <input value={editingPolicy.translations?.en?.title || ''} onChange={(event) => updateEnglishPolicy('title', event.target.value)} />
+            </label>
+            <label>
+              <span>Résumé anglais</span>
+              <input value={editingPolicy.translations?.en?.summary || ''} onChange={(event) => updateEnglishPolicy('summary', event.target.value)} />
+            </label>
+            <label>
+              <span>Contenu anglais</span>
+              <textarea rows={8} value={editingPolicy.translations?.en?.content || ''} onChange={(event) => updateEnglishPolicy('content', event.target.value)} />
+            </label>
             <div className="admin-policy-form__actions">
               <button type="button" onClick={() => setEditingPolicy(null)}>Annuler</button>
               <button type="submit">Enregistrer</button>
@@ -265,12 +307,14 @@ export function AdminPolicyModal({ policies, onPoliciesChange, onClose }) {
               <Icon name="Add" size="sm" />
               Ajouter une politique
             </button>
-            {policies.length ? policies.map((policy) => (
+            {policies.length ? policies.map((policy) => {
+              const visiblePolicy = localizePolicy(policy, language);
+              return (
               <button type="button" key={policy.id} className="admin-policy-row" onClick={() => setActivePolicyId(policy.id)}>
-                <Icon name={policy.icon || 'ReceiptLong'} size="sm" />
+                <Icon name={visiblePolicy.icon || 'ReceiptLong'} size="sm" />
                 <span>
-                  <strong>{policy.title}</strong>
-                  <small>{policy.summary || 'Aucun résumé renseigné.'}</small>
+                  <strong>{visiblePolicy.title}</strong>
+                  <small>{visiblePolicy.summary || 'Aucun résumé renseigné.'}</small>
                 </span>
                 <span className="admin-policy-row__actions" aria-label="Actions">
                   <span role="button" tabIndex={0} title="Modifier" onClick={(event) => openEditPolicy(policy, event)} onKeyDown={(event) => event.key === 'Enter' && openEditPolicy(policy, event)}>
@@ -282,7 +326,8 @@ export function AdminPolicyModal({ policies, onPoliciesChange, onClose }) {
                 </span>
                 <Icon name="ChevronRight" size="sm" />
               </button>
-            )) : (
+              );
+            }) : (
               <p className="admin-policy-empty">Aucune politique configurée.</p>
             )}
           </div>

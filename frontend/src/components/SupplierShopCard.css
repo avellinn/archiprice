@@ -225,6 +225,19 @@
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
+.supplier-shop-product-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--supplier-product-card-background) center / cover no-repeat;
+  opacity: 0.055;
+  pointer-events: none;
+}
+
+.supplier-shop-product-card > * {
+  position: relative;
+}
+
 .supplier-shop-product-card:hover,
 .supplier-shop-product-card:focus-within {
   border-color: rgba(34, 75, 115, 0.32);

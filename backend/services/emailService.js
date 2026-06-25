@@ -44,27 +44,6 @@ async function getTransporter() {
   return { transporter, missingKeys: [], config };
 }
 
-export async function verifyEmailTransport() {
-  try {
-    const { transporter, missingKeys } = await getTransporter();
-
-    if (!transporter) {
-      return {
-        ok: false,
-        reason: `SMTP incomplet: ${missingKeys.join(', ')}`,
-      };
-    }
-
-    await transporter.verify();
-    return { ok: true };
-  } catch (error) {
-    return {
-      ok: false,
-      reason: error.message,
-    };
-  }
-}
-
 export async function sendPasswordResetEmail({ to, name, resetUrl, expiresInMinutes = 30 }) {
   const subject = 'Réinitialisation de votre mot de passe ArchiPrice';
   const text = [

@@ -17,10 +17,8 @@ Exemples :
 - selects ;
 - tables ;
 - modals ;
-- cards ;
 - dropdowns ;
 - badges ;
-- pagination ;
 - upload image ;
 - date picker ;
 - notifications ;
@@ -41,24 +39,21 @@ Exemples actuels :
 - `Text.jsx` et `Text.css`
 - `Icon.jsx` et `Icon.css`
 - `components/ui/Badge.jsx`
-- `components/ui/Card.jsx`
-- `components/ui/DataTable.jsx`
 - `components/ui/EmptyState.jsx`
-- `components/ui/Pagination.jsx`
 - `components/ui/Alert.jsx`
 - `components/ui/Table.jsx`
 - `components/ui/ServerError.jsx`
 - `Header.jsx` et `Header.css`
 - `Sidebar.jsx` et `Sidebar.css`
 - `Avatar.jsx` et `Avatar.css`
-- `Newproject.jsx` et `Newproject.css`, avec `ModalCreateProject.jsx` comme wrapper de compatibilité
+- `Newproject.jsx` et `Newproject.css`
 - `DonutChart.jsx` et `DonutChart.css`
 
 Les nouveaux composants génériques doivent être créés dans `src/components/ui/` lorsqu'ils ne dépendent pas d'un domaine métier.
 
 Les modals génériques doivent être rangées dans `src/components/ui/modals/`. Une modale métier transverse peut rester dans `src/components/`, par exemple `modalBoutique.jsx`.
 
-`src/pages/admin/PageShell.jsx` peut réexporter certains composants partagés pour préserver les imports admin existants, mais la source de vérité doit rester dans `src/components/ui/`.
+Les pages admin importent directement les composants partagés depuis `src/components/ui/`.
 
 ## Ce Qui Est Spécifique Au Rôle
 

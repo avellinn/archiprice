@@ -13,11 +13,12 @@ export default function SimulBudget({
   onValidate,
   onInteract,
   onMinimize,
+  isValidating = false,
 }) {
   return (
     <aside className="catalogue-budget-panel catalogue-budget-panel--expanded" aria-label="Simulation budget live">
       <div className="catalogue-budget-card">
-        <div className="catalogue-budget-panel__toolbar">
+        {onMinimize && <div className="catalogue-budget-panel__toolbar">
           <button
             type="button"
             className="catalogue-panel-minimize"
@@ -26,7 +27,7 @@ export default function SimulBudget({
           >
             <Icon name="ChevronRight" size="sm" />
           </button>
-        </div>
+        </div>}
         <h2>Budget</h2>
 
         <label className="catalogue-budget-field">
@@ -36,6 +37,7 @@ export default function SimulBudget({
             inputMode="numeric"
             value={formatBudgetInputValue(budgetTarget)}
             placeholder="Définir le budget"
+            required
             onChange={(event) => {
               onInteract?.();
               onBudgetChange(normalizeBudgetInput(event.target.value));
@@ -70,7 +72,7 @@ export default function SimulBudget({
             : `${selectedCount} article(s) ajouté(s) au panier budget.`}
         </p>
 
-        {validationError && <Alert variant="danger">{validationError}</Alert>}
+        {validationError && <Alert variant="danger" layout="inline">{validationError}</Alert>}
 
         <Button
           type="button"
@@ -82,6 +84,7 @@ export default function SimulBudget({
             onValidate();
           }}
           disabled={selectedCount === 0}
+          isLoading={isValidating}
         >
           Valider
         </Button>

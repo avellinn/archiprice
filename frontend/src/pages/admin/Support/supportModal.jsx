@@ -10,6 +10,7 @@ export default function SupportModal({
   onClose,
   onUpdate,
   canReply = true,
+  labels = {},
 }) {
   const [isReplying, setIsReplying] = useState(false);
   const [replyError, setReplyError] = useState('');
@@ -37,7 +38,7 @@ export default function SupportModal({
       <section className="support-modal" role="dialog" aria-modal="true" aria-labelledby="support-modal-title">
         <header>
           <h2 id="support-modal-title">Détail </h2>
-          <button type="button" aria-label="Fermer" onClick={onClose}>
+          <button type="button" aria-label={labels.close || 'Fermer'} onClick={onClose}>
             <Icon name="Close" size="sm" />
           </button>
         </header>
@@ -71,9 +72,20 @@ export default function SupportModal({
           <p>{item.description || '-'}</p>
         </section>
 
+        {Array.isArray(item.messages) && item.messages.length > 0 && (
+          <section className="support-modal__card">
+            <h3>Conversation</h3>
+            {item.messages.map((message) => (
+              <p key={message._id || message.id || `${message.createdAt}-${message.message}`}>
+                <strong>{message.senderName || message.senderRole} :</strong> {message.message}
+              </p>
+            ))}
+          </section>
+        )}
+
         {item.reply && !isReplying && (
           <section className="support-modal__card">
-            <h3>Réponse envoyée</h3>
+            <h3>Réponse </h3>
             <p>{item.reply}</p>
           </section>
         )}
@@ -104,24 +116,24 @@ export default function SupportModal({
         <footer>
           {!canReply ? (
             <Button type="button" variant="outline" size="sm" onClick={onClose}>
-              Fermer
+              {labels.close || 'Fermer'}
             </Button>
           ) : isReplying ? (
             <>
               <Button type="button" variant="outline" size="sm" onClick={() => setIsReplying(false)}>
-                Annuler
+                {labels.cancel || 'Annuler'}
               </Button>
               <Button type="button" size="sm" onClick={sendReply}>
-                Envoyer
+                {labels.send || 'Envoyer'}
               </Button>
             </>
           ) : (
             <>
               <Button type="button" variant="outline" size="sm" onClick={onClose}>
-                Annuler
+                {labels.cancel || 'Annuler'}
               </Button>
               <Button type="button" size="sm" onClick={() => setIsReplying(true)}>
-                Répondre
+                {labels.reply || 'Répondre'}
               </Button>
             </>
           )}

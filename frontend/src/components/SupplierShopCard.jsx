@@ -1,4 +1,5 @@
 import { Button, Icon } from './ui';
+import { getSaleUnit } from '../constants/productTaxonomy';
 import './SupplierShopCard.css';
 
 function getShortShopName(shopName) {
@@ -30,6 +31,7 @@ export default function SupplierShopCard({
   backgroundImage = '',
   products = [],
   onAddProduct,
+  onOpenProduct,
   onEditProduct,
   onDeleteProduct,
 }) {
@@ -100,24 +102,29 @@ export default function SupplierShopCard({
           <div className="supplier-shop-new-products__grid">
             {products.map((product) => {
               const image = getProductImage(product);
+              const openProduct = () => onOpenProduct?.(product);
               const editProduct = () => onEditProduct?.(product);
+              const productStyle = image
+                ? { '--supplier-product-card-background': `url(${JSON.stringify(image)})` }
+                : undefined;
 
               return (
                 <article
-                  key={product.id}
+                  key={product.id || product._id}
                   className="supplier-shop-product-card"
+                  style={productStyle}
                   tabIndex={0}
                   role="button"
-                  onClick={editProduct}
-                  onKeyDown={(event) => handleCardKeyDown(event, editProduct)}
+                  onClick={openProduct}
+                  onKeyDown={(event) => handleCardKeyDown(event, openProduct)}
                 >
                   <div className="supplier-shop-product-card__media">
                     {image ? <img src={image} alt={product.name} /> : <Icon name="Tag" size="lg" />}
                   </div>
                   <div className="supplier-shop-product-card__body">
                     <h2>{product.name || 'Produit sans nom'}</h2>
-                    <p>{product.category || 'Catégorie non renseignée'}</p>
-                    <strong>{formatFCFA(product.unitPrice)}</strong>
+                    <p>{[product.category, product.subcategory].filter(Boolean).join(' › ') || 'Catégorie non renseignée'}</p>
+                    <strong>{formatFCFA(product.priceExcludingTax ?? product.unitPrice)} / {(getSaleUnit(product.unit)?.label || product.unit || 'unité').toLocaleLowerCase('fr')}</strong>
                   </div>
                   <div className="supplier-shop-product-card__actions" onClick={(event) => event.stopPropagation()}>
                     <button type="button" title="Modifier" onClick={editProduct}>

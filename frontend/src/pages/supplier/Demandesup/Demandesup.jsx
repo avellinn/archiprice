@@ -1,11 +1,14 @@
-import './Demandesup.css';
+import '../../../components/demandeList.css';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Icon } from '../../../components/ui';
+import DemandeModal from '../../../components/demandeModal';
+import { Alert, Icon, Loader } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
+import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { useAdminData } from '../../../services/adminData';
-import { fetchMyDemandes, replyToDemande } from '../../../services/demandes';
+import { fetchMyDemandes, markDemandeRead, notifyDemandesChange, replyToDemande, subscribeDemandesChange } from '../../../services/demandes';
 import { fetchSupplierWorkspace } from '../../../services/supplier';
 import { isNumericOnly } from '../../../utils/formInput';
+import { getSupplierTranslations } from '../../../utils/supplierLanguage';
 
 const HIDDEN_SUPPLIER_DEMAND_ITEMS_KEY = 'archiprice:supplier-demand-hidden-items';
 const SUPPLIER_DISMISSED_NOTIFICATIONS_KEY = 'archiprice:supplier-dismissed-notifications';
@@ -129,28 +132,33 @@ function normalizeDemandMessages(notification) {
       : [];
   const seenMessages = new Set();
 
-  return messages.filter((message) => {
-    const messageKey = [
-      message.id,
-      message.senderRole,
-      message.senderName,
-      message.message,
-      message.createdAt,
-    ].map((value) => String(value || '').trim()).join('|');
+  return messages
+    .filter((message) => {
+      const messageKey = [
+        message.id,
+        message.senderRole,
+        message.senderName,
+        message.message,
+        message.createdAt,
+      ].map((value) => String(value || '').trim()).join('|');
 
-    if (seenMessages.has(messageKey)) return false;
-    seenMessages.add(messageKey);
-    return true;
-  });
+      if (seenMessages.has(messageKey)) return false;
+      seenMessages.add(messageKey);
+      return true;
+    })
+    .sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
 }
 
 function getSupplierDemandGroupId(notification) {
   return [
     notification.clientId,
     notification.clientEmail,
+    notification.clientName,
     notification.projectId,
+    notification.productId,
     notification.supplierId,
     notification.supplierName,
+    notification.supplierContact,
   ].map((value) => String(value || '').trim().toLowerCase()).filter(Boolean).join('|')
     || String(notification.id || '');
 }
@@ -186,10 +194,12 @@ function groupDemandsByClient(notifications) {
     });
   });
 
-  return [...groups.values()].map((group) => ({
-    ...group,
-    messages: normalizeDemandMessages({ ...group, message: '', messages: group.messages }),
-  }));
+  return [...groups.values()]
+    .map((group) => ({
+      ...group,
+      messages: normalizeDemandMessages({ ...group, message: '', messages: group.messages }),
+    }))
+    .sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0));
 }
 
 function getLastMessage(item) {
@@ -217,25 +227,52 @@ function getDemandReadKeys(item, notifications = [], expectedSenderRole = 'user'
 }
 
 function hasUnreadClientMessage(item, readKeys, notifications) {
+  if (Number.isFinite(Number(item.unreadForSupplier))) return Number(item.unreadForSupplier) > 0;
   return getDemandReadKeys(item, notifications, 'user').some((key) => !readKeys.includes(key));
+}
+
+function replaceOrPrependDemande(demandes, updatedDemande) {
+  if (!updatedDemande?.id) return demandes;
+  const updatedGroupId = getSupplierDemandGroupId(updatedDemande);
+  let replaced = false;
+  const nextDemandes = [];
+
+  for (const demande of demandes) {
+    const demandeGroupId = getSupplierDemandGroupId(demande);
+    if (!replaced && (demande.id === updatedDemande.id || demandeGroupId === updatedGroupId)) {
+      nextDemandes.push(updatedDemande);
+      replaced = true;
+      continue;
+    }
+    if (demande.id === updatedDemande.id || demandeGroupId === updatedGroupId) {
+      continue;
+    }
+    nextDemandes.push(demande);
+  }
+
+  return replaced ? nextDemandes : [updatedDemande, ...demandes];
 }
 
 export default function Demandesup() {
   const { user } = useAuth();
   const [adminData, updateAdminData] = useAdminData();
+  const translations = getSupplierTranslations(adminData);
+  const demandText = translations.demand;
   const [supplierProfile, setSupplierProfile] = useState(null);
   const hiddenDemandItemsKey = getHiddenDemandItemsKey(user, supplierProfile);
   const [hiddenDemandIds, setHiddenDemandIds] = useState(() => readHiddenDemandItems(hiddenDemandItemsKey));
-  const [replyDemandId, setReplyDemandId] = useState('');
   const [replyText, setReplyText] = useState('');
   const [replyError, setReplyError] = useState('');
   const [actionMessage, setActionMessage] = useState('');
   const [selectedDemandId, setSelectedDemandId] = useState('');
   const [apiDemandes, setApiDemandes] = useState([]);
+  const [isLoadingDemandes, setIsLoadingDemandes] = useState(true);
   const [readNotificationKeys, setReadNotificationKeys] = useState(readDismissedNotificationKeys);
 
-  useEffect(() => {
+  function loadDemandes({ silent = false } = {}) {
     let cancelled = false;
+
+    if (!silent) setIsLoadingDemandes(true);
 
     Promise.allSettled([fetchSupplierWorkspace(), fetchMyDemandes()])
       .then(([workspaceResult, demandesResult]) => {
@@ -243,12 +280,30 @@ export default function Demandesup() {
         if (workspaceResult.status === 'fulfilled') setSupplierProfile(workspaceResult.value?.supplier || null);
         if (demandesResult.status === 'fulfilled') setApiDemandes(demandesResult.value);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled && !silent) setIsLoadingDemandes(false);
+      });
 
     return () => {
       cancelled = true;
     };
+  }
+
+  useEffect(() => {
+    let cancelLoad = () => {};
+    const timer = window.setTimeout(() => {
+      cancelLoad = loadDemandes();
+    }, 0);
+    return () => {
+      window.clearTimeout(timer);
+      cancelLoad();
+    };
   }, []);
+
+  useRealtimeRefresh(() => loadDemandes({ silent: true }), ['demandes', 'suppliers']);
+
+  useEffect(() => subscribeDemandesChange(() => loadDemandes({ silent: true })), []);
 
   useEffect(() => {
     if (!hiddenDemandItemsKey) return undefined;
@@ -296,13 +351,14 @@ export default function Demandesup() {
     setHiddenDemandIds(nextHiddenIds);
     writeHiddenDemandItems(hiddenDemandItemsKey, nextHiddenIds);
     if (selectedDemandId === itemId) setSelectedDemandId('');
-    setActionMessage('Conversation supprimée de votre liste.');
+    setActionMessage(demandText.conversationHidden);
   }
 
   function sendReply(event) {
     event.preventDefault();
     const comment = replyText.trim();
-    if (!replyDemandId || !comment) return;
+    const targetDemandId = selectedDemand?.sourceNotificationId;
+    if (!targetDemandId || !comment) return;
     if (isNumericOnly(comment)) {
       setReplyError('Le message doit contenir du texte.');
       setActionMessage('');
@@ -316,22 +372,19 @@ export default function Demandesup() {
       || user?.name
       || 'Boutique';
 
-    replyToDemande(replyDemandId, comment)
+    replyToDemande(targetDemandId, comment)
       .then((updatedDemande) => {
-        setApiDemandes((currentDemandes) => currentDemandes.map((demande) => (
-          demande.id === updatedDemande.id ? updatedDemande : demande
-        )));
+        setApiDemandes((currentDemandes) => replaceOrPrependDemande(currentDemandes, updatedDemande));
         setReplyText('');
-        setReplyDemandId('');
         setReplyError('');
-        setActionMessage('Message envoyé.');
+        setActionMessage(demandText.messageSent);
       })
       .catch(() => {
         const now = new Date().toISOString();
         updateAdminData((currentData) => ({
           ...currentData,
           supplierClientNotifications: (currentData.supplierClientNotifications || []).map((notification) => {
-            if (notification.id !== replyDemandId) return notification;
+            if (notification.id !== targetDemandId) return notification;
 
             return {
               ...notification,
@@ -349,10 +402,10 @@ export default function Demandesup() {
             };
           }),
         }));
+        notifyDemandesChange({ action: 'message-created-local', demandeId: targetDemandId });
         setReplyText('');
-        setReplyDemandId('');
         setReplyError('');
-        setActionMessage('Message envoyé.');
+        setActionMessage(demandText.messageSent);
       });
   }
 
@@ -364,16 +417,24 @@ export default function Demandesup() {
 
   function markDemandAsRead(item) {
     const keys = getDemandReadKeys(item, demandNotifications, 'user');
-    if (keys.length === 0) return;
+    const notificationIds = new Set((item.notificationIds || [item.sourceNotificationId]).filter(Boolean).map(String));
+    setApiDemandes((currentDemandes) => currentDemandes.map((demande) => (
+      notificationIds.has(String(demande.id || '')) ? { ...demande, unreadForSupplier: 0 } : demande
+    )));
 
-    const nextKeys = [...new Set([...readNotificationKeys, ...keys])];
-    setReadNotificationKeys(nextKeys);
-    writeDismissedNotificationKeys(nextKeys);
+    if (keys.length > 0) {
+      const nextKeys = [...new Set([...readNotificationKeys, ...keys])];
+      setReadNotificationKeys(nextKeys);
+      writeDismissedNotificationKeys(nextKeys);
+    }
   }
 
   function openDemand(itemId) {
     const demand = demands.find((item) => item.id === itemId);
-    if (demand) markDemandAsRead(demand);
+    if (demand) {
+      markDemandAsRead(demand);
+      markDemandeRead(demand.sourceNotificationId).catch(() => {});
+    }
     setSelectedDemandId(itemId);
   }
 
@@ -388,23 +449,25 @@ export default function Demandesup() {
       <section className="user-support-panel">
         <header className="user-support-header">
           <div>
-            <span>Demandes clients</span>
+            <span>{demandText.eyebrow}</span>
             {unreadDemandCount > 0 && (
               <strong className="user-demand-notification-badge">
-                {unreadDemandCount} nouvelle{unreadDemandCount > 1 ? 's' : ''} demande{unreadDemandCount > 1 ? 's' : ''}
+                {demandText.badgeNewRequests(unreadDemandCount)}
               </strong>
             )}
           </div>
         </header>
 
         <section className="user-support-card">
-          <h2>Demandes reçues</h2>
+          <h2>{demandText.title}</h2>
           {actionMessage && (
             <Alert variant="success" className="user-demand-action-alert" onClose={() => setActionMessage('')}>
               {actionMessage}
             </Alert>
           )}
-          {demands.length ? (
+          {isLoadingDemandes ? (
+            <Loader label={demandText.loading} />
+          ) : demands.length ? (
             <div className="user-support-list user-demand-list">
               {demands.map((item) => {
                 const isUnread = hasUnreadClientMessage(item, readNotificationKeys, demandNotifications);
@@ -421,14 +484,16 @@ export default function Demandesup() {
                   
                   <div>
                     <strong>{item.clientName || 'Client ArchiPrice'}</strong>
-                    <span>{item.projectName || 'Projet non renseigné'} · {item.createdAtLabel}</span>
-                    <small>{item.messages.at(-1)?.message || 'Aucun message renseigné'}</small>
+                    <span>{item.projectName || demandText.noProject} · {item.createdAtLabel}</span>
+                    <small>{item.messages.at(-1)?.message || demandText.noMessage}</small>
                   </div>
-                  <b>{isUnread ? 'Nouvelle demande' : item.status || 'Nouveau'}</b>
+                  <span className={`user-demand-list__status${isUnread ? ' is-unread-badge' : ''}`}>
+                    {isUnread ? demandText.newMessage : (item.status || demandText.readLabel)}
+                  </span>
                   <button
                     type="button"
                     className="user-support-list__delete"
-                    title="Supprimer de ma liste"
+                    title={demandText.deleteTitle}
                     aria-label={`Supprimer la demande de ${item.clientName || 'client'}`}
                     onClick={(event) => {
                       event.stopPropagation();
@@ -442,82 +507,31 @@ export default function Demandesup() {
               })}
             </div>
           ) : (
-            <Alert variant="info">Aucune demande reçue pour le moment.</Alert>
+            <Alert variant="info" layout="inline">{demandText.empty}</Alert>
           )}
         </section>
       </section>
 
       {selectedDemand && (
-        <div className="user-demand-modal" role="dialog" aria-modal="true" aria-label="Conversation client">
-          <section className="user-demand-card">
-            <header>
-              <div>
-                <span>{selectedDemand.projectName || 'Projet non renseigné'}</span>
-                <h2>{selectedDemand.clientName || 'Client ArchiPrice'}</h2>
-              </div>
-              <button type="button" aria-label="Fermer" onClick={() => setSelectedDemandId('')}>
-                <Icon name="Close" size="sm" />
-              </button>
-            </header>
-
-            <div className="user-support-chat__messages">
-              {selectedDemand.messages.length === 0 ? (
-                <p className="is-empty">
-                  <span>Aucun message dans cette conversation.</span>
-                </p>
-              ) : (
-                selectedDemand.messages.map((chatMessage) => (
-                  <p
-                    key={chatMessage.id}
-                    className={chatMessage.senderRole === 'supplier' ? 'is-supplier' : 'is-user'}
-                  >
-                    <small>{chatMessage.senderName || (chatMessage.senderRole === 'supplier' ? 'Vous' : selectedDemand.clientName)}</small>
-                    <span>{chatMessage.message}</span>
-                  </p>
-                ))
-              )}
-            </div>
-
-            <footer>
-              {replyDemandId === selectedDemand.sourceNotificationId ? (
-                <form className="user-support-chat__reply-form" onSubmit={sendReply}>
-                  <textarea
-                    value={replyText}
-                    onChange={(event) => setReplyText(event.target.value)}
-                    placeholder="Écrivez votre réponse au client."
-                    rows={4}
-                    required
-                    autoFocus
-                  />
-                  {replyError && (
-                    <Alert variant="danger" onClose={() => setReplyError('')}>
-                      {replyError}
-                    </Alert>
-                  )}
-                  {actionMessage && (
-                    <Alert variant="success" onClose={() => setActionMessage('')}>
-                      {actionMessage}
-                    </Alert>
-                  )}
-                  <div>
-                    <button type="button" onClick={() => {
-                      setReplyDemandId('');
-                      setReplyText('');
-                      setReplyError('');
-                    }}>
-                      Annuler
-                    </button>
-                    <button type="submit">Envoyer</button>
-                  </div>
-                </form>
-              ) : (
-                <button type="button" className="user-support-chat__reply" onClick={() => setReplyDemandId(selectedDemand.sourceNotificationId)}>
-                  Répondre
-                </button>
-              )}
-            </footer>
-          </section>
-        </div>
+        <DemandeModal
+          demand={selectedDemand}
+          currentRole="supplier"
+          currentUser={user}
+          replyText={replyText}
+          replyError={replyError}
+          actionMessage={actionMessage}
+          placeholder={demandText.placeholder}
+          labels={{ ...demandText, ...translations.common }}
+          onReplyTextChange={setReplyText}
+          onDismissReplyError={() => setReplyError('')}
+          onDismissActionMessage={() => setActionMessage('')}
+          onSubmit={sendReply}
+          onClose={() => {
+            setSelectedDemandId('');
+            setReplyText('');
+            setReplyError('');
+          }}
+        />
       )}
     </main>
   );

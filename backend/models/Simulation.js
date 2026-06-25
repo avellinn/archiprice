@@ -12,9 +12,13 @@ const simulationItemSchema = new mongoose.Schema(
 
 const simulationSchema = new mongoose.Schema(
   {
-    user: { type: String, required: true, trim: true },
-    email: { type: String, required: true, lowercase: true, trim: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     date: { type: String, trim: true },
+    projectId: { type: String, trim: true, default: '' },
+    projectName: { type: String, trim: true, default: '' },
+    reference: { type: String, trim: true, default: '' },
+    sourceType: { type: String, trim: true, default: 'simulation' },
+    sourceId: { type: String, trim: true, default: '' },
     total: { type: String, trim: true, default: '-' },
     products: { type: mongoose.Schema.Types.Mixed, default: 0 },
     status: {

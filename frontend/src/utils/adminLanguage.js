@@ -1,8 +1,3 @@
-export const ADMIN_LANGUAGE_LABELS = {
-  fr: 'Français',
-  en: 'Anglais',
-};
-
 export const ADMIN_TRANSLATIONS = {
   fr: {
     pageTitles: {
@@ -38,6 +33,27 @@ export const ADMIN_TRANSLATIONS = {
       publication: 'Publication fournisseur',
       newUser: 'Nouvelle inscription user',
       newFeedback: (role) => `Nouveau feedback ${role === 'supplier' ? 'fournisseur' : 'user'}`,
+    },
+    support: {
+      eyebrow: 'Assistance', title: 'Support', listTitle: 'Feedbacks reçus',
+      empty: 'Aucun feedback reçu.', loading: 'Chargement des feedbacks...',
+      deleted: 'Feedback supprimé.', replySent: 'Réponse envoyée.', updated: 'Feedback mis à jour.',
+    },
+    common: { close: 'Fermer', cancel: 'Annuler', send: 'Envoyer', message: 'Message', reply: 'Répondre' },
+    users: {
+      statusActive: 'Actif',
+      statusInactive: 'Inactif',
+      statusBlocked: 'Bloqué',
+      statusMissing: 'Inexistant',
+      permanentDelete: 'Supprimer définitivement',
+      restore: 'Restaurer',
+      delete: 'Supprimer',
+    },
+    suppliers: {
+      statusMissing: 'Inexistant',
+      permanentDelete: 'Supprimer définitivement',
+      restore: 'Restaurer',
+      delete: 'Supprimer',
     },
     settings: {
       title: 'Paramètres',
@@ -83,6 +99,27 @@ export const ADMIN_TRANSLATIONS = {
       publication: 'Supplier publication',
       newUser: 'New user signup',
       newFeedback: (role) => `New ${role === 'supplier' ? 'supplier' : 'user'} feedback`,
+    },
+    support: {
+      eyebrow: 'Help desk', title: 'Support', listTitle: 'Received feedback',
+      empty: 'No feedback received.', loading: 'Loading feedback...',
+      deleted: 'Feedback deleted.', replySent: 'Reply sent.', updated: 'Feedback updated.',
+    },
+    common: { close: 'Close', cancel: 'Cancel', send: 'Send', message: 'Message', reply: 'Reply' },
+    users: {
+      statusActive: 'Active',
+      statusInactive: 'Inactive',
+      statusBlocked: 'Blocked',
+      statusMissing: 'Missing',
+      permanentDelete: 'Delete permanently',
+      restore: 'Restore',
+      delete: 'Delete',
+    },
+    suppliers: {
+      statusMissing: 'Missing',
+      permanentDelete: 'Delete permanently',
+      restore: 'Restore',
+      delete: 'Delete',
     },
     settings: {
       title: 'Settings',

@@ -56,11 +56,34 @@ function requireRole(role) {
     if (role === 'supplier') {
       try {
         const supplier = await Supplier.findOne({ user: req.user._id });
-        if (!supplier || supplier.status === 'Supprimé') {
+
+        if (!supplier) {
+          // Don't create supplier profiles automatically in production.
+          // In development only, create a minimal profile to ease local testing.
+          if (process.env.NODE_ENV === 'development') {
+            const minimal = {
+              user: req.user._id,
+              email: req.user.email || '',
+              // Ensure required `name` is set when possible to avoid validation errors
+              name: req.user.name || req.user.email || 'Fournisseur',
+              companyName: req.user.name || req.user.email || 'Boutique',
+              contact: req.user.phone || req.user.email || '',
+              phone: req.user.phone || '',
+              status: 'Actif',
+            };
+            await Supplier.create(minimal);
+          } else {
+            res.status(403).json({ error: 'Profil fournisseur introuvable — accès supplier interdit' });
+            return;
+          }
+        }
+
+        if (supplier && supplier.status === 'Supprimé') {
           res.status(403).json({ error: 'Profil fournisseur introuvable — accès supplier interdit' });
           return;
         }
-      } catch {
+      } catch (err) {
+        // If DB operations fail, return server error
         res.status(500).json({ error: 'Vérification fournisseur impossible' });
         return;
       }

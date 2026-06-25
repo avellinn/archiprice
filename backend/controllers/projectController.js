@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 import Project from '../models/Project.js';
+import Product from '../models/Product.js';
+import Simulation from '../models/Simulation.js';
 import { publishCrudEvent } from '../services/realtimeService.js';
 
 function formatProject(project) {
@@ -36,6 +38,28 @@ async function createProject(req, res) {
     clientName: clientName?.trim() || undefined,
     status,
     user: req.user._id,
+  });
+
+  const projectDate = new Intl.DateTimeFormat('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(new Date());
+
+  await Simulation.create({
+    userId: req.user._id,
+    date: projectDate,
+    projectId: String(project._id),
+    projectName: project.name,
+    reference: `SIM-${project._id}`,
+    sourceType: 'project',
+    sourceId: String(project._id),
+    total: '-',
+    products: 0,
+    status: 'Succès',
   });
 
   publishCrudEvent('projects', 'created', { projectId: String(project._id) }, {
@@ -103,6 +127,8 @@ async function deleteProject(req, res) {
     return res.status(404).json({ error: 'Projet introuvable' });
   }
 
+  await Product.deleteMany({ project: project._id });
+
   publishCrudEvent('projects', 'deleted', { projectId: String(project._id) }, {
     roles: ['admin'],
     userIds: [req.user._id],
@@ -111,9 +137,29 @@ async function deleteProject(req, res) {
   res.json({ message: 'Projet supprimé' });
 }
 
+async function resetProjects(req, res) {
+  const projects = await Project.find({ user: req.user._id }).select('_id');
+  const projectIds = projects.map((project) => project._id);
+
+  if (projectIds.length > 0) {
+    await Promise.all([
+      Product.deleteMany({ project: { $in: projectIds } }),
+      Project.deleteMany({ _id: { $in: projectIds } }),
+    ]);
+  }
+
+  publishCrudEvent('projects', 'deleted', { bulk: true, deletedCount: projectIds.length }, {
+    roles: ['admin'],
+    userIds: [req.user._id],
+  });
+
+  res.json({ message: 'Projets réinitialisés', deletedCount: projectIds.length });
+}
+
 export {
   getProjects,
   createProject,
   updateProject,
   deleteProject,
+  resetProjects,
 };

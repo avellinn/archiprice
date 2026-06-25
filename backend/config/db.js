@@ -1,9 +1,27 @@
 import mongoose from 'mongoose';
 import Demande from '../models/Demande.js';
 import PasswordResetToken from '../models/PasswordResetToken.js';
+import Product from '../models/Product.js';
+import Project from '../models/Project.js';
+import Simulation from '../models/Simulation.js';
+import Supplier from '../models/Supplier.js';
+import SupportItem from '../models/SupportItem.js';
+import User from '../models/User.js';
+
+const DEFAULT_SERVER_SELECTION_TIMEOUT_MS = 30000;
+
+function getServerSelectionTimeout() {
+  const configuredValue = Number(process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS);
+
+  if (Number.isFinite(configuredValue) && configuredValue > 0) {
+    return configuredValue;
+  }
+
+  return DEFAULT_SERVER_SELECTION_TIMEOUT_MS;
+}
 
 const CONNECT_OPTIONS = {
-  serverSelectionTimeoutMS: 10000,
+  serverSelectionTimeoutMS: getServerSelectionTimeout(),
   maxPoolSize: 10,
   bufferCommands: false,
 };
@@ -55,7 +73,7 @@ async function connectDB() {
 }
 
 async function ensureCoreCollections() {
-  const collections = [Demande, PasswordResetToken];
+  const collections = [Demande, PasswordResetToken, Product, Project, Simulation, Supplier, SupportItem, User];
 
   await Promise.all(collections.map(async (model) => {
     try {

@@ -55,13 +55,14 @@ export default function MaBoutique() {
     const product = pendingProductDelete;
     if (!product) return;
 
+    const productId = product.id || product._id || '';
     setPendingProductDelete(null);
 
     try {
-      await deleteSupplierProduct(product.id);
+      await deleteSupplierProduct(productId);
       setWorkspace((currentWorkspace) => ({
         ...currentWorkspace,
-        products: (currentWorkspace?.products || []).filter((item) => item.id !== product.id),
+        products: (currentWorkspace?.products || []).filter((item) => (item.id || item._id) !== productId),
       }));
     } catch (apiError) {
       setError(getApiErrorMessage(apiError, 'Impossible de supprimer ce catalogue.'));
@@ -85,6 +86,7 @@ export default function MaBoutique() {
           variant="warning"
           title="Suppression catalogue"
           className="supplier-shop-alert supplier-shop-confirm-alert"
+          autoCloseMs={0}
           onClose={() => setPendingProductDelete(null)}
         >
           <span>Supprimer ce catalogue de votre boutique ?</span>
@@ -102,7 +104,10 @@ export default function MaBoutique() {
           heroTitle={shopName ? `Découvrez les nouveautés ${shopName}` : 'Découvrez les nouveautés'}
           products={products}
           onAddProduct={() => navigate('/supplier/products/new')}
-          onEditProduct={(product) => navigate(`/supplier/products/new?edit=${product.id}`)}
+          onOpenProduct={(product) => navigate(`/fiche-produits/${product.id || product._id}`, {
+            state: { product },
+          })}
+          onEditProduct={(product) => navigate(`/supplier/products/new?edit=${product.id || product._id}`)}
           onDeleteProduct={removeProduct}
         />
       )}

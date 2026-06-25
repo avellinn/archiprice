@@ -28,6 +28,35 @@ export function getCurrentStorageScope() {
   }
 }
 
+export function clearUserScopedStorage(userId, userEmail = '') {
+  if (!canUseBrowserStorage()) return;
+
+  try {
+    const scope = String(userId || '');
+    const emailScope = String(userEmail || '').toLowerCase();
+    const keysToRemove = [];
+
+    for (let index = 0; index < window.localStorage.length; index++) {
+      const key = window.localStorage.key(index);
+      if (!key) continue;
+      if (scope && key.includes(`:${scope}`)) {
+        keysToRemove.push(key);
+      }
+      if (emailScope && key.toLowerCase().includes(emailScope)) {
+        keysToRemove.push(key);
+      }
+    }
+
+    keysToRemove.forEach((key) => window.localStorage.removeItem(key));
+    window.localStorage.removeItem('archiprice_admin_data');
+    window.localStorage.removeItem('archiprice:admin-hidden-simulations');
+    window.localStorage.removeItem('archiprice:user-dismissed-notifications');
+    window.localStorage.removeItem('archiprice:user-support-hidden-items');
+  } catch {
+    // ignore storage errors
+  }
+}
+
 export function getScopedStorageKey(baseKey) {
   return `${baseKey}:${getCurrentStorageScope()}`;
 }

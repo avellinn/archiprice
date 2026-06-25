@@ -188,7 +188,6 @@ Fonctions repertoriees :
 | `getSmtpConfig()` | `emailService.js` | Construit la config SMTP. |
 | `getMissingConfigKeys(config)` | `emailService.js` | Liste les variables SMTP manquantes. |
 | `getTransporter()` | `emailService.js` | Cree le transport Nodemailer. |
-| `verifyEmailTransport()` | `emailService.js` | Teste la connexion SMTP. |
 | `sendPasswordResetEmail(...)` | `emailService.js` | Envoie l'email de reset password. |
 | `normalizeId(value)` | `realtimeService.js` | Normalise un id pour comparaison. |
 | `writeSse(res, payload)` | `realtimeService.js` | Ecrit un evenement SSE. |
@@ -265,7 +264,6 @@ Exports :
 | `API_ROUTES` | `constants/api.js` | Evite les URL API ecrites en dur. |
 | `TOKEN_KEY` | `constants/storage.js` | Cle locale du JWT. |
 | `UPLOAD_LIMIT_LABEL` | `constants/uploads.js` | Libelle UI pour upload. |
-| `MAX_PRODUCT_IMAGE_SIZE` | `constants/uploads.js` | Taille max image produit. |
 
 ### Context
 
@@ -294,7 +292,6 @@ Les services frontend isolent les appels API et les fallback localStorage. Ils e
 | `frontend/src/services/adminMongo.js` | API admin pour users, suppliers, articles supplier, simulations, support. |
 | `frontend/src/services/adminData.js` | Store admin local/synchronise, taxonomies, nettoyage legacy. `products` est purge pour ne plus alimenter le catalogue. |
 | `frontend/src/services/catalogueProducts.js` | Lecture des articles valides exposes dans le catalogue user. |
-| `frontend/src/services/catalogueImages.js` | Upload/suppression images catalogue. |
 | `frontend/src/services/exportedDocuments.js` | Archives/documents exportes en localStorage scope. |
 | `frontend/src/services/products.js` | Produits de projet, avec fallback localStorage. |
 | `frontend/src/services/projects.js` | Projets workspace, avec fallback localStorage et events. |
@@ -319,12 +316,9 @@ Fonctions exportees importantes :
 | `fetchAdminSupportItems`, `updateAdminSupportItem`, `deleteAdminSupportItem` | `adminMongo.js` | Support admin. |
 | `getAdminData`, `saveAdminData`, `useAdminData` | `adminData.js` | Lecture/ecriture/reactivité du store admin. |
 | `fetchRemoteAdminData`, `saveRemoteAdminData`, `syncAdminDataFromRemote` | `adminData.js` | Synchronisation remote catalogue config. |
-| `createAdminId(prefix)` | `adminData.js` | Cree un id local unique. |
-| `uploadCatalogueImages`, `deleteCatalogueImage` | `catalogueImages.js` | Gestion images catalogue. |
 | `fetchCatalogueProducts` | `catalogueProducts.js` | Charge uniquement les articles valides visibles cote user. |
 | `fetchExportedDocuments`, `addExportedDocument`, `removeExportedDocument`, `subscribeExportedDocumentsChange` | `exportedDocuments.js` | Archives/documents exportes. |
 | `fetchProjects`, `createProject`, `updateProject`, `deleteProject`, `downloadProjectRecapPdf` | `projects.js` | Workspace projets. |
-| `subscribeProjectsChange` | `projects.js` | Notification locale changement projets. |
 | `fetchProducts`, `createProduct`, `updateProduct`, `deleteProduct` | `products.js` | Articles rattaches aux projets. |
 | `connectRealtime` | `realtime.js` | Connexion SSE authentifiee. |
 | `getCurrentStorageScope`, `getScopedStorageKey` | `scopedStorage.js` | Isolation localStorage par compte. |

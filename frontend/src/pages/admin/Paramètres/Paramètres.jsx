@@ -5,6 +5,7 @@ import { PasswordSettingsModal } from '../../../components/ui/modals';
 import useAuth from '../../../context/useAuth';
 import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
+import { DEFAULT_POLICY_PAGES } from '../../../services/policies';
 import { getAdminTranslations } from '../../../utils/adminLanguage';
 import { AdminLocationModal, AdminPolicyModal, AdminProfileModal } from './adminparModal';
 
@@ -14,36 +15,6 @@ const TIMEZONES = [
   '(GMT +02:00) Afrique australe',
 ];
 const LANGUAGES = ['Français', 'Anglais'];
-const DEFAULT_ADMIN_POLICIES = [
-  {
-    id: 'admin-policy-cgu',
-    icon: 'ReceiptLong',
-    title: "CONDITIONS GÉNÉRALES D'UTILISATION (CGU)",
-    summary: 'Cadre d’utilisation de la plateforme ArchiPrice par les comptes user, supplier et admin.',
-    content: 'Les utilisateurs accèdent aux services ArchiPrice selon leur rôle. Les actions sensibles sont journalisées et les données métier restent protégées.',
-  },
-  {
-    id: 'admin-policy-privacy',
-    icon: 'Info',
-    title: 'POLITIQUE DE CONFIDENTIALITÉ',
-    summary: 'Traitement et protection des données des comptes, projets, simulations, fournisseurs et catalogues.',
-    content: 'Les données sont exploitées pour fournir les fonctionnalités de simulation, de validation fournisseur, de catalogue et de support.',
-  },
-  {
-    id: 'admin-policy-suppliers',
-    icon: 'Workspaces',
-    title: 'CONDITIONS FOURNISSEURS',
-    summary: 'Règles de validation, publication, refus et retrait des articles proposés par les fournisseurs.',
-    content: 'Les fournisseurs soumettent leurs articles à validation. L’admin peut approuver, refuser ou masquer les contenus non conformes.',
-  },
-  {
-    id: 'admin-policy-legal',
-    icon: 'Folder',
-    title: 'MENTIONS LÉGALES',
-    summary: 'Informations légales et responsabilité opérationnelle de la plateforme ArchiPrice.',
-    content: 'ArchiPrice conserve les informations nécessaires à la traçabilité des actions, aux audits et à la continuité des services.',
-  },
-];
 
 function getUniqueValues(values) {
   return [...new Set(values.map((value) => String(value || '').trim()).filter(Boolean))];
@@ -69,9 +40,9 @@ export default function Paramètres() {
     language: savedAdminSettings.settings?.language || LANGUAGES[0],
   });
   const [policies, setPolicies] = useState(
-    Array.isArray(savedAdminSettings.policies) && savedAdminSettings.policies.length
+    Array.isArray(savedAdminSettings.policies)
       ? savedAdminSettings.policies
-      : DEFAULT_ADMIN_POLICIES,
+      : DEFAULT_POLICY_PAGES,
   );
   const [activeModal, setActiveModal] = useState(null);
   const [settingsAlert, setSettingsAlert] = useState(null);
@@ -154,6 +125,12 @@ export default function Paramètres() {
   function saveAdminSettings() {
     saveAndNotify(adminProfile, settings);
     closeModal();
+  }
+
+  function updatePolicies(nextPolicies) {
+    setPolicies(nextPolicies);
+    persistAdminSettings(adminProfile, settings, nextPolicies);
+    setSettingsAlert({ variant: 'success', message: 'Politiques synchronisées.' });
   }
 
   return (
@@ -241,7 +218,8 @@ export default function Paramètres() {
       {activeModal === 'policy' && (
         <AdminPolicyModal
           policies={policies}
-          onPoliciesChange={setPolicies}
+          language={settings.language}
+          onPoliciesChange={updatePolicies}
           onClose={closeModal}
           onSave={saveAdminSettings}
         />

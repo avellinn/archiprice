@@ -22,7 +22,9 @@ export default function ProtectedRoute({ children }) {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
-  if (user?.role === 'supplier' && location.pathname !== '/deconnexion') {
+  const isFicheProduits = location.pathname.startsWith('/fiche-produits/');
+
+  if (user?.role === 'supplier' && location.pathname !== '/deconnexion' && !isFicheProduits) {
     return <Navigate to="/supplier/dashboard" replace />;
   }
 

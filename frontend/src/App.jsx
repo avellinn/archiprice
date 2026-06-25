@@ -1,3 +1,4 @@
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
 import AdminRoute from './components/AdminRoute';
 import AdminShell from './components/AdminShell';
@@ -6,42 +7,56 @@ import GuestRoute from './components/GuestRoute';
 import ProtectedRoute from './components/ProtectedRoute';
 import SupplierRoute from './components/SupplierRoute';
 import SupplierShell from './components/SupplierShell';
-import BackofficeDashboard from './pages/admin/Dashboard/Dashboard';
-import Articles from './pages/admin/Articles/Articles';
-import Fournisseurs from './pages/admin/Fournisseurs/Fournisseurs';
-import Paramètres from './pages/admin/Paramètres/Paramètres';
-import Simulations from './pages/admin/Simulations/Simulations';
-import Support from './pages/admin/Support/Support';
-import Utilisateurs from './pages/admin/Utilisateurs/Utilisateurs';
-import Home from './pages/user/Home/Home';
-import Login from './pages/user/Login/Login';
-import Register from './pages/user/Register/Register';
-import ResetPassword from './pages/user/ResetPassword/ResetPassword';
-import Dashboard from './pages/user/Dashboard/Dashboard';
-import Catalogue from './pages/user/Catalogue/Catalogue';
-import Archives from './pages/user/Archives/Archives';
-import Demande from './pages/user/Demande/Demande';
-import Logout from './pages/user/Logout/Logout';
-import Workspace from './pages/user/Workspace/Workspace';
-import EspacePro from './pages/user/EspacePro/EspacePro';
-import FicheProduits from './pages/user/FicheProduits/ficheProduits';
-import UserParametres from './pages/user/Parametres/Parametres';
-import UserSupport from './pages/user/Support/Support';
-import SupplierDashboard from './pages/supplier/Dashboard/Dashboard';
-import SupplierClients from './pages/supplier/Clients/Clients';
-import SupplierDemandesup from './pages/supplier/Demandesup/Demandesup';
-import SupplierFichiers from './pages/supplier/Fichiers/Fichiers';
-import SupplierMaBoutique from './pages/supplier/MaBoutique/MaBoutique';
-import SupplierParametres from './pages/supplier/Parametres/Parametres';
-import SupplierAjouterProduit from './pages/supplier/AjouterProduit/AjouterProduit';
-import SupplierProduits from './pages/supplier/Produits/Produits';
-import SupplierSupport from './pages/supplier/Support/Support';
+import Loader from './components/ui/loader';
 import './App.css';
 
+const BackofficeDashboard = lazy(() => import('./pages/admin/Dashboard/Dashboard'));
+const Articles = lazy(() => import('./pages/admin/Articles/Articles'));
+const Fournisseurs = lazy(() => import('./pages/admin/Fournisseurs/Fournisseurs'));
+const Paramètres = lazy(() => import('./pages/admin/Paramètres/Paramètres'));
+const Simulations = lazy(() => import('./pages/admin/Simulations/Simulations'));
+const Support = lazy(() => import('./pages/admin/Support/Support'));
+const Utilisateurs = lazy(() => import('./pages/admin/Utilisateurs/Utilisateurs'));
+const Home = lazy(() => import('./pages/user/Home/Home'));
+const Login = lazy(() => import('./pages/user/Login/Login'));
+const Register = lazy(() => import('./pages/user/Register/Register'));
+const ResetPassword = lazy(() => import('./pages/user/ResetPassword/ResetPassword'));
+const Dashboard = lazy(() => import('./pages/user/Dashboard/Dashboard'));
+const Catalogue = lazy(() => import('./pages/user/Catalogue/Catalogue'));
+const Archives = lazy(() => import('./pages/user/Archives/Archives'));
+const Demande = lazy(() => import('./pages/user/Demande/Demande'));
+const Logout = lazy(() => import('./pages/user/Logout/Logout'));
+const Workspace = lazy(() => import('./pages/user/Workspace/Workspace'));
+const EspacePro = lazy(() => import('./pages/user/EspacePro/EspacePro'));
+const FicheProduits = lazy(() => import('./pages/user/FicheProduits/ficheProduits'));
+const ExportPdf = lazy(() => import('./pages/user/Exportpdf/Exportpdf'));
+const UserParametres = lazy(() => import('./pages/user/Parametres/Parametres'));
+const UserSupport = lazy(() => import('./pages/user/Support/Support'));
+const SupplierDashboard = lazy(() => import('./pages/supplier/Dashboard/Dashboard'));
+const SupplierClients = lazy(() => import('./pages/supplier/Clients/Clients'));
+const SupplierDemandesup = lazy(() => import('./pages/supplier/Demandesup/Demandesup'));
+const SupplierFichiers = lazy(() => import('./pages/supplier/Fichiers/Fichiers'));
+const SupplierMaBoutique = lazy(() => import('./pages/supplier/MaBoutique/MaBoutique'));
+const SupplierParametres = lazy(() => import('./pages/supplier/Parametres/Parametres'));
+const SupplierAjouterProduit = lazy(() => import('./pages/supplier/AjouterProduit/AjouterProduit'));
+const SupplierProduits = lazy(() => import('./pages/supplier/Produits/Produits'));
+const SupplierSupport = lazy(() => import('./pages/supplier/Support/Support'));
+
 function App() {
+  useEffect(() => {
+    const applyStoredTheme = () => {
+      const isDark = window.localStorage.getItem('archiprice:theme') === 'dark';
+      document.body.classList.toggle('theme-dark', isDark);
+    };
+    applyStoredTheme();
+    window.addEventListener('storage', applyStoredTheme);
+    return () => window.removeEventListener('storage', applyStoredTheme);
+  }, []);
+
   return (
     <BrowserRouter>
-      <Routes>
+      <Suspense fallback={<Loader label="Chargement de la page..." />}>
+        <Routes>
         <Route path="/" element={<Home />} />
         <Route
           path="/login"
@@ -60,6 +75,14 @@ function App() {
           }
         />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route
+          path="/export-pdf/:documentId"
+          element={(
+            <ProtectedRoute>
+              <ExportPdf />
+            </ProtectedRoute>
+          )}
+        />
         <Route
           element={
             <AdminRoute>
@@ -128,7 +151,8 @@ function App() {
             </ProtectedRoute>
           }
         />
-      </Routes>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

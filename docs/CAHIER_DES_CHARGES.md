@@ -609,7 +609,7 @@ Services importants :
 - `support.js`
 - `projects.js`
 - `products.js`
-- `catalogueImages.js`
+- `catalogueProducts.js`
 - `realtime.js`
 
 ### 3. Realtime SSE

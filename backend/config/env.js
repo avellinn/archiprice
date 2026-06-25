@@ -14,13 +14,3 @@ const envFiles = [
 envFiles.forEach((envFile) => {
   dotenv.config({ path: envFile, quiet: true });
 });
-
-function requireEnv(name) {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Variable d'environnement manquante : ${name}`);
-  }
-  return value;
-}
-
-export { requireEnv };

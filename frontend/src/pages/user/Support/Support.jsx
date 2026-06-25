@@ -5,7 +5,8 @@ import { Alert, Button, Icon } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
 import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { getApiErrorMessage } from '../../../services/api';
-import { createSupportFeedback, fetchMySupportItems } from '../../../services/support';
+import { createSupportFeedback, fetchMySupportItems, markSupportItemRead, replyToSupportItem, subscribeSupportChange } from '../../../services/support';
+import { getStoredUserLanguage, getUserTranslations } from '../../../utils/userLanguage';
 import SupportModal from '../../admin/Support/supportModal';
 
 const HIDDEN_SUPPORT_ITEMS_KEY = 'archiprice:user-support-hidden-items';
@@ -39,6 +40,16 @@ export default function UserSupport() {
   const [remoteSupportItems, setRemoteSupportItems] = useState([]);
   const [hiddenSupportItemIds, setHiddenSupportItemIds] = useState(readHiddenSupportItems);
   const [selectedFeedback, setSelectedFeedback] = useState(null);
+  const [replyDrafts, setReplyDrafts] = useState({});
+  const [language, setLanguage] = useState(getStoredUserLanguage);
+  const translations = getUserTranslations(language);
+  const text = translations.support;
+
+  useEffect(() => {
+    const syncLanguage = () => setLanguage(getStoredUserLanguage());
+    window.addEventListener('archiprice:user-profile-change', syncLanguage);
+    return () => window.removeEventListener('archiprice:user-profile-change', syncLanguage);
+  }, []);
 
   const userEmail = user?.email || '';
   const userName = user?.name || userEmail || 'Utilisateur';
@@ -63,6 +74,7 @@ export default function UserSupport() {
   }, [loadSupportItems]);
 
   useRealtimeRefresh(loadSupportItems, ['support-items']);
+  useEffect(() => subscribeSupportChange(loadSupportItems), [loadSupportItems]);
 
   function hideSupportItem(itemId) {
     const nextHiddenItemIds = Array.from(new Set([...hiddenSupportItemIds, String(itemId)]));
@@ -70,6 +82,11 @@ export default function UserSupport() {
     writeHiddenSupportItems(nextHiddenItemIds);
     if (selectedFeedback?.id === itemId) setSelectedFeedback(null);
     setMessage('Feedback supprimé de votre liste.');
+  }
+
+  function openFeedback(item) {
+    setSelectedFeedback(item);
+    if (Number(item.unreadForOwner) > 0) markSupportItemRead(item.id).catch(() => {});
   }
 
   async function submitFeedback(comment) {
@@ -89,10 +106,31 @@ export default function UserSupport() {
       });
       setRemoteSupportItems((currentItems) => [remoteFeedback, ...currentItems]);
       setIsModalOpen(false);
-      setMessage('Merci pour votre Feedback');
+      setMessage(text.sent);
       setError('');
     } catch (apiError) {
       setError(getApiErrorMessage(apiError, "L'envoi du feedback a échoué. Vérifiez que le backend est démarré."));
+    }
+  }
+
+  async function replyToFeedback(patch) {
+    if (!selectedFeedback?.id || !patch?.reply) return;
+
+    try {
+      const remoteFeedback = await replyToSupportItem(selectedFeedback.id, patch.reply);
+      setRemoteSupportItems((currentItems) => currentItems.map((item) => (
+        item.id === remoteFeedback.id ? remoteFeedback : item
+      )));
+      setReplyDrafts((currentDrafts) => {
+        const nextDrafts = { ...currentDrafts };
+        delete nextDrafts[selectedFeedback.id];
+        return nextDrafts;
+      });
+      setSelectedFeedback(remoteFeedback);
+      setMessage(text.replySent);
+      setError('');
+    } catch (apiError) {
+      setError(getApiErrorMessage(apiError, "L'envoi de la réponse a échoué."));
     }
   }
 
@@ -101,11 +139,11 @@ export default function UserSupport() {
       <section className="user-support-panel">
         <header className="user-support-header">
           <div>
-            <span>Assistance</span>
-            <h1>Support</h1>
+            <span>{text.eyebrow}</span>
+            <h1>{text.title}</h1>
           </div>
           <Button type="button" icon={<Icon name="Chat" size="sm" />} onClick={() => setIsModalOpen(true)}>
-            Laisser un commentaire
+            {text.leaveComment}
           </Button>
         </header>
 
@@ -121,7 +159,7 @@ export default function UserSupport() {
         )}
 
         <section className="user-support-card">
-          <h2>Mes feedbacks</h2>
+          <h2>{text.listTitle}</h2>
           {userFeedbacks.length ? (
             <div className="user-support-list">
               {userFeedbacks.map((item) => (
@@ -129,23 +167,23 @@ export default function UserSupport() {
                   key={item.id}
                   role="button"
                   tabIndex={0}
-                  onClick={() => setSelectedFeedback(item)}
+                  onClick={() => openFeedback(item)}
                   onKeyDown={(event) => {
                     if (event.key !== 'Enter' && event.key !== ' ') return;
                     event.preventDefault();
-                    setSelectedFeedback(item);
+                    openFeedback(item);
                   }}
                 >
                   <div>
                     <strong>{item.subject}</strong>
                     <span>{item.date}</span>
-                    {item.reply && <small>Réponse admin : {item.reply}</small>}
+                    {item.reply && <small>{text.adminReply} : {item.reply}</small>}
                   </div>
                   <b>{item.status}</b>
                   <button
                     type="button"
                     className="user-support-list__delete"
-                    title="Supprimer de ma liste"
+                    title={text.delete}
                     aria-label={`Supprimer ${item.subject} de ma liste`}
                     onClick={(event) => {
                       event.stopPropagation();
@@ -158,15 +196,16 @@ export default function UserSupport() {
               ))}
             </div>
           ) : (
-            <Alert variant="info">Aucun feedback envoyé pour le moment.</Alert>
+            <Alert variant="info">{text.empty}</Alert>
           )}
         </section>
       </section>
 
       {isModalOpen && (
         <ModalSupport
-          title="Laisser un commentaire"
-          placeholder="Partagez votre feedback sur votre expérience ArchiPrice."
+          title={text.leaveComment}
+          placeholder={text.placeholder}
+          labels={{ ...text, ...translations.common }}
           onCancel={() => setIsModalOpen(false)}
           onSubmit={submitFeedback}
         />
@@ -174,12 +213,17 @@ export default function UserSupport() {
 
       {selectedFeedback && (
         <SupportModal
+          labels={translations.common}
           item={selectedFeedback}
-          replyDraft={selectedFeedback.reply || ''}
-          onReplyChange={() => {}}
+          replyDraft={replyDrafts[selectedFeedback.id] ?? ''}
+          onReplyChange={(value) => {
+            setReplyDrafts((currentDrafts) => ({
+              ...currentDrafts,
+              [selectedFeedback.id]: value,
+            }));
+          }}
           onClose={() => setSelectedFeedback(null)}
-          onUpdate={() => {}}
-          canReply={false}
+          onUpdate={replyToFeedback}
         />
       )}
     </main>

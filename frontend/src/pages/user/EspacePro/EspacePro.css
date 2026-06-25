@@ -2,9 +2,15 @@
   display: grid;
   align-content: stretch;
   gap: 1rem;
-  min-height: calc(100vh - 56px);
+  height: calc(100vh - 64px);
+  min-height: 0;
+  overflow: hidden;
   padding: 1rem 1.25rem 1.25rem;
   background: #f0f0f0;
+}
+
+.dashboard-shell.is-theme-dark .espacepro-page {
+  background: var(--app-content-background);
 }
 
 .espacepro-page__header {
@@ -41,6 +47,7 @@
 
 .espacepro-page__alert {
   max-width: 760px;
+  height: 100px;
 }
 
 .espacepro-page__alert-actions {

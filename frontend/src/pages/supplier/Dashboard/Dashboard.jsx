@@ -6,8 +6,8 @@ import DonutChartCard from '../../../components/DonutChart';
 import { Button, Icon, Loader, Text } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
 import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
-import { useAdminData } from '../../../services/adminData';
 import { getApiErrorMessage } from '../../../services/api';
+import { fetchMyDemandes, subscribeDemandesChange } from '../../../services/demandes';
 import { fetchSupplierWorkspace, subscribeSupplierWorkspaceChange } from '../../../services/supplier';
 
 const HIDDEN_SUPPLIER_DEMAND_ITEMS_KEY = 'archiprice:supplier-demand-hidden-items';
@@ -219,15 +219,16 @@ export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [adminData] = useAdminData();
   const [workspace, setWorkspace] = useState(null);
+  const [remoteDemandes, setRemoteDemandes] = useState([]);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   const loadWorkspace = useCallback(() => {
-    fetchSupplierWorkspace()
-      .then((data) => {
+    Promise.all([fetchSupplierWorkspace(), fetchMyDemandes()])
+      .then(([data, demandes]) => {
         setWorkspace(data);
+        setRemoteDemandes(demandes);
         setError('');
       })
       .catch((apiError) => {
@@ -239,10 +240,14 @@ export default function Dashboard() {
   useEffect(() => {
     loadWorkspace();
     const unsubscribe = subscribeSupplierWorkspaceChange(loadWorkspace);
-    return unsubscribe;
+    const unsubscribeDemandes = subscribeDemandesChange(loadWorkspace);
+    return () => {
+      unsubscribe();
+      unsubscribeDemandes();
+    };
   }, [loadWorkspace]);
 
-  useRealtimeRefresh(loadWorkspace, ['supplier-products', 'suppliers', 'admin-products']);
+  useRealtimeRefresh(loadWorkspace, ['supplier-products', 'suppliers', 'admin-products', 'demandes']);
 
   const supplierProfile = workspace?.supplier || null;
   const hiddenDemandItemsKey = getHiddenDemandItemsKey(user, supplierProfile);
@@ -253,15 +258,15 @@ export default function Dashboard() {
 
   const products = useMemo(() => workspace?.products || [], [workspace]);
   const demands = useMemo(() => (
-    (adminData.supplierClientNotifications || [])
+    remoteDemandes
       .filter((notification) => notification.type === 'Demande')
       .filter((notification) => isDemandForSupplier(notification, user, supplierProfile))
       .filter((notification) => !hiddenDemandIds.includes(getSupplierDemandGroupId(notification)))
-  ), [adminData.supplierClientNotifications, hiddenDemandIds, supplierProfile, user]);
+  ), [hiddenDemandIds, remoteDemandes, supplierProfile, user]);
   const clients = useMemo(() => (
-    (adminData.supplierClientNotifications || [])
+    remoteDemandes
       .filter((notification) => isDemandForSupplier(notification, user, supplierProfile))
-  ), [adminData.supplierClientNotifications, supplierProfile, user]);
+  ), [remoteDemandes, supplierProfile, user]);
   const stats = useMemo(() => {
     const active = products.filter((product) => isEffectivelyPublished(product)).length;
     const published = products.filter((product) => (
@@ -443,7 +448,7 @@ export default function Dashboard() {
             </div>
             <div className="chart-legend">
               
-              <Text as="span" variant="bold" size="sm"><i className="legend-orange" /> Demandes</Text>
+              <Text as="span" variant="bold" size="sm"><i className="legend-orange" /> Demandes ({demands.length})</Text>
             </div>
           </div>
         </section>

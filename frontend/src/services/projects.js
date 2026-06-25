@@ -5,6 +5,10 @@ import { getCurrentStorageScope, getScopedStorageKey } from './scopedStorage';
 const LOCAL_PROJECTS_KEY = 'archiprice_local_projects';
 const PROJECTS_EVENT = 'archiprice:projects-change';
 
+function notifyProjectsChange() {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(PROJECTS_EVENT));
+}
+
 function canUseBrowserStorage() {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
 }
@@ -29,7 +33,6 @@ function writeLocalProjects(projects) {
 
   try {
     window.localStorage.setItem(getScopedStorageKey(LOCAL_PROJECTS_KEY), JSON.stringify(projects));
-    window.dispatchEvent(new CustomEvent(PROJECTS_EVENT, { detail: projects }));
   } catch {
     window.localStorage.removeItem(getScopedStorageKey(LOCAL_PROJECTS_KEY));
   }
@@ -70,37 +73,17 @@ export async function fetchProjects() {
   }
 }
 
-export function subscribeProjectsChange(callback) {
-  if (typeof window === 'undefined') return () => {};
-
-  function handleChange(event) {
-    if (event.type === 'storage'
-      && event.key !== LOCAL_PROJECTS_KEY
-      && event.key !== getScopedStorageKey(LOCAL_PROJECTS_KEY)) return;
-
-    fetchProjects()
-      .then(callback)
-      .catch(() => callback([]));
-  }
-
-  window.addEventListener(PROJECTS_EVENT, handleChange);
-  window.addEventListener('storage', handleChange);
-
-  return () => {
-    window.removeEventListener(PROJECTS_EVENT, handleChange);
-    window.removeEventListener('storage', handleChange);
-  };
-}
-
 export async function createProject(payload) {
   try {
     const { data } = await api.post(API_ROUTES.projects.list, payload, { skipUnauthorizedHandler: true });
     const nextProjects = mergeProjects([data.project], readLocalProjects());
     writeLocalProjects(nextProjects);
+    notifyProjectsChange();
     return data.project;
   } catch {
     const project = createLocalProject(payload);
     writeLocalProjects([project, ...readLocalProjects()]);
+    notifyProjectsChange();
     return project;
   }
 }
@@ -130,6 +113,7 @@ export async function updateProject(id, payload) {
     ));
     const project = nextProjects.find((item) => item.id === id);
     writeLocalProjects(nextProjects);
+    notifyProjectsChange();
     return project;
   };
 
@@ -143,6 +127,7 @@ export async function updateProject(id, payload) {
       project.id === id ? data.project : project
     ));
     writeLocalProjects(localProjects);
+    notifyProjectsChange();
     return data.project;
   } catch {
     return updateLocalProject();
@@ -152,6 +137,7 @@ export async function updateProject(id, payload) {
 export async function deleteProject(id) {
   const deleteLocalProject = () => {
     writeLocalProjects(readLocalProjects().filter((project) => project.id !== id));
+    notifyProjectsChange();
     return { message: 'Projet supprimé' };
   };
 
@@ -164,10 +150,24 @@ export async function deleteProject(id) {
   return data;
 }
 
-export async function downloadProjectRecapPdf(id) {
+export async function resetProjects() {
+  const { data } = await api.delete(API_ROUTES.projects.list);
+  writeLocalProjects([]);
+  notifyProjectsChange();
+  return data;
+}
+
+export function subscribeProjectsChange(callback) {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener(PROJECTS_EVENT, callback);
+  return () => window.removeEventListener(PROJECTS_EVENT, callback);
+}
+
+export async function downloadProjectRecapPdf(id, { exportUrl = '' } = {}) {
   const { data, headers } = await api.get(API_ROUTES.projects.recapPdf(id), {
     responseType: 'blob',
     headers: { Accept: 'application/pdf' },
+    params: exportUrl ? { exportUrl } : undefined,
   });
 
   const disposition = headers['content-disposition'] || '';

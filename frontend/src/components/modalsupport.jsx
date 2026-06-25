@@ -8,6 +8,7 @@ export default function ModalSupport({
   placeholder = 'Écrivez votre feedback...',
   onCancel,
   onSubmit,
+  labels = {},
 }) {
   const [comment, setComment] = useState('');
   const [error, setError] = useState('');
@@ -18,11 +19,11 @@ export default function ModalSupport({
     const value = comment.trim();
     if (!value) return;
     if (isNumericOnly(value)) {
-      setError('Le message doit contenir du texte.');
+      setError(labels.textRequired || 'Le message doit contenir du texte.');
       return;
     }
 
-    setActionMessage('Message envoyé.');
+    setActionMessage(labels.sent || 'Message envoyé.');
     onSubmit(value);
     setComment('');
     setError('');
@@ -36,13 +37,13 @@ export default function ModalSupport({
             <span>Feedback</span>
             <h2 id="modal-support-title">{title}</h2>
           </div>
-          <button type="button" aria-label="Fermer" onClick={onCancel}>
+          <button type="button" aria-label={labels.close || 'Fermer'} onClick={onCancel}>
             <Icon name="Close" size="sm" />
           </button>
         </header>
 
         <label className="modal-support__field">
-          <span>Message</span>
+          <span>{labels.message || 'Message'}</span>
           <textarea
             value={comment}
             onChange={(event) => setComment(event.target.value)}
@@ -66,10 +67,10 @@ export default function ModalSupport({
 
         <footer className="modal-support__footer">
           <Button type="button" variant="outline" onClick={onCancel}>
-            Annuler
+            {labels.cancel || 'Annuler'}
           </Button>
           <Button type="submit" icon={<Icon name="Check" size="sm" />}>
-            Envoyer
+            {labels.send || 'Envoyer'}
           </Button>
         </footer>
       </form>

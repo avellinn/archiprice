@@ -1,15 +1,18 @@
 import express from 'express';
 import { protect, requireSupplier } from '../middleware/auth.js';
-import { handleMulterError, upload } from '../middleware/multerUpload.js';
+import { handleMulterError, mediaUpload, upload } from '../middleware/multerUpload.js';
 import requireDb from '../middleware/requireDb.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import Product from '../models/Product.js';
 import Supplier from '../models/Supplier.js';
 import {
   deleteProductImage,
+  deleteSupplierMedia,
   uploadProductImages,
+  uploadSupplierMedia,
 } from '../services/cloudinaryImageService.js';
 import { publishCrudEvent } from '../services/realtimeService.js';
+import { validateProductClassification } from '../../shared/productTaxonomy.mjs';
 
 const router = express.Router();
 
@@ -31,6 +34,7 @@ function formatProduct(product) {
     name: product.name,
     description: product.description,
     category: product.category,
+    subcategory: product.subcategory || '',
     room: product.room,
     range: product.range,
     availability: product.availability,
@@ -38,6 +42,10 @@ function formatProduct(product) {
     neighborhood: product.neighborhood,
     unit: product.unit,
     unitPrice: product.unitPrice,
+    priceExcludingTax: product.priceExcludingTax ?? product.unitPrice,
+    vatRate: product.vatRate ?? 0,
+    minimumOrderQuantity: product.minimumOrderQuantity ?? 1,
+    dimensions: product.dimensions || {},
     images: product.images || [],
     publicationStatus: product.publicationStatus || 'Brouillon',
     submittedAt: product.submittedAt,
@@ -45,6 +53,29 @@ function formatProduct(product) {
     withdrawnAt: product.withdrawnAt,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
+  };
+}
+
+function parseDimensions(value) {
+  if (!value) return {};
+
+  const source = typeof value === 'string'
+    ? (() => {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return {};
+      }
+    })()
+    : value;
+
+  if (!source || typeof source !== 'object') return {};
+
+  return {
+    length: String(source.length || '').trim(),
+    width: String(source.width || '').trim(),
+    thickness: String(source.thickness || '').trim(),
+    weight: String(source.weight || '').trim(),
   };
 }
 
@@ -58,27 +89,62 @@ function parsePrice(value) {
   return Number.isFinite(parsedValue) ? parsedValue : Number.NaN;
 }
 
+function calculateTaxInclusivePrice(priceExcludingTax, vatRate) {
+  return Math.round(priceExcludingTax * (1 + (vatRate / 100)) * 100) / 100;
+}
+
 async function findOrCreateSupplierProfile(user) {
-  const email = String(user.email || '').toLowerCase().trim();
-  let supplier = await Supplier.findOne({
-    $or: [
-      { user: user._id },
-      ...(email ? [{ email }] : []),
-    ],
-  });
+  const supplier = await Supplier.findOne({ user: user._id });
 
   if (supplier) {
-    let changed = false;
+    if (supplier.status === 'Supprimé') {
+      const minimal = {
+        user: user._id,
+        email: user.email || '',
+        name: user.name || '',
+        companyName: user.name || '',
+        contact: user.phone || user.email || '',
+        phone: user.phone || '',
+        status: 'Actif',
+      };
+
+      try {
+        const created = await Supplier.create(minimal);
+        return created;
+      } catch (err) {
+        const error = new Error('Profil fournisseur introuvable ou non validé');
+        error.statusCode = 403;
+        error.expose = true;
+        throw error;
+      }
+    }
     if (!supplier.user) {
       supplier.user = user._id;
-      changed = true;
+      await supplier.save();
     }
-    if (!supplier.email && email) {
-      supplier.email = email;
-      changed = true;
-    }
-    if (changed) await supplier.save();
     return supplier;
+  }
+  // In development, create a minimal supplier profile to ease local testing.
+  if (process.env.NODE_ENV === 'development') {
+    try {
+      const minimal = {
+        user: user._id,
+        email: user.email || '',
+        name: user.name || '',
+        companyName: user.name || '',
+        contact: user.phone || user.email || '',
+        phone: user.phone || '',
+        status: 'Actif',
+      };
+
+      const created = await Supplier.create(minimal);
+      return created;
+    } catch (err) {
+      const error = new Error('Profil fournisseur introuvable ou non validé');
+      error.statusCode = 403;
+      error.expose = true;
+      throw error;
+    }
   }
 
   const error = new Error('Profil fournisseur introuvable ou non validé');
@@ -138,6 +204,60 @@ router.get('/products', asyncHandler(async (req, res) => {
   res.json({ products: products.map(formatProduct) });
 }));
 
+router.get('/files', asyncHandler(async (req, res) => {
+  const supplier = await findOrCreateSupplierProfile(req.user);
+  res.json({ files: supplier.media || [] });
+}));
+
+router.post(
+  '/files',
+  mediaUpload.array('file', 20),
+  handleMulterError,
+  asyncHandler(async (req, res) => {
+    const supplier = await findOrCreateSupplierProfile(req.user);
+    const files = req.files || [];
+    if (!files.length) return res.status(400).json({ error: 'Sélectionnez au moins un fichier' });
+
+    const uploadedFiles = await uploadSupplierMedia(files);
+    supplier.media.push(...uploadedFiles);
+    await supplier.save();
+    publishCrudEvent('supplier-files', 'created', { supplierId: String(supplier._id) }, {
+      roles: ['admin'], userIds: [req.user._id],
+    });
+    return res.status(201).json({ files: supplier.media });
+  }),
+);
+
+router.delete('/files', asyncHandler(async (req, res) => {
+  const supplier = await findOrCreateSupplierProfile(req.user);
+  const media = [...(supplier.media || [])];
+
+  await Promise.all(media.map((file) => (
+    deleteSupplierMedia(file.public_id, file.resourceType)
+  )));
+
+  supplier.media = [];
+  await supplier.save();
+  publishCrudEvent('supplier-files', 'reset', {
+    supplierId: String(supplier._id),
+    deletedCount: media.length,
+  }, { roles: ['admin'], userIds: [req.user._id] });
+  return res.json({ files: [] });
+}));
+
+router.delete('/files/:fileId', asyncHandler(async (req, res) => {
+  const supplier = await findOrCreateSupplierProfile(req.user);
+  const file = supplier.media.id(req.params.fileId);
+  if (!file) return res.status(404).json({ error: 'Fichier introuvable' });
+  await deleteSupplierMedia(file.public_id, file.resourceType);
+  file.deleteOne();
+  await supplier.save();
+  publishCrudEvent('supplier-files', 'deleted', { supplierId: String(supplier._id) }, {
+    roles: ['admin'], userIds: [req.user._id],
+  });
+  return res.json({ files: supplier.media });
+}));
+
 router.post(
   '/products',
   upload.array('image'),
@@ -146,14 +266,26 @@ router.post(
     const supplier = await findOrCreateSupplierProfile(req.user);
     const files = req.files || [];
     const name = String(req.body.name || '').trim();
-    const unitPrice = parsePrice(req.body.unitPrice || 0);
+    const classification = validateProductClassification(req.body);
+    const priceExcludingTax = parsePrice(req.body.priceExcludingTax ?? req.body.unitPrice ?? 0);
+    const vatRate = parsePrice(req.body.vatRate ?? 0);
+    const minimumOrderQuantity = parsePrice(req.body.minimumOrderQuantity ?? 1);
+    const unitPrice = calculateTaxInclusivePrice(priceExcludingTax, vatRate);
 
     if (!name) {
       return res.status(400).json({ error: 'Nom du produit requis' });
     }
 
-    if (Number.isNaN(unitPrice) || unitPrice < 0) {
-      return res.status(400).json({ error: 'Prix unitaire invalide' });
+    if (!classification.valid) {
+      return res.status(400).json({ error: classification.message });
+    }
+
+    if (Number.isNaN(priceExcludingTax) || priceExcludingTax < 0 || Number.isNaN(vatRate) || vatRate < 0 || vatRate > 100) {
+      return res.status(400).json({ error: 'Prix HT ou taux de TVA invalide' });
+    }
+
+    if (Number.isNaN(minimumOrderQuantity) || minimumOrderQuantity < 1) {
+      return res.status(400).json({ error: 'Quantité minimale invalide' });
     }
 
     const images = files.length > 0
@@ -164,7 +296,8 @@ router.post(
       const product = await Product.create({
         name,
         description: req.body.description,
-        category: req.body.category,
+        category: classification.category.name,
+        subcategory: classification.subcategory.name,
         room: req.body.room,
         range: req.body.range,
         availability: req.body.availability,
@@ -172,6 +305,10 @@ router.post(
         neighborhood: supplier.neighborhood || '',
         unit: req.body.unit || 'u',
         unitPrice,
+        priceExcludingTax,
+        vatRate,
+        minimumOrderQuantity,
+        dimensions: parseDimensions(req.body.dimensions),
         supplier: supplier._id,
         supplierUser: req.user._id,
         images,
@@ -220,12 +357,30 @@ router.put(
     }
 
     const files = req.files || [];
-    const nextUnitPrice = req.body.unitPrice !== undefined
-      ? parsePrice(req.body.unitPrice || 0)
-      : product.unitPrice;
+    const nextClassification = validateProductClassification({
+      category: req.body.category ?? product.category,
+      subcategory: req.body.subcategory ?? product.subcategory,
+      unit: req.body.unit ?? product.unit,
+    });
+    const nextPriceExcludingTax = req.body.priceExcludingTax !== undefined
+      ? parsePrice(req.body.priceExcludingTax)
+      : (product.priceExcludingTax ?? product.unitPrice);
+    const nextVatRate = req.body.vatRate !== undefined ? parsePrice(req.body.vatRate) : (product.vatRate ?? 0);
+    const nextMinimumOrderQuantity = req.body.minimumOrderQuantity !== undefined
+      ? parsePrice(req.body.minimumOrderQuantity)
+      : (product.minimumOrderQuantity ?? 1);
+    const nextUnitPrice = calculateTaxInclusivePrice(nextPriceExcludingTax, nextVatRate);
 
-    if (Number.isNaN(nextUnitPrice) || nextUnitPrice < 0) {
-      return res.status(400).json({ error: 'Prix unitaire invalide' });
+    if (!nextClassification.valid) {
+      return res.status(400).json({ error: nextClassification.message });
+    }
+
+    if (Number.isNaN(nextPriceExcludingTax) || nextPriceExcludingTax < 0 || Number.isNaN(nextVatRate) || nextVatRate < 0 || nextVatRate > 100) {
+      return res.status(400).json({ error: 'Prix HT ou taux de TVA invalide' });
+    }
+
+    if (Number.isNaN(nextMinimumOrderQuantity) || nextMinimumOrderQuantity < 1) {
+      return res.status(400).json({ error: 'Quantité minimale invalide' });
     }
 
     const uploadedImages = files.length > 0
@@ -233,12 +388,20 @@ router.put(
       : [];
 
     try {
-      ['name', 'description', 'category', 'room', 'range', 'availability', 'unit'].forEach((field) => {
+      ['name', 'description', 'room', 'range', 'availability', 'unit'].forEach((field) => {
         if (req.body[field] !== undefined) product[field] = req.body[field];
       });
+      product.category = nextClassification.category.name;
+      product.subcategory = nextClassification.subcategory.name;
       product.city = supplier.city || supplier.region || '';
       product.neighborhood = supplier.neighborhood || '';
       product.unitPrice = nextUnitPrice;
+      product.priceExcludingTax = nextPriceExcludingTax;
+      product.vatRate = nextVatRate;
+      product.minimumOrderQuantity = nextMinimumOrderQuantity;
+      if (req.body.dimensions !== undefined) {
+        product.dimensions = parseDimensions(req.body.dimensions);
+      }
       product.images = [...(product.images || []), ...uploadedImages];
 
       if (!String(product.name || '').trim()) {
@@ -271,9 +434,9 @@ router.delete('/products/:productId', asyncHandler(async (req, res) => {
     ],
   });
 
-  if (!product) {
+    if (!product) {
     return res.status(404).json({ error: 'Produit introuvable' });
-  }
+    }
 
   await Promise.allSettled((product.images || []).map((image) => deleteProductImage(image.public_id)));
   await product.deleteOne();
@@ -316,6 +479,13 @@ router.patch('/products/:productId/publication', asyncHandler(async (req, res) =
 
   if (!product) {
     return res.status(404).json({ error: 'Produit introuvable' });
+  }
+
+  if (nextStatus === 'En attente') {
+    const classification = validateProductClassification(product);
+    if (!classification.valid) {
+      return res.status(400).json({ error: `${classification.message}. Corrigez la fiche avant de la soumettre.` });
+    }
   }
 
   product.publicationStatus = nextStatus;

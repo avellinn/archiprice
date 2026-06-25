@@ -213,7 +213,8 @@ Le champ `type` ou `category` ne donne jamais l'accès supplier à lui seul. Cet
 
 `POST` et `PUT /api/supplier/products` acceptent un `multipart/form-data` :
 
-- champs texte : `name`, `description`, `category`, `unit`, `unitPrice` ;
+- champs produit : `name`, `description`, `category`, `subcategory`, `unit`, `priceExcludingTax`, `vatRate`, `unitPrice`, `minimumOrderQuantity` ;
+- `category`, `subcategory` et `unit` sont validés contre `shared/productTaxonomy.mjs` ; une unité incompatible produit une réponse `400` avant tout upload ;
 - fichiers : champ `image` répété, sans limite arbitraire côté interface admin/supplier ;
 - formats : JPG, PNG, WebP ;
 - taille max : 5 Mo par image.
@@ -245,7 +246,7 @@ L'admin gère ensuite les articles soumis depuis `/admin/catalogue/products`, qu
 - `Retiré` ou `Refusé` : l'article reste masqué côté catalogue.
 - `Supprimé` : l'article est supprimé de MongoDB et ses images sont supprimées de Cloudinary si possible.
 
-Le catalogue user ne lit pas `adminData.products`. Il appelle `GET /api/catalogue/products`, qui renvoie uniquement les produits `publicationStatus: "Validé"` dont le fournisseur n'est ni bloqué ni supprimé. Si aucun produit n'est validé, le catalogue reste vide et `Catégori.jsx` ne s'affiche pas.
+Le catalogue user ne lit pas `adminData.products`. Il appelle `GET /api/catalogue/products`, qui renvoie uniquement les produits `publicationStatus: "Validé"` dont le fournisseur n'est ni bloqué ni supprimé. Si aucun produit n'est validé, le catalogue et ses catégories restent masqués.
 
 ## Catalogue Config
 

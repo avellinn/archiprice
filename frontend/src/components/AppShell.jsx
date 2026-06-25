@@ -6,12 +6,15 @@ import Logo from './Logo';
 import Sidebar from './Sidebar';
 import useAuth from '../context/useAuth';
 import { syncAdminDataFromRemote, useAdminData } from '../services/adminData';
+import { fetchMyDemandes, subscribeDemandesChange } from '../services/demandes';
 import { connectRealtime } from '../services/realtime';
-import { fetchMySupportItems } from '../services/support';
+import { fetchMySupportItems, subscribeSupportChange } from '../services/support';
 import { getUserTranslations, normalizeUserLanguage } from '../utils/userLanguage';
 import { getAvatarColor, getDisplayName, getUserInitials } from '../utils/userDisplay';
+import { useWorkspaceLanguage } from '../utils/workspaceLanguage';
 
 const USER_PROFILE_KEY = 'archiprice_user_profile_preferences';
+const THEME_STORAGE_KEY = 'archiprice:theme';
 const USER_PROFILE_EVENT = 'archiprice:user-profile-change';
 const USER_DISMISSED_NOTIFICATIONS_KEY = 'archiprice:user-dismissed-notifications';
 const NOTIFICATIONS_READ_EVENT = 'archiprice:notifications-read-change';
@@ -32,6 +35,14 @@ function readUserLanguage() {
     return normalizeUserLanguage(profile.language);
   } catch {
     return 'fr';
+  }
+}
+
+function readThemePreference() {
+  try {
+    return window.localStorage.getItem(THEME_STORAGE_KEY) === 'dark';
+  } catch {
+    return false;
   }
 }
 
@@ -66,21 +77,45 @@ export default function AppShell() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isThemeDark, setIsThemeDark] = useState(false);
+  const [isThemeDark, setIsThemeDark] = useState(readThemePreference);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [searchMessage, setSearchMessage] = useState('');
   const [userLanguage, setUserLanguage] = useState(readUserLanguage);
   const [supportItems, setSupportItems] = useState([]);
+  const [demandes, setDemandes] = useState([]);
   const [dismissedNotificationKeys, setDismissedNotificationKeys] = useState(readDismissedNotificationKeys);
   const [adminData] = useAdminData();
   const userText = getUserTranslations(userLanguage);
+  useWorkspaceLanguage(userLanguage);
+
+  useEffect(() => {
+    document.body.classList.toggle('theme-dark', isThemeDark);
+    window.localStorage.setItem(THEME_STORAGE_KEY, isThemeDark ? 'dark' : 'light');
+  }, [isThemeDark]);
+
+  useEffect(() => {
+    const syncTheme = (event) => {
+      if (event.key && event.key !== THEME_STORAGE_KEY) return;
+      setIsThemeDark(readThemePreference());
+    };
+    window.addEventListener('storage', syncTheme);
+    return () => window.removeEventListener('storage', syncTheme);
+  }, []);
 
   const refreshSupportNotifications = useCallback(async () => {
     try {
       setSupportItems(await fetchMySupportItems());
     } catch {
       setSupportItems([]);
+    }
+  }, []);
+
+  const refreshDemandeNotifications = useCallback(async () => {
+    try {
+      setDemandes(await fetchMyDemandes());
+    } catch {
+      setDemandes([]);
     }
   }, []);
 
@@ -100,19 +135,26 @@ export default function AppShell() {
   }, []);
 
   useEffect(() => {
-    const refreshTimer = window.setTimeout(refreshSupportNotifications, 0);
+    const refreshTimer = window.setTimeout(() => {
+      refreshSupportNotifications();
+      refreshDemandeNotifications();
+    }, 0);
     return () => {
       window.clearTimeout(refreshTimer);
     };
-  }, [refreshSupportNotifications, location.pathname]);
+  }, [refreshDemandeNotifications, refreshSupportNotifications, location.pathname]);
 
   useEffect(() => connectRealtime({
     onEvent: (event) => {
       if (event?.type === 'connected') return;
       syncAdminDataFromRemote().catch(() => {});
       refreshSupportNotifications();
+      refreshDemandeNotifications();
     },
-  }), [refreshSupportNotifications]);
+  }), [refreshDemandeNotifications, refreshSupportNotifications]);
+
+  useEffect(() => subscribeDemandesChange(refreshDemandeNotifications), [refreshDemandeNotifications]);
+  useEffect(() => subscribeSupportChange(refreshSupportNotifications), [refreshSupportNotifications]);
 
   useEffect(() => {
     function handleDismissedNotificationsChange(event) {
@@ -215,34 +257,48 @@ export default function AppShell() {
 
   const replyNotifications = useMemo(() => (
     supportItems
-      .filter((item) => item.reply && !dismissedNotificationKeys.includes(`support-reply-${item.id}`))
+      .filter((item) => (
+        (item.unreadForOwner === undefined ? Boolean(item.reply) : Number(item.unreadForOwner) > 0)
+        && !dismissedNotificationKeys.includes(`support-reply-${item.id}`)
+      ))
       .sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0))
   ), [dismissedNotificationKeys, supportItems]);
   const demandReplyNotifications = useMemo(() => {
     const userEmail = user?.email || '';
     const userId = user?.id || user?._id || '';
 
-    return (adminData.supplierClientNotifications || [])
+    const sourceDemandes = demandes.length > 0 ? demandes : (adminData.supplierClientNotifications || []);
+
+    return sourceDemandes
       .filter((notification) => notification.type === 'Demande')
-      .filter((notification) => notification.clientId === userId || notification.clientEmail === userEmail)
+      .filter((notification) => (
+        userId
+          ? notification.clientId === userId
+          : notification.clientEmail === userEmail
+      ))
       .map((notification) => ({
         ...notification,
         lastMessage: getLastDemandMessage(notification),
       }))
+      .filter((notification) => (
+        notification.unreadForUser === undefined || Number(notification.unreadForUser) > 0
+      ))
       .filter((notification) => notification.lastMessage?.senderRole === 'supplier')
       .filter((notification) => !dismissedNotificationKeys.includes(`demand-reply-${notification.id}-${notification.lastMessage.id}`))
       .sort((a, b) => new Date(b.lastMessage.createdAt || b.updatedAt || 0) - new Date(a.lastMessage.createdAt || a.updatedAt || 0));
-  }, [adminData.supplierClientNotifications, dismissedNotificationKeys, user]);
+  }, [adminData.supplierClientNotifications, demandes, dismissedNotificationKeys, user]);
   const sidebarSectionsWithBadges = useMemo(() => (
     sidebarSections.map((section) => ({
       ...section,
       items: section.items.map((item) => (
         item.id === 'demande'
           ? { ...item, badge: demandReplyNotifications.length || undefined }
-          : item
+          : item.id === 'support'
+            ? { ...item, badge: replyNotifications.length || undefined }
+            : item
       )),
     }))
-  ), [demandReplyNotifications.length, sidebarSections]);
+  ), [demandReplyNotifications.length, replyNotifications.length, sidebarSections]);
 
   function dismissVisibleNotifications() {
     const nextKeys = [

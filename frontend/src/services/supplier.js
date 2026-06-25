@@ -3,7 +3,7 @@ import api from './api';
 
 export const SUPPLIER_WORKSPACE_EVENT = 'archiprice:supplier-workspace-change';
 const SUPPLIER_WORKSPACE_CHANNEL = 'archiprice-supplier-workspace';
-const SUPPLIER_UPLOAD_TIMEOUT = 120000;
+const SUPPLIER_UPLOAD_TIMEOUT = 135000;
 
 function getSupplierWorkspaceChannel() {
   if (typeof window === 'undefined' || typeof window.BroadcastChannel === 'undefined') {
@@ -62,6 +62,33 @@ export async function fetchSupplierProducts() {
   return Array.isArray(data.products) ? data.products : [];
 }
 
+export async function fetchSupplierFiles() {
+  const { data } = await api.get(API_ROUTES.supplier.files);
+  return Array.isArray(data.files) ? data.files : [];
+}
+
+export async function uploadSupplierFiles(files = []) {
+  const formData = new FormData();
+  files.forEach((file) => formData.append('file', file));
+  const { data } = await api.post(API_ROUTES.supplier.files, formData, {
+    timeout: SUPPLIER_UPLOAD_TIMEOUT,
+  });
+  notifySupplierWorkspaceChange({ action: 'upload-files' });
+  return Array.isArray(data.files) ? data.files : [];
+}
+
+export async function deleteSupplierFile(fileId) {
+  const { data } = await api.delete(`${API_ROUTES.supplier.files}/${fileId}`);
+  notifySupplierWorkspaceChange({ action: 'delete-file', fileId });
+  return Array.isArray(data.files) ? data.files : [];
+}
+
+export async function resetSupplierFiles() {
+  const { data } = await api.delete(API_ROUTES.supplier.files);
+  notifySupplierWorkspaceChange({ action: 'reset-files' });
+  return Array.isArray(data.files) ? data.files : [];
+}
+
 export async function updateSupplierProfile(payload) {
   const { data } = await api.put(API_ROUTES.supplier.me, payload);
   notifySupplierWorkspaceChange({ action: 'update-supplier-profile', supplierId: data.supplier?.id });
@@ -82,7 +109,6 @@ export async function createSupplierProduct(payload, files = []) {
   });
 
   const { data } = await api.post(API_ROUTES.supplier.products, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
     timeout: SUPPLIER_UPLOAD_TIMEOUT,
   });
 
@@ -104,7 +130,6 @@ export async function updateSupplierProduct(productId, payload, files = []) {
   });
 
   const { data } = await api.put(API_ROUTES.supplier.product(productId), formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
     timeout: SUPPLIER_UPLOAD_TIMEOUT,
   });
 

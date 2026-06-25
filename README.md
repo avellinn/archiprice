@@ -46,6 +46,9 @@ cp .env.example .env
 
 npm run install:all
 # ou : cd backend && npm install && cd ../frontend && npm install
+
+# Validation locale avant commit
+npm run check
 ```
 
 Un seul fichier `.env` à la racine `archi-price/` est requis. Migration depuis `backend/.env` :
@@ -110,6 +113,7 @@ Si `MONGODB_URI` est défini et la connexion échoue, l’API ne démarre pas. E
 |----------|-------------|--------|
 | `PORT` | Port API | `5000` |
 | `MONGODB_URI` | MongoDB (local ou Atlas `mongodb+srv://`) | — (obligatoire si `NODE_ENV=production`) |
+| `MONGODB_SERVER_SELECTION_TIMEOUT_MS` | Délai de connexion/sélection Atlas en millisecondes | `30000` |
 | `NODE_ENV` | `production` impose `MONGODB_URI` et fail-fast si la DB est injoignable | — |
 | `JWT_SECRET` | Secret JWT | — |
 | `JWT_EXPIRES_IN` | Expiration token | `7d` |
@@ -118,6 +122,9 @@ Si `MONGODB_URI` est défini et la connexion échoue, l’API ne démarre pas. E
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary uploads images | — |
 | `CLOUDINARY_API_KEY` | Cloudinary uploads images | — |
 | `CLOUDINARY_API_SECRET` | Cloudinary uploads images | — |
+| `CLOUDINARY_UPLOAD_TIMEOUT_MS` | Budget total d'un upload Cloudinary | `120000` |
+| `CLOUDINARY_UPLOAD_ATTEMPT_TIMEOUT_MS` | Délai maximal par adresse réseau Cloudinary | `20000` |
+| `CLOUDINARY_UPLOAD_RETRIES` | Retries sur timeout, 429 et erreurs 5xx | `5` |
 
 ## API — Authentification
 
@@ -295,9 +302,9 @@ Règles actuelles :
 - Les pages `Demande` user et `Demandesup` supplier regroupent les conversations par boutique ou client/projet.
 - `/api/admin/simulations` expose les simulations et les projets Workspace afin que l'admin voie les projets créés par les users.
 - La table admin Simulations n'affiche plus la colonne `Statut` ; les détails restent accessibles via le modal de ligne.
-- La grille catalogue est isolée dans `frontend/src/pages/user/Catalogue/catalgrid.jsx`.
+- La grille, les catégories et les filtres catalogue sont regroupés dans `frontend/src/pages/user/Catalogue/Catalogue.jsx`.
 - La création projet accepte `Autre` dans `Type de pièce` pour saisir une pièce personnalisée.
-- Le composant `Logo.jsx` et `Logo.css` ont été supprimés : `log.png` est importé directement dans les shells/layouts et le dark mode du logo est géré par `Sidebar.css`, `Header.css` et `AuthLayout.css`.
+- `Logo.jsx` centralise l'unique asset `log.png` utilisé par les shells et layouts.
 - Les uploads admin/supplier ne doivent pas imposer de limite arbitraire côté interface ; la validation serveur reste obligatoire.
 
 ```bash

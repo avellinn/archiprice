@@ -45,7 +45,7 @@ export function addRealtimeClient(req, res) {
   });
 }
 
-export function publishRealtimeEvent(event, targets = {}) {
+function publishRealtimeEvent(event, targets = {}) {
   const payload = {
     createdAt: new Date().toISOString(),
     ...event,

@@ -9,14 +9,17 @@ import { Loader } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
 import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { getApiErrorMessage } from '../../../services/api';
+import { getScopedStorageKey } from '../../../services/scopedStorage';
+import { createExportedProductSnapshot } from '../../../utils/productPresentation';
 import { useAdminData } from '../../../services/adminData';
 import { fetchCatalogueProducts } from '../../../services/catalogueProducts';
-import { addExportedDocument } from '../../../services/exportedDocuments';
-import { createProduct, fetchProducts } from '../../../services/products';
+import { upsertProjectArchive } from '../../../services/exportedDocuments';
+import { createProduct, deleteProduct, fetchProducts } from '../../../services/products';
 import { createProject, fetchProjects, updateProject } from '../../../services/projects';
 import SimulBudget from '../../../components/simulBudget';
 import { createSimulation } from '../../../services/simulations';
 import { buildCatalogueLocationFilters } from '../../../utils/locationOptions';
+import { getSaleUnit } from '../../../constants/productTaxonomy';
 
 const VISUAL_TONES = {
   sofa: 'linen',
@@ -52,6 +55,12 @@ function formatOptionalCurrency(value) {
   return value > 0 ? formatFCFA(value) : 'À définir';
 }
 
+function formatProductPrice(product) {
+  const price = product.priceExcludingTax ?? product.minPrice ?? product.unitPrice ?? 0;
+  const unitLabel = getSaleUnit(product.unit)?.label || product.unit || 'unité';
+  return `${formatFCFA(price)} / ${unitLabel.toLocaleLowerCase('fr')}`;
+}
+
 function normalizeBudgetInput(value) {
   return String(value || '').replace(/[^\d]/g, '');
 }
@@ -77,7 +86,9 @@ function buildCatalogueProduct(product, adminData) {
   const settings = adminData.settings;
   const basePrice = parsePrice(product.price ?? product.unitPrice);
   const margin = Number(settings.margin || 0) / 100;
-  const vat = Number(settings.vat || 0) / 100;
+  const vat = product.priceExcludingTax !== undefined
+    ? 0
+    : Number(settings.vat || 0) / 100;
   const regionalCoefficient = getCoefficient(product.city, adminData.regionalCoefficients);
   const minPrice = Math.round(basePrice * regionalCoefficient);
   const maxPrice = Math.round(basePrice * (1 + margin) * (1 + vat) * regionalCoefficient);
@@ -114,8 +125,9 @@ function isSupplierVisibleForCatalogue(product, adminData) {
   return !['Bloqué', 'Supprimé'].includes(supplier.status);
 }
 
-function buildProjectDescription({ selectedProducts, budgetTarget, budgetSummary }) {
-  const rooms = [...new Set(selectedProducts.map((product) => product.room))].join(', ');
+function buildProjectDescription({ selectedProducts, budgetTarget, budgetSummary, baseDescription = '' }) {
+  const configuredRoom = String(baseDescription).match(/Type de pièce\s*:\s*([^\n]+)/i)?.[1]?.trim();
+  const rooms = configuredRoom || [...new Set(selectedProducts.map((product) => product.room))].join(', ');
   const shops = [...new Set(selectedProducts.map((product) => product.shop))].join(', ');
   const productList = selectedProducts.map((product) => `- ${product.name} (${product.shop})`).join('\n');
 
@@ -148,6 +160,66 @@ function isPublishedCatalogueProduct(product) {
   return !product.publicationStatus || product.publicationStatus === 'Validé';
 }
 
+function buildProjectProductPayload(product) {
+  return {
+    name: product.name,
+    description: [
+      `Boutique : ${product.shop}`,
+      `Gamme : ${product.range}`,
+      `Prix min : ${product.minPrice}`,
+      `Prix max : ${product.maxPrice}`,
+    ].join('\n'),
+    category: product.category,
+    subcategory: product.subcategory || '',
+    unit: product.unit,
+    unitPrice: product.maxPrice,
+    priceExcludingTax: product.priceExcludingTax ?? product.minPrice,
+    vatRate: product.vatRate ?? 0,
+    minimumOrderQuantity: product.minimumOrderQuantity ?? 1,
+    images: product.imageDocuments || [],
+    catalogueProductId: product.id,
+  };
+}
+
+const PROJECT_GATE_GRACE_MS = 48 * 3600 * 1000;
+const PROJECT_GATE_STORAGE_KEY = getScopedStorageKey('archiprice:catalogue_project_created_at');
+
+function getProjectGateGraceEnd() {
+  try {
+    const stored = window.localStorage.getItem(PROJECT_GATE_STORAGE_KEY);
+    if (!stored) return null;
+    const timestamp = Number(stored);
+    if (!Number.isFinite(timestamp)) return null;
+    return timestamp + PROJECT_GATE_GRACE_MS;
+  } catch {
+    return null;
+  }
+}
+
+function setProjectGateGraceEnd() {
+  try {
+    window.localStorage.setItem(PROJECT_GATE_STORAGE_KEY, String(Date.now()));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function clearProjectGateGraceEnd() {
+  try {
+    window.localStorage.removeItem(PROJECT_GATE_STORAGE_KEY);
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function projectProductMatchesCatalogue(projectProduct, catalogueProduct) {
+  if (projectProduct.catalogueProductId) {
+    return String(projectProduct.catalogueProductId) === String(catalogueProduct.id);
+  }
+  return String(projectProduct.name || '').trim().toLocaleLowerCase('fr') === String(catalogueProduct.name || '').trim().toLocaleLowerCase('fr')
+    && String(projectProduct.category || '').trim().toLocaleLowerCase('fr') === String(catalogueProduct.category || '').trim().toLocaleLowerCase('fr');
+}
+
 function buildFieldFilter(products, field, allLabel) {
   const values = [...new Set(
     products
@@ -159,7 +231,7 @@ function buildFieldFilter(products, field, allLabel) {
 }
 
 const FILTER_COLLAPSE_MS = 60_000;
-const BUDGET_INACTIVITY_MS = 5 * 60_000;
+const BUDGET_EXPANDED_MS = 4 * 60_000;
 
 /* ── Bouton discret flottant ── */
 
@@ -335,29 +407,50 @@ function CatalogueCategories({ products = [], activeCategory = '', onSelect }) {
             style={{ '--category-index': index }}
             onClick={() => handleSelect(category)}
           >
-            <span
-              className={[
-                'catalogue-categories__thumb',
-                category.images?.length ? 'catalogue-categories__thumb--has-image' : '',
-              ].filter(Boolean).join(' ')}
-              style={{ '--category-cycle': `${Math.max(category.images?.length || 1, 1) * 3.8}s` }}
-              aria-hidden="true"
-            >
-              {(category.images || []).map((image, imageIndex) => (
-                <img
-                  src={image}
-                  alt=""
-                  loading="lazy"
-                  key={`${image}-${imageIndex}`}
-                  style={{ '--category-image-index': imageIndex }}
-                />
-              ))}
-            </span>
+            <CategoryThumbnail
+              key={(category.images || []).join('|')}
+              images={category.images || []}
+            />
             <span className="catalogue-categories__label">{category.label}</span>
           </button>
         ))}
       </div>
     </section>
+  );
+}
+
+function CategoryThumbnail({ images }) {
+  const [slide, setSlide] = useState({ activeIndex: 0, previousIndex: -1 });
+
+  useEffect(() => {
+    if (images.length <= 1) return undefined;
+    const timer = window.setInterval(() => {
+      setSlide(({ activeIndex }) => ({
+        previousIndex: activeIndex,
+        activeIndex: (activeIndex + 1) % images.length,
+      }));
+    }, 3800);
+    return () => window.clearInterval(timer);
+  }, [images.length]);
+
+  return (
+    <span
+      className={['catalogue-categories__thumb', images.length ? 'catalogue-categories__thumb--has-image' : ''].filter(Boolean).join(' ')}
+      aria-hidden="true"
+    >
+      {images.map((image, imageIndex) => (
+        <img
+          src={image}
+          alt=""
+          loading="lazy"
+          key={`${image}-${imageIndex}`}
+          className={[
+            imageIndex === slide.activeIndex ? 'is-active' : '',
+            imageIndex === slide.previousIndex ? 'is-previous' : '',
+          ].filter(Boolean).join(' ')}
+        />
+      ))}
+    </span>
   );
 }
 
@@ -410,6 +503,9 @@ function CardArticle({
   return (
     <article
       className={['catalogue-product-card', isSelected ? 'is-selected' : ''].filter(Boolean).join(' ')}
+      style={product.image
+        ? { '--catalogue-product-card-background': `url(${JSON.stringify(product.image)})` }
+        : undefined}
       role="button"
       tabIndex={0}
       onClick={() => onOpen(product.id)}
@@ -431,11 +527,26 @@ function CardArticle({
         )}
       </ArticleImage>
 
-      <div className="catalogue-product-card__body">
-        <div>
+      <div
+        className="catalogue-product-card__body"
+        role="button"
+        tabIndex={-1}
+        onClick={(event) => {
+          event.stopPropagation();
+          onDetailsOpen(product.id);
+        }}
+      >
+        <button
+          type="button"
+          className="catalogue-product-card__detail-trigger"
+          onClick={(event) => {
+            event.stopPropagation();
+            onDetailsOpen(product.id);
+          }}
+        >
           <h3>{product.name}</h3>
           <p>{product.shop} · {product.shopZone}</p>
-        </div>
+        </button>
         <strong>{priceRange}</strong>
         <button
           type="button"
@@ -574,32 +685,56 @@ export default function Catalogue() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [adminData] = useAdminData();
-  const [selectedCategory, setSelectedCategory] = useState('Tout');
-  const [selectedRoom, setSelectedRoom] = useState('Toutes');
-  const [selectedRange, setSelectedRange] = useState('Toutes');
-  const [selectedCity, setSelectedCity] = useState('Toutes');
-  const [selectedNeighborhood, setSelectedNeighborhood] = useState('Tous');
-  const [budgetTarget, setBudgetTarget] = useState('');
-  const [selectedProductIds, setSelectedProductIds] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(() => location.state?.catalogueSnapshot?.selectedCategory || 'Tout');
+  const [selectedRoom, setSelectedRoom] = useState(() => location.state?.catalogueSnapshot?.selectedRoom || 'Toutes');
+  const [selectedRange, setSelectedRange] = useState(() => location.state?.catalogueSnapshot?.selectedRange || 'Toutes');
+  const [selectedCity, setSelectedCity] = useState(() => location.state?.catalogueSnapshot?.selectedCity || 'Toutes');
+  const [selectedNeighborhood, setSelectedNeighborhood] = useState(() => location.state?.catalogueSnapshot?.selectedNeighborhood || 'Tous');
+  const [budgetTarget, setBudgetTarget] = useState(() => location.state?.catalogueSnapshot?.budgetTarget || '');
+  const [selectedProductIds, setSelectedProductIds] = useState(() => {
+    const snapshot = location.state?.catalogueSnapshot;
+    if (snapshot?.selectedProductIds) {
+      return snapshot.selectedProductIds.map(String);
+    }
+    if (location.state?.selectedProductId) {
+      return [String(location.state.selectedProductId)];
+    }
+    return [];
+  });
+  const [skipProjectGate] = useState(() => Boolean(location.state?.skipProjectGate));
+  const [pendingProjectPayload, setPendingProjectPayload] = useState(location.state?.pendingProject || null);
+  const [currentProject, setCurrentProject] = useState(null);
+  const [isProjectGateCompleted, setIsProjectGateCompleted] = useState(false);
+  const [isProjectGateForced, setIsProjectGateForced] = useState(Boolean(location.state?.forceProjectGate));
+  const [isWithinGracePeriod, setIsWithinGracePeriod] = useState(() => {
+    try {
+      const graceEnd = getProjectGateGraceEnd();
+      return Boolean(graceEnd && Date.now() < graceEnd);
+    } catch {
+      return false;
+    }
+  });
+  const [projectsChecked, setProjectsChecked] = useState(false);
   const [fullscreenProductId, setFullscreenProductId] = useState('');
   const [fullscreenImageIndex, setFullscreenImageIndex] = useState(0);
   const [isRecapVisible, setIsRecapVisible] = useState(false);
   const [validationError, setValidationError] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const [catalogueProducts, setCatalogueProducts] = useState([]);
+  const [hasProjectInProgress, setHasProjectInProgress] = useState(false);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [productsError, setProductsError] = useState('');
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
-  const [isBudgetExpanded, setIsBudgetExpanded] = useState(true);
+  const [isBudgetExpanded, setIsBudgetExpanded] = useState(Boolean(location.state?.selectedProductId));
   const pageRef = useRef(null);
   const filterCollapseTimerRef = useRef(null);
-  const budgetInactivityTimerRef = useRef(null);
+  const budgetCollapseTimerRef = useRef(null);
   const activeProjectId = searchParams.get('projectId') || '';
 
-  const loadCatalogueProducts = useCallback(({ silent = false } = {}) => {
+  const loadCatalogueProducts = useCallback(({ silent = false, force = false } = {}) => {
     if (!silent) setIsLoadingProducts(true);
 
-    fetchCatalogueProducts()
+    fetchCatalogueProducts({ force })
       .then((items) => {
         setCatalogueProducts(items);
         setProductsError('');
@@ -618,8 +753,28 @@ export default function Catalogue() {
     return () => window.clearTimeout(timer);
   }, [loadCatalogueProducts]);
 
+  useEffect(() => {
+    function syncGracePeriod() {
+      try {
+        const graceEnd = getProjectGateGraceEnd();
+        if (!graceEnd || Date.now() >= graceEnd) {
+          if (graceEnd) clearProjectGateGraceEnd();
+          setIsWithinGracePeriod(false);
+          return;
+        }
+        setIsWithinGracePeriod(true);
+      } catch {
+        setIsWithinGracePeriod(false);
+      }
+    }
+
+    syncGracePeriod();
+    const intervalId = window.setInterval(syncGracePeriod, 60000);
+    return () => window.clearInterval(intervalId);
+  }, []);
+
   useRealtimeRefresh(
-    () => loadCatalogueProducts({ silent: true }),
+    () => loadCatalogueProducts({ silent: true, force: true }),
     ['admin-products', 'supplier-products', 'suppliers', 'catalogue-config'],
   );
 
@@ -633,6 +788,7 @@ export default function Catalogue() {
       .then((projects) => {
         if (cancelled) return;
         const currentProject = projects.find((project) => project.id === projectIdFromUrl);
+        setCurrentProject(currentProject || null);
         const projectBudget = extractProjectBudget(currentProject);
         if (projectBudget) setBudgetTarget(String(projectBudget));
       })
@@ -643,15 +799,52 @@ export default function Catalogue() {
     };
   }, [activeProjectId]);
 
+  useEffect(() => {
+    if (activeProjectId) {
+      const timer = window.setTimeout(() => {
+        setHasProjectInProgress(true);
+        setProjectsChecked(true);
+      }, 0);
+      return () => window.clearTimeout(timer);
+    }
+
+    let cancelled = false;
+
+    fetchProjects()
+      .then((projects) => {
+        if (cancelled) return;
+        const projectInProgress = projects.find((project) => String(project.status || '').toLowerCase() === 'draft');
+        setHasProjectInProgress(Boolean(projectInProgress));
+        setProjectsChecked(true);
+        if (projectInProgress?.id && !location.state?.forceProjectGate) {
+          navigate(`/catalogue?projectId=${projectInProgress.id}&recap=1`, {
+            replace: true,
+            state: { from: location.state?.from || { pathname: '/espacepro', search: `?projectId=${projectInProgress.id}` } },
+          });
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setHasProjectInProgress(false);
+          setProjectsChecked(true);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeProjectId, location.state?.forceProjectGate, location.state?.from, navigate]);
+
   const products = useMemo(() => (
     catalogueProducts
       .filter(isPublishedCatalogueProduct)
       .filter((product) => isSupplierVisibleForCatalogue(product, adminData))
+      .filter((product) => product.supplierUserId)
       .map((product) => buildCatalogueProduct(product, adminData))
   ), [adminData, catalogueProducts]);
 
   useEffect(() => {
-    if (!activeProjectId || searchParams.get('recap') !== '1' || products.length === 0) return undefined;
+    if (!activeProjectId || searchParams.get('recap') !== '1' || products.length === 0 || location.state?.skipRecap) return undefined;
 
     let cancelled = false;
 
@@ -684,7 +877,7 @@ export default function Catalogue() {
     return () => {
       cancelled = true;
     };
-  }, [activeProjectId, products, searchParams]);
+  }, [activeProjectId, products, searchParams, location.state?.skipRecap]);
 
   const publishedCatalogueProducts = useMemo(() => (
     catalogueProducts
@@ -772,7 +965,31 @@ export default function Catalogue() {
   ));
   const shouldShowFilterPanel = hasCatalogueProducts && hasCatalogueFilters;
   const isFilterVisible = shouldShowFilterPanel && isFilterExpanded;
-  const isBudgetVisible = Boolean(activeProjectId) && isBudgetExpanded;
+  const canDisplayBudget = selectedProducts.length > 0
+    || isProjectGateCompleted
+    || Boolean(activeProjectId)
+    || Boolean(pendingProjectPayload);
+  const isBudgetVisible = canDisplayBudget && isBudgetExpanded;
+
+  const scheduleBudgetCollapse = useCallback(() => {
+    if (budgetCollapseTimerRef.current) window.clearTimeout(budgetCollapseTimerRef.current);
+    budgetCollapseTimerRef.current = window.setTimeout(() => {
+      setIsBudgetExpanded(false);
+    }, BUDGET_EXPANDED_MS);
+  }, []);
+
+  function expandBudget() {
+    setIsBudgetExpanded(true);
+    scheduleBudgetCollapse();
+  }
+
+  useEffect(() => {
+    if (canDisplayBudget && isBudgetExpanded) scheduleBudgetCollapse();
+  }, [canDisplayBudget, isBudgetExpanded, scheduleBudgetCollapse]);
+
+  useEffect(() => () => {
+    if (budgetCollapseTimerRef.current) window.clearTimeout(budgetCollapseTimerRef.current);
+  }, []);
 
   const resetFilterCollapseTimer = useCallback(() => {
     if (filterCollapseTimerRef.current) {
@@ -785,17 +1002,6 @@ export default function Catalogue() {
     }, FILTER_COLLAPSE_MS);
   }, [isFilterExpanded, shouldShowFilterPanel]);
 
-  const resetBudgetInactivityTimer = useCallback(() => {
-    if (budgetInactivityTimerRef.current) {
-      window.clearTimeout(budgetInactivityTimerRef.current);
-    }
-    if (!activeProjectId || !isBudgetExpanded) return;
-
-    budgetInactivityTimerRef.current = window.setTimeout(() => {
-      setIsBudgetExpanded(false);
-    }, BUDGET_INACTIVITY_MS);
-  }, [activeProjectId, isBudgetExpanded]);
-
   useEffect(() => {
     resetFilterCollapseTimer();
     return () => {
@@ -804,42 +1010,6 @@ export default function Catalogue() {
       }
     };
   }, [resetFilterCollapseTimer]);
-
-  useEffect(() => {
-    resetBudgetInactivityTimer();
-    return () => {
-      if (budgetInactivityTimerRef.current) {
-        window.clearTimeout(budgetInactivityTimerRef.current);
-      }
-    };
-  }, [resetBudgetInactivityTimer]);
-
-  useEffect(() => {
-    if (!activeProjectId || !isBudgetExpanded) return undefined;
-
-    const pageElement = pageRef.current;
-    if (!pageElement) return undefined;
-
-    function handleScroll() {
-      setIsBudgetExpanded(false);
-    }
-
-    function handleActivity() {
-      resetBudgetInactivityTimer();
-    }
-
-    pageElement.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('mousemove', handleActivity, { passive: true });
-    window.addEventListener('keydown', handleActivity);
-    window.addEventListener('click', handleActivity);
-
-    return () => {
-      pageElement.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('mousemove', handleActivity);
-      window.removeEventListener('keydown', handleActivity);
-      window.removeEventListener('click', handleActivity);
-    };
-  }, [activeProjectId, isBudgetExpanded, resetBudgetInactivityTimer]);
 
   function handleFilterInteract() {
     resetFilterCollapseTimer();
@@ -853,18 +1023,6 @@ export default function Catalogue() {
     setIsFilterExpanded(false);
   }
 
-  function handleBudgetInteract() {
-    resetBudgetInactivityTimer();
-  }
-
-  function handleExpandBudget() {
-    setIsBudgetExpanded(true);
-  }
-
-  function handleCollapseBudget() {
-    setIsBudgetExpanded(false);
-  }
-
   function toggleProduct(productId) {
     setValidationError('');
     setIsRecapVisible(false);
@@ -873,11 +1031,7 @@ export default function Catalogue() {
       ? [...selectedProductIds, productId]
       : selectedProductIds.filter((id) => id !== productId);
     setSelectedProductIds(nextIds);
-
-    if (isAdding && activeProjectId) {
-      setIsBudgetExpanded(true);
-      resetBudgetInactivityTimer();
-    }
+    if (isAdding) expandBudget();
   }
 
   function openFullscreenProduct(productId) {
@@ -886,7 +1040,26 @@ export default function Catalogue() {
   }
 
   function openProductDetails(productId) {
-    navigate(`/fiche-produits/${productId}`);
+    const isSelected = selectedProductIds.includes(productId);
+
+    navigate(`/fiche-produits/${productId}${location.search || ''}`, {
+      state: {
+        isSelected,
+        from: {
+          pathname: '/catalogue',
+          search: location.search || '',
+        },
+        catalogueSnapshot: {
+          selectedProductIds,
+          selectedCategory,
+          selectedRoom,
+          selectedRange,
+          selectedCity,
+          selectedNeighborhood,
+          budgetTarget,
+        },
+      },
+    });
   }
 
   function handleCategorySelect(category) {
@@ -900,14 +1073,96 @@ export default function Catalogue() {
     navigate(`/catalogue${searchParams.toString() ? `?${searchParams.toString()}` : ''}`, { replace: true });
   }
 
-  function handleBudgetValidation() {
+  async function syncProjectProducts(projectId) {
+    const existingProducts = await fetchProducts(projectId);
+    const productsToDelete = existingProducts.filter((projectProduct) => (
+      !selectedProducts.some((catalogueProduct) => projectProductMatchesCatalogue(projectProduct, catalogueProduct))
+    ));
+    const productsToCreate = selectedProducts.filter((catalogueProduct) => (
+      !existingProducts.some((projectProduct) => projectProductMatchesCatalogue(projectProduct, catalogueProduct))
+    ));
+
+    await Promise.all([
+      ...productsToDelete.map((product) => deleteProduct(projectId, product.id)),
+      ...productsToCreate.map((product) => createProduct(projectId, buildProjectProductPayload(product))),
+    ]);
+  }
+
+  async function handleBudgetValidation() {
     if (selectedProducts.length === 0) return;
     if (!budgetSummary.hasTarget) {
       setValidationError('Renseignez un budget cible avant de valider la simulation.');
       return;
     }
+
+    if (!activeProjectId && !pendingProjectPayload) {
+      setValidationError('Renseignez d’abord les informations du projet.');
+      setIsProjectGateCompleted(false);
+      setIsProjectGateForced(true);
+      return;
+    }
+
+    setIsValidating(true);
     setValidationError('');
-    setIsRecapVisible(true);
+
+    try {
+      const baseProject = currentProject || pendingProjectPayload;
+      const description = buildProjectDescription({
+        selectedProducts,
+        budgetTarget: budgetSummary.target,
+        budgetSummary,
+        baseDescription: baseProject?.description,
+      });
+      const project = activeProjectId
+        ? await updateProject(activeProjectId, { description, status: 'draft' })
+        : await createProject({
+          name: pendingProjectPayload.name || getGeneratedProjectName(),
+          description,
+          status: 'draft',
+        });
+
+      if (String(project.id).startsWith('local-project-')) {
+        throw new Error('La base de données doit être disponible pour démarrer le projet.');
+      }
+
+      await syncProjectProducts(project.id);
+      setCurrentProject(project);
+      setHasProjectInProgress(true);
+      setIsRecapVisible(true);
+      setProjectGateGraceEnd();
+      setIsWithinGracePeriod(true);
+      upsertProjectArchive({
+        projectId: project.id,
+        projectName: project.name,
+        userName: user?.name || user?.fullName || user?.email || 'Utilisateur ArchiPrice',
+        userEmail: user?.email || '',
+        reference: `PROJ-${project.id}`,
+        amount: budgetSummary.max || 0,
+        itemCount: selectedProducts.length,
+        status: 'Brouillon',
+        city: [...new Set(selectedProducts.map((product) => product.city).filter(Boolean))].join(', ') || project.name,
+        coefficient: '1,00',
+        items: selectedProducts.map((product) => ({
+          ...createExportedProductSnapshot(product),
+          id: product.id,
+          name: product.name,
+          category: product.category,
+          quantity: 1,
+          price: formatFCFA(product.maxPrice),
+          total: formatFCFA(product.maxPrice),
+          rawPrice: product.maxPrice,
+          imageUrl: product.image,
+        })),
+      });
+      navigate(`/catalogue?projectId=${project.id}&recap=1`, {
+        replace: true,
+        state: { from: location.state?.from || { pathname: '/espacepro', search: `?projectId=${project.id}` } },
+      });
+    } catch (error) {
+      setValidationError(getApiErrorMessage(error, 'Impossible de démarrer le projet'));
+    } finally {
+      setIsValidating(false);
+    }
   }
 
   function handleWorkspaceReturn() {
@@ -936,14 +1191,15 @@ export default function Catalogue() {
     navigate('/dashboard', { replace: true });
   }
 
-  function handleProjectGateCreated(project) {
-    if (!project?.id) return;
-    const projectBudget = extractProjectBudget(project);
+  function handleProjectGateCreated(projectPayload) {
+    if (!projectPayload?.name) return;
+    const projectBudget = extractProjectBudget(projectPayload);
     if (projectBudget) setBudgetTarget(String(projectBudget));
-    navigate(`/catalogue?projectId=${project.id}`, {
-      replace: true,
-      state: { from: location.state?.from || { pathname: '/workspace', search: '' } },
-    });
+    setPendingProjectPayload(projectPayload);
+    setIsProjectGateCompleted(true);
+    setProjectGateGraceEnd();
+    setIsWithinGracePeriod(true);
+    expandBudget();
   }
 
   async function handleConfirmValidation() {
@@ -957,38 +1213,19 @@ export default function Catalogue() {
     setValidationError('');
 
     try {
-      const projectIdFromUrl = activeProjectId;
+      if (!activeProjectId) {
+        throw new Error('Validez d’abord le budget afin de créer le projet en cours.');
+      }
       const description = buildProjectDescription({
         selectedProducts,
         budgetTarget: budgetSummary.target,
         budgetSummary,
+        baseDescription: currentProject?.description,
       });
-      const project = projectIdFromUrl
-        ? await updateProject(projectIdFromUrl, {
-          description,
-          status: 'active',
-        })
-        : await createProject({
-          name: getGeneratedProjectName(),
-          description,
-          status: 'active',
-        });
+      await syncProjectProducts(activeProjectId);
+      const project = await updateProject(activeProjectId, { description, status: 'active' });
 
-      await Promise.all(selectedProducts.map((product) => createProduct(project.id, {
-        name: product.name,
-        description: [
-          `Boutique : ${product.shop}`,
-          `Gamme : ${product.range}`,
-          `Prix min : ${product.minPrice}`,
-          `Prix max : ${product.maxPrice}`,
-        ].join('\n'),
-        category: product.category,
-        unit: 'u',
-        unitPrice: product.maxPrice,
-        images: product.imageDocuments || [],
-      })));
-
-      addExportedDocument({
+      upsertProjectArchive({
         projectId: project.id,
         projectName: project.name,
         userName: user?.name || user?.fullName || user?.email || 'Utilisateur ArchiPrice',
@@ -1000,6 +1237,7 @@ export default function Catalogue() {
         city: [...new Set(selectedProducts.map((product) => product.city).filter(Boolean))].join(', ') || project.name,
         coefficient: '1,00',
         items: selectedProducts.map((product) => ({
+          ...createExportedProductSnapshot(product),
           id: product.id,
           name: product.name,
           category: product.category,
@@ -1088,6 +1326,15 @@ export default function Catalogue() {
         />
       )}
 
+      {canDisplayBudget && !isBudgetExpanded && (
+        <CatalogueDiscreteButton
+          position="top-right"
+          label="Budget"
+          iconName="ReceiptLong"
+          onClick={expandBudget}
+        />
+      )}
+
       <main className="catalogue-product-main">
         {hasCatalogueProducts && (
           <CatalogueCategories
@@ -1120,7 +1367,7 @@ export default function Catalogue() {
 
             {!isLoadingProducts && !productsError && filteredProducts.map((product, index) => {
               const isSelected = selectedProductIds.includes(product.id);
-              const priceRange = `${formatCurrency(product.minPrice)} - ${formatCurrency(product.maxPrice)}`;
+              const priceRange = formatProductPrice(product);
 
               return (
                 <CardArticle
@@ -1138,7 +1385,7 @@ export default function Catalogue() {
         </div>
       </main>
 
-      {activeProjectId && isBudgetVisible && (
+      {isBudgetVisible && (
         <SimulBudget
           budgetTarget={budgetTarget}
           budgetSummary={budgetSummary}
@@ -1149,17 +1396,9 @@ export default function Catalogue() {
           normalizeBudgetInput={normalizeBudgetInput}
           onBudgetChange={setBudgetTarget}
           onValidate={handleBudgetValidation}
-          onInteract={handleBudgetInteract}
-          onMinimize={handleCollapseBudget}
-        />
-      )}
-
-      {activeProjectId && !isBudgetExpanded && (
-        <CatalogueDiscreteButton
-          position="top-right"
-          label="Budget"
-          iconName="Wallet"
-          onClick={handleExpandBudget}
+          onInteract={scheduleBudgetCollapse}
+          onMinimize={() => setIsBudgetExpanded(false)}
+          isValidating={isValidating}
         />
       )}
 
@@ -1180,10 +1419,16 @@ export default function Catalogue() {
       )}
 
       <Newproject
-        isOpen={!activeProjectId}
+        isOpen={projectsChecked
+          && !activeProjectId
+          && !isProjectGateCompleted
+          && (!skipProjectGate || isProjectGateForced)
+          && (!hasProjectInProgress || isProjectGateForced)
+          && (!isWithinGracePeriod || isProjectGateForced)}
         onCancel={handleGateCancel}
         onCreated={handleProjectGateCreated}
         roomTypes={roomOptions}
+        deferCreation
       />
 
       {fullscreenProduct && (
@@ -1192,7 +1437,7 @@ export default function Catalogue() {
           image={fullscreenImage}
           imageIndex={fullscreenImageIndex}
           isSelected={selectedProductIds.includes(fullscreenProduct.id)}
-          priceRange={`${formatCurrency(fullscreenProduct.minPrice)} - ${formatCurrency(fullscreenProduct.maxPrice)}`}
+          priceRange={formatProductPrice(fullscreenProduct)}
           onClose={() => setFullscreenProductId('')}
           onImageSelect={setFullscreenImageIndex}
           onToggle={toggleProduct}

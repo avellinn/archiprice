@@ -34,7 +34,7 @@ function buildProjectDescription(roomType, budget) {
     .join('\n');
 }
 
-export default function Newproject({ isOpen, onCancel, onCreated, roomTypes = [] }) {
+export default function Newproject({ isOpen, onCancel, onCreated, roomTypes = [], deferCreation = false }) {
   const normalizedRoomTypes = roomTypes.map((room) => (
     typeof room === 'string'
       ? { value: room, label: room }
@@ -94,11 +94,13 @@ export default function Newproject({ isOpen, onCancel, onCreated, roomTypes = []
     setActionMessage('');
 
     try {
-      const project = await createProject({
+      const projectPayload = {
         name,
         description: buildProjectDescription(effectiveRoomType, budget.trim()),
-      });
-      setActionMessage('Projet créé avec succès.');
+        status: 'draft',
+      };
+      const project = deferCreation ? projectPayload : await createProject(projectPayload);
+      setActionMessage(deferCreation ? 'Informations du projet enregistrées.' : 'Projet créé avec succès.');
       resetForm();
       onCreated?.(project);
     } catch (err) {

@@ -54,14 +54,8 @@ export default function SimulationModal({ simulation, onClose }) {
               <span>Ville / Projet</span>
               <strong>{simulation.city || '-'}</strong>
             </article>
-            <article>
-              <span>Coefficient coût</span>
-              <strong>{simulation.coefficient || '-'}</strong>
-            </article>
-            <article>
-              <span>Total HT</span>
-              <strong>{simulation.total || '-'}</strong>
-            </article>
+
+
           </div>
         </section>
 

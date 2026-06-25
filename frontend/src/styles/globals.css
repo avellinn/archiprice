@@ -67,12 +67,106 @@ body,
   overflow-x: hidden;
 }
 
+.dashboard-content:not(:has(.catalogue-page)) {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.dashboard-content:not(:has(.catalogue-page)) > :where([class$="-page"], [class*="-page "]) {
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+}
+
+.dashboard-content:has(.espacepro-page) {
+  overflow: hidden;
+}
+
+.dashboard-content:has(.espacepro-page) > .espacepro-page {
+  max-height: calc(100vh );
+
+}
+
 body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
   background: #F3F4F6;
   font-family: var(--font-primary);
+}
+
+body.theme-dark {
+  --app-shell-background: #020617;
+  --app-content-background: #0f172a;
+  --dashboard-page-background: #0f172a;
+  --app-panel-background: #1f2937;
+  --app-card-background: #111827;
+  --app-text-color: #e5e7eb;
+  --app-muted-color: #94a3b8;
+  --app-heading-color: #f8fafc;
+  --app-border-color: #334155;
+  --bg-primary: var(--app-card-background);
+  --bg-secondary: var(--app-panel-background);
+  --border-color: var(--app-border-color);
+  --text-primary: var(--app-heading-color);
+  --text-secondary: var(--app-text-color);
+  --color-grey: var(--app-muted-color);
+  --color-grey-dark: var(--app-heading-color);
+  --color-grey-light: #1f2937;
+  background: #0f172a;
+  color: #e5e7eb;
+  color-scheme: dark;
+}
+
+/* Couverture sombre de sécurité pour les vues historiques et les modales.
+   Les composants spécialisés peuvent toujours surcharger ces variables. */
+body.theme-dark :where(
+  [class$="-page"],
+  [class*="-page "],
+  [class$="-panel"],
+  [class*="-panel "],
+  [class$="-card"],
+  [class*="-card "],
+  [class$="-modal"],
+  [class*="-modal "],
+  [role="dialog"]
+) {
+  border-color: var(--app-border-color);
+  color: var(--app-text-color);
+}
+
+body.theme-dark :where(
+  [class$="-card"],
+  [class*="-card "],
+  [class$="-panel"],
+  [class*="-panel "],
+  [class$="-modal"],
+  [class*="-modal "],
+  [role="dialog"]
+):not([class*="backdrop"]) {
+  background-color: var(--app-card-background);
+}
+
+body.theme-dark :where(input, textarea, select) {
+  border-color: var(--app-border-color) !important;
+  background-color: #0f172a !important;
+  color: var(--app-heading-color) !important;
+}
+
+body.theme-dark :where(input, textarea)::placeholder {
+  color: #94a3b8 !important;
+}
+
+body.theme-dark :where(table, thead, tbody, tr, th, td) {
+  border-color: var(--app-border-color) !important;
+  color: var(--app-text-color);
+}
+
+body.theme-dark :where(h1, h2, h3, h4, h5, h6, strong, dt) {
+  color: var(--app-heading-color);
+}
+
+body.theme-dark :where(p, dd, small, label) {
+  color: var(--app-text-color);
 }
 
 h1,
@@ -223,4 +317,3 @@ svg {
     scroll-behavior: auto !important;
   }
 }
-

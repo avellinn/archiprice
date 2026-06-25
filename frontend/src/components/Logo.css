@@ -47,6 +47,7 @@
 .app-logo--public {
   gap: 0.65rem;
   color: inherit;
+  align-items: center;
 }
 
 .app-logo--public .app-logo__image {
@@ -56,16 +57,24 @@
 
 .app-logo--public .app-logo__text {
   font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
 }
 
 .dashboard-shell.is-theme-dark .app-logo--sidebar,
 .dashboard-shell.is-theme-dark .app-logo--auth,
 body.theme-dark .app-logo--auth {
-  background: #ffffff;
+  background: #0f172a;
   box-shadow: 0 12px 28px rgb(15 23 42 / 0.22);
 }
 
 .dashboard-shell.is-theme-dark .sidebar__logo-link .app-logo--sidebar {
   background: transparent;
   box-shadow: none;
+}
+
+.dashboard-shell.is-theme-dark .app-logo--auth .app-logo__image,
+.dashboard-shell.is-theme-dark .app-logo--public .app-logo__image,
+.dashboard-shell.is-theme-dark .header .logo .app-logo__image {
+  filter: brightness(0) invert(1) drop-shadow(0 2px 8px rgb(255 255 255 / 0.12));
 }

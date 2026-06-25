@@ -1,14 +1,10 @@
 import { API_ROUTES } from '../constants/api';
 import api from './api';
+import { notifySupportChange } from './support';
 
 export async function fetchAdminUsers() {
   const { data } = await api.get(API_ROUTES.admin.users);
   return Array.isArray(data) ? data : data.users || [];
-}
-
-export async function createAdminUser(payload) {
-  const { data } = await api.post(API_ROUTES.admin.users, payload);
-  return data.user || data;
 }
 
 export async function updateAdminUser(userId, payload) {
@@ -21,14 +17,14 @@ export async function deleteAdminUser(userId) {
   return data;
 }
 
+export async function permanentDeleteAdminUser(userId) {
+  const { data } = await api.delete(API_ROUTES.admin.permanentDeleteUser(userId));
+  return data;
+}
+
 export async function fetchAdminSuppliers() {
   const { data } = await api.get(API_ROUTES.admin.suppliers);
   return data.suppliers || [];
-}
-
-export async function createAdminSupplier(payload) {
-  const { data } = await api.post(API_ROUTES.admin.suppliers, payload);
-  return data.supplier;
 }
 
 export async function updateAdminSupplier(supplierId, payload) {
@@ -38,6 +34,11 @@ export async function updateAdminSupplier(supplierId, payload) {
 
 export async function deleteAdminSupplier(supplierId) {
   const { data } = await api.delete(API_ROUTES.admin.supplier(supplierId));
+  return data;
+}
+
+export async function permanentDeleteAdminSupplier(supplierId) {
+  const { data } = await api.delete(API_ROUTES.admin.permanentDeleteSupplier(supplierId));
   return data;
 }
 
@@ -61,16 +62,6 @@ export async function fetchAdminSimulations() {
   return data.simulations || [];
 }
 
-export async function createAdminSimulation(payload) {
-  const { data } = await api.post(API_ROUTES.admin.simulations, payload);
-  return data.simulation;
-}
-
-export async function updateAdminSimulation(simulationId, payload) {
-  const { data } = await api.patch(API_ROUTES.admin.simulation(simulationId), payload);
-  return data.simulation;
-}
-
 export async function deleteAdminSimulation(simulationId) {
   const { data } = await api.delete(API_ROUTES.admin.simulation(simulationId));
   return data;
@@ -88,10 +79,12 @@ export async function fetchAdminSupportItems() {
 
 export async function updateAdminSupportItem(itemId, payload) {
   const { data } = await api.patch(API_ROUTES.admin.supportItem(itemId), payload);
+  notifySupportChange({ action: 'updated', supportItem: data.supportItem });
   return data.supportItem;
 }
 
 export async function deleteAdminSupportItem(itemId) {
   const { data } = await api.delete(API_ROUTES.admin.supportItem(itemId));
+  notifySupportChange({ action: 'deleted', supportItemId: itemId });
   return data;
 }

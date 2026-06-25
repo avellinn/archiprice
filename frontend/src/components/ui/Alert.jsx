@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Icon from './Icon';
 import './Alert.css';
 
@@ -16,22 +17,28 @@ export default function Alert({
   icon,
   onClose,
   className = '',
-  autoCloseMs = 4000,
+  autoCloseMs = 3500,
+  layout = 'toast',
 }) {
-  const classes = ['alert', `alert--${variant}`, className].filter(Boolean).join(' ');
+  const classes = [
+    'alert',
+    `alert--${variant}`,
+    layout === 'toast' ? 'alert--toast' : 'alert--inline',
+    className,
+  ].filter(Boolean).join(' ');
   const displayIcon = icon || <Icon name={DEFAULT_ICONS[variant] || DEFAULT_ICONS.info} size={24} />;
 
   useEffect(() => {
-    if (!onClose || !autoCloseMs) return undefined;
+    if (!onClose || !autoCloseMs || layout !== 'toast') return undefined;
 
     const timer = window.setTimeout(() => {
       onClose();
     }, autoCloseMs);
 
     return () => window.clearTimeout(timer);
-  }, [autoCloseMs, onClose]);
+  }, [autoCloseMs, layout, onClose]);
 
-  return (
+  const alertNode = (
     <div className={classes} role="alert">
       <div className="alert__content">
         {displayIcon && <div className="alert__icon">{displayIcon}</div>}
@@ -52,4 +59,10 @@ export default function Alert({
       )}
     </div>
   );
+
+  if (layout === 'toast' && typeof document !== 'undefined') {
+    return createPortal(alertNode, document.body);
+  }
+
+  return alertNode;
 }

@@ -6,13 +6,16 @@ import Sidebar from './Sidebar';
 import { Icon } from './ui';
 import useAuth from '../context/useAuth';
 import { syncAdminDataFromRemote, useAdminData } from '../services/adminData';
+import { fetchMyDemandes, subscribeDemandesChange } from '../services/demandes';
 import { connectRealtime } from '../services/realtime';
-import { fetchMySupportItems } from '../services/support';
+import { fetchMySupportItems, subscribeSupportChange } from '../services/support';
 import { fetchSupplierWorkspace, notifySupplierWorkspaceChange } from '../services/supplier';
 import { getAvatarColor, getDisplayName, getUserInitials } from '../utils/userDisplay';
 import { getSupplierLanguage, getSupplierTranslations } from '../utils/supplierLanguage';
+import { useWorkspaceLanguage } from '../utils/workspaceLanguage';
 
 const SUPPLIER_DISMISSED_NOTIFICATIONS_KEY = 'archiprice:supplier-dismissed-notifications';
+const THEME_STORAGE_KEY = 'archiprice:theme';
 const NOTIFICATIONS_READ_EVENT = 'archiprice:notifications-read-change';
 const SUPPLIER_SEARCH_ICONS = {
   '/supplier/dashboard': 'Dashboard',
@@ -31,6 +34,14 @@ function readDismissedNotificationKeys() {
     return JSON.parse(window.localStorage.getItem(SUPPLIER_DISMISSED_NOTIFICATIONS_KEY) || '[]');
   } catch {
     return [];
+  }
+}
+
+function readThemePreference() {
+  try {
+    return window.localStorage.getItem(THEME_STORAGE_KEY) === 'dark';
+  } catch {
+    return false;
   }
 }
 
@@ -103,16 +114,32 @@ export default function SupplierShell() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isThemeDark, setIsThemeDark] = useState(false);
+  const [isThemeDark, setIsThemeDark] = useState(readThemePreference);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [searchMessage, setSearchMessage] = useState('');
   const [adminData] = useAdminData();
   const [supportItems, setSupportItems] = useState([]);
+  const [demandes, setDemandes] = useState([]);
   const [supplierProfile, setSupplierProfile] = useState(null);
   const [dismissedNotificationKeys, setDismissedNotificationKeys] = useState(readDismissedNotificationKeys);
   const supplierLanguage = getSupplierLanguage(adminData);
   const supplierText = getSupplierTranslations(supplierLanguage);
+  useWorkspaceLanguage(supplierLanguage);
+
+  useEffect(() => {
+    document.body.classList.toggle('theme-dark', isThemeDark);
+    window.localStorage.setItem(THEME_STORAGE_KEY, isThemeDark ? 'dark' : 'light');
+  }, [isThemeDark]);
+
+  useEffect(() => {
+    const syncTheme = (event) => {
+      if (event.key && event.key !== THEME_STORAGE_KEY) return;
+      setIsThemeDark(readThemePreference());
+    };
+    window.addEventListener('storage', syncTheme);
+    return () => window.removeEventListener('storage', syncTheme);
+  }, []);
 
   const refreshSupportNotifications = useCallback(async () => {
     try {
@@ -122,14 +149,26 @@ export default function SupplierShell() {
     }
   }, []);
 
+  const refreshDemandeNotifications = useCallback(async () => {
+    try {
+      setDemandes(await fetchMyDemandes());
+    } catch {
+      setDemandes([]);
+    }
+  }, []);
+
   useEffect(() => connectRealtime({
     onEvent: (event) => {
       if (event?.type === 'connected') return;
       notifySupplierWorkspaceChange({ action: event.type, source: 'realtime' });
       syncAdminDataFromRemote().catch(() => {});
       refreshSupportNotifications();
+      refreshDemandeNotifications();
     },
-  }), [refreshSupportNotifications]);
+  }), [refreshDemandeNotifications, refreshSupportNotifications]);
+
+  useEffect(() => subscribeDemandesChange(refreshDemandeNotifications), [refreshDemandeNotifications]);
+  useEffect(() => subscribeSupportChange(refreshSupportNotifications), [refreshSupportNotifications]);
 
   useEffect(() => {
     function handleDismissedNotificationsChange(event) {
@@ -147,11 +186,14 @@ export default function SupplierShell() {
   }, []);
 
   useEffect(() => {
-    const refreshTimer = window.setTimeout(refreshSupportNotifications, 0);
+    const refreshTimer = window.setTimeout(() => {
+      refreshSupportNotifications();
+      refreshDemandeNotifications();
+    }, 0);
     return () => {
       window.clearTimeout(refreshTimer);
     };
-  }, [refreshSupportNotifications, location.pathname]);
+  }, [refreshDemandeNotifications, refreshSupportNotifications, location.pathname]);
 
   useEffect(() => {
     let cancelled = false;
@@ -178,16 +220,19 @@ export default function SupplierShell() {
     clientNotifications.filter((notification) => !dismissedNotificationKeys.includes(`supplier-client-${notification.id}`))
   ), [clientNotifications, dismissedNotificationKeys]);
   const demandNotifications = useMemo(() => (
-    (adminData.supplierClientNotifications || [])
+    (demandes.length > 0 ? demandes : (adminData.supplierClientNotifications || []))
       .filter((notification) => notification.type === 'Demande')
       .filter((notification) => isClientNotificationForSupplier(notification, user, supplierProfile))
       .map((notification) => ({
         ...notification,
         lastMessage: getLastDemandMessage(notification),
       }))
+      .filter((notification) => (
+        notification.unreadForSupplier === undefined || Number(notification.unreadForSupplier) > 0
+      ))
       .filter((notification) => notification.lastMessage?.senderRole === 'user')
       .sort((a, b) => new Date(b.lastMessage.createdAt || b.updatedAt || 0) - new Date(a.lastMessage.createdAt || a.updatedAt || 0))
-  ), [adminData.supplierClientNotifications, supplierProfile, user]);
+  ), [adminData.supplierClientNotifications, demandes, supplierProfile, user]);
   const visibleDemandNotifications = useMemo(() => (
     demandNotifications.filter((notification) => (
       !dismissedNotificationKeys.includes(`supplier-demand-${notification.id}-${notification.lastMessage.id}`)
@@ -195,7 +240,10 @@ export default function SupplierShell() {
   ), [demandNotifications, dismissedNotificationKeys]);
   const visibleSupportReplies = useMemo(() => (
     supportItems
-      .filter((item) => item.reply && !dismissedNotificationKeys.includes(`supplier-support-reply-${item.id}`))
+      .filter((item) => (
+        (item.unreadForOwner === undefined ? Boolean(item.reply) : Number(item.unreadForOwner) > 0)
+        && !dismissedNotificationKeys.includes(`supplier-support-reply-${item.id}`)
+      ))
       .sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0))
   ), [dismissedNotificationKeys, supportItems]);
 
@@ -253,6 +301,7 @@ export default function SupplierShell() {
             label: supplierText.sidebar.support,
             path: '/supplier/support',
             icon: <Icon name="Chat" />,
+            badge: visibleSupportReplies.length || undefined,
           },
           {
             id: 'supplier-settings',
@@ -269,7 +318,7 @@ export default function SupplierShell() {
         ],
       },
     ],
-    [supplierText, visibleDemandNotifications.length],
+    [supplierText, visibleDemandNotifications.length, visibleSupportReplies.length],
   );
 
   const currentPage = supplierText.pageTitles[location.pathname] || supplierText.pageTitles.fallback;

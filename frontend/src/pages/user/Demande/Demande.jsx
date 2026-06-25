@@ -1,10 +1,13 @@
-import './Demande.css';
+import '../../../components/demandeList.css';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Icon } from '../../../components/ui';
+import DemandeModal from '../../../components/demandeModal';
+import { Alert, Icon, Loader } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
+import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { useAdminData } from '../../../services/adminData';
-import { fetchMyDemandes, replyToDemande } from '../../../services/demandes';
+import { fetchMyDemandes, markDemandeRead, notifyDemandesChange, replyToDemande, subscribeDemandesChange } from '../../../services/demandes';
 import { isNumericOnly } from '../../../utils/formInput';
+import { getStoredUserLanguage, getUserTranslations } from '../../../utils/userLanguage';
 
 const HIDDEN_DEMAND_ITEMS_KEY = 'archiprice:user-demand-hidden-items';
 const USER_DISMISSED_NOTIFICATIONS_KEY = 'archiprice:user-dismissed-notifications';
@@ -22,8 +25,8 @@ function formatDateTime(value) {
   }).format(new Date(value));
 }
 
-function getHiddenDemandItemsKey(userId, userEmail) {
-  return `${HIDDEN_DEMAND_ITEMS_KEY}:${userId || userEmail || 'anonymous'}`;
+function getHiddenDemandItemsKey(userId) {
+  return `${HIDDEN_DEMAND_ITEMS_KEY}:${userId || 'anonymous'}`;
 }
 
 function readHiddenDemandItems(storageKey) {
@@ -74,26 +77,33 @@ function normalizeDemandMessages(notification, fallbackSenderName) {
       : [];
   const seenMessages = new Set();
 
-  return messages.filter((message) => {
-    const messageKey = [
-      message.id,
-      message.senderRole,
-      message.senderName,
-      message.message,
-      message.createdAt,
-    ].map((value) => String(value || '').trim()).join('|');
+  return messages
+    .filter((message) => {
+      const messageKey = [
+        message.id,
+        message.senderRole,
+        message.senderName,
+        message.message,
+        message.createdAt,
+      ].map((value) => String(value || '').trim()).join('|');
 
-    if (seenMessages.has(messageKey)) return false;
-    seenMessages.add(messageKey);
-    return true;
-  });
+      if (seenMessages.has(messageKey)) return false;
+      seenMessages.add(messageKey);
+      return true;
+    })
+    .sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
 }
 
 function getDemandGroupId(notification) {
   return [
+    notification.clientId,
+    notification.clientEmail,
+    notification.clientName,
     notification.supplierId,
-    notification.supplierName,
     notification.supplierContact,
+    notification.supplierName,
+    notification.projectId,
+    notification.productId,
   ].map((value) => String(value || '').trim().toLowerCase()).filter(Boolean).join('|')
     || String(notification.id || '');
 }
@@ -129,10 +139,12 @@ function groupDemandsByShop(notifications, fallbackSenderName) {
     });
   });
 
-  return [...groups.values()].map((group) => ({
-    ...group,
-    messages: normalizeDemandMessages({ ...group, message: '', messages: group.messages }, fallbackSenderName),
-  }));
+  return [...groups.values()]
+    .map((group) => ({
+      ...group,
+      messages: normalizeDemandMessages({ ...group, message: '', messages: group.messages }, fallbackSenderName),
+    }))
+    .sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0));
 }
 
 function getLastMessage(item) {
@@ -160,39 +172,91 @@ function getDemandReadKeys(item, notifications = [], expectedSenderRole = 'suppl
 }
 
 function hasUnreadSupplierReply(item, readKeys, notifications) {
+  if (Number.isFinite(Number(item.unreadForUser))) return Number(item.unreadForUser) > 0;
   return getDemandReadKeys(item, notifications, 'supplier').some((key) => !readKeys.includes(key));
+}
+
+function replaceOrPrependDemande(demandes, updatedDemande) {
+  if (!updatedDemande?.id) return demandes;
+  const updatedGroupId = getDemandGroupId(updatedDemande);
+  let replaced = false;
+  const nextDemandes = [];
+
+  for (const demande of demandes) {
+    const demandeGroupId = getDemandGroupId(demande);
+    if (!replaced && (demande.id === updatedDemande.id || demandeGroupId === updatedGroupId)) {
+      nextDemandes.push(updatedDemande);
+      replaced = true;
+      continue;
+    }
+    if (demande.id === updatedDemande.id || demandeGroupId === updatedGroupId) {
+      continue;
+    }
+    nextDemandes.push(demande);
+  }
+
+  return replaced ? nextDemandes : [updatedDemande, ...demandes];
 }
 
 export default function Demande() {
   const { user } = useAuth();
   const [adminData, updateAdminData] = useAdminData();
-  const [replyDemandId, setReplyDemandId] = useState('');
   const [replyText, setReplyText] = useState('');
   const [replyError, setReplyError] = useState('');
   const [actionMessage, setActionMessage] = useState('');
   const [selectedDemandId, setSelectedDemandId] = useState('');
   const [apiDemandes, setApiDemandes] = useState([]);
+  const [isLoadingDemandes, setIsLoadingDemandes] = useState(true);
   const [readNotificationKeys, setReadNotificationKeys] = useState(readDismissedNotificationKeys);
+  const [language, setLanguage] = useState(getStoredUserLanguage);
+  const translations = getUserTranslations(language);
+  const demandText = translations.demand;
+
+  useEffect(() => {
+    const syncLanguage = () => setLanguage(getStoredUserLanguage());
+    window.addEventListener('archiprice:user-profile-change', syncLanguage);
+    return () => window.removeEventListener('archiprice:user-profile-change', syncLanguage);
+  }, []);
 
   const userEmail = user?.email || '';
   const userId = user?.id || user?._id || '';
   const userName = user?.name || user?.fullName || userEmail || 'Client ArchiPrice';
-  const hiddenDemandItemsKey = getHiddenDemandItemsKey(userId, userEmail);
+  const hiddenDemandItemsKey = getHiddenDemandItemsKey(userId);
   const [hiddenDemandIds, setHiddenDemandIds] = useState(() => readHiddenDemandItems(hiddenDemandItemsKey));
 
-  useEffect(() => {
+  function loadDemandes({ silent = false } = {}) {
     let cancelled = false;
+
+    if (!silent) setIsLoadingDemandes(true);
 
     fetchMyDemandes()
       .then((demandes) => {
         if (!cancelled) setApiDemandes(demandes);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled && !silent) setIsLoadingDemandes(false);
+      });
 
     return () => {
       cancelled = true;
     };
+  }
+
+  useEffect(() => {
+    let cancelLoad = () => {};
+    const timer = window.setTimeout(() => {
+      cancelLoad = loadDemandes();
+    }, 0);
+    return () => {
+      window.clearTimeout(timer);
+      cancelLoad();
+    };
   }, []);
+
+  useRealtimeRefresh(() => loadDemandes({ silent: true }), ['demandes']);
+
+  useEffect(() => subscribeDemandesChange(() => loadDemandes({ silent: true })), []);
 
   useEffect(() => {
     if (!hiddenDemandItemsKey) return undefined;
@@ -229,8 +293,9 @@ export default function Demande() {
       .filter((notification) => notification.type === 'Demande')
       .filter((notification) => !hiddenDemandIds.includes(getDemandGroupId(notification)))
       .filter((notification) => (
-        notification.clientId === userId
-        || notification.clientEmail === userEmail
+        userId
+          ? notification.clientId === userId
+          : notification.clientEmail === userEmail
       )), userName)
       .map((notification) => ({
         ...notification,
@@ -243,35 +308,33 @@ export default function Demande() {
     setHiddenDemandIds(nextHiddenIds);
     writeHiddenDemandItems(hiddenDemandItemsKey, nextHiddenIds);
     if (selectedDemandId === itemId) setSelectedDemandId('');
-    setActionMessage('Conversation supprimée de votre liste.');
+    setActionMessage(demandText.conversationHidden);
   }
 
   function sendReply(event) {
     event.preventDefault();
     const comment = replyText.trim();
-    if (!replyDemandId || !comment) return;
+    const targetDemandId = selectedDemand?.sourceNotificationId;
+    if (!targetDemandId || !comment) return;
     if (isNumericOnly(comment)) {
       setReplyError('Le message doit contenir du texte.');
       setActionMessage('');
       return;
     }
 
-    replyToDemande(replyDemandId, comment)
+    replyToDemande(targetDemandId, comment)
       .then((updatedDemande) => {
-        setApiDemandes((currentDemandes) => currentDemandes.map((demande) => (
-          demande.id === updatedDemande.id ? updatedDemande : demande
-        )));
+        setApiDemandes((currentDemandes) => replaceOrPrependDemande(currentDemandes, updatedDemande));
         setReplyText('');
-        setReplyDemandId('');
         setReplyError('');
-        setActionMessage('Message envoyé.');
+        setActionMessage(demandText.messageSent);
       })
       .catch(() => {
         const now = new Date().toISOString();
         updateAdminData((currentData) => ({
           ...currentData,
           supplierClientNotifications: (currentData.supplierClientNotifications || []).map((notification) => {
-            if (notification.id !== replyDemandId) return notification;
+            if (notification.id !== targetDemandId) return notification;
 
             return {
               ...notification,
@@ -289,10 +352,10 @@ export default function Demande() {
             };
           }),
         }));
+        notifyDemandesChange({ action: 'message-created-local', demandeId: targetDemandId });
         setReplyText('');
-        setReplyDemandId('');
         setReplyError('');
-        setActionMessage('Message envoyé.');
+        setActionMessage(demandText.messageSent);
       });
   }
 
@@ -304,16 +367,25 @@ export default function Demande() {
 
   function markDemandAsRead(item) {
     const keys = getDemandReadKeys(item, demandNotifications, 'supplier');
-    if (keys.length === 0) return;
+    const notificationIds = new Set((item.notificationIds || [item.sourceNotificationId]).filter(Boolean).map(String));
+    setApiDemandes((currentDemandes) => currentDemandes.map((demande) => (
+      notificationIds.has(String(demande.id || '')) ? { ...demande, unreadForUser: 0 } : demande
+    )));
 
-    const nextKeys = [...new Set([...readNotificationKeys, ...keys])];
-    setReadNotificationKeys(nextKeys);
-    writeDismissedNotificationKeys(nextKeys);
+    if (keys.length > 0) {
+      const nextKeys = [...new Set([...readNotificationKeys, ...keys])];
+      setReadNotificationKeys(nextKeys);
+      writeDismissedNotificationKeys(nextKeys);
+    }
   }
 
   function openDemand(itemId) {
     const demand = demands.find((item) => item.id === itemId);
-    if (demand) markDemandAsRead(demand);
+    if (demand) {
+      markDemandAsRead(demand);
+      markDemandeRead(demand.sourceNotificationId).catch(() => {});
+      setReplyError('');
+    }
     setSelectedDemandId(itemId);
   }
 
@@ -328,23 +400,25 @@ export default function Demande() {
       <section className="user-support-panel">
         <header className="user-support-header">
           <div>
-            <span>Conversations boutique</span>
+            <span>{demandText.eyebrow}</span>
             {unreadDemandCount > 0 && (
               <strong className="user-demand-notification-badge">
-                {unreadDemandCount} nouveau{unreadDemandCount > 1 ? 'x' : ''} message{unreadDemandCount > 1 ? 's' : ''}
+                {demandText.badgeNewMessages(unreadDemandCount)}
               </strong>
             )}
           </div>
         </header>
 
         <section className="user-support-card">
-          <h2>Mes demandes boutique</h2>
+          <h2>{demandText.title}</h2>
           {actionMessage && (
             <Alert variant="success" className="user-demand-action-alert" onClose={() => setActionMessage('')}>
               {actionMessage}
             </Alert>
           )}
-          {demands.length ? (
+          {isLoadingDemandes ? (
+            <Loader label={demandText.loading} />
+          ) : demands.length ? (
             <div className="user-support-list user-demand-list">
               {demands.map((item) => {
                 const isUnread = hasUnreadSupplierReply(item, readNotificationKeys, demandNotifications);
@@ -361,14 +435,16 @@ export default function Demande() {
                   
                   <div>
                     <strong>{item.supplierName || 'Boutique'}</strong>
-                    <span>{item.projectName || 'Projet non renseigné'} · {item.createdAtLabel}</span>
-                    <small>{item.messages.at(-1)?.message || 'Aucun message renseigné'}</small>
+                    <span>{item.projectName || demandText.noProject} · {item.createdAtLabel}</span>
+                    <small>{item.messages.at(-1)?.message || demandText.noMessage}</small>
                   </div>
-                  <b>{isUnread ? 'Nouveau message' : item.status || 'Nouveau'}</b>
+                  <span className={`user-demand-list__status${isUnread ? ' is-unread-badge' : ''}`}>
+                    {isUnread ? demandText.newMessage : (item.status || demandText.readLabel)}
+                  </span>
                   <button
                     type="button"
                     className="user-support-list__delete"
-                    title="Supprimer de ma liste"
+                    title={demandText.deleteTitle}
                     aria-label={`Supprimer la demande à ${item.supplierName || 'boutique'}`}
                     onClick={(event) => {
                       event.stopPropagation();
@@ -382,82 +458,31 @@ export default function Demande() {
               })}
             </div>
           ) : (
-            <Alert variant="info">Cliquez sur une boutique depuis "Où acheter" pour démarrer une demande.</Alert>
+            <Alert variant="info" layout="inline">{demandText.empty}</Alert>
           )}
         </section>
       </section>
 
       {selectedDemand && (
-        <div className="user-demand-modal" role="dialog" aria-modal="true" aria-label="Conversation boutique">
-          <section className="user-demand-card">
-            <header>
-              <div>
-                <span>{selectedDemand.projectName || 'Projet non renseigné'}</span>
-                <h2>{selectedDemand.supplierName || 'Boutique'}</h2>
-              </div>
-              <button type="button" aria-label="Fermer" onClick={() => setSelectedDemandId('')}>
-                <Icon name="Close" size="sm" />
-              </button>
-            </header>
-
-            <div className="user-support-chat__messages">
-              {selectedDemand.messages.length === 0 ? (
-                <p className="is-empty">
-                  <span>Aucun message dans cette conversation.</span>
-                </p>
-              ) : (
-                selectedDemand.messages.map((chatMessage) => (
-                  <p
-                    key={chatMessage.id}
-                    className={chatMessage.senderRole === 'user' ? 'is-user' : 'is-supplier'}
-                  >
-                    <small>{chatMessage.senderName || (chatMessage.senderRole === 'user' ? 'Vous' : selectedDemand.supplierName)}</small>
-                    <span>{chatMessage.message}</span>
-                  </p>
-                ))
-              )}
-            </div>
-
-            <footer>
-              {replyDemandId === selectedDemand.sourceNotificationId ? (
-                <form className="user-support-chat__reply-form" onSubmit={sendReply}>
-                  <textarea
-                    value={replyText}
-                    onChange={(event) => setReplyText(event.target.value)}
-                    placeholder="Écrivez votre message."
-                    rows={4}
-                    required
-                    autoFocus
-                  />
-                  {replyError && (
-                    <Alert variant="danger" onClose={() => setReplyError('')}>
-                      {replyError}
-                    </Alert>
-                  )}
-                  {actionMessage && (
-                    <Alert variant="success" onClose={() => setActionMessage('')}>
-                      {actionMessage}
-                    </Alert>
-                  )}
-                  <div>
-                    <button type="button" onClick={() => {
-                      setReplyDemandId('');
-                      setReplyText('');
-                      setReplyError('');
-                    }}>
-                      Annuler
-                    </button>
-                    <button type="submit">Envoyer</button>
-                  </div>
-                </form>
-              ) : (
-                <button type="button" className="user-support-chat__reply" onClick={() => setReplyDemandId(selectedDemand.sourceNotificationId)}>
-                  Répondre
-                </button>
-              )}
-            </footer>
-          </section>
-        </div>
+        <DemandeModal
+          demand={selectedDemand}
+          currentRole="user"
+          currentUser={user}
+          replyText={replyText}
+          replyError={replyError}
+          actionMessage={actionMessage}
+          placeholder={demandText.placeholder}
+          labels={{ ...demandText, ...translations.common }}
+          onReplyTextChange={setReplyText}
+          onDismissReplyError={() => setReplyError('')}
+          onDismissActionMessage={() => setActionMessage('')}
+          onSubmit={sendReply}
+          onClose={() => {
+            setSelectedDemandId('');
+            setReplyText('');
+            setReplyError('');
+          }}
+        />
       )}
     </main>
   );

@@ -131,18 +131,23 @@
   padding: 0.9rem;
   border: 1px solid var(--app-border-color);
   border-radius: 12px;
-  background: var(--app-card-background);
-  color: var(--app-text-color);
+  background: #878a846f;
+  color: black;
   font: inherit;
   text-align: left;
   cursor: pointer;
 }
 
+.modal-boutique__shop:hover {
+  background: #5C6795; 
+   color: white; 
+  transition: all 0.25s ease; 
+}
 
 
 .modal-boutique__shop--selected {
   border-color: #d7d7d7;
-  background: rgba(121, 169, 102, 0.394);
+  background: #5C6795;
   box-shadow: inset 4px 0 0 #767471a4;
   
 }
@@ -167,9 +172,20 @@
 }
 
 .modal-boutique__shop strong {
-  color: rgb(108, 108, 108);
+  color: rgb(96, 91, 91);
   font-size: 0.95rem;
 }
+
+.modal-boutique__shop strong {
+  color: rgb(250, 250, 250);
+  font-size: 0.95rem;
+  transition: color 0.25s ease;
+}
+
+.modal-boutique__shop:hover strong {
+  color: var(--app-primary-color); /* met en avant le texte au survol */
+}
+
 
 .fournisseur-modal__footer button:last-child[type='button']:hover {
   background-color: #26e05b;

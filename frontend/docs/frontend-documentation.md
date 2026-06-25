@@ -29,7 +29,7 @@ Documentation dédiée : `docs/design-system.md`.
 
 À retenir :
 
-- `src/components/ui/` est le point d'entrée du design system partagé : boutons, tables, cards, badges, empty states, pagination, icônes et typographie.
+- `src/components/ui/` est le point d'entrée du design system partagé : boutons, tables, badges, empty states, icônes et typographie.
 - `src/components/` contient encore les composants de layout ou métier plus larges : header, sidebar, avatar, modales, charts et workspace.
 - `src/pages/admin/` contient uniquement les pages backoffice.
 - `src/pages/user/` contient uniquement les pages utilisateur.
@@ -114,7 +114,6 @@ Fichiers :
 - `src/pages/admin/Simulations/Simulations.jsx`
 - `src/pages/admin/Support/Support.jsx`
 - `src/pages/admin/Paramètres/Paramètres.jsx`
-- `src/pages/admin/PageShell.jsx`
 
 Les données dynamiques admin passent par `src/services/adminMongo.js` quand elles proviennent de MongoDB. `src/services/adminData.js` reste disponible pour les jeux de données locaux ou fallback UI.
 
@@ -129,15 +128,13 @@ Les données dynamiques admin passent par `src/services/adminMongo.js` quand ell
 
 `Fournisseurs.jsx` affiche les fournisseurs disponibles. Les comptes supplier sont créés directement à l'inscription ou depuis l'administration des utilisateurs.
 
-`PageShell.jsx` centralise la structure commune des pages admin : en-tête, statistiques, toolbar, filtres, tables et badges.
-
 Les pages admin sont rendues dans `AdminShell.jsx` et protégées par `AdminRoute.jsx`.
 
 ### Supplier
 
 Fichiers :
 
-- `src/pages/supplier/Analysedon/Analysedon.jsx`
+- `src/pages/supplier/Dashboard/Dashboard.jsx`
 - `src/pages/supplier/MaBoutique/MaBoutique.jsx`
 - `src/pages/supplier/Produits/Produits.jsx`
 - `src/pages/supplier/AjouterProduit/AjouterProduit.jsx`
@@ -205,7 +202,7 @@ La page workspace contient deux modes :
 
 Fonctions principales :
 
-- création de projet via `Newproject`, exposé aussi par `ModalCreateProject` pour compatibilité ;
+- création de projet via `Newproject` ;
 - liste dynamique des projets récents ;
 - accès aux articles choisis par projet ;
 - informations projet en bas de la zone centrale ;
@@ -238,13 +235,11 @@ Les pages login/register utilisent `AuthLayout`, `PasswordInput`, `react-hook-fo
 - `components/ui/Table.jsx` : table adaptable aux pages métier.
 - `components/ui/ServerError.jsx` : écran d'erreur serveur.
 - `DonutChart.jsx` : chart donut basé sur Recharts.
-- `WorkspaceMiniGrid.jsx` : cards miniatures du workspace.
-- `espacepro.jsx` : layout détaillé des projets dans le workspace.
+- `Workspace.jsx` : hub et cards du workspace.
+- `EspaceProWorkspace.jsx` : layout détaillé des projets.
 - `modalBoutique.jsx` : modal "Où acheter" alimentée exclusivement par la liste des fournisseurs validés côté admin.
 - `recap.jsx` : récapitulatif d'estimation.
 - `Newproject.jsx` : modale de création de projet. Le champ `Type de pièce` propose `Autre` pour saisir une pièce personnalisée.
-- `ModalCreateProject.jsx` : wrapper de compatibilité vers `Newproject`.
-- `pages/user/Catalogue/catalgrid.jsx` : grille des articles catalogue extraite de `.catalogue-product-main`.
 - `Text.jsx` : composant typographique.
 
 ### Sidebar Partagée
@@ -263,7 +258,7 @@ Elle supporte :
 
 Le style de base reste uniforme entre user, admin et supplier. Le titre du sidebar supplier n'est pas affiché ; seuls le logo et les liens structurent la navigation.
 
-Le composant `Logo.jsx` a été supprimé. Les layouts importent directement `src/assets/images/log.png` :
+Le composant `Logo.jsx` centralise l'affichage de `src/assets/images/log.png` pour :
 
 - `AuthLayout.jsx` pour les pages auth ;
 - `Header.jsx` pour l'en-tête public ;
@@ -389,10 +384,10 @@ Chaque composant important possède son CSS propre quand son style est suffisamm
 - `Avatar.css`
 - `Icon.css`
 - `DonutChart.css`
-- `WorkspaceMiniGrid.css`
-- `espacepro.css`
+- `Workspace.css`
+- `EspaceProWorkspace.css`
 - `Newproject.css`
-- `pages/user/Catalogue/catalgrid.css`
+- `pages/user/Catalogue/Catalogue.css`
 - `AuthLayout.css`
 - `PasswordInput.css`
 - `Text.css`
@@ -464,10 +459,9 @@ Modifier le catalogue :
 
 1. données visibles : `src/services/catalogueProducts.js`
 2. rendu user : `src/pages/user/Catalogue/Catalogue.jsx`
-3. rendu des cards : `src/components/cardarticle.jsx` et `src/components/cardarticle.css`
+3. rendu des cards, catégories et filtres : `src/pages/user/Catalogue/Catalogue.jsx`
 4. layout et style : `src/pages/user/Catalogue/Catalogue.css`
-5. catégories dynamiques : `src/components/Catégori.jsx`
-6. données visibles : uniquement les articles validés par l'admin via `/api/catalogue/products`.
+5. données visibles : uniquement les articles validés par l'admin via `/api/catalogue/products`.
 
 `adminData.products` ne doit plus être utilisé pour afficher le catalogue user. Cette clé est réservée au nettoyage legacy et doit rester vide.
 
@@ -483,18 +477,17 @@ Modifier le parcours fournisseur :
 Modifier le workspace :
 
 1. orchestration : `src/pages/user/Workspace/Workspace.jsx`
-2. cards miniatures : `WorkspaceMiniGrid.jsx` et `WorkspaceMiniGrid.css`
-3. espace projet : `espacepro.jsx` et `espacepro.css`
+2. cards du hub : `Workspace.jsx` et `Workspace.css`
+3. espace projet : `EspaceProWorkspace.jsx` et `EspaceProWorkspace.css`
 4. modal "Où acheter" : `modalBoutique.jsx` et `modalBoutique.css`
 5. fournisseurs proposés : liste synchronisée depuis `pages/admin/Fournisseurs/`.
 
 Modifier le catalogue :
 
 1. orchestration : `src/pages/user/Catalogue/Catalogue.jsx`
-2. grille articles : `src/pages/user/Catalogue/catalgrid.jsx`
-3. styles grille : `src/pages/user/Catalogue/catalgrid.css`
-4. filtres : `Filterpanel.jsx` et `Filterpanel.css`
-5. simulation budget : `simulBudget.jsx` et `simulBudget.css`
+2. grille, catégories et filtres : `src/pages/user/Catalogue/Catalogue.jsx`
+3. styles : `src/pages/user/Catalogue/Catalogue.css`
+4. simulation budget : `simulBudget.jsx` et `simulBudget.css`
 
 Modifier le dashboard :
 
@@ -522,7 +515,7 @@ Dernière passe de nettoyage :
 - aucun artefact `frontend/dist`, cache Vite ou fichier temporaire n'était présent avant build ;
 - `frontend/dist` a été recréé par vérification build puis supprimé via `npm run clean` ;
 - la colonne `Statut` a été retirée de `admin/Simulations` ;
-- `.catalogue-product-main` est extrait dans `pages/user/Catalogue/catalgrid.jsx` avec `catalgrid.css`.
+- la grille, les catégories et les filtres sont regroupés dans `pages/user/Catalogue/Catalogue.jsx` avec `Catalogue.css`.
 
 Ne pas commiter :
 

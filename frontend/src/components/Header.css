@@ -30,11 +30,18 @@
   align-items: center;
   gap: 0.65rem;
   padding: 0.25rem 0.35rem;
-  border-radius: 8px;
+  border-radius: 10px;
   color: var(--app-heading-color);
   font-weight: 700;
   text-decoration: none;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  background: rgba(255,255,255,0.08);
+}
+
+.header .logo:hover,
+.header .logo:focus-visible {
+  background: rgba(255,255,255,0.16);
+  transform: translateY(-1px);
 }
 
 .dashboard-shell.is-theme-dark .header .logo,
@@ -266,7 +273,23 @@ body.theme-dark .header .logo {
 }
 
 .header__icon-btn:hover {
-background-color: rgba(165, 162, 162, 0.132);}
+  background-color: rgba(165, 162, 162, 0.18);
+}
+
+.header__menu-toggle:hover,
+.header__menu-toggle:focus-visible,
+.header__icon-btn:focus-visible,
+.header__user:focus-visible {
+  outline: 2px solid rgba(34, 75, 115, 0.25);
+  outline-offset: 2px;
+}
+
+.header__user-menu-item:hover,
+.header__user-menu-item:focus-visible {
+  background: rgba(34, 75, 115, 0.08);
+  outline: 0;
+}
+
 
 .header__icon-btn svg {
   width: 1.25rem;

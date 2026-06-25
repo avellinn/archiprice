@@ -5,6 +5,7 @@ import { PasswordSettingsModal, SupplierLocationModal, SupplierPolicyModal, Supp
 import useAuth from '../../../context/useAuth';
 import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
+import { getSyncedPolicies } from '../../../services/policies';
 import { fetchSupplierWorkspace, notifySupplierWorkspaceChange, updateSupplierProfile } from '../../../services/supplier';
 import { getSupplierTranslations, SUPPLIER_LANGUAGE_LABELS } from '../../../utils/supplierLanguage';
 import { buildCityOptions, buildNeighborhoodOptions } from '../../../utils/locationOptions';
@@ -65,6 +66,7 @@ export default function Parametres() {
   const [activeModal, setActiveModal] = useState(null);
   const [settingsAlert, setSettingsAlert] = useState(null);
   const supplierText = getSupplierTranslations(settings.language);
+  const policies = useMemo(() => getSyncedPolicies(adminData), [adminData]);
 
   useEffect(() => {
     let cancelled = false;
@@ -297,7 +299,7 @@ export default function Parametres() {
       </section>
 
       {activeModal === 'policy' && (
-        <SupplierPolicyModal onClose={closeModal} onSave={saveSupplierSettings} />
+        <SupplierPolicyModal policies={policies} language={settings.language} onClose={closeModal} onSave={saveSupplierSettings} />
       )}
 
       {activeModal === 'shop' && (

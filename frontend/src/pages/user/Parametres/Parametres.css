@@ -34,6 +34,26 @@
   min-height: 132px;
 }
 
+.user-profile-row--button {
+  width: 100%;
+  border-top: 0;
+  border-right: 0;
+  border-left: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.user-profile-row--button > svg {
+  color: var(--app-muted-color);
+}
+
+.user-profile-row--button:hover,
+.user-profile-row--button:focus-visible {
+  outline: 0;
+  box-shadow: 0 12px 26px rgb(67 63 143 / 0.12);
+}
+
 .user-profile-row__content {
   display: grid;
   gap: 0.62rem;

@@ -10,6 +10,7 @@ import {
   setStoredToken,
   updateMe as updateMeRequest,
 } from '../services/auth';
+import { clearUserScopedStorage } from '../services/scopedStorage';
 import { getRandomAvatarColor } from '../utils/userDisplay';
 
 const AVATAR_COLOR_KEY = 'archiprice_avatar_color';
@@ -124,6 +125,7 @@ export function AuthProvider({ children }) {
   const login = useCallback(
     async (credentials) => {
       const { token, user: userData } = await loginRequest(credentials);
+      clearUserScopedStorage(userData.id || userData._id, userData.email);
       applySession(token, userData, true);
       return userData;
     },
@@ -133,6 +135,7 @@ export function AuthProvider({ children }) {
   const register = useCallback(
     async (payload) => {
       const { token, user: userData } = await registerRequest(payload);
+      clearUserScopedStorage(userData.id || userData._id, userData.email);
       applySession(token, userData, true);
       return userData;
     },

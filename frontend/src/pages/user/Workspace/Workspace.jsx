@@ -8,6 +8,7 @@ import useAuth from '../../../context/useAuth';
 import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { getApiErrorMessage } from '../../../services/api';
 import { useAdminData } from '../../../services/adminData';
+import { upsertSupplierClientNotification } from '../../../services/clientNotifications';
 import { createDemande } from '../../../services/demandes';
 import { deleteProject, fetchProjects, updateProject } from '../../../services/projects';
 import { isNumericOnly, sanitizeNumericInput } from '../../../utils/formInput';
@@ -49,39 +50,6 @@ const WORKSPACE_CARDS = [
     intent: 'shop',
   },
 ];
-
-function isFinished(project) {
-  return ['archived', 'completed', 'done'].includes(project.status);
-}
-
-function getProjectExportedEstimateCount(project) {
-  const numericFields = [
-    'exportedEstimatesCount',
-    'exportedEstimationsCount',
-    'estimationExportsCount',
-    'exportedDocumentsCount',
-    'exportsCount',
-  ];
-
-  const countFromNumber = numericFields.find((field) => Number.isFinite(Number(project[field])));
-  if (countFromNumber) return Number(project[countFromNumber]);
-
-  const arrayFields = ['exportedEstimates', 'exportedEstimations', 'estimationExports', 'exportedDocuments', 'exports'];
-  const countFromArray = arrayFields.find((field) => Array.isArray(project[field]));
-  if (countFromArray) return project[countFromArray].length;
-
-  return project.isEstimateExported || project.hasExportedEstimate ? 1 : 0;
-}
-
-function getPercent(value, total) {
-  if (!total) return 0;
-  return Number(((value / total) * 100).toFixed(2));
-}
-
-function formatTrend(value) {
-  if (!value) return '0.00%';
-  return `${value > 0 ? '+' : ''}${value.toFixed(2)}%`;
-}
 
 function parseAmount(value) {
   const amount = Number(String(value || '').replace(/[^\d.-]/g, ''));
@@ -259,6 +227,28 @@ function buildEditedProjectDescription(project, roomType, budget) {
     .join('\n');
 }
 
+function isActiveProject(project) {
+  return !['archived', 'completed', 'done'].includes(String(project?.status || '').toLowerCase());
+}
+
+function getLatestActiveProject(projects = []) {
+  return projects
+    .filter(isActiveProject)
+    .sort((left, right) => (
+      new Date(right.updatedAt || right.createdAt || 0) - new Date(left.updatedAt || left.createdAt || 0)
+    ))[0] || projects[0] || null;
+}
+
+function getShopDemandMessage({ shop, project, products = [] }) {
+  const shopName = shop?.name || shop?.companyName || 'cette boutique';
+  const projectName = project?.name || 'mon projet';
+  const productCount = products.length;
+
+  return productCount > 0
+    ? `Demande boutique pour ${projectName}: ${productCount} article(s) sélectionné(s) chez ${shopName}.`
+    : `Demande boutique pour ${projectName} chez ${shopName}.`;
+}
+
 export default function Workspace() {
   const { user } = useAuth();
   const location = useLocation();
@@ -281,23 +271,8 @@ export default function Workspace() {
   const [isUpdatingProject, setIsUpdatingProject] = useState(false);
   const [deletingProjectId, setDeletingProjectId] = useState('');
   const [pendingProjectDelete, setPendingProjectDelete] = useState(null);
-  const [selectedProjectProducts, setSelectedProjectProducts] = useState([]);
+  const [selectedProjectProducts] = useState([]);
   const [projectLaunchNotice, setProjectLaunchNotice] = useState('');
-  const workspaceStats = useMemo(() => {
-    const completed = projects.filter(isFinished).length;
-    const active = Math.max(projects.length - completed, 0);
-    const exportedEstimates = projects.reduce(
-      (total, project) => total + getProjectExportedEstimateCount(project),
-      0,
-    );
-
-    return {
-      totalProjects: projects.length,
-      activeProjects: active,
-      exportedEstimates,
-      recommendedShops: (adminData.suppliers || []).filter((supplier) => supplier.isRecommended).length,
-    };
-  }, [adminData.suppliers, projects]);
   const roomOptions = useMemo(() => (
     normalizeRoomOptions(adminData.taxonomies?.rooms || [])
   ), [adminData.taxonomies?.rooms]);
@@ -335,7 +310,8 @@ export default function Workspace() {
 
   useRealtimeRefresh(loadProjects, ['projects', 'project-products']);
 
-  const selectedProject = projects.find((project) => project.id === selectedProjectId) || projects[0];
+  const latestActiveProject = useMemo(() => getLatestActiveProject(projects), [projects]);
+  const selectedProject = projects.find((project) => project.id === selectedProjectId) || latestActiveProject;
   const workspaceSearchTerm = searchParams.get('q')?.trim().toLowerCase() || '';
   const filteredProjects = useMemo(() => {
     if (!workspaceSearchTerm) return projects;
@@ -398,7 +374,9 @@ export default function Workspace() {
       setProjectsError('');
       setIsModalOpen(false);
       setProjectLaunchNotice('');
-      navigate(`/catalogue?projectId=${project.id}`, { state: { from: location } });
+      if (project.id) {
+        navigate(`/catalogue?projectId=${project.id}`, { state: { from: location } });
+      }
       return;
     }
     closeModal();
@@ -506,7 +484,7 @@ export default function Workspace() {
     }
 
     if (card.kind === 'projects') {
-      navigate(selectedProjectId ? `/espacepro?projectId=${selectedProjectId}` : '/espacepro');
+      navigate(latestActiveProject?.id ? `/espacepro?projectId=${latestActiveProject.id}` : '/espacepro');
       return;
     }
 
@@ -517,6 +495,12 @@ export default function Workspace() {
     }
 
     if (card.intent === 'shop') {
+      const projectForShop = latestActiveProject || selectedProject;
+      if (projectForShop?.id) {
+        navigate(`/espacepro?projectId=${projectForShop.id}&shop=1`);
+        return;
+      }
+
       setProjectLaunchNotice('Lancez votre projet et découvrez les boutiques recommandées');
       setIsModalOpen(true);
       return;
@@ -538,61 +522,41 @@ export default function Workspace() {
     if (!shop?.name) return;
 
     setSelectedShopName(shop.name);
+    const demandMessage = message.trim() || getShopDemandMessage({
+      shop,
+      project: selectedProject,
+      products: selectedProjectProducts,
+    });
     const notification = buildSupplierClientNotification({
       shop,
       user,
       project: selectedProject,
       simulation: selectedProjectPurchaseSimulation,
       products: selectedProjectProducts,
-      message,
+      message: demandMessage,
     });
 
     try {
-      await createDemande({
+      const demande = await createDemande({
         supplierId: shop.id || shop._id || '',
         supplierName: shop.name || shop.companyName || '',
         supplierContact: shop.contact || shop.email || '',
-        message,
+        projectId: selectedProject?.id || '',
+        projectName: selectedProject?.name || '',
+        message: demandMessage,
+      });
+      upsertSupplierClientNotification(updateAdminData, {
+        ...notification,
+        id: demande.id || notification.id,
+        sourceNotificationId: demande.id || notification.id,
+        messages: demande.messages || notification.messages,
+        status: demande.status || notification.status,
+        createdAt: demande.createdAt || notification.createdAt,
+        updatedAt: demande.updatedAt || notification.updatedAt,
       });
     } catch {
-      updateAdminData((currentData) => ({
-        ...currentData,
-        supplierClientNotifications: [
-          notification,
-          ...(currentData.supplierClientNotifications || []),
-        ],
-      }));
+      upsertSupplierClientNotification(updateAdminData, notification);
     }
-  }
-
-  function getMiniCardMetric(card) {
-    const totalProjects = workspaceStats.totalProjects;
-
-    if (card.id === 'create-project') {
-      return {
-        value: workspaceStats.totalProjects,
-        trend: formatTrend(getPercent(workspaceStats.totalProjects, Math.max(totalProjects, 1))),
-      };
-    }
-
-    if (card.id === 'catalogue-projects') {
-      return {
-        value: workspaceStats.activeProjects,
-        trend: formatTrend(getPercent(workspaceStats.activeProjects, totalProjects)),
-      };
-    }
-
-    if (card.id === 'archives') {
-      return {
-        value: workspaceStats.exportedEstimates,
-        trend: formatTrend(getPercent(workspaceStats.exportedEstimates, Math.max(totalProjects, workspaceStats.exportedEstimates))),
-      };
-    }
-
-    return {
-      value: workspaceStats.recommendedShops,
-      trend: formatTrend(getPercent(workspaceStats.recommendedShops, Math.max(workspaceStats.recommendedShops, 1))),
-    };
   }
 
   function renderCardContent(card) {

@@ -1,8 +1,10 @@
 import './Clients.css';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Badge, Icon, Table } from '../../../components/ui';
+import { Alert, Badge, Icon, Loader, Table } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
+import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { useAdminData } from '../../../services/adminData';
+import { fetchMyDemandes, subscribeDemandesChange } from '../../../services/demandes';
 import { fetchSupplierWorkspace } from '../../../services/supplier';
 import ClientModal from './clientModal';
 
@@ -92,33 +94,72 @@ export default function Clients() {
   const { user } = useAuth();
   const [adminData, updateAdminData] = useAdminData();
   const [supplierProfile, setSupplierProfile] = useState(null);
+  const [apiDemandes, setApiDemandes] = useState([]);
+  const [isLoadingClients, setIsLoadingClients] = useState(true);
   const [selectedClient, setSelectedClient] = useState(null);
   const [pendingClientDelete, setPendingClientDelete] = useState(null);
 
-  useEffect(() => {
+  function loadClients({ silent = false } = {}) {
     let cancelled = false;
 
-    fetchSupplierWorkspace()
-      .then((workspace) => {
-        if (!cancelled) setSupplierProfile(workspace?.supplier || null);
+    if (!silent) setIsLoadingClients(true);
+
+    Promise.allSettled([fetchSupplierWorkspace(), fetchMyDemandes()])
+      .then(([workspaceResult, demandesResult]) => {
+        if (cancelled) return;
+        if (workspaceResult.status === 'fulfilled') setSupplierProfile(workspaceResult.value?.supplier || null);
+        if (demandesResult.status === 'fulfilled') setApiDemandes(demandesResult.value || []);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled && !silent) setIsLoadingClients(false);
+      });
 
     return () => {
       cancelled = true;
     };
+  }
+
+  useEffect(() => {
+    let cancelLoad = () => {};
+    const timer = window.setTimeout(() => {
+      cancelLoad = loadClients();
+    }, 0);
+    return () => {
+      window.clearTimeout(timer);
+      cancelLoad();
+    };
   }, []);
 
+  useRealtimeRefresh(() => loadClients({ silent: true }), ['demandes', 'suppliers']);
+
+  useEffect(() => subscribeDemandesChange(() => loadClients({ silent: true })), []);
+
   const clients = useMemo(() => {
-    const notifications = adminData.supplierClientNotifications || [];
+    const notifications = [
+      ...apiDemandes,
+      ...(adminData.supplierClientNotifications || []),
+    ];
+    const seen = new Set();
+
     return notifications.filter((notification) => (
       isNotificationForSupplier(notification, user, supplierProfile)
-    )).map((notification) => ({
+    )).filter((notification) => {
+      const key = String(notification.id || notification.sourceNotificationId || '');
+      if (!key) return true;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).map((notification) => ({
       ...notification,
+      clientProfession: notification.clientProfession || 'Client',
+      clientPhone: notification.clientPhone || 'Non renseigné',
+      projectName: notification.projectName || notification.project?.name || 'Projet sans nom',
+      simulationTotalLabel: notification.simulationTotalLabel || 'Demande boutique',
       articleImages: normalizeArticleImages(notification),
       createdAtLabel: formatDateTime(notification.createdAt),
     }));
-  }, [adminData.supplierClientNotifications, supplierProfile, user]);
+  }, [adminData.supplierClientNotifications, apiDemandes, supplierProfile, user]);
 
   function confirmClientDelete() {
     if (!pendingClientDelete) return;
@@ -220,14 +261,18 @@ export default function Clients() {
         </Alert>
       )}
 
-      <Table
-        className="supplier-clients-table"
-        columns={clientColumns}
-        data={clients}
-        getRowId={(client) => client.id}
-        onRowClick={setSelectedClient}
-        emptyLabel="Aucun client  pour le moment..."
-      />
+      {isLoadingClients ? (
+        <Loader label="Chargement des clients..." />
+      ) : (
+        <Table
+          className="supplier-clients-table"
+          columns={clientColumns}
+          data={clients}
+          getRowId={(client) => client.id}
+          onRowClick={setSelectedClient}
+          emptyLabel="Aucun client  pour le moment..."
+        />
+      )}
 
       {selectedClient && (
         <ClientModal

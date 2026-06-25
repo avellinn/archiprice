@@ -4,6 +4,7 @@ import {
   createProject,
   updateProject,
   deleteProject,
+  resetProjects,
 } from '../controllers/projectController.js';
 import { downloadProjectRecapPdf } from '../controllers/recapController.js';
 import { protect } from '../middleware/auth.js';
@@ -17,6 +18,7 @@ router.use(protect);
 
 router.get('/', asyncHandler(getProjects));
 router.post('/', asyncHandler(createProject));
+router.delete('/', asyncHandler(resetProjects));
 router.get('/:id/recap.pdf', asyncHandler(downloadProjectRecapPdf));
 router.put('/:id', asyncHandler(updateProject));
 router.delete('/:id', asyncHandler(deleteProject));

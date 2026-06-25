@@ -10,6 +10,8 @@ import {
   deleteAdminSupplier,
   fetchAdminSuppliers,
   fetchAdminUsers,
+  permanentDeleteAdminSupplier,
+  permanentDeleteAdminUser,
   updateAdminSupplier,
   updateAdminUser,
 } from '../../../services/adminMongo';
@@ -55,6 +57,31 @@ function isInactiveStatus(status) {
 
 function isDeletedStatus(status) {
   return normalizeStatusKey(status) === 'supprime';
+}
+
+function isMissingAccount(user) {
+  return Boolean(user?.isMissingFromDb)
+    || isDeletedStatus(user?.status)
+    || normalizeStatusKey(user?.status) === 'inexistant';
+}
+
+function buildMissingUsers(cachedUsers = [], apiUsers = [], apiSuppliers = []) {
+  const apiUserIds = new Set(apiUsers.map((user) => String(user.id)));
+  const linkedSupplierUserIds = new Set(
+    apiSuppliers.map((supplier) => String(supplier.userId || supplier.user?._id || supplier.user || '')).filter(Boolean),
+  );
+
+  return cachedUsers
+    .filter((user) => {
+      const userId = String(user?.id || '');
+      if (!userId || userId.startsWith('supplier-')) return false;
+      return !apiUserIds.has(userId) && !linkedSupplierUserIds.has(userId);
+    })
+    .map((user) => ({
+      ...normalizeUserForWorkspace(user),
+      status: 'Inexistant',
+      isMissingFromDb: true,
+    }));
 }
 
 function normalizeUserForWorkspace(user) {
@@ -104,33 +131,31 @@ function mergeUsersWithSuppliers(users = [], suppliers = []) {
     supplierId: user.supplierId || user.supplier?.id || user.supplier?._id || '',
   }));
 
-  suppliers
-    .filter((supplier) => supplier.status !== 'Supprimé')
-    .forEach((supplier) => {
-      const supplierId = supplier.id || supplier._id;
-      const supplierEmail = String(supplier.email || supplier.contact || '').toLowerCase();
-      const existingIndex = mergedUsers.findIndex((user) => (
-        String(user.supplierId || '') === String(supplierId)
-        || String(user.id || '') === String(supplier.userId || '')
-        || (supplierEmail && String(user.email || '').toLowerCase() === supplierEmail)
-      ));
+  suppliers.forEach((supplier) => {
+    const supplierId = supplier.id || supplier._id;
+    const supplierEmail = String(supplier.email || supplier.contact || '').toLowerCase();
+    const existingIndex = mergedUsers.findIndex((user) => (
+      String(user.supplierId || '') === String(supplierId)
+      || String(user.id || '') === String(supplier.userId || '')
+      || (supplierEmail && String(user.email || '').toLowerCase() === supplierEmail)
+    ));
 
-      if (existingIndex >= 0) {
-        const existingUser = mergedUsers[existingIndex];
-        const existingRole = getUserRole(existingUser);
-        mergedUsers[existingIndex] = {
-          ...existingUser,
-          supplierId,
-          role: existingRole,
-          type: existingRole === 'supplier' ? 'Fournisseur' : existingUser.type,
-          status: supplier.status || mergedUsers[existingIndex].status || 'Actif',
-          shopName: getSupplierName(supplier),
-        };
-        return;
-      }
+    if (existingIndex >= 0) {
+      const existingUser = mergedUsers[existingIndex];
+      const existingRole = getUserRole(existingUser);
+      mergedUsers[existingIndex] = {
+        ...existingUser,
+        supplierId,
+        role: existingRole,
+        type: existingRole === 'supplier' ? 'Fournisseur' : existingUser.type,
+        status: supplier.status || mergedUsers[existingIndex].status || 'Actif',
+        shopName: getSupplierName(supplier),
+      };
+      return;
+    }
 
-      mergedUsers.push(normalizeSupplierAsUser(supplier));
-    });
+    mergedUsers.push(normalizeSupplierAsUser(supplier));
+  });
 
   return mergedUsers;
 }
@@ -142,6 +167,7 @@ export default function Utilisateurs() {
   const [suppliers, setSuppliers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [orphanedUsers, setOrphanedUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [editForm, setEditForm] = useState({
     name: '',
@@ -157,11 +183,15 @@ export default function Utilisateurs() {
         const mergedUsers = mergeUsersWithSuppliers(userList, supplierList);
         setRawUsers(userList);
         setSuppliers(supplierList);
-        updateAdminData((currentData) => ({
-          ...currentData,
-          users: mergedUsers.map(normalizeUserForWorkspace),
-          suppliers: supplierList,
-        }));
+        updateAdminData((currentData) => {
+          const missingUsers = buildMissingUsers(currentData.users, userList, supplierList);
+          setOrphanedUsers(missingUsers);
+          return {
+            ...currentData,
+            users: mergedUsers.map(normalizeUserForWorkspace),
+            suppliers: supplierList,
+          };
+        });
         setError('');
       })
       .catch((apiError) => {
@@ -176,7 +206,12 @@ export default function Utilisateurs() {
 
   useRealtimeRefresh(loadUsers, ['users', 'suppliers']);
 
-  const users = useMemo(() => mergeUsersWithSuppliers(rawUsers, suppliers), [rawUsers, suppliers]);
+  const users = useMemo(() => {
+    const mergedUsers = mergeUsersWithSuppliers(rawUsers, suppliers);
+    const mergedIds = new Set(mergedUsers.map((user) => String(user.id)));
+    const extraMissingUsers = orphanedUsers.filter((user) => !mergedIds.has(String(user.id)));
+    return [...mergedUsers, ...extraMissingUsers];
+  }, [orphanedUsers, rawUsers, suppliers]);
   const filteredUsers = useMemo(() => {
     const headerSearchTerm = searchParams.get('q') || '';
     const normalizedSearch = headerSearchTerm.trim().toLowerCase();
@@ -352,6 +387,54 @@ export default function Utilisateurs() {
     }
   }
 
+  async function permanentDeleteUser(userId) {
+    const previousUsers = users;
+    const previousRawUsers = rawUsers;
+    const previousSuppliers = suppliers;
+    const previousOrphans = orphanedUsers;
+    const currentUser = users.find((user) => user.id === userId);
+
+    if (currentUser?.isMissingFromDb) {
+      setOrphanedUsers((current) => current.filter((user) => user.id !== userId));
+      updateAdminData((currentData) => ({
+        ...currentData,
+        users: (currentData.users || []).filter((user) => String(user.id) !== String(userId)),
+        supplierClientNotifications: (currentData.supplierClientNotifications || []).filter(
+          (notification) => String(notification.clientId) !== String(userId),
+        ),
+      }));
+      if (selectedUserId === userId) closeUserDetail();
+      return;
+    }
+
+    setRawUsers((current) => current.filter((user) => user.id !== userId));
+    setSuppliers((current) => current.filter((supplier) => String(supplier.userId || supplier.user || '') !== String(userId)));
+    updateAdminData((currentData) => ({
+      ...currentData,
+      users: currentData.users.filter((user) => user.id !== userId),
+      suppliers: currentData.suppliers.filter((supplier) => String(supplier.userId || '') !== String(userId)),
+    }));
+
+    try {
+      if (currentUser?.isSupplierMirror && currentUser?.supplierId) {
+        await permanentDeleteAdminSupplier(currentUser.supplierId);
+      } else {
+        await permanentDeleteAdminUser(userId);
+      }
+      if (selectedUserId === userId) closeUserDetail();
+    } catch (apiError) {
+      setRawUsers(previousRawUsers);
+      setSuppliers(previousSuppliers);
+      setOrphanedUsers(previousOrphans);
+      updateAdminData((currentData) => ({
+        ...currentData,
+        users: previousUsers.map(normalizeUserForWorkspace),
+        suppliers: previousSuppliers,
+      }));
+      setError(getApiErrorMessage(apiError, "La suppression définitive de l'utilisateur a échoué."));
+    }
+  }
+
   function fillUserForm(user) {
     setEditForm({
       name: user.name || '',
@@ -432,7 +515,7 @@ export default function Utilisateurs() {
     const isActive = isActiveStatus(user.status);
     const isInactive = isInactiveStatus(user.status);
     const isBlocked = isBlockedStatus(user.status);
-    const isDeleted = isDeletedStatus(user.status);
+    const isDeleted = isMissingAccount(user);
 
     return (
       <span className="admin-users-management__actions">
@@ -518,6 +601,21 @@ export default function Utilisateurs() {
             <span className="visually-hidden">Restaurer</span>
           </button>
         )}
+        {isDeleted && (
+          <button
+            type="button"
+            className="is-danger"
+            title="Supprimer définitivement"
+            aria-label={`Supprimer définitivement ${userName}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              permanentDeleteUser(user.id);
+            }}
+          >
+            <Icon name="Delete" size="sm" />
+            <span className="visually-hidden">Supprimer définitivement</span>
+          </button>
+        )}
         {!isDeleted && (
           <button
             type="button"
@@ -569,16 +667,26 @@ export default function Utilisateurs() {
     {
       key: 'simulations',
       label: 'Simulations',
-      render: (_value, user) => getSimulationCount(user),
+      render: (_value, user) => {
+        if (isMissingAccount(user)) return '-';
+        return getSimulationCount(user);
+      },
     },
     {
       key: 'status',
       label: 'Statut',
-      render: (status) => (
-        <Badge tone={isActiveStatus(status) ? 'success' : isBlockedStatus(status) ? 'warning' : 'danger'}>
-          {status || 'Actif'}
-        </Badge>
-      ),
+      render: (status, user) => {
+        const missing = isMissingAccount(user);
+        const tone = missing
+          ? 'neutral'
+          : isActiveStatus(status)
+            ? 'success'
+            : isBlockedStatus(status)
+              ? 'warning'
+              : 'danger';
+        const label = missing ? 'Inexistant' : status || 'Actif';
+        return <Badge tone={tone}>{label}</Badge>;
+      },
     },
     {
       key: 'actions',

@@ -1,8 +1,14 @@
 import { Alert, Button, Icon, Loader } from './ui';
+import { getSaleUnit } from '../constants/productTaxonomy';
 import './ProduitAjouteSup.css';
 
 function formatFCFA(amount) {
   return `${new Intl.NumberFormat('fr-FR').format(Number(amount || 0))} FCFA`;
+}
+
+function formatProductPrice(product) {
+  const unit = getSaleUnit(product.unit)?.label || product.unit || 'unité';
+  return `${formatFCFA(product.priceExcludingTax ?? product.unitPrice)} / ${unit.toLocaleLowerCase('fr')}`;
 }
 
 function getPublicationState(product, adminProductsBySupplierSource) {
@@ -65,10 +71,10 @@ export default function ProduitAjouteSup({
                       <strong>{product.name}</strong>
                       <span>{product.availability || 'Disponibilité non renseignée'}</span>
                     </td>
-                    <td>{product.category || '-'}</td>
+                    <td>{[product.category, product.subcategory].filter(Boolean).join(' › ') || '-'}</td>
                     <td>{product.room || '-'}</td>
                     <td>{product.range || '-'}</td>
-                    <td>{formatFCFA(product.unitPrice)}</td>
+                    <td>{formatProductPrice(product)}</td>
                     <td>
                       <span className="supplier-products-table__actions">
                         <button type="button" title="Modifier" onClick={() => onEdit(product)}>

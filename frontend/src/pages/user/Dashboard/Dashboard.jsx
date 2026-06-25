@@ -9,7 +9,7 @@ import {
   fetchExportedDocuments,
   subscribeExportedDocumentsChange,
 } from '../../../services/exportedDocuments';
-import { fetchProjects } from '../../../services/projects';
+import { fetchProjects, subscribeProjectsChange } from '../../../services/projects';
 
 const STATUS_COPY = {
   draft: 'Brouillon',
@@ -113,6 +113,7 @@ export default function Dashboard() {
   }, [loadProjects]);
 
   useRealtimeRefresh(loadProjects, ['projects', 'project-products']);
+  useEffect(() => subscribeProjectsChange(loadProjects), [loadProjects]);
 
   useEffect(() => subscribeExportedDocumentsChange(setExportedDocuments), []);
 
@@ -309,7 +310,7 @@ export default function Dashboard() {
             </div>
             <div className="chart-legend">
               
-              <Text as="span" variant="bold" size="sm"><i className="legend-orange" /> simulations exportées</Text>
+              <Text as="span" variant="bold" size="sm"><i className="legend-orange" /> simulations exportées ({exportedDocuments.length})</Text>
             </div>
           </div>
         </section>

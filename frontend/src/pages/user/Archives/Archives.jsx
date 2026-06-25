@@ -6,6 +6,7 @@ import {
   removeExportedDocument,
   subscribeExportedDocumentsChange,
 } from '../../../services/exportedDocuments';
+import { getStoredUserLanguage, getUserTranslations } from '../../../utils/userLanguage';
 
 function formatFCFA(amount) {
   return `${new Intl.NumberFormat('fr-FR').format(Number(amount || 0))} FCFA`;
@@ -24,12 +25,20 @@ function formatDate(value) {
 }
 
 export default function Archives() {
+  const [language, setLanguage] = useState(getStoredUserLanguage);
+  const translations = getUserTranslations(language);
+  const archiveText = translations.archives;
   const [documents, setDocuments] = useState(() => fetchExportedDocuments());
-  const [selectedDocumentId, setSelectedDocumentId] = useState('');
   const [pendingDeleteDocument, setPendingDeleteDocument] = useState(null);
   const [deleteMessage, setDeleteMessage] = useState('');
 
   useEffect(() => subscribeExportedDocumentsChange(setDocuments), []);
+
+  useEffect(() => {
+    const syncLanguage = () => setLanguage(getStoredUserLanguage());
+    window.addEventListener('archiprice:user-profile-change', syncLanguage);
+    return () => window.removeEventListener('archiprice:user-profile-change', syncLanguage);
+  }, []);
 
   function confirmDeleteDocument() {
     const documentId = pendingDeleteDocument?.id;
@@ -37,61 +46,65 @@ export default function Archives() {
 
     removeExportedDocument(documentId);
     setDocuments(fetchExportedDocuments());
-    if (selectedDocumentId === documentId) setSelectedDocumentId('');
     setPendingDeleteDocument(null);
-    setDeleteMessage('Archive supprimée définitivement.');
+    setDeleteMessage(archiveText.deleted);
   }
 
-  const selectedDocument = documents.find((document) => document.id === selectedDocumentId);
   function handleDocumentKeyDown(event, documentId) {
     if (event.key !== 'Enter' && event.key !== ' ') return;
     event.preventDefault();
-    setSelectedDocumentId(documentId);
+    window.open(`/export-pdf/${encodeURIComponent(documentId)}`, '_blank', 'noopener,noreferrer');
+  }
+
+  function openExportedDocument(documentId) {
+    window.open(`/export-pdf/${encodeURIComponent(documentId)}`, '_blank', 'noopener,noreferrer');
   }
 
   return (
     <div className="workspace-page invoices-page">
       <div className="workspace-heading">
         <div>
-          
-          <h1>Archives</h1>
+          <h1>{archiveText.title}</h1>
         </div>
       </div>
 
       {documents.length === 0 ? (
         <section className="workspace-card invoices-empty">
           <Text as="strong" variant="bold" size="md">
-            Aucune archive disponible
+            {archiveText.emptyTitle}
           </Text>
           <Text className="muted">
-            Les archives créées après confirmation de validation apparaîtront ici.
+            {archiveText.emptyDescription}
           </Text>
         </section>
       ) : (
         <section className="invoices-list" aria-label="Liste des archives">
-          {documents.map((document) => (
+          {documents.map((document) => {
+            const displayName = document.fileName || document.projectName || archiveText.title;
+
+            return (
             <article
               key={document.id}
               className="invoices-list__item"
               role="button"
               tabIndex={0}
-              onClick={() => setSelectedDocumentId(document.id)}
+              onClick={() => openExportedDocument(document.id)}
               onKeyDown={(event) => handleDocumentKeyDown(event, document.id)}
             >
               <span className="invoices-list__icon" aria-hidden="true">
                 <Icon name="ReceiptLong" size="sm" />
               </span>
               <div>
-                <h2>{document.fileName}</h2>
+                <h2>{displayName}</h2>
                 <p>
                   {document.projectName} · {formatDate(document.exportedAt)}
                 </p>
               </div>
               <strong>{formatFCFA(document.amount)}</strong>
-              <small>{document.itemCount || 0} article(s)</small>
+              <small>{archiveText.articles(document.itemCount || 0)}</small>
               <button
                 type="button"
-                aria-label={`Supprimer ${document.fileName}`}
+                aria-label={`Supprimer ${displayName}`}
                 onClick={(event) => {
                   event.stopPropagation();
                   setPendingDeleteDocument(document);
@@ -100,60 +113,9 @@ export default function Archives() {
                 <Icon name="Delete" size="sm" />
               </button>
             </article>
-          ))}
+            );
+          })}
         </section>
-      )}
-
-      {selectedDocument && (
-        <div className="invoices-detail-modal" role="dialog" aria-modal="true" aria-label="Articles sélectionnés">
-          <section className="invoices-detail-card">
-            <header>
-              <div>
-                <span>{selectedDocument.fileName}</span>
-                <h2>Articles sélectionnés</h2>
-              </div>
-              <button type="button" aria-label="Fermer" onClick={() => setSelectedDocumentId('')}>
-                <Icon name="Close" size="sm" />
-              </button>
-            </header>
-            <div className="invoices-detail-list">
-              {(selectedDocument.items || []).length === 0 ? (
-                <p>Aucun article associé à ce document.</p>
-              ) : (
-                selectedDocument.items.map((item, index) => (
-                  <article key={`${selectedDocument.id}-${item.name}-${index}`}>
-                    <a
-                      className={[
-                        'invoices-detail-image',
-                        item.imageUrl ? 'invoices-detail-image--available' : '',
-                      ].filter(Boolean).join(' ')}
-                      href={item.imageUrl || undefined}
-                      target={item.imageUrl ? '_blank' : undefined}
-                      rel="noreferrer"
-                      aria-label={item.imageUrl ? `Voir l'image de ${item.name}` : undefined}
-                      onClick={(event) => {
-                        if (!item.imageUrl) event.preventDefault();
-                      }}
-                    >
-                      {item.imageUrl ? <img src={item.imageUrl} alt={item.name} /> : <Icon name="Tag" size="sm" />}
-                    </a>
-                    <div>
-                      <strong>{item.name}</strong>
-                      <span>{item.category}</span>
-                      {item.imageUrl && (
-                        <a href={item.imageUrl} target="_blank" rel="noreferrer">
-                          Voir image Cloudinary
-                        </a>
-                      )}
-                    </div>
-                    <small>Qté {item.quantity || 1}</small>
-                    <b>{item.total || formatFCFA(item.rawPrice)}</b>
-                  </article>
-                ))
-              )}
-            </div>
-          </section>
-        </div>
       )}
 
       {deleteMessage && (
@@ -165,16 +127,16 @@ export default function Archives() {
       {pendingDeleteDocument && (
         <div className="archives-delete-modal" role="presentation">
           <section className="archives-delete-card" role="dialog" aria-modal="true" aria-labelledby="archives-delete-title">
-            <Alert variant="danger" title="Supprimer définitivement">
-              Cette action retirera l’archive de votre liste.
+            <Alert variant="danger" title={archiveText.deleteConfirmTitle} layout="inline">
+              {archiveText.deleteConfirmBody}
             </Alert>
-            <p id="archives-delete-title">{pendingDeleteDocument.fileName}</p>
+            <p id="archives-delete-title">{pendingDeleteDocument.fileName || pendingDeleteDocument.projectName}</p>
             <footer>
               <Button type="button" variant="outline" onClick={() => setPendingDeleteDocument(null)}>
-                Annuler
+                {archiveText.cancel}
               </Button>
               <Button type="button" variant="danger" onClick={confirmDeleteDocument}>
-                Valider
+                {archiveText.confirm}
               </Button>
             </footer>
           </section>

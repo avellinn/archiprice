@@ -47,38 +47,36 @@ function normalizeCategories(categories) {
 async function ensureSupplierProfile(user, payload = {}) {
   if (user.role !== 'supplier') return null;
 
-  const email = String(user.email || '').toLowerCase().trim();
-  const existingSupplier = await Supplier.findOne({
-    $or: [
-      { user: user._id },
-      ...(email ? [{ email }] : []),
-    ],
-  });
+  const existingSupplier = await Supplier.findOne({ user: user._id });
 
   if (existingSupplier) {
-    let changed = false;
-    if (!existingSupplier.user) {
-      existingSupplier.user = user._id;
-      changed = true;
+    if (existingSupplier.status === 'Supprimé') {
+      return Supplier.create({
+        user: user._id,
+        name: payload.companyName?.trim() || payload.name?.trim() || user.name || user.email,
+        companyName: payload.companyName?.trim() || payload.name?.trim() || user.name || user.email,
+        email: user.email || '',
+        contact: payload.contact?.trim() || user.email || '',
+        phone: payload.phone?.trim() || undefined,
+        region: payload.region?.trim() || payload.city?.trim() || undefined,
+        city: payload.city?.trim() || undefined,
+        neighborhood: payload.neighborhood?.trim() || undefined,
+        categories: normalizeCategories([
+          user.category,
+          payload.category,
+          ...(Array.isArray(payload.categories) ? payload.categories : []),
+        ]),
+      });
     }
-    if (!existingSupplier.email && email) {
-      existingSupplier.email = email;
-      changed = true;
-    }
-    if (user.category && !(existingSupplier.categories || []).includes(user.category)) {
-      existingSupplier.categories = [user.category, ...(existingSupplier.categories || [])];
-      changed = true;
-    }
-    if (changed) await existingSupplier.save();
     return existingSupplier;
   }
 
   return Supplier.create({
     user: user._id,
-    name: payload.companyName?.trim() || payload.name?.trim() || user.name || email,
-    companyName: payload.companyName?.trim() || payload.name?.trim() || user.name || email,
-    email,
-    contact: payload.contact?.trim() || email,
+    name: payload.companyName?.trim() || payload.name?.trim() || user.name || user.email,
+    companyName: payload.companyName?.trim() || payload.name?.trim() || user.name || user.email,
+    email: user.email || '',
+    contact: payload.contact?.trim() || user.email || '',
     phone: payload.phone?.trim() || undefined,
     region: payload.region?.trim() || payload.city?.trim() || undefined,
     city: payload.city?.trim() || undefined,
@@ -120,6 +118,9 @@ async function register(req, res) {
 
   const existing = await User.findOne({ email: email.toLowerCase().trim() });
   if (existing) {
+    if (existing.status === 'Supprimé') {
+      return res.status(400).json({ error: 'Cette adresse email a été supprimée. Contactez le support pour réactiver votre compte.' });
+    }
     return res.status(400).json({ error: 'Un compte existe déjà avec cet email' });
   }
 
@@ -187,7 +188,7 @@ async function updateMe(req, res) {
 
   if (nextEmail !== user.email) {
     const existingUser = await User.findOne({ email: nextEmail, _id: { $ne: user._id } });
-    if (existingUser) {
+    if (existingUser && existingUser.status !== 'Supprimé') {
       return res.status(400).json({ error: 'Un compte existe déjà avec cet email' });
     }
   }
@@ -204,14 +205,9 @@ async function updateMe(req, res) {
   await user.save();
 
   if (user.role === 'supplier') {
-    const supplier = await Supplier.findOne({
-      $or: [
-        { user: user._id },
-        { email: user.email },
-      ],
-    });
+    const supplier = await Supplier.findOne({ user: user._id });
 
-    if (supplier) {
+    if (supplier && supplier.status !== 'Supprimé') {
       supplier.user = supplier.user || user._id;
       supplier.email = user.email;
       supplier.phone = user.phone || supplier.phone;
@@ -364,12 +360,21 @@ async function login(req, res) {
     return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
   }
 
+  if (user.status === 'Supprimé') {
+    return res.status(403).json({ error: 'Ce compte a été supprimé. Contactez le support pour recréer un compte.' });
+  }
+
   if (user.status !== 'Actif') {
     return res.status(403).json({
       error: user.status === 'Bloqué'
         ? 'Votre compte est bloqué. Contactez le support ArchiPrice.'
         : 'Votre compte est désactivé. Contactez le support ArchiPrice.',
     });
+  }
+
+  // Ensure supplier profile exists for supplier role users
+  if (user.role === 'supplier') {
+    await ensureSupplierProfile(user);
   }
 
   sendAuthResponse(res, user);

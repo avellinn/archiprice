@@ -1,105 +1,305 @@
 import './ficheProduits.css';
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import DetailStore from '../../../components/detailstore';
 import Icon from '../../../components/Icon';
+import ProductDetailSections from '../../../components/ProductDetailSections';
+import ProductSheetGallery from '../../../components/ProductSheetGallery';
 import { Alert, Button, Loader } from '../../../components/ui';
+import useAuth from '../../../context/useAuth';
+import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { getApiErrorMessage } from '../../../services/api';
+import { useAdminData } from '../../../services/adminData';
 import { fetchCatalogueProduct } from '../../../services/catalogueProducts';
-
-function getImageUrl(image) {
-  if (!image) return '';
-  if (typeof image === 'string') return image;
-  return image.secure_url || image.url || '';
-}
+import { buildSupplierClientNotification, upsertSupplierClientNotification } from '../../../services/clientNotifications';
+import { createDemande } from '../../../services/demandes';
+import { createProduct } from '../../../services/products';
+import { fetchProjects } from '../../../services/projects';
+import { getStoredUserLanguage } from '../../../utils/userLanguage';
+import { translateWorkspaceText } from '../../../utils/workspaceLanguage';
 
 function formatFCFA(amount) {
   return `${new Intl.NumberFormat('fr-FR').format(Number(amount || 0))} FCFA`;
 }
 
-function buildDescriptionParagraphs(description = '') {
-  const cleanDescription = String(description || '').trim();
-  if (!cleanDescription) {
-    return [
-      'Cet article publié par un fournisseur ArchiPrice est disponible pour vos simulations et peut être comparé avec les autres références du catalogue.',
-      'Les informations techniques sont consolidées depuis la fiche fournisseur afin de faciliter la sélection, le chiffrage et la préparation du projet.',
-    ];
+
+function normalizeComparableValue(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function getSupplierDisplayName(supplier) {
+  return supplier?.companyName || supplier?.name || supplier?.shopName || 'Boutique sans nom';
+}
+
+function buildProductShop(product) {
+  const shopName = product?.supplierName || product?.shop || product?.supplier;
+  if (!shopName && !product?.supplierId) return null;
+
+  return {
+    id: product?.supplierId || shopName,
+    name: shopName,
+    companyName: shopName,
+    contact: product?.supplierContact || '',
+    email: product?.supplierContact || '',
+    phone: product?.supplierPhone || '',
+    city: product?.city || '',
+    neighborhood: product?.neighborhood || '',
+    region: [product?.city, product?.neighborhood].filter(Boolean).join(', '),
+    category: product?.category || '',
+    categories: [product?.category].filter(Boolean),
+    status: product?.supplierStatus || 'Actif',
+    isRecommended: true,
+  };
+}
+
+function buildContactShops(product, suppliers = []) {
+  const productShop = buildProductShop(product);
+  const productSupplierId = normalizeComparableValue(product?.supplierId);
+  const productSupplierName = normalizeComparableValue(product?.supplierName || product?.shop || product?.supplier);
+
+  const matchingSuppliers = suppliers.filter((supplier) => {
+    const supplierIds = [supplier.id, supplier._id, supplier.supplierId].map(normalizeComparableValue);
+    const supplierNames = [
+      supplier.companyName,
+      supplier.name,
+      supplier.shopName,
+      supplier.email,
+    ].map(normalizeComparableValue);
+
+    return (
+      (productSupplierId && supplierIds.includes(productSupplierId))
+      || (productSupplierName && supplierNames.includes(productSupplierName))
+    );
+  });
+
+  const recommendedSuppliers = suppliers.filter((supplier) => supplier.isRecommended);
+  const shopsByKey = new Map();
+
+  [...matchingSuppliers, productShop, ...recommendedSuppliers]
+    .filter(Boolean)
+    .forEach((shop) => {
+      const key = normalizeComparableValue(shop.id || shop._id || getSupplierDisplayName(shop));
+      if (!key || shopsByKey.has(key)) return;
+      shopsByKey.set(key, {
+        ...shop,
+        name: getSupplierDisplayName(shop),
+        companyName: getSupplierDisplayName(shop),
+        isRecommended: true,
+      });
+    });
+
+  return [...shopsByKey.values()];
+}
+
+function buildCatalogueReturnPath(activeProjectId, from) {
+  const fromPathname = from?.pathname === '/catalogue' ? from.pathname : '/catalogue';
+  const params = new URLSearchParams(from?.pathname === '/catalogue' ? from.search || '' : '');
+  params.delete('recap');
+
+  if (activeProjectId && !params.get('projectId')) {
+    params.set('projectId', activeProjectId);
   }
 
-  return cleanDescription
-    .split(/\n{2,}|\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
+  const query = params.toString();
+  return `${fromPathname}${query ? `?${query}` : ''}`;
+}
+
+function getShopDemandMessage({ shop, product }) {
+  const shopName = shop?.name || shop?.companyName || 'cette boutique';
+  const productName = product?.name || 'cet article';
+
+  return `Demande boutique pour ${productName} chez ${shopName}.`;
 }
 
 export default function FicheProduits() {
+  const { user } = useAuth();
   const { productId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const [adminData, updateAdminData] = useAdminData();
   const [product, setProduct] = useState(null);
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [language, setLanguage] = useState(getStoredUserLanguage);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdding, setIsAdding] = useState(false);
+  const [isShopDetailOpen, setIsShopDetailOpen] = useState(false);
   const [error, setError] = useState('');
+  const [activeProject, setActiveProject] = useState(location.state?.project || null);
 
-  useEffect(() => {
+  const loadProduct = useCallback(({ silent = false, force = false } = {}) => {
     let cancelled = false;
 
-    fetchCatalogueProduct(productId)
+    if (!silent) setIsLoading(true);
+
+    fetchCatalogueProduct(productId, { force })
       .then((item) => {
         if (cancelled) return;
-        setProduct(item);
-        setActiveImageIndex(0);
+        setProduct(item || location.state?.product || null);
         setError('');
       })
       .catch((apiError) => {
-        if (!cancelled) setError(getApiErrorMessage(apiError, 'Impossible de charger la fiche produit.'));
+        if (cancelled) return;
+        if (location.state?.product) {
+          setProduct(location.state.product);
+          setError('');
+          return;
+        }
+        setError(getApiErrorMessage(apiError, 'Impossible de charger la fiche produit.'));
       })
       .finally(() => {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled && !silent) setIsLoading(false);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [productId]);
+  }, [location.state, productId]);
 
-  const images = useMemo(() => {
-    const imageList = Array.isArray(product?.images)
-      ? product.images.map(getImageUrl).filter(Boolean)
-      : [];
-    const primaryImage = getImageUrl(product?.image);
-    return [...new Set([primaryImage, ...imageList].filter(Boolean))];
-  }, [product]);
-  const activeImage = images[activeImageIndex] || '';
-  const descriptionParagraphs = useMemo(
-    () => buildDescriptionParagraphs(product?.description),
-    [product?.description],
+  useEffect(() => {
+    const timer = window.setTimeout(loadProduct, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadProduct]);
+
+  useRealtimeRefresh(
+    () => loadProduct({ silent: true, force: true }),
+    ['admin-products', 'supplier-products', 'suppliers', 'catalogue-config'],
   );
-  const publicationYear = useMemo(() => {
-    const sourceDate = product?.approvedAt || product?.updatedAt || product?.createdAt;
-    if (!sourceDate) return 'Non renseignée';
-    const year = new Date(sourceDate).getFullYear();
-    return Number.isFinite(year) ? year : 'Non renseignée';
-  }, [product?.approvedAt, product?.createdAt, product?.updatedAt]);
 
-  function showPreviousImage() {
-    if (images.length <= 1) return;
-    setActiveImageIndex((currentIndex) => (currentIndex - 1 + images.length) % images.length);
+  useEffect(() => {
+    const syncLanguage = () => setLanguage(getStoredUserLanguage());
+    window.addEventListener('archiprice:user-profile-change', syncLanguage);
+    window.addEventListener('storage', syncLanguage);
+    return () => {
+      window.removeEventListener('archiprice:user-profile-change', syncLanguage);
+      window.removeEventListener('storage', syncLanguage);
+    };
+  }, []);
+  const text = (value) => translateWorkspaceText(value, language);
+  const activeProjectId = searchParams.get('projectId') || '';
+  const previousLocation = location.state?.from || null;
+  const cameFromEspacePro = String(previousLocation?.pathname || '').startsWith('/espacepro');
+  const isSelectedFromCatalogue = Boolean(location.state?.isSelected);
+  const contactShops = useMemo(
+    () => buildContactShops(product, adminData.suppliers || []),
+    [adminData.suppliers, product],
+  );
+  const selectedContactShop = contactShops[0] || null;
+
+  useEffect(() => {
+    if (!activeProjectId) {
+      setActiveProject(null);
+      return undefined;
+    }
+
+    let cancelled = false;
+    fetchProjects()
+      .then((projects) => {
+        if (cancelled) return;
+        setActiveProject(projects.find((project) => project.id === activeProjectId) || location.state?.project || null);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeProjectId, location.state?.project]);
+
+  async function handleAddProduct() {
+    if (!activeProjectId) {
+      navigate('/catalogue', {
+        state: {
+          selectedProductId: product.id || productId,
+          skipProjectGate: true,
+        },
+      });
+      return;
+    }
+
+    setIsAdding(true);
+    setError('');
+
+    try {
+      await createProduct(activeProjectId, {
+        name: product.name,
+        description: [
+          product.description || '',
+          product.supplierName || product.shop ? `Boutique : ${product.supplierName || product.shop}` : '',
+          product.range ? `Gamme : ${product.range}` : '',
+        ].filter(Boolean).join('\n'),
+        category: product.category || '',
+        subcategory: product.subcategory || '',
+        unit: product.unit || 'u',
+        unitPrice: product.unitPrice || product.price || 0,
+        priceExcludingTax: product.priceExcludingTax ?? product.unitPrice ?? product.price ?? 0,
+        vatRate: product.vatRate ?? 0,
+        minimumOrderQuantity: product.minimumOrderQuantity ?? 1,
+        images: product.images || (product.image ? [product.image] : []),
+        dimensions: product.dimensions || {},
+        catalogueProductId: product.id || productId,
+      });
+      navigate(buildCatalogueReturnPath(activeProjectId, previousLocation), {
+        state: { addedProductId: product.id || productId },
+      });
+    } catch (apiError) {
+      setError(getApiErrorMessage(apiError, "Impossible d'ajouter cet article au projet."));
+    } finally {
+      setIsAdding(false);
+    }
   }
 
-  function showNextImage() {
-    if (images.length <= 1) return;
-    setActiveImageIndex((currentIndex) => (currentIndex + 1) % images.length);
+  async function handleShopDemand(shop, message = '') {
+    if (!shop) return;
+    const demandMessage = message.trim() || getShopDemandMessage({ shop, product });
+
+    const notification = buildSupplierClientNotification({
+      shop,
+      user,
+      project: activeProjectId ? { id: activeProjectId, name: activeProject?.name || product?.projectName || 'Projet catalogue' } : null,
+      simulation: {
+        total: Number(product?.unitPrice || product?.price || 0),
+        totalLabel: formatFCFA(product?.unitPrice || product?.price || 0),
+        count: 1,
+        categories: [product?.category].filter(Boolean),
+      },
+      products: [product].filter(Boolean),
+      message: demandMessage,
+    });
+
+    try {
+      const demande = await createDemande({
+        supplierId: shop.id || shop._id || '',
+        supplierName: shop.name || shop.companyName || '',
+        supplierContact: shop.contact || shop.email || '',
+        productId: product.id || productId,
+        productName: product.name || '',
+        projectId: activeProjectId,
+        projectName: activeProject?.name || product?.projectName || '',
+        message: demandMessage,
+      });
+      upsertSupplierClientNotification(updateAdminData, {
+        ...notification,
+        id: demande.id || notification.id,
+        sourceNotificationId: demande.id || notification.id,
+        messages: demande.messages || notification.messages,
+        status: demande.status || notification.status,
+        createdAt: demande.createdAt || notification.createdAt,
+        updatedAt: demande.updatedAt || notification.updatedAt,
+      });
+    } catch {
+      upsertSupplierClientNotification(updateAdminData, notification);
+    }
   }
 
   if (isLoading) {
-    return <Loader className="product-sheet-loader" label="Chargement de la fiche produit..." />;
+    return <Loader className="product-sheet-loader" label={text('Chargement de la fiche produit...')} />;
   }
 
   if (error || !product) {
     return (
       <main className="product-sheet-page">
-        <Alert variant="danger">{error || 'Article introuvable.'}</Alert>
-        <Button type="button" variant="outline" icon={<Icon name="ArrowLeft" size="sm" />} onClick={() => navigate(-1)}>
-          Retour
+        <Alert variant="danger">{error || text('Article introuvable.')}</Alert>
+        <Button type="button" variant="outline" icon={<Icon name="ArrowLeft" size="sm" />} onClick={() => navigate(buildCatalogueReturnPath(activeProjectId, previousLocation), { state: { skipRecap: true, catalogueSnapshot: location.state?.catalogueSnapshot } })}>
+          {text('Retour')}
         </Button>
       </main>
     );
@@ -107,103 +307,45 @@ export default function FicheProduits() {
 
   return (
     <main className="product-sheet-page">
-      <button type="button" className="product-sheet-back" onClick={() => navigate(-1)} aria-label="Retour">
+      <button type="button" className="product-sheet-back" onClick={() => navigate(buildCatalogueReturnPath(activeProjectId, previousLocation), { state: { skipRecap: true, catalogueSnapshot: location.state?.catalogueSnapshot } })} aria-label={text('Retour')}>
         <Icon name="ArrowLeft" size="sm" />
       </button>
 
       <section className="product-sheet-layout">
+        <ProductSheetGallery key={product.id || productId} product={product} language={language} />
+
         <article className="product-sheet-content">
-          <header className="product-sheet-title">
-            <span>{product.category || 'Article publié'}</span>
-            <h1>{product.name}</h1>
-            <p>{product.supplierName || product.shop || 'Fournisseur ArchiPrice'}</p>
-          </header>
 
-          <dl className="product-sheet-meta">
-            <div>
-              <dt>Collection</dt>
-              <dd>{product.range || 'Collection fournisseur'}</dd>
+
+
+
+          <ProductDetailSections product={product} language={language} />
+
+          <footer className="product-sheet-content-footer">
+            <div className="product-sheet-actions">
+              <Button type="button" size="sm" onClick={() => setIsShopDetailOpen(true)}>{text('Contactez la société')}</Button>
             </div>
-            <div>
-              <dt>Type</dt>
-              <dd>{product.room || product.category || 'Non renseigné'}</dd>
-            </div>
-            <div>
-              <dt>Année de publication</dt>
-              <dd>{publicationYear}</dd>
-            </div>
-            <div>
-              <dt>Code produit</dt>
-              <dd>{String(product.id || '').slice(-8).toUpperCase()}</dd>
-            </div>
-          </dl>
-
-          <div className="product-sheet-copy">
-            {descriptionParagraphs.map((paragraph, index) => (
-              <p key={`${paragraph.slice(0, 24)}-${index}`}>{paragraph}</p>
-            ))}
-          </div>
-
-          <section className="product-sheet-info">
-            <h2>Principales informations du produit</h2>
-            <details open>
-              <summary>
-                Dimensions et tarif
-                <Icon name="ChevronDown" size="sm" />
-              </summary>
-              <div>
-                <strong>{product.range || product.category || product.name}</strong>
-                <span>Prix unitaire: {formatFCFA(product.unitPrice)}</span>
-                <span>Unité: {product.unit || 'u'}</span>
-                <span>Disponibilité: {product.availability || 'Non renseignée'}</span>
-                <span>Zone: {[product.city, product.neighborhood].filter(Boolean).join(', ') || 'Non renseignée'}</span>
-              </div>
-            </details>
-          </section>
-        </article>
-
-        <aside className="product-sheet-gallery" aria-label="Galerie produit">
-          <div className="product-sheet-main-image">
-            {activeImage ? (
-              <img src={activeImage} alt={product.name} />
-            ) : (
-              <span>{String(product.name || 'AP').slice(0, 2).toUpperCase()}</span>
-            )}
-          </div>
-
-          <div className="product-sheet-actions">
-            <Button type="button" size="sm">Contactez la société</Button>
-            <Button type="button" size="sm" variant="outline">Site Internet</Button>
-          </div>
-
-          <div className="product-sheet-thumbs">
-            {images.slice(0, 12).map((image, index) => (
-              <button
+            {!cameFromEspacePro && !isSelectedFromCatalogue && (
+              <Button
                 type="button"
-                className={index === activeImageIndex ? 'is-active' : ''}
-                key={`${image}-${index}`}
-                onClick={() => setActiveImageIndex(index)}
-                aria-label={`Afficher l'image ${index + 1}`}
+                size="sm"
+                icon={<Icon name="Add" size="sm" />}
+                isLoading={isAdding}
+                onClick={handleAddProduct}
               >
-                <img src={image} alt="" />
-              </button>
-            ))}
-          </div>
-
-          <footer className="product-sheet-gallery-footer">
-            <button type="button">Afficher tous</button>
-            <span>
-              <button type="button" onClick={showPreviousImage} aria-label="Image précédente">
-                <Icon name="ChevronLeft" size="sm" />
-              </button>
-              <button type="button" onClick={showNextImage} aria-label="Image suivante">
-                <Icon name="ChevronRight" size="sm" />
-              </button>
-            </span>
+                {text('Ajouter')}
+              </Button>
+            )}
           </footer>
-          <small>Revendeur {product.supplierName || product.shop || 'ArchiPrice'}</small>
-        </aside>
+        </article>
       </section>
+
+      <DetailStore
+        isOpen={isShopDetailOpen}
+        shop={selectedContactShop}
+        onClose={() => setIsShopDetailOpen(false)}
+        onSelectShop={handleShopDemand}
+      />
     </main>
   );
 }
