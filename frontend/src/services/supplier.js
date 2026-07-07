@@ -47,6 +47,11 @@ export function subscribeSupplierWorkspaceChange(callback) {
   };
 }
 
+export async function fetchClientDetails(clientId) {
+  const { data } = await api.get(API_ROUTES.supplier.clients.details(clientId));
+  return data;
+}
+
 export async function fetchSupplierWorkspace() {
   const { data } = await api.get(API_ROUTES.supplier.workspace);
   return data;

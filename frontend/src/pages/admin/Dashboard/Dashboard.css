@@ -209,6 +209,7 @@
 
 .admin-dashboard-page .chart-line--user {
   stroke: #ff943b;
+  stroke-width: 6;
 }
 
 .admin-dashboard-page .chart-line--supplier {
@@ -222,21 +223,28 @@
   stroke-width: 3;
 }
 
+.admin-dashboard-page .line-chart .chart-point--user {
+  stroke: #ff943b;
+}
+
 .admin-dashboard-page .line-chart .chart-point--supplier {
   stroke: #5877f7;
 }
 
 .admin-dashboard-page .chart-axis {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 0.15rem;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 0;
 }
 
 .admin-dashboard-page .chart-axis span {
   color: #2a2c2e96;
-  font-size: 0.72rem;
+  font-size: 0.62rem;
   font-weight: 800;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
 }
 
 .admin-dashboard-page .chart-legend,

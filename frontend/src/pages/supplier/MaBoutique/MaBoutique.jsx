@@ -5,6 +5,7 @@ import SupplierShopCard from '../../../components/SupplierShopCard';
 import { Alert, Loader } from '../../../components/ui';
 import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { getApiErrorMessage } from '../../../services/api';
+import { addExportedDocument } from '../../../services/exportedDocuments';
 import { deleteSupplierProduct, fetchSupplierWorkspace, subscribeSupplierWorkspaceChange } from '../../../services/supplier';
 
 export default function MaBoutique() {
@@ -73,6 +74,22 @@ export default function MaBoutique() {
     setPendingProductDelete(product);
   }
 
+  function openProductExport(product) {
+    const safeProductName = String(product?.name || 'catalogue')
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .slice(0, 60) || 'catalogue';
+    const exportedDocument = addExportedDocument({
+      projectName: shopName || 'Boutique',
+      fileName: `${safeProductName}.pdf`,
+      items: [product],
+      supplierName: shopName,
+    });
+
+    window.open(`/export-pdf/${encodeURIComponent(exportedDocument.id)}`, '_blank', 'noopener,noreferrer');
+  }
+
   return (
     <div className="supplier-shop-page">
       {isLoading && <Loader label="Chargement de la boutique..." />}
@@ -104,9 +121,7 @@ export default function MaBoutique() {
           heroTitle={shopName ? `Découvrez les nouveautés ${shopName}` : 'Découvrez les nouveautés'}
           products={products}
           onAddProduct={() => navigate('/supplier/products/new')}
-          onOpenProduct={(product) => navigate(`/fiche-produits/${product.id || product._id}`, {
-            state: { product },
-          })}
+          onOpenProduct={openProductExport}
           onEditProduct={(product) => navigate(`/supplier/products/new?edit=${product.id || product._id}`)}
           onDeleteProduct={removeProduct}
         />

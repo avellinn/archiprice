@@ -8,7 +8,9 @@ import { addExportedDocument, removeExportedDocument } from '../../../services/e
 import { fetchProducts } from '../../../services/products';
 import { downloadProjectRecapPdf } from '../../../services/projects';
 import { API_ROUTES } from '../../../constants/api';
+import { createSimulationExport } from '../../../services/simulationExports';
 import { createExportedProductSnapshot } from '../../../utils/productPresentation';
+import { getProjectStatusLabel } from '../../../utils/projectStatus';
 import './EspaceProWorkspace.css';
 
 function formatDate(value) {
@@ -43,11 +45,10 @@ function formatOptionalCurrency(value) {
 function extractProjectMetadata(project) {
   const description = project?.description || '';
   const roomMatch = description.match(/Type de pièce\s*:\s*(.+)/i);
-  const budgetMatch = description.match(/Estimation budget\s*:\s*(.+)/i);
 
   return {
     roomType: roomMatch?.[1]?.trim() || 'Non renseigné',
-    budget: budgetMatch?.[1]?.trim() || '',
+    budget: project?.budgetTarget ?? 0,
   };
 }
 
@@ -118,6 +119,7 @@ export default function EspacePro({
   const navigate = useNavigate();
   const effectiveSelectedProjectId = selectedProjectId || projects[0]?.id || '';
   const selectedProject = projects.find((project) => project.id === effectiveSelectedProjectId) || projects[0];
+  const isTreated = selectedProject?.status === 'treated';
   const projectMetadata = extractProjectMetadata(selectedProject);
   const [projectProducts, setProjectProducts] = useState([]);
   const [isProductsLoading, setIsProductsLoading] = useState(true);
@@ -238,7 +240,47 @@ export default function EspacePro({
     let exportedDocument = null;
     try {
       const expectedFileName = getProjectRecapFileName(selectedProject);
+      
+      let simulationExportDoc = null;
+      try {
+        simulationExportDoc = await createSimulationExport({
+          projectId: selectedProject.id,
+          projectName: selectedProject.name,
+          reference: getProjectReference(selectedProject),
+          budget: projectMetadata.budget,
+          estimatedTotal: articleSimulation.total,
+          totalFormatted: formatCurrency(articleSimulation.total),
+          articleCount: articleSimulation.count,
+          city: projectMetadata.roomType,
+          coefficient: '1,00',
+          exportedAt: new Date().toISOString(),
+          exportedBy: user?.name || user?.fullName || user?.email || 'Utilisateur ArchiPrice',
+          exportedByEmail: user?.email || '',
+          status: 'Succès',
+          items: recapRows.map((row) => ({
+            name: row.name,
+            category: row.category,
+            quantity: 1,
+            price: formatCurrency(row.price),
+            rawPrice: Number(row.price) || 0,
+            total: formatCurrency(row.price),
+            rawTotal: Number(row.price) || 0,
+            imageUrl: row.imageUrl || '',
+            shop: row.supplierName || row.shop || row.supplier || '',
+            city: row.city || projectMetadata.roomType || '',
+          })),
+        });
+      } catch (err) {
+        // L'export PDF continue même si l'enregistrement SimulationExport échoue.
+        // L'erreur est affichée dans la console pour diagnostic.
+        // eslint-disable-next-line no-console
+        console.error('SimulationExport non enregistré :', err?.response?.data || err?.message);
+      }
+
+      const docId = simulationExportDoc?.id || `export-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+
       exportedDocument = addExportedDocument({
+        id: docId,
         projectId: selectedProject.id,
         projectName: selectedProject.name,
         userName: user?.name || user?.fullName || user?.email || 'Utilisateur ArchiPrice',
@@ -319,6 +361,9 @@ export default function EspacePro({
         {!isProjectsLoading && !projectsError && projects.length === 0 && (
           <p>Aucun projet créé pour le moment.</p>
         )}
+        {isTreated && (
+          <Alert variant="info" className="espacepro__alert">Ce projet est traité.</Alert>
+        )}
         {projects.map((project, index) => (
           <div
             className={[
@@ -347,6 +392,7 @@ export default function EspacePro({
                 type="button"
                 className="espacepro__project-action espacepro__project-action--edit"
                 aria-label={`Modifier ${project.name}`}
+                disabled={isTreated}
                 onClick={() => onProjectEdit?.(project)}
               >
                 <Icon name="Edit" size="sm" />
@@ -355,7 +401,7 @@ export default function EspacePro({
                 type="button"
                 className="espacepro__project-action espacepro__project-action--delete"
                 aria-label={`Supprimer ${project.name}`}
-                disabled={deletingProjectId === project.id}
+                disabled={deletingProjectId === project.id || isTreated}
                 onClick={() => onProjectDelete?.(project)}
               >
                 <Icon name="Delete" size="sm" />
@@ -411,7 +457,12 @@ export default function EspacePro({
               onClick={(event) => event.stopPropagation()}
               onKeyDown={(event) => event.stopPropagation()}
             >
-              <h3>{activeArticle.name}</h3>
+              <div className="espacepro__article-header-row">
+                <h3>{activeArticle.name}</h3>
+                <span className={`project-status-badge project-status-badge--${(selectedProject?.status || 'draft').toLowerCase()}`}>
+                  {getProjectStatusLabel(selectedProject?.status)}
+                </span>
+              </div>
               <p>{activeArticle.category || 'Catégorie non renseignée'}</p>
               <strong>{formatCurrency(activeArticle.unitPrice)}</strong>
             </div>
@@ -421,18 +472,20 @@ export default function EspacePro({
                   <a
                     className="espacepro__recap-link"
                     href={getProjectRecapHref(selectedProject)}
+                    title="Générer et télécharger un fichier PDF récapitulatif de la simulation (n'affecte pas le statut du projet)"
                     onClick={(event) => {
                       event.stopPropagation();
                       event.preventDefault();
                       handleDownloadRecap();
                     }}
                   >
-                    Télécharger le recap  {getProjectRecapFileName(selectedProject)}
+                    Exporter PDF Simulation
                   </a>
                   <button
                     type="button"
                     className="espacepro__recap-open"
-                    aria-label="Afficher le récapitulatif"
+                    title="Afficher le récapitulatif détaillé"
+                    aria-label="Afficher le récapitulatif détaillé"
                     onClick={(event) => {
                       event.stopPropagation();
                       setIsRecapOpen(true);
@@ -544,9 +597,14 @@ export default function EspacePro({
 
             <footer className="espacepro__recap-footer">
               <span>Réf. #{getProjectReference(selectedProject)}</span>
-              <button type="button" onClick={handleDownloadRecap} disabled={isRecapDownloading}>
-                <Icon name="Download" size="sm" />
-                {isRecapDownloading ? 'Génération...' : 'Exporter en PDF'}
+              <button
+                type="button"
+                onClick={handleDownloadRecap}
+                disabled={isRecapDownloading}
+                title="Générer et télécharger un fichier PDF récapitulatif de la simulation (n'affecte pas le statut du projet)"
+              >
+                <Icon name="PictureAsPdf" size="sm" />
+                {isRecapDownloading ? 'Génération...' : 'Exporter PDF Simulation'}
               </button>
             </footer>
             {recapError && <Alert variant="danger" className="espacepro__recap-error">{recapError}</Alert>}

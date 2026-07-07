@@ -1,9 +1,13 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import { protect, requireSupplier } from '../middleware/auth.js';
 import { handleMulterError, mediaUpload, upload } from '../middleware/multerUpload.js';
 import requireDb from '../middleware/requireDb.js';
 import asyncHandler from '../utils/asyncHandler.js';
+import Demande from '../models/Demande.js';
 import Product from '../models/Product.js';
+import Project from '../models/Project.js';
+import Simulation from '../models/Simulation.js';
 import Supplier from '../models/Supplier.js';
 import {
   deleteProductImage,
@@ -235,6 +239,22 @@ router.delete('/files', asyncHandler(async (req, res) => {
   await Promise.all(media.map((file) => (
     deleteSupplierMedia(file.public_id, file.resourceType)
   )));
+
+  const supplierProducts = await Product.find({
+    $or: [
+      { supplier: supplier._id },
+      { supplierUser: req.user._id },
+    ],
+  });
+
+  await Promise.allSettled(supplierProducts.flatMap((product) => (
+    (product.images || []).map((image) => deleteProductImage(image.public_id))
+  )));
+
+  await Promise.all(supplierProducts.map(async (product) => {
+    product.images = [];
+    await product.save();
+  }));
 
   supplier.media = [];
   await supplier.save();
@@ -571,6 +591,77 @@ router.get('/workspace', asyncHandler(async (req, res) => {
       active: supplier.status === 'Actif',
     },
     products: products.map(formatProduct),
+  });
+}));
+
+router.get('/clients/:clientId', asyncHandler(async (req, res) => {
+  const supplier = await findOrCreateSupplierProfile(req.user);
+  const clientId = req.params.clientId;
+
+  const demandes = await Demande.find({
+    user: clientId,
+    $or: [
+      { supplier: supplier._id },
+      { supplierUser: req.user._id },
+    ],
+    hiddenBySupplier: { $ne: true },
+  })
+    .populate('user', 'name email phone')
+    .populate('supplier', 'name companyName email contact')
+    .populate('supplierUser', 'name email')
+    .populate({ path: 'product', select: 'name project', populate: { path: 'project', select: 'name status budgetTarget' } })
+    .sort({ lastMessageAt: -1 })
+    .lean();
+
+  const projectIds = [...new Set(
+    demandes
+      .map((d) => d.product?.project?._id || d.product?.project)
+      .filter(Boolean)
+      .map((id) => String(id)),
+  )];
+
+  const validProjectIds = projectIds.filter((id) => mongoose.Types.ObjectId.isValid(id));
+
+  const [projects, simulations] = await Promise.all([
+    validProjectIds.length > 0
+      ? Project.find({ _id: { $in: validProjectIds } }).sort({ updatedAt: -1 }).lean()
+      : [],
+    validProjectIds.length > 0
+      ? Simulation.find({ projectId: { $in: validProjectIds } }).sort({ createdAt: -1 }).lean()
+      : [],
+  ]);
+
+  res.json({
+    demandes: demandes.map((d) => ({
+      id: String(d._id),
+      status: d.status,
+      lastMessage: d.messages?.length
+        ? {
+            message: d.messages[d.messages.length - 1].message,
+            senderRole: d.messages[d.messages.length - 1].senderRole,
+            createdAt: d.messages[d.messages.length - 1].createdAt,
+          }
+        : null,
+      client: d.user ? { id: String(d.user._id), name: d.user.name, email: d.user.email } : null,
+      supplier: d.supplier ? { id: String(d.supplier._id), name: d.supplier.name } : null,
+      projectId: d.product?.project?._id || d.product?.project || null,
+      productName: d.product?.name || d.productName || '',
+    })),
+    projects: projects.map((p) => ({
+      id: String(p._id),
+      name: p.name,
+      status: p.status,
+      budgetTarget: p.budgetTarget,
+    })),
+    simulations: simulations.map((s) => ({
+      id: String(s._id),
+      projectId: String(s.projectId || ''),
+      projectName: s.projectName,
+      total: s.total,
+      date: s.date || s.createdAt,
+      products: typeof s.products === 'number' ? s.products : (Array.isArray(s.items) ? s.items.length : 0),
+      status: s.status,
+    })),
   });
 }));
 

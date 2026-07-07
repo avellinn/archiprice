@@ -23,8 +23,9 @@ export default function ProtectedRoute({ children }) {
   }
 
   const isFicheProduits = location.pathname.startsWith('/fiche-produits/');
+  const isExportPdf = location.pathname.startsWith('/export-pdf/');
 
-  if (user?.role === 'supplier' && location.pathname !== '/deconnexion' && !isFicheProduits) {
+  if (user?.role === 'supplier' && location.pathname !== '/deconnexion' && !isFicheProduits && !isExportPdf) {
     return <Navigate to="/supplier/dashboard" replace />;
   }
 

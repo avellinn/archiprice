@@ -4,6 +4,7 @@ import { Alert, Button, Icon, Loader } from '../../../components/ui';
 import { getApiErrorMessage } from '../../../services/api';
 import {
   deleteSupplierFile,
+  deleteSupplierProductImage,
   fetchSupplierFiles,
   fetchSupplierWorkspace,
   resetSupplierFiles,
@@ -125,19 +126,21 @@ export default function Fichiers() {
     }
   }
 
-  function hideProductImage(file) {
-    setDeletingFileId(file.id);
-    setError('');
-    setHiddenCloudinaryFileIds((currentIds) => [...new Set([...currentIds, file.id])]);
-    window.setTimeout(() => {
-      setDeletingFileId('');
-    }, 120);
-  }
+
 
   async function removeFile(file) {
     if (file.isProductImage) {
-      hideProductImage(file);
-      setSuccessMessage("L'image produit est masquée de cette médiathèque, sans modifier le produit.");
+      setDeletingFileId(file.id);
+      setError('');
+      try {
+        await deleteSupplierProductImage(file.productId, file.publicId);
+        loadWorkspace();
+        setSuccessMessage("L'image du produit a été supprimée définitivement.");
+      } catch (apiError) {
+        setError(getApiErrorMessage(apiError, "Impossible de supprimer l'image du produit."));
+      } finally {
+        setDeletingFileId('');
+      }
       return;
     }
 
@@ -160,8 +163,10 @@ export default function Fichiers() {
     setIsResetConfirmOpen(false);
     try {
       setCloudFiles(await resetSupplierFiles());
+      setHiddenCloudinaryFileIds([]);
+      loadWorkspace();
       setSuccessMessage(
-        'Médiathèque vidée. Les images liées aux produits restent intactes sur Cloudinary.',
+        'Médiathèque vidée. Les images liées aux produits ont été supprimées de Cloudinary.',
       );
     } catch (apiError) {
       setError(getApiErrorMessage(apiError, 'Impossible de réinitialiser la médiathèque.'));

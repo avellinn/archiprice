@@ -245,15 +245,18 @@
 
 .chart-axis {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 0.15rem;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 0;
 }
 
 .chart-axis span {
   color: #2a2c2e96;
-  font-size: 0.72rem;
+  font-size: 0.62rem;
   font-weight: 800;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
 }
 
 .chart-legend,
@@ -493,4 +496,12 @@
       flex-direction: row;
       margin-top: 0.75rem;
     }
+
+  .chart-axis {
+    grid-template-columns: repeat(12, 1fr);
+  }
+
+  .chart-axis span {
+    font-size: 0.54rem;
+  }
 }

@@ -144,19 +144,13 @@ export default function Parametres() {
         updateAdminData((currentData) => {
           const normalizedSupplier = normalizeSupplierForWorkspace(supplier);
           const suppliers = currentData.suppliers || [];
-          const supplierExists = suppliers.some((item) => (
-            item.id === normalizedSupplier.id
-            || (item.email && item.email === normalizedSupplier.email)
-            || (item.contact && item.contact === normalizedSupplier.contact)
-          ));
+          const supplierExists = suppliers.some((item) => item.id === normalizedSupplier.id);
 
           return {
             ...currentData,
             suppliers: supplierExists
               ? suppliers.map((item) => (
                 item.id === normalizedSupplier.id
-                || (item.email && item.email === normalizedSupplier.email)
-                || (item.contact && item.contact === normalizedSupplier.contact)
                   ? { ...item, ...normalizedSupplier }
                   : item
               ))
@@ -290,8 +284,8 @@ export default function Parametres() {
           <button type="button" className="supplier-settings-row-button" onClick={() => setActiveModal('password')}>
             <Icon name="Visibility" size="sm" />
             <div>
-              <strong>Mot de passe</strong>
-              <span>Modifier le mot de passe de connexion</span>
+              <strong>{supplierText.settings.password}</strong>
+              <span>{supplierText.settings.passwordDescription}</span>
             </div>
             <Icon name="ChevronRight" size="sm" />
           </button>
@@ -324,10 +318,11 @@ export default function Parametres() {
 
       {activeModal === 'password' && (
         <PasswordSettingsModal
+          labels={supplierText.common}
           onClose={closeModal}
           onSubmit={async (payload) => {
             await changePassword(payload);
-            setSettingsAlert({ variant: 'success', message: 'Mot de passe mis à jour.' });
+            setSettingsAlert({ variant: 'success', message: supplierText.settings.passwordUpdated });
           }}
         />
       )}

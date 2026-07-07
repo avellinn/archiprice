@@ -30,11 +30,14 @@ function formatFCFA(amount) {
 function extractProjectMetadata(project) {
   const description = project?.description || '';
   const roomMatch = description.match(/Type de pièce\s*:\s*(.+)/i);
-  const budgetMatch = description.match(/Estimation budget\s*:\s*(.+)/i);
+  const budgetTarget = Number(project?.budgetTarget);
+  const budget = Number.isFinite(budgetTarget) && budgetTarget > 0
+    ? budgetTarget
+    : (description.match(/Estimation budget\s*:\s*(.+)/i)?.[1]?.trim() || '');
 
   return {
     roomType: roomMatch?.[1]?.trim() || 'Non renseigne',
-    budget: budgetMatch?.[1]?.trim() || '',
+    budget,
   };
 }
 

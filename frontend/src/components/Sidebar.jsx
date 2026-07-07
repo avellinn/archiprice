@@ -1,7 +1,26 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { getScopedStorageKey } from '../services/scopedStorage';
 import './Sidebar.css';
 import Icon from './Icon';
+
+const CATALOGUE_GRACE_BASE_KEY = 'archiprice:catalogue_project_created_at';
+const CATALOGUE_GRACE_MS = 24 * 3600 * 1000;
+
+function checkGracePeriod() {
+  try {
+    // Clé recalculée dynamiquement à chaque appel pour correspondre au scope
+    // de l'utilisateur connecté au moment du clic (pas au chargement du module).
+    const key = getScopedStorageKey(CATALOGUE_GRACE_BASE_KEY);
+    const stored = window.localStorage.getItem(key);
+    if (!stored) return false;
+    const timestamp = Number(stored);
+    if (!Number.isFinite(timestamp)) return false;
+    return Date.now() < timestamp + CATALOGUE_GRACE_MS;
+  } catch {
+    return false;
+  }
+}
 
 function getInitials(user) {
   if (user?.initials) return user.initials;
@@ -166,9 +185,11 @@ export default function Sidebar({
       }
 
       event.preventDefault();
-      navigate(itemPath);
+      // Naviguer directement — la grace period est gérée via le localStorage,
+      // pas via location.state, ce qui évite les valeurs stale.
+      navigate(itemPath, { state: { from: location } });
     },
-    [getItemPath, isMobile, location.pathname, navigate, onClose, onItemClick],
+    [getItemPath, isMobile, navigate, onClose, onItemClick, location],
   );
 
   return (
@@ -276,7 +297,6 @@ export default function Sidebar({
                     ) : (
                       <Link
                         to={itemPath}
-                        state={itemPath === '/catalogue' ? { from: location } : undefined}
                         className={linkClassName}
                         onClick={(event) => handleItemClick(event, item)}
                       >

@@ -122,18 +122,12 @@ export default function FournisseurModal({
               <span>Articles liés</span>
               <strong>{supplier.products || 0}</strong>
             </article>
-            <article>
-              <span>Catégories</span>
-              <strong>{supplier.categories?.length ? supplier.categories.join(', ') : 'Non renseignées'}</strong>
-            </article>
+            
             <article>
               <span>Identifiant</span>
               <strong>{isCreating ? 'Création en cours' : supplier.id || 'Non renseigné'}</strong>
             </article>
-            <article>
-              <span>Impact du statut</span>
-              <strong>{supplierStatus === 'Bloqué' ? 'Catalogue masqué et accès interdit' : supplierStatus === 'Inactif' ? 'Accès temporairement retiré' : 'Compte opérationnel'}</strong>
-            </article>
+            
           </div>
         </section>
 

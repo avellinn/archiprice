@@ -144,3 +144,17 @@
     max-height: none;
   }
 }
+
+/* Notice projet verrouillé dans le panneau budget */
+.catalogue-budget-locked-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #10b981;
+  border-radius: 8px;
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 0.82rem;
+  font-weight: 600;
+}

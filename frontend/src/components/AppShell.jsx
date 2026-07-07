@@ -185,8 +185,8 @@ export default function AppShell() {
           {
             id: 'explorer-catalogue',
             label: userText.sidebar.catalogue,
-            path: '/catalogue',
             icon: <Icon name="Explore" />,
+            action: true,
           },
           {
             id: 'workspace',
@@ -253,6 +253,12 @@ export default function AppShell() {
   function handleLogout() {
     setIsAccountOpen(false);
     navigate('/deconnexion');
+  }
+
+  function handleSidebarItemClick(itemId) {
+    if (itemId === 'explorer-catalogue') {
+      navigate('/catalogue', { state: { forceProjectGate: true, from: location } });
+    }
   }
 
   const replyNotifications = useMemo(() => (
@@ -334,6 +340,7 @@ export default function AppShell() {
         sections={sidebarSectionsWithBadges}
         isOpen={!isSidebarCollapsed}
         onClose={() => setIsSidebarCollapsed(true)}
+        onItemClick={handleSidebarItemClick}
         user={{
           initials: getUserInitials(user),
           name: getDisplayName(user),

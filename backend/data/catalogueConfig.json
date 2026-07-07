@@ -1,10 +1,52 @@
 {
-  "__version": 690,
-  "__updatedAt": 1782382804787,
+  "__version": 1092,
+  "__updatedAt": 1783426539764,
   "__staticPurgeVersion": 2,
   "users": [
     {
-      "id": "6a2671be3e7aaea935dd1117",
+      "id": "6a4bba774c96fdbbdad0b896",
+      "supplierId": "",
+      "name": "tik",
+      "email": "tik@gmail.com",
+      "phone": "",
+      "role": "user",
+      "type": "Architecte",
+      "simulations": 0,
+      "inscription": "06/07/2026",
+      "status": "Actif",
+      "createdAt": "2026-07-06T14:23:51.636Z",
+      "updatedAt": "2026-07-06T14:23:51.636Z"
+    },
+    {
+      "id": "6a422b087b344eca2694c428",
+      "supplierId": "6a422b097b344eca2694c429",
+      "name": "Test",
+      "email": "tes@gmail.com",
+      "phone": "01010145212",
+      "role": "supplier",
+      "type": "Fournisseur",
+      "simulations": 0,
+      "inscription": "29/06/2026",
+      "status": "Actif",
+      "createdAt": "2026-06-29T08:21:28.881Z",
+      "updatedAt": "2026-06-30T10:53:07.159Z"
+    },
+    {
+      "id": "6a422a357b344eca2694c403",
+      "supplierId": "",
+      "name": "avellin adjai",
+      "email": "avellinadjai@gmail.com",
+      "phone": "",
+      "role": "user",
+      "type": "Architecte",
+      "simulations": 35,
+      "inscription": "29/06/2026",
+      "status": "Actif",
+      "createdAt": "2026-06-29T08:17:57.341Z",
+      "updatedAt": "2026-07-03T11:29:41.735Z"
+    },
+    {
+      "id": "6a4229e6fdea5f41b8dcc524",
       "supplierId": "",
       "name": "Super Admin",
       "email": "admin@archiprice.com",
@@ -12,59 +54,431 @@
       "role": "admin",
       "type": "Admin",
       "simulations": "-",
-      "inscription": "08/06/2026",
+      "inscription": "29/06/2026",
       "status": "Actif",
-      "createdAt": "2026-06-08T07:39:42.774Z",
-      "updatedAt": "2026-06-25T10:13:52.600Z"
-    },
-    {
-      "id": "supplier-6a399cb4a01076c19519cb80",
-      "supplierId": "6a399cb4a01076c19519cb80",
-      "name": "mine",
-      "email": "mine@gmail.com",
-      "phone": "551523156130",
-      "role": "supplier",
-      "type": "Fournisseur",
-      "simulations": 0,
-      "inscription": "",
-      "status": "Actif",
-      "createdAt": "2026-06-22T20:36:04.677Z",
-      "updatedAt": "2026-06-23T18:09:34.903Z"
+      "createdAt": "2026-06-29T08:16:38.909Z",
+      "updatedAt": "2026-07-06T15:13:30.901Z"
     }
   ],
   "products": [],
   "suppliers": [
     {
-      "logo": {
-        "metadata": {
-          "provider": "cloudinary"
-        }
-      },
-      "_id": "6a399cb4a01076c19519cb80",
-      "user": null,
-      "name": "mine",
-      "companyName": "mine",
-      "email": "mine@gmail.com",
-      "contact": "mine@gmail.com",
-      "phone": "551523156130",
+      "id": "6a422b097b344eca2694c429",
+      "userId": "6a422b087b344eca2694c428",
+      "name": "Test",
+      "companyName": "Test",
+      "contact": "01010145212",
+      "email": "tes@gmail.com",
+      "phone": "01010145212",
+      "region": "Bénin",
+      "status": "Actif",
+      "products": 9,
       "categories": [
         "Fournisseur"
       ],
-      "region": "Bénin",
-      "city": "Bénin",
-      "neighborhood": "usui",
-      "status": "Actif",
-      "products": 2,
-      "isRecommended": false,
-      "media": [],
-      "createdAt": "2026-06-22T20:36:04.677Z",
-      "updatedAt": "2026-06-23T18:09:34.903Z",
-      "__v": 1,
-      "id": "6a399cb4a01076c19519cb80",
-      "userId": ""
+      "isRecommended": true
     }
   ],
   "supplierClientNotifications": [
+    {
+      "id": "6a43e107d7b050c87fe82b30",
+      "supplierId": "6a422b097b344eca2694c429",
+      "supplierName": "Test",
+      "supplierContact": "01010145212",
+      "clientId": "6a422a357b344eca2694c403",
+      "clientName": "avellin adjai",
+      "clientProfession": "Architecte",
+      "clientEmail": "avellinadjai@gmail.com",
+      "clientPhone": "Non renseigné",
+      "projectId": "6a4cccf975ea55f21b6db2eb",
+      "projectName": "hibiv",
+      "simulationTotal": 5336760,
+      "simulationTotalLabel": "5 336 760 FCFA",
+      "articleCount": 2,
+      "categories": [
+        "Accessoires et décoration",
+        "Cuisine"
+      ],
+      "selectedArticles": [
+        {
+          "id": "6a4ccd0675ea55f21b6db32f",
+          "name": "hvdgvfj",
+          "category": "Accessoires et décoration",
+          "unitPrice": 5278350
+        },
+        {
+          "id": "6a4ccd0675ea55f21b6db330",
+          "name": "jbdehb",
+          "category": "Cuisine",
+          "unitPrice": 58410
+        }
+      ],
+      "type": "Demande",
+      "message": "ninnnunt",
+      "messages": [
+        {
+          "id": "6a43e107d7b050c87fe82b31",
+          "senderRole": "user",
+          "senderName": "avellin adjai",
+          "message": "Demande boutique pour fjknfkonf: 4 article(s) sélectionné(s) chez Test.",
+          "readByUserAt": "2026-06-30T15:30:15.536Z",
+          "readBySupplierAt": "2026-06-30T15:52:49.954Z",
+          "createdAt": "2026-06-30T15:30:15.785Z",
+          "updatedAt": "2026-06-30T15:52:49.959Z"
+        },
+        {
+          "id": "6a43e574d7b050c87fe82b8a",
+          "senderRole": "user",
+          "senderName": "avellin adjai",
+          "message": "Nexte",
+          "readByUserAt": "2026-06-30T15:49:08.368Z",
+          "readBySupplierAt": "2026-06-30T15:52:49.954Z",
+          "createdAt": "2026-06-30T15:49:08.592Z",
+          "updatedAt": "2026-06-30T15:52:49.959Z"
+        },
+        {
+          "id": "6a43e66fd7b050c87fe82bd4",
+          "senderRole": "supplier",
+          "senderName": "Test",
+          "message": "Merci bien",
+          "readByUserAt": "2026-06-30T15:53:51.708Z",
+          "readBySupplierAt": "2026-06-30T15:53:19.126Z",
+          "createdAt": "2026-06-30T15:53:19.131Z",
+          "updatedAt": "2026-06-30T15:53:51.715Z"
+        },
+        {
+          "id": "6a43e67dd7b050c87fe82bde",
+          "senderRole": "supplier",
+          "senderName": "Test",
+          "message": "Merci",
+          "readByUserAt": "2026-06-30T15:53:51.708Z",
+          "readBySupplierAt": "2026-06-30T15:53:33.888Z",
+          "createdAt": "2026-06-30T15:53:33.893Z",
+          "updatedAt": "2026-06-30T15:53:51.715Z"
+        },
+        {
+          "id": "6a44e280a65ed8dd0e18d3cd",
+          "senderRole": "user",
+          "senderName": "avellin adjai",
+          "message": "Bonjour",
+          "readByUserAt": "2026-07-01T09:48:48.399Z",
+          "readBySupplierAt": "2026-07-01T10:00:03.413Z",
+          "createdAt": "2026-07-01T09:48:48.579Z",
+          "updatedAt": "2026-07-01T10:00:03.416Z"
+        },
+        {
+          "id": "6a44e52da65ed8dd0e18d59f",
+          "senderRole": "supplier",
+          "senderName": "Test",
+          "message": "Bonjour",
+          "readByUserAt": "2026-07-01T10:01:33.625Z",
+          "readBySupplierAt": "2026-07-01T10:00:13.541Z",
+          "createdAt": "2026-07-01T10:00:13.544Z",
+          "updatedAt": "2026-07-01T10:01:33.628Z"
+        },
+        {
+          "id": "6a44e53da65ed8dd0e18d5d6",
+          "senderRole": "supplier",
+          "senderName": "Test",
+          "message": "C'est à 800k",
+          "readByUserAt": "2026-07-01T10:01:33.625Z",
+          "readBySupplierAt": "2026-07-01T10:00:29.322Z",
+          "createdAt": "2026-07-01T10:00:29.324Z",
+          "updatedAt": "2026-07-01T10:01:33.628Z"
+        },
+        {
+          "id": "6a44e5c6a65ed8dd0e18d817",
+          "senderRole": "supplier",
+          "senderName": "Test",
+          "message": "Vous en voulez combien ?",
+          "readByUserAt": "2026-07-01T10:03:08.019Z",
+          "readBySupplierAt": "2026-07-01T10:02:46.847Z",
+          "createdAt": "2026-07-01T10:02:46.850Z",
+          "updatedAt": "2026-07-01T10:03:08.023Z"
+        },
+        {
+          "id": "6a450aca81ef17224aefbc57",
+          "senderRole": "supplier",
+          "senderName": "Test",
+          "message": "judsuir",
+          "readByUserAt": "2026-07-01T14:01:49.615Z",
+          "readBySupplierAt": "2026-07-01T12:40:42.561Z",
+          "createdAt": "2026-07-01T12:40:42.564Z",
+          "updatedAt": "2026-07-01T14:01:49.620Z"
+        },
+        {
+          "id": "6a46743668bb87a298c31678",
+          "senderRole": "user",
+          "senderName": "avellin adjai",
+          "message": "Bonjour",
+          "readByUserAt": "2026-07-02T14:22:46.071Z",
+          "readBySupplierAt": "2026-07-03T10:52:14.464Z",
+          "createdAt": "2026-07-02T14:22:46.280Z",
+          "updatedAt": "2026-07-03T10:52:14.469Z"
+        },
+        {
+          "id": "6a4793f6f182f9bda6211205",
+          "senderRole": "user",
+          "senderName": "avellin adjai",
+          "message": "Demande boutique pour good: 5 article(s) sélectionné(s) chez Test.",
+          "readByUserAt": "2026-07-03T10:50:30.292Z",
+          "readBySupplierAt": "2026-07-03T10:52:14.464Z",
+          "createdAt": "2026-07-03T10:50:30.506Z",
+          "updatedAt": "2026-07-03T10:52:14.469Z"
+        },
+        {
+          "id": "6a47940ef182f9bda6211269",
+          "senderRole": "user",
+          "senderName": "avellin adjai",
+          "message": "huds",
+          "readByUserAt": "2026-07-03T10:50:53.844Z",
+          "readBySupplierAt": "2026-07-03T10:52:14.464Z",
+          "createdAt": "2026-07-03T10:50:54.054Z",
+          "updatedAt": "2026-07-03T10:52:14.469Z"
+        },
+        {
+          "id": "6a479426f182f9bda6211306",
+          "senderRole": "user",
+          "senderName": "avellin adjai",
+          "message": "Demande boutique pour good: 5 article(s) sélectionné(s) chez Test.",
+          "readByUserAt": "2026-07-03T10:51:17.806Z",
+          "readBySupplierAt": "2026-07-03T10:52:14.464Z",
+          "createdAt": "2026-07-03T10:51:18.019Z",
+          "updatedAt": "2026-07-03T10:52:14.469Z"
+        },
+        {
+          "id": "6a47942ef182f9bda621137c",
+          "senderRole": "user",
+          "senderName": "avellin adjai",
+          "message": "bonjour",
+          "readByUserAt": "2026-07-03T10:51:26.306Z",
+          "readBySupplierAt": "2026-07-03T10:52:14.464Z",
+          "createdAt": "2026-07-03T10:51:26.516Z",
+          "updatedAt": "2026-07-03T10:52:14.469Z"
+        },
+        {
+          "id": "6a47949ef182f9bda62114ef",
+          "senderRole": "supplier",
+          "senderName": "Test",
+          "message": "Merci",
+          "readByUserAt": "2026-07-03T11:25:07.711Z",
+          "readBySupplierAt": "2026-07-03T10:53:18.539Z",
+          "createdAt": "2026-07-03T10:53:18.540Z",
+          "updatedAt": "2026-07-03T11:25:07.719Z"
+        },
+        {
+          "id": "6a4794a1f182f9bda621153d",
+          "senderRole": "supplier",
+          "senderName": "Test",
+          "message": "Merci",
+          "readByUserAt": "2026-07-03T11:25:07.711Z",
+          "readBySupplierAt": "2026-07-03T10:53:21.128Z",
+          "createdAt": "2026-07-03T10:53:21.132Z",
+          "updatedAt": "2026-07-03T11:25:07.719Z"
+        },
+        {
+          "id": "6a479d0df2822947791a3551",
+          "senderRole": "user",
+          "senderName": "avellin adjai",
+          "message": "Bonjiorno",
+          "readByUserAt": "2026-07-03T11:29:17.568Z",
+          "readBySupplierAt": "2026-07-03T16:29:06.540Z",
+          "createdAt": "2026-07-03T11:29:17.779Z",
+          "updatedAt": "2026-07-03T16:29:06.548Z"
+        },
+        {
+          "id": "6a479d7af2822947791a36e1",
+          "senderRole": "user",
+          "senderName": "avellin adjai",
+          "message": "Demande boutique pour good: 5 article(s) sélectionné(s) chez Test.",
+          "readByUserAt": "2026-07-03T11:31:06.416Z",
+          "readBySupplierAt": "2026-07-03T16:29:06.540Z",
+          "createdAt": "2026-07-03T11:31:06.633Z",
+          "updatedAt": "2026-07-03T16:29:06.548Z"
+        },
+        {
+          "id": "6a479d80f2822947791a378a",
+          "senderRole": "user",
+          "senderName": "avellin adjai",
+          "message": "nicos",
+          "readByUserAt": "2026-07-03T11:31:12.463Z",
+          "readBySupplierAt": "2026-07-03T16:29:06.540Z",
+          "createdAt": "2026-07-03T11:31:12.673Z",
+          "updatedAt": "2026-07-03T16:29:06.548Z"
+        },
+        {
+          "id": "6a47a025f2822947791a3a42",
+          "senderRole": "user",
+          "senderName": "avellin adjai",
+          "message": "Demande boutique pour , sznd: 1 article(s) sélectionné(s) chez Test.",
+          "readByUserAt": "2026-07-03T11:42:28.906Z",
+          "readBySupplierAt": "2026-07-03T16:29:06.540Z",
+          "createdAt": "2026-07-03T11:42:29.113Z",
+          "updatedAt": "2026-07-03T16:29:06.548Z"
+        },
+        {
+          "id": "6a47a02df2822947791a3b4d",
+          "senderRole": "user",
+          "senderName": "avellin adjai",
+          "message": "salut",
+          "readByUserAt": "2026-07-03T11:42:37.508Z",
+          "readBySupplierAt": "2026-07-03T16:29:06.540Z",
+          "createdAt": "2026-07-03T11:42:37.719Z",
+          "updatedAt": "2026-07-03T16:29:06.548Z"
+        },
+        {
+          "id": "6a47ab8ef2822947791a3f8b",
+          "senderRole": "user",
+          "senderName": "avellin adjai",
+          "message": "Demande boutique pour cjkjc: 4 article(s) sélectionné(s) chez Test.",
+          "readByUserAt": "2026-07-03T12:31:10.667Z",
+          "readBySupplierAt": "2026-07-03T16:29:06.540Z",
+          "createdAt": "2026-07-03T12:31:10.950Z",
+          "updatedAt": "2026-07-03T16:29:06.548Z"
+        },
+        {
+          "id": "6a47abe2f2822947791a40b0",
+          "senderRole": "user",
+          "senderName": "avellin adjai",
+          "message": "ugygfuhj",
+          "readByUserAt": "2026-07-03T12:32:33.868Z",
+          "readBySupplierAt": "2026-07-03T16:29:06.540Z",
+          "createdAt": "2026-07-03T12:32:34.100Z",
+          "updatedAt": "2026-07-03T16:29:06.548Z"
+        },
+        {
+          "id": "6a47ac28f2822947791a42b1",
+          "senderRole": "user",
+          "senderName": "avellin adjai",
+          "message": "Demande boutique pour cjkjc: 4 article(s) sélectionné(s) chez Test.",
+          "readByUserAt": "2026-07-03T12:33:44.448Z",
+          "readBySupplierAt": "2026-07-03T16:29:06.540Z",
+          "createdAt": "2026-07-03T12:33:44.659Z",
+          "updatedAt": "2026-07-03T16:29:06.548Z"
+        },
+        {
+          "id": "6a4cb906a117ce10488fdb33",
+          "senderRole": "user",
+          "senderName": "avellin adjai",
+          "message": "Demande boutique pour ffk chez Test.",
+          "readByUserAt": "2026-07-07T08:29:58.001Z",
+          "readBySupplierAt": "2026-07-07T08:31:23.732Z",
+          "createdAt": "2026-07-07T08:29:58.218Z",
+          "updatedAt": "2026-07-07T08:31:23.738Z"
+        },
+        {
+          "id": "6a4cb90fa117ce10488fdc1e",
+          "senderRole": "user",
+          "senderName": "avellin adjai",
+          "message": "saluto",
+          "readByUserAt": "2026-07-07T08:30:06.807Z",
+          "readBySupplierAt": "2026-07-07T08:31:23.732Z",
+          "createdAt": "2026-07-07T08:30:07.013Z",
+          "updatedAt": "2026-07-07T08:31:23.738Z"
+        },
+        {
+          "id": "6a4cb965a117ce10488fde8a",
+          "senderRole": "supplier",
+          "senderName": "Test",
+          "message": "Que tal ?",
+          "readByUserAt": "2026-07-07T08:31:54.052Z",
+          "readBySupplierAt": "2026-07-07T08:31:33.361Z",
+          "createdAt": "2026-07-07T08:31:33.369Z",
+          "updatedAt": "2026-07-07T08:31:54.061Z"
+        },
+        {
+          "id": "6a4cb967a117ce10488fdf18",
+          "senderRole": "supplier",
+          "senderName": "Test",
+          "message": "Que tal ?",
+          "readByUserAt": "2026-07-07T08:31:54.052Z",
+          "readBySupplierAt": "2026-07-07T08:31:35.818Z",
+          "createdAt": "2026-07-07T08:31:35.824Z",
+          "updatedAt": "2026-07-07T08:31:54.062Z"
+        },
+        {
+          "id": "6a4cb9a4a117ce10488fe42a",
+          "senderRole": "supplier",
+          "senderName": "Test",
+          "message": "Bien ?",
+          "readByUserAt": "2026-07-07T08:32:42.190Z",
+          "readBySupplierAt": "2026-07-07T08:32:36.965Z",
+          "createdAt": "2026-07-07T08:32:36.971Z",
+          "updatedAt": "2026-07-07T08:32:42.200Z"
+        },
+        {
+          "id": "6a4cb9a8a117ce10488fe536",
+          "senderRole": "supplier",
+          "senderName": "Test",
+          "message": "Bien ?",
+          "readByUserAt": "2026-07-07T08:32:42.190Z",
+          "readBySupplierAt": "2026-07-07T08:32:40.851Z",
+          "createdAt": "2026-07-07T08:32:40.859Z",
+          "updatedAt": "2026-07-07T08:32:42.200Z"
+        },
+        {
+          "id": "6a4cced575ea55f21b6db9ef",
+          "senderRole": "supplier",
+          "senderName": "Test",
+          "message": "time",
+          "readByUserAt": "2026-07-07T10:03:17.194Z",
+          "readBySupplierAt": "2026-07-07T10:03:01.220Z",
+          "createdAt": "2026-07-07T10:03:01.228Z",
+          "updatedAt": "2026-07-07T10:03:17.202Z"
+        },
+        {
+          "id": "6a4ce50095f0a7a04a4ee98d",
+          "senderRole": "user",
+          "senderName": "avellin adjai",
+          "message": "Demande boutique pour hibiv: 2 article(s) sélectionné(s) chez Test.",
+          "readByUserAt": "2026-07-07T11:37:36.532Z",
+          "readBySupplierAt": null,
+          "createdAt": "2026-07-07T11:37:36.820Z",
+          "updatedAt": "2026-07-07T11:37:36.820Z"
+        },
+        {
+          "id": "6a4ce50995f0a7a04a4eeab7",
+          "senderRole": "user",
+          "senderName": "avellin adjai",
+          "message": "ninnnunt",
+          "readByUserAt": "2026-07-07T11:37:45.304Z",
+          "readBySupplierAt": null,
+          "createdAt": "2026-07-07T11:37:45.517Z",
+          "updatedAt": "2026-07-07T11:37:45.517Z"
+        }
+      ],
+      "status": "Répondu",
+      "createdAt": "2026-06-30T15:30:15.785Z",
+      "sourceNotificationId": "6a43e107d7b050c87fe82b30",
+      "updatedAt": "2026-07-07T11:37:45.517Z",
+      "articleImages": [
+        {
+          "name": "junior",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/product-7db92f9a-eea8-46f5-8bdc-58f3566b95aa?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/product-7db92f9a-eea8-46f5-8bdc-58f3566b95aa"
+        },
+        {
+          "name": "junior",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/product-a4eb794b-a81c-4752-98fa-c61d332c8bd7?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/product-a4eb794b-a81c-4752-98fa-c61d332c8bd7"
+        },
+        {
+          "name": "junior",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/product-0cb44727-e048-4693-a361-b3d55fe11074?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/product-0cb44727-e048-4693-a361-b3d55fe11074"
+        },
+        {
+          "name": "junior",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/product-2e727a3a-9684-4d42-8639-b92e1dca056a?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/product-2e727a3a-9684-4d42-8639-b92e1dca056a"
+        },
+        {
+          "name": "junior",
+          "secure_url": "https://res.cloudinary.com/dtbhcuyil/image/upload/f_auto,q_auto/v1/archiprice/products/product-5f51498f-3812-4e35-abf9-bef078c2bc8e?_a=BAMAPqhK0",
+          "public_id": "archiprice/products/product-5f51498f-3812-4e35-abf9-bef078c2bc8e"
+        }
+      ]
+    },
     {
       "id": "6a3becc7d38ef779d9600576",
       "supplierId": "6a33d63f2e88d7fb9b1d02f2",
@@ -166,56 +580,6 @@
       "updatedAt": "2026-06-24T14:40:49.417Z"
     },
     {
-      "id": "6a3bec6cd38ef779d96004c9",
-      "supplierId": "6a33ff7daaff3061a5dcf1a2",
-      "supplierName": "jinuiop",
-      "supplierContact": "hospiceavell@gmail.com",
-      "clientId": "6a3be331d38ef779d96002f6",
-      "clientName": "miic",
-      "clientProfession": "Architecte",
-      "clientEmail": "miic@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a3be8fcd38ef779d9600306",
-      "projectName": "hgyu",
-      "simulationTotal": 6303990,
-      "simulationTotalLabel": "6 303 990 FCFA",
-      "articleCount": 2,
-      "categories": [
-        "Sanitaire",
-        "Mobilier"
-      ],
-      "selectedArticles": [
-        {
-          "id": "6a3be8fdd38ef779d9600308",
-          "name": "JBGYIU",
-          "category": "Sanitaire",
-          "unitPrice": 528990
-        },
-        {
-          "id": "6a3be8fdd38ef779d9600307",
-          "name": "Stalonne",
-          "category": "Mobilier",
-          "unitPrice": 5775000
-        }
-      ],
-      "type": "Demande",
-      "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
-      "messages": [
-        {
-          "id": "6a3bec6cd38ef779d96004ca",
-          "senderRole": "user",
-          "senderName": "miic",
-          "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
-          "createdAt": "2026-06-24T14:40:44.356Z",
-          "updatedAt": "2026-06-24T14:40:44.356Z"
-        }
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-24T14:40:44.356Z",
-      "sourceNotificationId": "6a3bec6cd38ef779d96004c9",
-      "updatedAt": "2026-06-24T14:40:44.356Z"
-    },
-    {
       "id": "6a3bec27d38ef779d960047d",
       "supplierId": "6a33d63f2e88d7fb9b1d02f2",
       "supplierName": "noon",
@@ -264,106 +628,6 @@
       "createdAt": "2026-06-24T14:39:35.031Z",
       "sourceNotificationId": "6a3bec27d38ef779d960047d",
       "updatedAt": "2026-06-24T14:39:35.031Z"
-    },
-    {
-      "id": "6a3beb87d38ef779d9600438",
-      "supplierId": "6a33ff7daaff3061a5dcf1a2",
-      "supplierName": "jinuiop",
-      "supplierContact": "hospiceavell@gmail.com",
-      "clientId": "6a3be331d38ef779d96002f6",
-      "clientName": "miic",
-      "clientProfession": "Architecte",
-      "clientEmail": "miic@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a3be8fcd38ef779d9600306",
-      "projectName": "hgyu",
-      "simulationTotal": 6303990,
-      "simulationTotalLabel": "6 303 990 FCFA",
-      "articleCount": 2,
-      "categories": [
-        "Sanitaire",
-        "Mobilier"
-      ],
-      "selectedArticles": [
-        {
-          "id": "6a3be8fdd38ef779d9600308",
-          "name": "JBGYIU",
-          "category": "Sanitaire",
-          "unitPrice": 528990
-        },
-        {
-          "id": "6a3be8fdd38ef779d9600307",
-          "name": "Stalonne",
-          "category": "Mobilier",
-          "unitPrice": 5775000
-        }
-      ],
-      "type": "Demande",
-      "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
-      "messages": [
-        {
-          "id": "6a3beb87d38ef779d9600439",
-          "senderRole": "user",
-          "senderName": "miic",
-          "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
-          "createdAt": "2026-06-24T14:36:55.671Z",
-          "updatedAt": "2026-06-24T14:36:55.671Z"
-        }
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-24T14:36:55.671Z",
-      "sourceNotificationId": "6a3beb87d38ef779d9600438",
-      "updatedAt": "2026-06-24T14:36:55.671Z"
-    },
-    {
-      "id": "6a3beb60d38ef779d96003fa",
-      "supplierId": "6a33ff7daaff3061a5dcf1a2",
-      "supplierName": "jinuiop",
-      "supplierContact": "hospiceavell@gmail.com",
-      "clientId": "6a3be331d38ef779d96002f6",
-      "clientName": "miic",
-      "clientProfession": "Architecte",
-      "clientEmail": "miic@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a3be8fcd38ef779d9600306",
-      "projectName": "hgyu",
-      "simulationTotal": 6303990,
-      "simulationTotalLabel": "6 303 990 FCFA",
-      "articleCount": 2,
-      "categories": [
-        "Sanitaire",
-        "Mobilier"
-      ],
-      "selectedArticles": [
-        {
-          "id": "6a3be8fdd38ef779d9600308",
-          "name": "JBGYIU",
-          "category": "Sanitaire",
-          "unitPrice": 528990
-        },
-        {
-          "id": "6a3be8fdd38ef779d9600307",
-          "name": "Stalonne",
-          "category": "Mobilier",
-          "unitPrice": 5775000
-        }
-      ],
-      "type": "Demande",
-      "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
-      "messages": [
-        {
-          "id": "6a3beb60d38ef779d96003fb",
-          "senderRole": "user",
-          "senderName": "miic",
-          "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
-          "createdAt": "2026-06-24T14:36:16.127Z",
-          "updatedAt": "2026-06-24T14:36:16.127Z"
-        }
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-24T14:36:16.127Z",
-      "sourceNotificationId": "6a3beb60d38ef779d96003fa",
-      "updatedAt": "2026-06-24T14:36:16.127Z"
     },
     {
       "id": "6a3bea9bd38ef779d96003c3",
@@ -416,56 +680,6 @@
       "updatedAt": "2026-06-24T14:32:59.458Z"
     },
     {
-      "id": "6a3bea7ed38ef779d9600393",
-      "supplierId": "6a33ff7daaff3061a5dcf1a2",
-      "supplierName": "jinuiop",
-      "supplierContact": "hospiceavell@gmail.com",
-      "clientId": "6a3be331d38ef779d96002f6",
-      "clientName": "miic",
-      "clientProfession": "Architecte",
-      "clientEmail": "miic@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a3be8fcd38ef779d9600306",
-      "projectName": "hgyu",
-      "simulationTotal": 6303990,
-      "simulationTotalLabel": "6 303 990 FCFA",
-      "articleCount": 2,
-      "categories": [
-        "Sanitaire",
-        "Mobilier"
-      ],
-      "selectedArticles": [
-        {
-          "id": "6a3be8fdd38ef779d9600308",
-          "name": "JBGYIU",
-          "category": "Sanitaire",
-          "unitPrice": 528990
-        },
-        {
-          "id": "6a3be8fdd38ef779d9600307",
-          "name": "Stalonne",
-          "category": "Mobilier",
-          "unitPrice": 5775000
-        }
-      ],
-      "type": "Demande",
-      "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
-      "messages": [
-        {
-          "id": "6a3bea7ed38ef779d9600394",
-          "senderRole": "user",
-          "senderName": "miic",
-          "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
-          "createdAt": "2026-06-24T14:32:30.273Z",
-          "updatedAt": "2026-06-24T14:32:30.273Z"
-        }
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-24T14:32:30.273Z",
-      "sourceNotificationId": "6a3bea7ed38ef779d9600393",
-      "updatedAt": "2026-06-24T14:32:30.273Z"
-    },
-    {
       "id": "6a3bea60d38ef779d960036a",
       "supplierId": "6a33d63f2e88d7fb9b1d02f2",
       "supplierName": "noon",
@@ -516,56 +730,6 @@
       "updatedAt": "2026-06-24T14:32:00.883Z"
     },
     {
-      "id": "6a3bea27d38ef779d960032a",
-      "supplierId": "6a33ff7daaff3061a5dcf1a2",
-      "supplierName": "jinuiop",
-      "supplierContact": "hospiceavell@gmail.com",
-      "clientId": "6a3be331d38ef779d96002f6",
-      "clientName": "miic",
-      "clientProfession": "Architecte",
-      "clientEmail": "miic@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a3be8fcd38ef779d9600306",
-      "projectName": "hgyu",
-      "simulationTotal": 6303990,
-      "simulationTotalLabel": "6 303 990 FCFA",
-      "articleCount": 2,
-      "categories": [
-        "Sanitaire",
-        "Mobilier"
-      ],
-      "selectedArticles": [
-        {
-          "id": "6a3be8fdd38ef779d9600308",
-          "name": "JBGYIU",
-          "category": "Sanitaire",
-          "unitPrice": 528990
-        },
-        {
-          "id": "6a3be8fdd38ef779d9600307",
-          "name": "Stalonne",
-          "category": "Mobilier",
-          "unitPrice": 5775000
-        }
-      ],
-      "type": "Demande",
-      "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
-      "messages": [
-        {
-          "id": "6a3bea27d38ef779d960032b",
-          "senderRole": "user",
-          "senderName": "miic",
-          "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
-          "createdAt": "2026-06-24T14:31:03.222Z",
-          "updatedAt": "2026-06-24T14:31:03.222Z"
-        }
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-24T14:31:03.222Z",
-      "sourceNotificationId": "6a3bea27d38ef779d960032a",
-      "updatedAt": "2026-06-24T14:31:03.222Z"
-    },
-    {
       "id": "6a3bea20d38ef779d9600319",
       "supplierId": "6a33d63f2e88d7fb9b1d02f2",
       "supplierName": "noon",
@@ -614,56 +778,6 @@
       "createdAt": "2026-06-24T14:30:56.873Z",
       "sourceNotificationId": "6a3bea20d38ef779d9600319",
       "updatedAt": "2026-06-24T14:30:56.873Z"
-    },
-    {
-      "id": "6a3bea19d38ef779d960030a",
-      "supplierId": "6a33ff7daaff3061a5dcf1a2",
-      "supplierName": "jinuiop",
-      "supplierContact": "hospiceavell@gmail.com",
-      "clientId": "6a3be331d38ef779d96002f6",
-      "clientName": "miic",
-      "clientProfession": "Architecte",
-      "clientEmail": "miic@gmail.com",
-      "clientPhone": "Non renseigné",
-      "projectId": "6a3be8fcd38ef779d9600306",
-      "projectName": "hgyu",
-      "simulationTotal": 6303990,
-      "simulationTotalLabel": "6 303 990 FCFA",
-      "articleCount": 2,
-      "categories": [
-        "Sanitaire",
-        "Mobilier"
-      ],
-      "selectedArticles": [
-        {
-          "id": "6a3be8fdd38ef779d9600308",
-          "name": "JBGYIU",
-          "category": "Sanitaire",
-          "unitPrice": 528990
-        },
-        {
-          "id": "6a3be8fdd38ef779d9600307",
-          "name": "Stalonne",
-          "category": "Mobilier",
-          "unitPrice": 5775000
-        }
-      ],
-      "type": "Demande",
-      "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
-      "messages": [
-        {
-          "id": "6a3bea19d38ef779d960030b",
-          "senderRole": "user",
-          "senderName": "miic",
-          "message": "Demande boutique pour hgyu: 2 article(s) sélectionné(s) chez jinuiop.",
-          "createdAt": "2026-06-24T14:30:49.296Z",
-          "updatedAt": "2026-06-24T14:30:49.296Z"
-        }
-      ],
-      "status": "Nouveau",
-      "createdAt": "2026-06-24T14:30:49.296Z",
-      "sourceNotificationId": "6a3bea19d38ef779d960030a",
-      "updatedAt": "2026-06-24T14:30:49.296Z"
     }
   ],
   "taxonomies": {
@@ -775,20 +889,20 @@
   "supplierSettings": {
     "profile": {},
     "shopProfile": {
-      "name": "mine",
-      "email": "mine@gmail.com",
-      "phone": "551523156130"
+      "name": "Test",
+      "email": "tes@gmail.com",
+      "phone": "01010145212"
     },
     "settings": {
       "location": "Bénin",
-      "companyName": "mine",
+      "companyName": "Test",
       "address": "",
-      "neighborhood": "usui",
+      "neighborhood": "Cadjehoun",
       "city": "Bénin",
-      "timezone": "(GMT +02:00) Afrique australe",
+      "timezone": "(GMT +01:00) Afrique centrale et de l’Ouest",
       "language": "Français"
     },
-    "savedAt": "2026-06-23T11:12:13.123Z"
+    "savedAt": "2026-07-03T16:33:17.728Z"
   },
   "adminSettings": {
     "profile": {
@@ -850,6 +964,6 @@
         "content": "ArchiPrice conserve les informations nécessaires à la traçabilité des actions, aux audits et à la continuité des services."
       }
     ],
-    "savedAt": "2026-06-23T11:15:10.721Z"
+    "savedAt": "2026-07-01T10:32:59.157Z"
   }
 }

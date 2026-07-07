@@ -34,33 +34,97 @@ function getDonutDisplayValue(value, total) {
 
 function buildMonthActivity(items = []) {
   const monthFormatter = new Intl.DateTimeFormat('fr-FR', { month: 'short' });
-  return Array.from({ length: 8 }, (_, index) => {
-    const date = new Date();
-    date.setMonth(date.getMonth() - (7 - index));
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    const monthItems = items.filter((item) => {
-      const itemDate = new Date(item.exportedAt || item.createdAt || item.updatedAt || item.date || item.submittedAt);
+  // Axe fixe : janvier → décembre de l'année courante.
+  // Le filtre cherche le mois ET l'année exacts de chaque item —
+  // il n'est pas limité à l'année courante, donc les inscriptions
+  // des années précédentes (ex. 2025) apparaissent sur leur mois respectif
+  // si ce mois existe dans la fenêtre jan→déc courante.
+  // Pour afficher l'historique multi-années, on regroupe par mois (index 0-11)
+  // toutes les inscriptions, quelle que soit l'année.
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  return Array.from({ length: 12 }, (_, index) => {
+    const date = new Date(currentYear, index, 1);
+    const isFuture = index > currentMonth;
+    const monthKey = `${currentYear}-${String(index + 1).padStart(2, '0')}`;
+
+    // Compte tous les items dont le mois (0-indexed) correspond, toutes années confondues.
+    // Cela permet d'afficher les inscriptions passées (2024, 2025) sur leur mois.
+    const monthItems = isFuture ? [] : items.filter((item) => {
+      const itemDate = new Date(
+        item.exportedAt || item.createdAt || item.updatedAt || item.date || item.submittedAt,
+      );
       if (Number.isNaN(itemDate.getTime())) return false;
-      return itemDate.getFullYear() === date.getFullYear() && itemDate.getMonth() === date.getMonth();
+      return itemDate.getMonth() === index; // toutes années confondues
     });
 
     return {
       key: monthKey,
       label: monthFormatter.format(date).replace('.', ''),
       count: monthItems.length,
+      isFuture,
     };
   });
 }
 
 function buildActivityPath(activity = []) {
-  const maxCount = Math.max(...activity.map((item) => item.count), 1);
+  // Modèle : courbe continue connectant TOUS les mois (comme Rainfall vs Temperature).
+  // Même les mois à zéro sont sur la ligne — pas de segments brisés.
+  // Échelle linéaire normalisée sur le maximum — fidèle aux valeurs réelles.
+  const counts = activity.map((item) => item.count);
+  const maxCount = Math.max(...counts, 1);
+  const FLOOR_Y = 162;   // plancher SVG (y max visible)
+  const TOP_Y = 30;      // sommet SVG (y min)
+  const CHART_HEIGHT = FLOOR_Y - TOP_Y; // 132px
+
+  // Tous les points incluant les mois futurs (mis au plancher)
   const points = activity.map((item, index) => {
     const x = 30 + ((364 / Math.max(activity.length - 1, 1)) * index);
-    const y = 162 - ((item.count / maxCount) * 124);
+    const y = item.isFuture
+      ? FLOOR_Y
+      : FLOOR_Y - ((item.count / maxCount) * CHART_HEIGHT);
     return { ...item, x: Number(x.toFixed(1)), y: Number(y.toFixed(1)) };
   });
-  const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'}${point.x} ${point.y}`).join(' ');
-  const fillPath = `${linePath} L394 184 L30 184 Z`;
+
+  if (points.length === 0) {
+    return { points, linePath: '', fillPath: '' };
+  }
+
+  // Courbe lisse via approximation Catmull-Rom → Bézier cubique.
+  // Chaque segment utilise les points voisins comme points de contrôle
+  // pour produire une courbe continue et naturelle (comme le modèle image).
+  function catmullRomToBezier(pts) {
+    if (pts.length < 2) return '';
+    const TENSION = 0.4; // 0 = angles droits, 0.5 = spline très lisse
+
+    let path = `M${pts[0].x} ${pts[0].y}`;
+
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[Math.max(0, i - 1)];
+      const p1 = pts[i];
+      const p2 = pts[i + 1];
+      const p3 = pts[Math.min(pts.length - 1, i + 2)];
+
+      // Points de contrôle Bézier dérivés de Catmull-Rom
+      const cp1x = p1.x + (p2.x - p0.x) * TENSION;
+      const cp1y = p1.y + (p2.y - p0.y) * TENSION;
+      const cp2x = p2.x - (p3.x - p1.x) * TENSION;
+      const cp2y = p2.y - (p3.y - p1.y) * TENSION;
+
+      path += ` C${cp1x.toFixed(1)} ${cp1y.toFixed(1)},${cp2x.toFixed(1)} ${cp2y.toFixed(1)},${p2.x} ${p2.y}`;
+    }
+
+    return path;
+  }
+
+  const linePath = catmullRomToBezier(points);
+
+  // Fill : ferme le polygone sous la courbe complète
+  const fillPath = linePath
+    ? `${linePath} L${points.at(-1).x} 184 L${points[0].x} 184 Z`
+    : '';
 
   return { points, linePath, fillPath };
 }
@@ -148,6 +212,8 @@ export default function Dashboard() {
   const [hiddenSimulationIds, setHiddenSimulationIds] = useState(readHiddenSimulationIds);
   const [adminUsers, setAdminUsers] = useState([]);
   const [adminSuppliers, setAdminSuppliers] = useState([]);
+  const [hoveredUserPoint, setHoveredUserPoint] = useState(null);
+  const [hoveredSupplierPoint, setHoveredSupplierPoint] = useState(null);
 
   const loadSupportItems = useCallback(() => {
     fetchAdminSupportItems()
@@ -396,7 +462,52 @@ export default function Dashboard() {
             </Text>
           </div>
           <div className="line-chart" aria-label="Graphique d'activité backoffice">
-            <svg viewBox="0 0 420 210" role="img">
+            <svg
+              viewBox="0 0 420 210"
+              role="img"
+              style={{ overflow: 'visible' }}
+              onMouseLeave={() => { setHoveredUserPoint(null); setHoveredSupplierPoint(null); }}
+              onMouseMove={(e) => {
+                const svgEl = e.currentTarget;
+                const rect = svgEl.getBoundingClientRect();
+                // Convertir les coordonnées écran en coordonnées viewBox (0-420)
+                const svgW = rect.width || 420;
+                const svgH = rect.height || 210;
+                const mouseX = ((e.clientX - rect.left) / svgW) * 420;
+                const mouseY = ((e.clientY - rect.top) / svgH) * 210;
+
+                const uPts = userActivityChart.points.filter((p) => !p.isFuture);
+                const sPts = supplierActivityChart.points.filter((p) => !p.isFuture);
+
+                // Trouver le point le plus proche en X pour chaque série
+                const closestUser = uPts.length > 0
+                  ? uPts.reduce((a, b) => Math.abs(b.x - mouseX) < Math.abs(a.x - mouseX) ? b : a)
+                  : null;
+                const closestSupplier = sPts.length > 0
+                  ? sPts.reduce((a, b) => Math.abs(b.x - mouseX) < Math.abs(a.x - mouseX) ? b : a)
+                  : null;
+
+                if (!closestUser && !closestSupplier) return;
+
+                // Distance en Y du curseur à chaque courbe
+                const distUser = closestUser ? Math.abs(closestUser.y - mouseY) : Infinity;
+                const distSupplier = closestSupplier ? Math.abs(closestSupplier.y - mouseY) : Infinity;
+
+                // Seuil de proximité : 40px en coordonnées viewBox
+                const THRESHOLD = 40;
+
+                if (distUser <= distSupplier && distUser < THRESHOLD) {
+                  setHoveredUserPoint(closestUser);
+                  setHoveredSupplierPoint(null);
+                } else if (distSupplier < distUser && distSupplier < THRESHOLD) {
+                  setHoveredSupplierPoint(closestSupplier);
+                  setHoveredUserPoint(null);
+                } else {
+                  setHoveredUserPoint(null);
+                  setHoveredSupplierPoint(null);
+                }
+              }}
+            >
               <defs>
                 <linearGradient id="activityUserFill" x1="0" x2="0" y1="0" y2="1">
                   <stop offset="0%" stopColor="#ffac4a" stopOpacity="0.55" />
@@ -407,29 +518,102 @@ export default function Dashboard() {
                   <stop offset="100%" stopColor="#5877f7" stopOpacity="0.01" />
                 </linearGradient>
               </defs>
-              <path
-                className="chart-fill chart-fill--supplier"
-                d={supplierActivityChart.fillPath}
-              />
-              <path
-                className="chart-fill chart-fill--user"
-                d={userActivityChart.fillPath}
-              />
-              <path
-                className="chart-line chart-line--supplier"
-                d={supplierActivityChart.linePath}
-              />
-              <path
-                className="chart-line chart-line--user"
-                d={userActivityChart.linePath}
-                style={{ strokeWidth: userStrokeWidth }}
-              />
+
+              {/* Zone de capture de souris sur tout le SVG */}
+              <rect x={0} y={0} width={420} height={184} fill="transparent" style={{ cursor: 'crosshair' }} />
+
+              <path className="chart-fill chart-fill--supplier" d={supplierActivityChart.fillPath} />
+              <path className="chart-fill chart-fill--user" d={userActivityChart.fillPath} />
+              <path className="chart-line chart-line--supplier" d={supplierActivityChart.linePath} />
+              <path className="chart-line chart-line--user" d={userActivityChart.linePath} style={{ strokeWidth: userStrokeWidth }} />
+
+              {/* Cercles supplier */}
               {supplierActivityChart.points.map((point) => (
-                <circle key={`supplier-${point.key}`} className="chart-point--supplier" cx={point.x} cy={point.y} r={point.count ? 4 : 2.5} />
+                <circle
+                  key={`supplier-${point.key}`}
+                  className="chart-point--supplier"
+                  cx={point.x}
+                  cy={point.y}
+                  r={point.count > 0 ? 4 : 2.5}
+                  opacity={point.isFuture ? 0.18 : point.count > 0 ? 1 : 0.45}
+                />
               ))}
+
+              {/* Cercles user */}
               {userActivityChart.points.map((point) => (
-                <circle key={`user-${point.key}`} className="chart-point--user" cx={point.x} cy={point.y} r={point.count ? 5 : 3.5} />
+                <circle
+                  key={`user-${point.key}`}
+                  className="chart-point--user"
+                  cx={point.x}
+                  cy={point.y}
+                  r={point.count > 0 ? 5 : 3.5}
+                  opacity={point.isFuture ? 0.18 : point.count > 0 ? 1 : 0.45}
+                />
               ))}
+
+              {/* Tooltip supplier */}
+              {hoveredSupplierPoint && (() => {
+                const now = new Date();
+                const monthLabel = hoveredSupplierPoint.label
+                  ? `${hoveredSupplierPoint.label} ${now.getFullYear()}`
+                  : hoveredSupplierPoint.key || '';
+                const countLabel = hoveredSupplierPoint.count > 0
+                  ? `${hoveredSupplierPoint.count} boutique${hoveredSupplierPoint.count > 1 ? 's' : ''}`
+                  : 'Aucune boutique';
+                const tooltipWidth = Math.max(monthLabel.length, countLabel.length) * 7 + 20;
+                const tooltipHeight = 38;
+                const anchorY = hoveredSupplierPoint.count > 0 ? hoveredSupplierPoint.y : 162;
+                const tx = Math.min(Math.max(hoveredSupplierPoint.x - tooltipWidth / 2, 4), 420 - tooltipWidth - 4);
+                const ty = anchorY - tooltipHeight - 10;
+                return (
+                  <g style={{ pointerEvents: 'none' }}>
+                    <rect x={tx} y={ty} width={tooltipWidth} height={tooltipHeight} rx={6} ry={6} fill="#1d2433" opacity={0.9} />
+                    <text x={tx + tooltipWidth / 2} y={ty + 14} textAnchor="middle" fill="#fff" fontSize="11" fontWeight="700" fontFamily="inherit">
+                      {monthLabel}
+                    </text>
+                    <text x={tx + tooltipWidth / 2} y={ty + 28} textAnchor="middle"
+                      fill={hoveredSupplierPoint.count > 0 ? '#5877f7' : '#94a3b8'} fontSize="10" fontWeight="600" fontFamily="inherit">
+                      {countLabel}
+                    </text>
+                    <line x1={hoveredSupplierPoint.x} y1={anchorY + (hoveredSupplierPoint.count > 0 ? 6 : 0)}
+                      x2={hoveredSupplierPoint.x} y2={162}
+                      stroke="#5877f7" strokeWidth={1} strokeDasharray="3 3"
+                      opacity={hoveredSupplierPoint.count > 0 ? 0.5 : 0.25} />
+                  </g>
+                );
+              })()}
+
+              {/* Tooltip user */}
+              {hoveredUserPoint && (() => {
+                const now = new Date();
+                const monthLabel = hoveredUserPoint.label
+                  ? `${hoveredUserPoint.label} ${now.getFullYear()}`
+                  : hoveredUserPoint.key || '';
+                const countLabel = hoveredUserPoint.count > 0
+                  ? `${hoveredUserPoint.count} utilisateur${hoveredUserPoint.count > 1 ? 's' : ''}`
+                  : 'Aucun utilisateur';
+                const tooltipWidth = Math.max(monthLabel.length, countLabel.length) * 7 + 20;
+                const tooltipHeight = 38;
+                const anchorY = hoveredUserPoint.count > 0 ? hoveredUserPoint.y : 162;
+                const tx = Math.min(Math.max(hoveredUserPoint.x - tooltipWidth / 2, 4), 420 - tooltipWidth - 4);
+                const ty = anchorY - tooltipHeight - 10;
+                return (
+                  <g style={{ pointerEvents: 'none' }}>
+                    <rect x={tx} y={ty} width={tooltipWidth} height={tooltipHeight} rx={6} ry={6} fill="#1d2433" opacity={0.9} />
+                    <text x={tx + tooltipWidth / 2} y={ty + 14} textAnchor="middle" fill="#fff" fontSize="11" fontWeight="700" fontFamily="inherit">
+                      {monthLabel}
+                    </text>
+                    <text x={tx + tooltipWidth / 2} y={ty + 28} textAnchor="middle"
+                      fill={hoveredUserPoint.count > 0 ? '#ffac4a' : '#94a3b8'} fontSize="10" fontWeight="600" fontFamily="inherit">
+                      {countLabel}
+                    </text>
+                    <line x1={hoveredUserPoint.x} y1={anchorY + (hoveredUserPoint.count > 0 ? 6 : 0)}
+                      x2={hoveredUserPoint.x} y2={162}
+                      stroke="#ff943b" strokeWidth={1} strokeDasharray="3 3"
+                      opacity={hoveredUserPoint.count > 0 ? 0.5 : 0.25} />
+                  </g>
+                );
+              })()}
             </svg>
             <div className="chart-axis">
               {userMonthActivity.map((item, index) => (

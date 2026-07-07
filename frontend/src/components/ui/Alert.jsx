@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from './Icon';
 import './Alert.css';
@@ -17,9 +17,13 @@ export default function Alert({
   icon,
   onClose,
   className = '',
-  autoCloseMs = 3500,
+  autoCloseMs = 4000,
   layout = 'toast',
 }) {
+  const dismissSignature = [variant, title, children]
+    .map((value) => (typeof value === 'string' || typeof value === 'number' ? String(value) : ''))
+    .join('|');
+  const [dismissedSignature, setDismissedSignature] = useState('');
   const classes = [
     'alert',
     `alert--${variant}`,
@@ -27,16 +31,25 @@ export default function Alert({
     className,
   ].filter(Boolean).join(' ');
   const displayIcon = icon || <Icon name={DEFAULT_ICONS[variant] || DEFAULT_ICONS.info} size={24} />;
+  const handleClose = useCallback(() => {
+    if (onClose) {
+      onClose();
+      return;
+    }
+    setDismissedSignature(dismissSignature);
+  }, [dismissSignature, onClose]);
 
   useEffect(() => {
-    if (!onClose || !autoCloseMs || layout !== 'toast') return undefined;
+    if (!autoCloseMs || layout !== 'toast') return undefined;
 
     const timer = window.setTimeout(() => {
-      onClose();
+      handleClose();
     }, autoCloseMs);
 
     return () => window.clearTimeout(timer);
-  }, [autoCloseMs, layout, onClose]);
+  }, [autoCloseMs, handleClose, layout]);
+
+  if (dismissedSignature === dismissSignature) return null;
 
   const alertNode = (
     <div className={classes} role="alert">
@@ -47,10 +60,10 @@ export default function Alert({
           <div className="alert__message">{children}</div>
         </div>
       </div>
-      {onClose && (
+      {(onClose || layout === 'toast') && (
         <button
           className="alert__close"
-          onClick={onClose}
+          onClick={handleClose}
           type="button"
           aria-label="Fermer"
         >

@@ -18,20 +18,8 @@ function formatFCFA(amount) {
   return `${new Intl.NumberFormat('fr-FR').format(amount)} FCFA`;
 }
 
-function formatBudgetInput(value) {
-  const amount = parseAmount(value);
-  return amount > 0 ? formatFCFA(amount) : '';
-}
-
-function buildProjectDescription(roomType, budget) {
-  const formattedBudget = formatBudgetInput(budget);
-
-  return [
-    `Type de pièce : ${roomType}`,
-    formattedBudget ? `Estimation budget : ${formattedBudget}` : '',
-  ]
-    .filter(Boolean)
-    .join('\n');
+function buildProjectDescription(roomType) {
+  return `Type de pièce : ${roomType}`;
 }
 
 export default function Newproject({ isOpen, onCancel, onCreated, roomTypes = [], deferCreation = false }) {
@@ -79,13 +67,23 @@ export default function Newproject({ isOpen, onCancel, onCreated, roomTypes = []
 
     const effectiveRoomType = roomType === CUSTOM_ROOM_VALUE ? customRoomType.trim() : roomType;
 
-    if (!effectiveRoomType || !budget.trim()) {
-      setError('Tous les champs sont requis');
+    if (!effectiveRoomType) {
+      setError('Type de pièce requis');
       return;
     }
 
     if (isNumericOnly(effectiveRoomType)) {
       setError('Le type de pièce doit contenir du texte.');
+      return;
+    }
+
+    if (!budget.trim()) {
+      setError('Budget cible requis');
+      return;
+    }
+
+    if (parseAmount(budget) <= 0) {
+      setError('Le budget doit être supérieur à 0');
       return;
     }
 
@@ -96,15 +94,21 @@ export default function Newproject({ isOpen, onCancel, onCreated, roomTypes = []
     try {
       const projectPayload = {
         name,
-        description: buildProjectDescription(effectiveRoomType, budget.trim()),
+        description: buildProjectDescription(effectiveRoomType),
         status: 'draft',
+        budgetTarget: parseAmount(budget),
       };
-      const project = deferCreation ? projectPayload : await createProject(projectPayload);
-      setActionMessage(deferCreation ? 'Informations du projet enregistrées.' : 'Projet créé avec succès.');
+      const project = await createProject(projectPayload);
+
+      if (String(project?.id || '').startsWith('local-project-')) {
+        throw new Error('La base de données doit être disponible pour démarrer le projet.');
+      }
+
+      setActionMessage('Projet créé avec succès.');
       resetForm();
       onCreated?.(project);
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Impossible de créer le projet'));
+      setError(getApiErrorMessage(err, 'Impossible de créer le projet. Vérifiez votre connexion et réessayez.'));
     } finally {
       setSubmitting(false);
     }
@@ -207,7 +211,7 @@ export default function Newproject({ isOpen, onCancel, onCreated, roomTypes = []
             type="submit"
             variant="success"
             isLoading={submitting}
-            disabled={!projectName.trim() || !budget.trim() || (roomType === CUSTOM_ROOM_VALUE && !customRoomType.trim())}
+            disabled={!projectName.trim() || !roomType || !budget.trim() || (roomType === CUSTOM_ROOM_VALUE && !customRoomType.trim())}
           >
             Valider
           </Button>

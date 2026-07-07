@@ -4,7 +4,7 @@ import Icon from '../Icon';
 import { getApiErrorMessage } from '../../../services/api';
 import './PasswordSettingsModal.css';
 
-export default function PasswordSettingsModal({ onClose, onSubmit }) {
+export default function PasswordSettingsModal({ labels, onClose, onSubmit }) {
   const [form, setForm] = useState({
     currentPassword: '',
     newPassword: '',
@@ -27,7 +27,7 @@ export default function PasswordSettingsModal({ onClose, onSubmit }) {
     event.preventDefault();
 
     if (form.newPassword !== form.confirmPassword) {
-      setError('Les nouveaux mots de passe ne correspondent pas.');
+      setError(labels.passwordModal.mismatch);
       return;
     }
 
@@ -39,10 +39,10 @@ export default function PasswordSettingsModal({ onClose, onSubmit }) {
         currentPassword: form.currentPassword,
         newPassword: form.newPassword,
       });
-      setSuccessMessage('Mot de passe sauvegardé.');
+      setSuccessMessage(labels.passwordModal.saved);
       window.setTimeout(onClose, 500);
     } catch (apiError) {
-      setError(getApiErrorMessage(apiError, 'Impossible de modifier le mot de passe.'));
+      setError(getApiErrorMessage(apiError, labels.passwordModal.saveError));
     } finally {
       setIsSubmitting(false);
     }
@@ -53,10 +53,10 @@ export default function PasswordSettingsModal({ onClose, onSubmit }) {
       <form className="password-settings-modal" role="dialog" aria-modal="true" aria-labelledby="password-settings-title" onSubmit={submitPassword}>
         <header className="password-settings-modal__header">
           <div>
-            <span>Sécurité</span>
-            <h2 id="password-settings-title">Modifier le mot de passe</h2>
+            <span>{labels.passwordModal.eyebrow}</span>
+            <h2 id="password-settings-title">{labels.passwordModal.title}</h2>
           </div>
-          <button type="button" aria-label="Fermer" onClick={onClose}>
+          <button type="button" aria-label={labels.close} onClick={onClose}>
             <Icon name="Close" size="sm" />
           </button>
         </header>
@@ -74,7 +74,7 @@ export default function PasswordSettingsModal({ onClose, onSubmit }) {
           )}
 
           <label>
-            <span>Mot de passe actuel</span>
+            <span>{labels.passwordModal.currentPassword}</span>
             <input
               type="password"
               value={form.currentPassword}
@@ -86,7 +86,7 @@ export default function PasswordSettingsModal({ onClose, onSubmit }) {
           </label>
 
           <label>
-            <span>Nouveau mot de passe</span>
+            <span>{labels.passwordModal.newPassword}</span>
             <input
               type="password"
               value={form.newPassword}
@@ -98,7 +98,7 @@ export default function PasswordSettingsModal({ onClose, onSubmit }) {
           </label>
 
           <label>
-            <span>Confirmer le nouveau mot de passe</span>
+            <span>{labels.passwordModal.confirmPassword}</span>
             <input
               type="password"
               value={form.confirmPassword}
@@ -111,9 +111,9 @@ export default function PasswordSettingsModal({ onClose, onSubmit }) {
         </div>
 
         <footer className="password-settings-modal__footer">
-          <button type="button" onClick={onClose}>Annuler</button>
+          <button type="button" onClick={onClose}>{labels.cancel}</button>
           <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Sauvegarde...' : 'Sauvegarder'}
+            {isSubmitting ? labels.saving : labels.save}
           </button>
         </footer>
       </form>

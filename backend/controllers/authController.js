@@ -4,6 +4,7 @@ import Supplier from '../models/Supplier.js';
 import PasswordResetToken from '../models/PasswordResetToken.js';
 import { sendPasswordResetEmail } from '../services/emailService.js';
 import { publishCrudEvent } from '../services/realtimeService.js';
+import { cascadeDeleteUser } from '../services/userService.js';
 import generateToken from '../utils/generateToken.js';
 
 const PASSWORD_RESET_EXPIRES_MINUTES = 30;
@@ -119,9 +120,10 @@ async function register(req, res) {
   const existing = await User.findOne({ email: email.toLowerCase().trim() });
   if (existing) {
     if (existing.status === 'Supprimé') {
-      return res.status(400).json({ error: 'Cette adresse email a été supprimée. Contactez le support pour réactiver votre compte.' });
+      await cascadeDeleteUser(existing);
+    } else {
+      return res.status(400).json({ error: 'Un compte existe déjà avec cet email' });
     }
-    return res.status(400).json({ error: 'Un compte existe déjà avec cet email' });
   }
 
   if (normalizedAccountType === 'supplier' && !companyName?.trim()) {

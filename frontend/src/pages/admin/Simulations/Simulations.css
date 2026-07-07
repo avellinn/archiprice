@@ -205,14 +205,14 @@
   justify-content: center;
   width: 2rem;
   height: 2rem;
-  border: 1px solid var(--app-border-color);
+  border: 1px solid rgb(124, 119, 119);
   border-radius: 7px;
-  background: var(--app-card-background);
-  color: #dc2626;
+  background: #fff;
+  color: #2d2e35;
   cursor: pointer;
   opacity: 0;
   transform: translateX(0.25rem);
-  transition: opacity 0.18s ease, transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+  transition: opacity 0.18s ease, transform 0.18s ease, border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
 }
 
 .admin-simulations-list .ui-data-table tbody tr:hover .admin-simulations-delete,
@@ -223,8 +223,9 @@
 
 .admin-simulations-delete:hover,
 .admin-simulations-delete:focus-visible {
-  border-color: #fecaca;
-  background: #fff1f2;
+  border-color: #224b73;
+  background: #224b73;
+  color: #d1d3d4;
   outline: 0;
 }
 

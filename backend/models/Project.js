@@ -20,8 +20,13 @@ const projectSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['draft', 'active', 'archived'],
+      enum: ['draft', 'active', 'treated', 'archived'],
       default: 'draft',
+    },
+    budgetTarget: {
+      type: Number,
+      min: 0,
+      default: 0,
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,

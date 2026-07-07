@@ -46,33 +46,82 @@ function getDonutDisplayValue(value, total) {
 
 function buildMonthActivity(items = []) {
   const monthFormatter = new Intl.DateTimeFormat('fr-FR', { month: 'short' });
-  return Array.from({ length: 8 }, (_, index) => {
-    const date = new Date();
-    date.setMonth(date.getMonth() - (7 - index));
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    const monthItems = items.filter((item) => {
+  // Axe fixe : janvier → décembre de l'année courante.
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  return Array.from({ length: 12 }, (_, index) => {
+    const date = new Date(currentYear, index, 1);
+    const isFuture = index > currentMonth;
+    const monthKey = `${currentYear}-${String(index + 1).padStart(2, '0')}`;
+
+    const monthItems = isFuture ? [] : items.filter((item) => {
       const itemDate = new Date(item.createdAt || item.updatedAt || item.submittedAt || item.date);
       if (Number.isNaN(itemDate.getTime())) return false;
-      return itemDate.getFullYear() === date.getFullYear() && itemDate.getMonth() === date.getMonth();
+      return itemDate.getFullYear() === currentYear && itemDate.getMonth() === index;
     });
 
     return {
       key: monthKey,
       label: monthFormatter.format(date).replace('.', ''),
       count: monthItems.length,
+      isFuture,
     };
   });
 }
 
 function buildActivityPath(activity = []) {
-  const maxCount = Math.max(...activity.map((item) => item.count), 1);
+  const nonZeroCounts = activity.map((item) => item.count).filter((c) => c > 0);
+  const maxCount = nonZeroCounts.length > 0 ? Math.max(...nonZeroCounts) : 1;
+  const logMax = Math.log10(maxCount + 1);
+  const FLOOR_Y = 162;
+  const CHART_HEIGHT = 120;
+
   const points = activity.map((item, index) => {
     const x = 30 + ((364 / Math.max(activity.length - 1, 1)) * index);
-    const y = 162 - ((item.count / maxCount) * 124);
+    const y = item.count === 0 || item.isFuture
+      ? FLOOR_Y
+      : FLOOR_Y - ((Math.log10(item.count + 1) / logMax) * CHART_HEIGHT);
     return { ...item, x: Number(x.toFixed(1)), y: Number(y.toFixed(1)) };
   });
-  const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'}${point.x} ${point.y}`).join(' ');
-  const fillPath = `${linePath} L394 184 L30 184 Z`;
+
+  const pastPoints = points.filter((p) => !p.isFuture);
+
+  if (pastPoints.length === 0) {
+    return { points, linePath: '', fillPath: '' };
+  }
+
+  let linePath = '';
+  let fillPath = '';
+  let segmentPoints = [];
+
+  function flushSegment() {
+    if (segmentPoints.length === 0) return;
+
+    if (segmentPoints.length === 1) {
+      const p = segmentPoints[0];
+      linePath += (linePath ? ' ' : '') + `M${p.x} ${FLOOR_Y} L${p.x} ${p.y}`;
+      fillPath += (fillPath ? ' ' : '') + `M${p.x} ${FLOOR_Y} L${p.x} ${p.y} L${p.x + 0.1} ${p.y} L${p.x + 0.1} ${FLOOR_Y} Z`;
+    } else {
+      const seg = segmentPoints.map((sp, si) => `${si === 0 ? 'M' : 'L'}${sp.x} ${sp.y}`).join(' ');
+      linePath += (linePath ? ' ' : '') + seg;
+      fillPath += (fillPath ? ' ' : '')
+        + `${seg} L${segmentPoints.at(-1).x} ${FLOOR_Y} L${segmentPoints[0].x} ${FLOOR_Y} Z`;
+    }
+
+    segmentPoints = [];
+  }
+
+  for (const p of pastPoints) {
+    if (p.count > 0) {
+      segmentPoints.push(p);
+    } else {
+      flushSegment();
+    }
+  }
+
+  flushSegment();
 
   return { points, linePath, fillPath };
 }
@@ -223,6 +272,7 @@ export default function Dashboard() {
   const [remoteDemandes, setRemoteDemandes] = useState([]);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [hoveredPoint, setHoveredPoint] = useState(null);
 
   const loadWorkspace = useCallback(() => {
     Promise.all([fetchSupplierWorkspace(), fetchMyDemandes()])
@@ -420,24 +470,51 @@ export default function Dashboard() {
             </Text>
           </div>
           <div className="line-chart" aria-label="Graphique d'activité fournisseur">
-            <svg viewBox="0 0 420 210" role="img">
+            <svg
+              viewBox="0 0 420 210"
+              role="img"
+              onMouseLeave={() => setHoveredPoint(null)}
+            >
               <defs>
                 <linearGradient id="supplierActivityFill" x1="0" x2="0" y1="0" y2="1">
                   <stop offset="0%" stopColor="#ffac4a" stopOpacity="0.55" />
                   <stop offset="100%" stopColor="#ffac4a" stopOpacity="0.02" />
                 </linearGradient>
               </defs>
-              <path
-                className="chart-fill supplier-chart-fill"
-                d={activityChart.fillPath}
-              />
-              <path
-                className="chart-line"
-                d={activityChart.linePath}
-              />
+              <path className="chart-fill supplier-chart-fill" d={activityChart.fillPath} />
+              <path className="chart-line" d={activityChart.linePath} />
               {activityChart.points.map((point) => (
-                <circle key={point.key} cx={point.x} cy={point.y} r={point.count ? 5 : 3} />
+                <g key={point.key} onMouseEnter={() => !point.isFuture && setHoveredPoint(point)}>
+                  <rect x={point.x - 14} y={20} width={28} height={164} fill="transparent"
+                    style={{ cursor: 'crosshair' }} />
+                  <circle cx={point.x} cy={point.y}
+                    r={point.count > 0 ? 5 : 3}
+                    opacity={point.isFuture ? 0.18 : point.count > 0 ? 1 : 0.45} />
+                </g>
               ))}
+              {hoveredPoint && (() => {
+                const now = new Date();
+                const monthLabel = hoveredPoint.label ? `${hoveredPoint.label} ${now.getFullYear()}` : hoveredPoint.key || '';
+                const countLabel = hoveredPoint.count > 0
+                  ? `${hoveredPoint.count} demande${hoveredPoint.count > 1 ? 's' : ''}`
+                  : 'Aucune demande';
+                const tooltipWidth = Math.max(monthLabel.length, countLabel.length) * 7 + 20;
+                const tooltipHeight = 38;
+                const anchorY = hoveredPoint.count > 0 ? hoveredPoint.y : 162;
+                const tx = Math.min(Math.max(hoveredPoint.x - tooltipWidth / 2, 4), 420 - tooltipWidth - 4);
+                const ty = anchorY - tooltipHeight - 10;
+                return (
+                  <g style={{ pointerEvents: 'none' }}>
+                    <rect x={tx} y={ty} width={tooltipWidth} height={tooltipHeight} rx={6} ry={6} fill="#1d2433" opacity={0.9} />
+                    <text x={tx + tooltipWidth / 2} y={ty + 14} textAnchor="middle"
+                      fill="#ffffff" fontSize="11" fontWeight="700" fontFamily="inherit">{monthLabel}</text>
+                    <text x={tx + tooltipWidth / 2} y={ty + 28} textAnchor="middle"
+                      fill={hoveredPoint.count > 0 ? '#ffac4a' : '#94a3b8'} fontSize="10" fontWeight="600" fontFamily="inherit">{countLabel}</text>
+                    <line x1={hoveredPoint.x} y1={anchorY + (hoveredPoint.count > 0 ? 6 : 0)} x2={hoveredPoint.x} y2={162}
+                      stroke="#ff943b" strokeWidth={1} strokeDasharray="3 3" opacity={hoveredPoint.count > 0 ? 0.5 : 0.25} />
+                  </g>
+                );
+              })()}
             </svg>
             <div className="chart-axis">
               {monthActivity.map((item, index) => (

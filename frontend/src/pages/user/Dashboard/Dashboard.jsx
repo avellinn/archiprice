@@ -5,15 +5,13 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import DonutChartCard from '../../../components/DonutChart';
 import { Button, Icon, Text } from '../../../components/ui';
 import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
-import {
-  fetchExportedDocuments,
-  subscribeExportedDocumentsChange,
-} from '../../../services/exportedDocuments';
 import { fetchProjects, subscribeProjectsChange } from '../../../services/projects';
+import { fetchMySimulationExports, fetchSimulationExportCount } from '../../../services/simulationExports';
 
 const STATUS_COPY = {
   draft: 'Brouillon',
   active: 'En cours',
+  treated: 'Traité',
   archived: 'Terminé',
   completed: 'Terminé',
   done: 'Terminé',
@@ -45,96 +43,134 @@ function getDonutDisplayValue(value, total) {
 
 function buildMonthActivity(items = []) {
   const monthFormatter = new Intl.DateTimeFormat('fr-FR', { month: 'short' });
-  return Array.from({ length: 8 }, (_, index) => {
-    const date = new Date();
-    date.setMonth(date.getMonth() - (7 - index));
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    const monthItems = items.filter((item) => {
-      const itemDate = new Date(item.exportedAt || item.createdAt || item.updatedAt || item.date);
+  // Axe fixe : janvier → décembre de l'année courante.
+  // Les mois futurs sont affichés mais marqués isFuture — pas de données.
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth(); // 0-indexed
+
+  return Array.from({ length: 12 }, (_, index) => {
+    const date = new Date(currentYear, index, 1);
+    const targetMonth = index;
+    const monthKey = `${currentYear}-${String(targetMonth + 1).padStart(2, '0')}`;
+    const isFuture = targetMonth > currentMonth;
+
+    const monthItems = isFuture ? [] : items.filter((item) => {
+      const itemDate = new Date(item.exportedAt || item.createdAt);
       if (Number.isNaN(itemDate.getTime())) return false;
-      return itemDate.getFullYear() === date.getFullYear() && itemDate.getMonth() === date.getMonth();
+      return itemDate.getFullYear() === currentYear && itemDate.getMonth() === targetMonth;
     });
 
     return {
       key: monthKey,
       label: monthFormatter.format(date).replace('.', ''),
       count: monthItems.length,
+      isFuture,
       items: monthItems,
     };
   });
 }
 
 function buildActivityPath(activity = []) {
-  const maxCount = Math.max(...activity.map((item) => item.count), 1);
+  const nonZeroCounts = activity.map((item) => item.count).filter((c) => c > 0);
+
+  // Échelle logarithmique : 1 export déjà visible, 100 proportionnel.
+  const maxCount = nonZeroCounts.length > 0 ? Math.max(...nonZeroCounts) : 1;
+  const logMax = Math.log10(maxCount + 1);
+
+  const FLOOR_Y = 162;
+  const CHART_HEIGHT = 120;
+
   const points = activity.map((item, index) => {
     const x = 30 + ((364 / Math.max(activity.length - 1, 1)) * index);
-    const y = 162 - ((item.count / maxCount) * 124);
+    const y = item.count === 0 || item.isFuture
+      ? FLOOR_Y
+      : FLOOR_Y - ((Math.log10(item.count + 1) / logMax) * CHART_HEIGHT);
     return { ...item, x: Number(x.toFixed(1)), y: Number(y.toFixed(1)) };
   });
-  const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'}${point.x} ${point.y}`).join(' ');
-  const fillPath = `${linePath} L394 184 L30 184 Z`;
+
+  const pastPoints = points.filter((p) => !p.isFuture);
+
+  if (pastPoints.length === 0) {
+    return { points, linePath: '', fillPath: '' };
+  }
+
+  let linePath = '';
+  let fillPath = '';
+  let segmentPoints = [];
+
+  function flushSegment() {
+    if (segmentPoints.length === 0) return;
+
+    if (segmentPoints.length === 1) {
+      // Un seul point actif : ligne verticale du plancher jusqu'au pic
+      const p = segmentPoints[0];
+      linePath += (linePath ? ' ' : '') + `M${p.x} ${FLOOR_Y} L${p.x} ${p.y}`;
+      fillPath += (fillPath ? ' ' : '') + `M${p.x} ${FLOOR_Y} L${p.x} ${p.y} L${p.x + 0.1} ${p.y} L${p.x + 0.1} ${FLOOR_Y} Z`;
+    } else {
+      // Plusieurs points actifs consécutifs : courbe normale
+      const seg = segmentPoints.map((sp, si) => `${si === 0 ? 'M' : 'L'}${sp.x} ${sp.y}`).join(' ');
+      linePath += (linePath ? ' ' : '') + seg;
+      fillPath += (fillPath ? ' ' : '')
+        + `${seg} L${segmentPoints.at(-1).x} ${FLOOR_Y} L${segmentPoints[0].x} ${FLOOR_Y} Z`;
+    }
+
+    segmentPoints = [];
+  }
+
+  for (const p of pastPoints) {
+    if (p.count > 0) {
+      segmentPoints.push(p);
+    } else {
+      flushSegment();
+    }
+  }
+
+  flushSegment();
 
   return { points, linePath, fillPath };
-}
-
-function getProjectExportedEstimateCount(project) {
-  const numericFields = [
-    'exportedEstimatesCount',
-    'exportedEstimationsCount',
-    'estimationExportsCount',
-    'exportedDocumentsCount',
-    'exportsCount',
-  ];
-
-  const countFromNumber = numericFields.find((field) => Number.isFinite(Number(project[field])));
-  if (countFromNumber) return Number(project[countFromNumber]);
-
-  const arrayFields = ['exportedEstimates', 'exportedEstimations', 'estimationExports', 'exportedDocuments', 'exports'];
-  const countFromArray = arrayFields.find((field) => Array.isArray(project[field]));
-  if (countFromArray) return project[countFromArray].length;
-
-  return project.isEstimateExported || project.hasExportedEstimate ? 1 : 0;
 }
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [projects, setProjects] = useState([]);
-  const [exportedDocuments, setExportedDocuments] = useState(() => fetchExportedDocuments());
+  const [simulationCount, setSimulationCount] = useState(0);
+  const [simulations, setSimulations] = useState([]);
+  const [hoveredPoint, setHoveredPoint] = useState(null);
 
-  const loadProjects = useCallback(() => {
+  const loadDashboardData = useCallback(() => {
     fetchProjects()
       .then(setProjects)
       .catch(() => setProjects([]));
+    fetchSimulationExportCount()
+      .then(setSimulationCount)
+      .catch(() => setSimulationCount(0));
+    fetchMySimulationExports()
+      .then(setSimulations)
+      .catch(() => setSimulations([]));
   }, []);
 
   useEffect(() => {
-    loadProjects();
-  }, [loadProjects]);
+    loadDashboardData();
+  }, [loadDashboardData]);
 
-  useRealtimeRefresh(loadProjects, ['projects', 'project-products']);
-  useEffect(() => subscribeProjectsChange(loadProjects), [loadProjects]);
-
-  useEffect(() => subscribeExportedDocumentsChange(setExportedDocuments), []);
+  useRealtimeRefresh(loadDashboardData, ['projects', 'project-products', 'simulation-exports']);
+  useEffect(() => subscribeProjectsChange(loadDashboardData), [loadDashboardData]);
 
   const stats = useMemo(() => {
-    const finishedProjects = projects.filter(isFinished).length;
-    const active = Math.max(projects.length - finishedProjects, 0);
-    const processed = projects.filter((project) => project.status !== 'draft').length;
-    const projectExportedEstimates = projects.reduce(
-      (total, project) => total + getProjectExportedEstimateCount(project),
-      0,
-    );
-    const exportedEstimates = Math.max(projectExportedEstimates, exportedDocuments.length);
+    const treatedProjects = projects.filter((project) => project.status === 'treated').length;
+    const archivedProjects = projects.filter(isFinished).length;
+    const active = Math.max(projects.length - archivedProjects - treatedProjects, 0);
 
     return {
       total: projects.length,
       active,
-      archived: exportedEstimates,
-      processed: Math.max(processed, exportedEstimates),
-      exportedEstimates,
+      archived: archivedProjects,       // projets réellement archivés (status archived/completed/done)
+      processed: treatedProjects,        // projets traités
+      exportedEstimates: simulationCount, // exports PDF (pour la légende du graphique)
     };
-  }, [exportedDocuments.length, projects]);
+  }, [simulationCount, projects]);
 
   const dashboardSearchTerm = searchParams.get('q')?.trim().toLowerCase() || '';
   const history = projects
@@ -144,24 +180,40 @@ export default function Dashboard() {
       || String(project.status || '').toLowerCase().includes(dashboardSearchTerm)
     ))
     .slice(0, 4);
-  const monthActivity = buildMonthActivity(exportedDocuments);
+
+  // Graphique : source unique = SimulationExport (exportedAt).
+  // Le chart-line représente exclusivement les exports PDF réels.
+  // Si la collection est vide, tous les mois affichent 0 — c'est correct.
+  // On n'injecte plus projects ni demandes pour ne pas afficher de fausse activité.
+  const allActivityItems = useMemo(() => simulations.map((s) => ({
+    exportedAt: s.exportedAt,
+    createdAt: s.createdAt,
+  })), [simulations]);
+
+  const monthActivity = buildMonthActivity(allActivityItems);
   const activityChart = buildActivityPath(monthActivity);
+
+  // Légende : détail par source pour le mois courant
+  const currentMonthKey = (() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  })();
+  const currentMonthSimulations = simulations.filter((s) => {
+    const d = new Date(s.exportedAt || s.createdAt || s.date);
+    return !Number.isNaN(d.getTime())
+      && `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` === currentMonthKey;
+  }).length;
   const repartitionData = [
+
     {
-      name: 'Projets en cours',
-      value: stats.active,
-      chartValue: getDonutDisplayValue(stats.active, stats.total),
-      percent: getPercent(stats.active, stats.total),
-      color: '#5877f7',
+      name: 'Total projets',
+      value: stats.total,
+      chartValue: getDonutDisplayValue(stats.total, stats.total),
+      percent: stats.total ? 100 : 0,
+      color: '#1d0870',
     },
-    {
-      name: 'Archives',
-      value: stats.archived,
-      chartValue: getDonutDisplayValue(stats.archived, Math.max(stats.total, stats.archived)),
-      percent: getPercent(stats.archived, Math.max(stats.total, stats.archived)),
-      color: '#ffc865',
-      unit: 'archive',
-    },
+
+
     {
       name: 'Projets traités',
       value: stats.processed,
@@ -170,11 +222,23 @@ export default function Dashboard() {
       color: '#22c55e',
     },
     {
-      name: 'Total projets',
-      value: stats.total,
-      chartValue: getDonutDisplayValue(stats.total, stats.total),
-      percent: stats.total ? 100 : 0,
-      color: '#1d0870',
+      name: 'Projets en cours',
+      value: stats.active,
+      chartValue: getDonutDisplayValue(stats.active, stats.total),
+      percent: getPercent(stats.active, stats.total),
+      color: '#5877f7',
+    },
+    
+    
+    
+
+    {
+      name: 'Simulations exportées',
+      value: stats.exportedEstimates,
+      chartValue: getDonutDisplayValue(stats.exportedEstimates, Math.max(stats.total, stats.exportedEstimates)),
+      percent: getPercent(stats.exportedEstimates, Math.max(stats.total, stats.exportedEstimates)),
+      color: '#ffc865',
+      unit: 'export',
     },
     
   ];
@@ -224,10 +288,10 @@ export default function Dashboard() {
             onKeyDown={(event) => handleStatKeyDown(event, '/archives')}
           >
             <Text as="span" variant="bold" size="sm">
-              Projets archives
+              Simulations exportées
             </Text>
             <Text as="strong" variant="medium" size="lg">
-              {String(stats.archived).padStart(2, '0')}
+              {String(stats.exportedEstimates).padStart(2, '0')}
             </Text>
             <svg viewBox="0 0 78 34" aria-hidden="true">
               <path d="M4 24 C18 12 24 22 35 18 S50 29 74 7" />
@@ -273,33 +337,112 @@ export default function Dashboard() {
 
         <section className="dashboard-panel activity-panel">
           <div className="panel-heading">
-            <h1>Activité des projets</h1>
+            <h1>Fréquence des projets exportés</h1>
             
           </div>
           <div className="line-chart" aria-label="Graphique d'activité mensuelle">
-            <svg viewBox="0 0 420 210" role="img">
+            <svg
+              viewBox="0 0 420 210"
+              role="img"
+              onMouseLeave={() => setHoveredPoint(null)}
+            >
               <defs>
                 <linearGradient id="activityFill" x1="0" x2="0" y1="0" y2="1">
                   <stop offset="0%" stopColor="#ffac4a" stopOpacity="0.55" />
                   <stop offset="100%" stopColor="#ffac4a" stopOpacity="0.02" />
                 </linearGradient>
               </defs>
-              <path
-                className="chart-fill"
-                d={activityChart.fillPath}
-              />
-              <path
-                className="chart-line"
-                d={activityChart.linePath}
-              />
+
+              <path className="chart-fill" d={activityChart.fillPath} />
+              <path className="chart-line" d={activityChart.linePath} />
+
+              {/* Zones de survol — déclenchent le tooltip sur tous les mois passés, même à count=0 */}
               {activityChart.points.map((point) => (
-                <circle
+                <g
                   key={point.key}
-                  cx={point.x}
-                  cy={point.y}
-                  r={point.count ? 5 : 3}
-                />
+                  onMouseEnter={() => !point.isFuture && setHoveredPoint(point)}
+                >
+                  <rect
+                    x={point.x - 14}
+                    y={20}
+                    width={28}
+                    height={164}
+                    fill="transparent"
+                    style={{ cursor: 'crosshair' }}
+                  />
+                  <circle
+                    cx={point.x}
+                    cy={point.y}
+                    r={point.count > 0 ? 5 : 3}
+                    opacity={point.isFuture ? 0.18 : point.count > 0 ? 1 : 0.45}
+                  />
+                </g>
               ))}
+
+              {/* Tooltip : mois + compteur — visible pour tous les mois passés (count=0 inclus) */}
+              {hoveredPoint && (() => {
+                const now = new Date();
+                const currentYear = now.getFullYear();
+                const monthLabel = hoveredPoint.label
+                  ? `${hoveredPoint.label} ${currentYear}`
+                  : hoveredPoint.key || '';
+                const countLabel = hoveredPoint.count > 0
+                  ? `${hoveredPoint.count} export${hoveredPoint.count > 1 ? 's' : ''}`
+                  : 'Aucun export';
+
+                const tooltipWidth = Math.max(monthLabel.length, countLabel.length) * 7 + 20;
+                const tooltipHeight = 38;
+                const anchorY = hoveredPoint.count > 0 ? hoveredPoint.y : 162;
+                const tx = Math.min(Math.max(hoveredPoint.x - tooltipWidth / 2, 4), 420 - tooltipWidth - 4);
+                const ty = anchorY - tooltipHeight - 10;
+
+                return (
+                  <g className="chart-tooltip" style={{ pointerEvents: 'none' }}>
+                    <rect
+                      x={tx}
+                      y={ty}
+                      width={tooltipWidth}
+                      height={tooltipHeight}
+                      rx={6}
+                      ry={6}
+                      fill="#1d2433"
+                      opacity={0.9}
+                    />
+                    <text
+                      x={tx + tooltipWidth / 2}
+                      y={ty + 14}
+                      textAnchor="middle"
+                      fill="#ffffff"
+                      fontSize="11"
+                      fontWeight="700"
+                      fontFamily="inherit"
+                    >
+                      {monthLabel}
+                    </text>
+                    <text
+                      x={tx + tooltipWidth / 2}
+                      y={ty + 28}
+                      textAnchor="middle"
+                      fill={hoveredPoint.count > 0 ? '#ffac4a' : '#94a3b8'}
+                      fontSize="10"
+                      fontWeight="600"
+                      fontFamily="inherit"
+                    >
+                      {countLabel}
+                    </text>
+                    <line
+                      x1={hoveredPoint.x}
+                      y1={anchorY + (hoveredPoint.count > 0 ? 6 : 0)}
+                      x2={hoveredPoint.x}
+                      y2={162}
+                      stroke="#ff943b"
+                      strokeWidth={1}
+                      strokeDasharray="3 3"
+                      opacity={hoveredPoint.count > 0 ? 0.5 : 0.25}
+                    />
+                  </g>
+                );
+              })()}
             </svg>
             <div className="chart-axis">
               {monthActivity.map((item) => (
@@ -308,10 +451,7 @@ export default function Dashboard() {
                 </Text>
               ))}
             </div>
-            <div className="chart-legend">
-              
-              <Text as="span" variant="bold" size="sm"><i className="legend-orange" /> simulations exportées ({exportedDocuments.length})</Text>
-            </div>
+            
           </div>
         </section>
 

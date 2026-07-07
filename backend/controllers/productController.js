@@ -70,6 +70,10 @@ async function createProduct(req, res) {
     return res.status(404).json({ error: 'Projet introuvable' });
   }
 
+  if (project.status === 'treated') {
+    return res.status(403).json({ error: "Les articles d'un projet traité ne peuvent pas être modifiés." });
+  }
+
   if (!name?.trim()) {
     return res.status(400).json({ error: 'Nom du produit requis' });
   }
@@ -120,6 +124,10 @@ async function updateProduct(req, res) {
   const project = await findOwnedProject(projectId, req.user._id);
   if (!project) {
     return res.status(404).json({ error: 'Projet introuvable' });
+  }
+
+  if (project.status === 'treated') {
+    return res.status(403).json({ error: "Les articles d'un projet traité ne peuvent pas être modifiés." });
   }
 
   const product = await Product.findOne({ _id: id, project: projectId });
@@ -204,6 +212,10 @@ async function deleteProduct(req, res) {
     return res.status(404).json({ error: 'Projet introuvable' });
   }
 
+  if (project.status === 'treated') {
+    return res.status(403).json({ error: "Les articles d'un projet traité ne peuvent pas être modifiés." });
+  }
+
   const product = await Product.findOneAndDelete({ _id: id, project: projectId });
 
   if (!product) {
@@ -236,6 +248,10 @@ async function deleteProductImageByPublicId(req, res) {
   const project = await findOwnedProject(projectId, req.user._id);
   if (!project) {
     return res.status(404).json({ error: 'Projet introuvable' });
+  }
+
+  if (project.status === 'treated') {
+    return res.status(403).json({ error: "Les articles d'un projet traité ne peuvent pas être modifiés." });
   }
 
   const product = await Product.findOne({ _id: id, project: projectId });

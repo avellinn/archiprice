@@ -10,7 +10,11 @@ import {
   setStoredToken,
   updateMe as updateMeRequest,
 } from '../services/auth';
-import { clearUserScopedStorage } from '../services/scopedStorage';
+import {
+  clearUserScopedStorage,
+  clearBrowserSessionStorage,
+  clearBrowserCaches,
+} from '../services/scopedStorage';
 import { getRandomAvatarColor } from '../utils/userDisplay';
 
 const AVATAR_COLOR_KEY = 'archiprice_avatar_color';
@@ -55,11 +59,7 @@ export function AuthProvider({ children }) {
 
   const clearSession = useCallback(() => {
     setStoredToken(null);
-    try {
-      sessionStorage.removeItem(AVATAR_COLOR_KEY);
-    } catch {
-      // Ignore storage errors.
-    }
+    clearBrowserSessionStorage();
     setUser(null);
   }, []);
 
@@ -125,7 +125,9 @@ export function AuthProvider({ children }) {
   const login = useCallback(
     async (credentials) => {
       const { token, user: userData } = await loginRequest(credentials);
-      clearUserScopedStorage(userData.id || userData._id, userData.email);
+      clearUserScopedStorage(userData.id || userData._id);
+      clearBrowserSessionStorage();
+      void clearBrowserCaches();
       applySession(token, userData, true);
       return userData;
     },
@@ -135,7 +137,9 @@ export function AuthProvider({ children }) {
   const register = useCallback(
     async (payload) => {
       const { token, user: userData } = await registerRequest(payload);
-      clearUserScopedStorage(userData.id || userData._id, userData.email);
+      clearUserScopedStorage(userData.id || userData._id);
+      clearBrowserSessionStorage();
+      void clearBrowserCaches();
       applySession(token, userData, true);
       return userData;
     },
@@ -161,8 +165,11 @@ export function AuthProvider({ children }) {
   );
 
   const logout = useCallback(() => {
+    clearUserScopedStorage(user?.id || user?._id);
+    clearBrowserSessionStorage();
+    void clearBrowserCaches();
     clearSession();
-  }, [clearSession]);
+  }, [clearSession, user]);
 
   const value = useMemo(
     () => ({

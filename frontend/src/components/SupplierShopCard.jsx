@@ -3,7 +3,8 @@ import { getSaleUnit } from '../constants/productTaxonomy';
 import './SupplierShopCard.css';
 
 function getShortShopName(shopName) {
-  return String(shopName || 'boutique').slice(0, 12).toLowerCase();
+  const name = String(shopName || 'boutique').slice(0, 12).toLowerCase();
+  return name.replace(/^./, (c) => c.toUpperCase());
 }
 
 function getProductImage(product) {

@@ -203,6 +203,7 @@ export default function Simulations() {
           variant="warning"
           title="Réinitialiser les simulations"
           className="admin-simulations-confirm-alert"
+          autoCloseMs={0}
           onClose={() => setIsResetConfirmOpen(false)}
         >
           <span>Supprimer toute la liste des simulations ? Cette action est irréversible dans la vue admin.</span>

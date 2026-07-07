@@ -398,7 +398,7 @@
 .espacepro__article-image i {
   position: absolute;
   inset: 0;
-  opacity: 0.9;
+  
   background:
     radial-gradient(circle at 14% 20%, #817dd2 0 18px, transparent 19px),
     radial-gradient(circle at 38% 82%, #817dd2 0 22px, transparent 23px),
@@ -407,7 +407,7 @@
 }
 
 .espacepro__article-image.espacepro__article-image--has-photo {
-  background: #111827;
+  background: #F8F6F4;
   color: #fff;
 }
 
@@ -416,9 +416,7 @@
   position: absolute;
   inset: 0;
   z-index: 2;
-  background:
-    linear-gradient(90deg, rgb(0 0 0 / 0.34), rgb(0 0 0 / 0.02) 20%, rgb(0 0 0 / 0.02) 80%, rgb(0 0 0 / 0.34)),
-    linear-gradient(180deg, rgb(0 0 0 / 0.06), rgb(0 0 0 / 0.12));
+  background: linear-gradient(135deg, rgb(0 0 0 / 0.06), rgb(0 0 0 / 0.12));
   pointer-events: none;
 }
 
@@ -433,29 +431,6 @@
   transform: none;
 }
 
-.espacepro__article-image--1 {
-  background: linear-gradient(135deg, #fff4d8 0%, #ffd08a 45%, #ff9800 100%);
-  color: #7c2d12;
-}
-
-.espacepro__article-image--1 i {
-  background:
-    linear-gradient(120deg, transparent 0 22%, rgb(255 255 255 / 0.42) 23% 31%, transparent 32% 100%),
-    radial-gradient(circle at 76% 20%, rgb(255 255 255 / 0.5) 0 36px, transparent 37px),
-    radial-gradient(circle at 28% 75%, rgb(124 45 18 / 0.26) 0 42px, transparent 43px);
-}
-
-.espacepro__article-image--2 {
-  background: linear-gradient(145deg, #dff7ef 0%, #9bdcc6 48%, #0f766e 100%);
-  color: #064e3b;
-}
-
-.espacepro__article-image--2 i {
-  background:
-    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.25) 0 10px, transparent 10px 22px),
-    radial-gradient(circle at 30% 24%, rgb(255 255 255 / 0.58) 0 34px, transparent 35px),
-    radial-gradient(circle at 78% 76%, rgb(6 78 59 / 0.3) 0 48px, transparent 49px);
-}
 
 .espacepro__article-body {
   display: grid;
@@ -881,4 +856,51 @@
     align-items: stretch;
     flex-direction: column;
   }
+}
+
+.espacepro__article-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.project-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border: 1px solid var(--app-border-color);
+  background: var(--app-panel-background);
+  color: var(--app-text-color);
+}
+
+.project-status-badge--treated {
+  background: #e6f4ea;
+  color: #137333;
+  border-color: #ceead6;
+}
+
+.project-status-badge--draft,
+.project-status-badge--active {
+  background: #fef7e0;
+  color: #b06000;
+  border-color: #feebc8;
+}
+
+.dashboard-shell.is-theme-dark .project-status-badge--treated {
+  background: #0f5132;
+  color: #d1e7dd;
+  border-color: #0f5132;
+}
+
+.dashboard-shell.is-theme-dark .project-status-badge--draft,
+.dashboard-shell.is-theme-dark .project-status-badge--active {
+  background: #664d03;
+  color: #fff3cd;
+  border-color: #664d03;
 }

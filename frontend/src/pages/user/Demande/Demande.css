@@ -180,7 +180,7 @@
   box-shadow: inset 4px 0 0 #0a3764, var(--app-card-shadow);
 }
 
-.user-demand-list__item.is-unread b {
+.user-demand-list__item.is-unread > b {
   display: inline-flex;
   align-items: center;
   min-height: 1.75rem;

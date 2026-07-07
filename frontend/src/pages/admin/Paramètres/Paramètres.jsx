@@ -130,7 +130,7 @@ export default function Paramètres() {
   function updatePolicies(nextPolicies) {
     setPolicies(nextPolicies);
     persistAdminSettings(adminProfile, settings, nextPolicies);
-    setSettingsAlert({ variant: 'success', message: 'Politiques synchronisées.' });
+    setSettingsAlert({ variant: 'success', message: adminText.settings.policiesSynced });
   }
 
   return (
@@ -207,8 +207,8 @@ export default function Paramètres() {
           <button type="button" className="admin-settings-row-button" onClick={() => setActiveModal('password')}>
             <Icon name="Visibility" size="sm" />
             <div>
-              <strong>Mot de passe</strong>
-              <span>Modifier le mot de passe de connexion</span>
+              <strong>{adminText.settings.password}</strong>
+              <span>{adminText.settings.passwordDescription}</span>
             </div>
             <Icon name="ChevronRight" size="sm" />
           </button>
@@ -218,6 +218,8 @@ export default function Paramètres() {
       {activeModal === 'policy' && (
         <AdminPolicyModal
           policies={policies}
+          labels={adminText.settingsModals}
+          commonLabels={adminText.common}
           language={settings.language}
           onPoliciesChange={updatePolicies}
           onClose={closeModal}
@@ -228,6 +230,8 @@ export default function Paramètres() {
       {activeModal === 'profile' && (
         <AdminProfileModal
           adminProfile={adminProfile}
+          labels={adminText.settingsModals}
+          commonLabels={adminText.common}
           onChange={updateAdminProfile}
           onClose={closeModal}
           onSave={saveAdminSettings}
@@ -237,6 +241,8 @@ export default function Paramètres() {
       {activeModal === 'location' && (
         <AdminLocationModal
           settings={settings}
+          labels={adminText.settingsModals}
+          commonLabels={adminText.common}
           cityOptions={cityOptions}
           neighborhoodOptions={neighborhoodOptions}
           onChange={updateSetting}
@@ -247,10 +253,11 @@ export default function Paramètres() {
 
       {activeModal === 'password' && (
         <PasswordSettingsModal
+          labels={adminText.common}
           onClose={closeModal}
           onSubmit={async (payload) => {
             await changePassword(payload);
-            setSettingsAlert({ variant: 'success', message: 'Mot de passe mis à jour.' });
+            setSettingsAlert({ variant: 'success', message: adminText.settings.passwordUpdated });
           }}
         />
       )}

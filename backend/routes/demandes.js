@@ -19,6 +19,8 @@ function formatMessage(message) {
     senderRole: plain.senderRole,
     senderName: plain.senderName || '',
     message: plain.message,
+    readByUserAt: plain.readByUserAt || null,
+    readBySupplierAt: plain.readBySupplierAt || null,
     createdAt: plain.createdAt,
     updatedAt: plain.updatedAt,
   };
@@ -49,6 +51,11 @@ function formatDemande(demande) {
     status: plain.status || 'Nouveau',
     message: plain.messages?.[0]?.message || '',
     messages: (plain.messages || []).map(formatMessage),
+    articleImages: (product?.images || []).map((image) => ({
+      name: image?.metadata?.originalName || 'Image article',
+      secure_url: image?.secure_url || '',
+      public_id: image?.public_id || '',
+    })),
     unreadForUser: plain.unreadForUser || 0,
     unreadForSupplier: plain.unreadForSupplier || 0,
     createdAt: plain.createdAt,
@@ -89,22 +96,22 @@ router.get('/me', asyncHandler(async (req, res) => {
 
   const query = req.user.role === 'supplier'
     ? {
-      $or: [
-        ...(supplier ? [{ supplier: supplier._id }] : []),
-        { supplierUser: req.user._id },
-      ],
-      hiddenBySupplier: { $ne: true },
-    }
+        $or: [
+          ...(supplier ? [{ supplier: supplier._id }] : []),
+          { supplierUser: req.user._id },
+        ],
+        hiddenBySupplier: { $ne: true },
+      }
     : {
-      user: req.user._id,
-      hiddenByUser: { $ne: true },
-    };
+        user: req.user._id,
+        hiddenByUser: { $ne: true },
+      };
 
   const demandes = await Demande.find(query)
     .populate('user', 'name email phone')
     .populate('supplier', 'name companyName email contact phone city region neighborhood status logo')
     .populate('supplierUser', 'name email status')
-    .populate({ path: 'product', select: 'name project', populate: { path: 'project', select: 'name' } })
+    .populate({ path: 'product', select: 'name project images', populate: { path: 'project', select: 'name' } })
     .sort({ lastMessageAt: -1, updatedAt: -1 });
 
   res.json({ demandes: demandes.map(formatDemande) });
@@ -134,8 +141,7 @@ router.post('/', asyncHandler(async (req, res) => {
   const existingDemande = await Demande.findOne({
     user: req.user._id,
     supplier: supplier._id,
-    ...(projectId ? { projectId } : product?._id ? { product: product._id } : {}),
-    status: { $nin: ['Clôturé', 'Archivé'] },
+    hiddenByUser: { $ne: true },
   }).sort({ lastMessageAt: -1 });
 
   if (existingDemande) {
@@ -148,7 +154,6 @@ router.post('/', asyncHandler(async (req, res) => {
         message,
         readByUserAt: now,
       });
-      existingDemande.status = 'En cours';
       existingDemande.lastMessageAt = now;
       existingDemande.unreadForSupplier += 1;
       await existingDemande.save();
@@ -160,7 +165,7 @@ router.post('/', asyncHandler(async (req, res) => {
       .populate('user', 'name email phone')
       .populate('supplier', 'name companyName email contact phone city region neighborhood status logo')
       .populate('supplierUser', 'name email status')
-      .populate({ path: 'product', select: 'name project', populate: { path: 'project', select: 'name' } });
+      .populate({ path: 'product', select: 'name project images', populate: { path: 'project', select: 'name' } });
     return res.status(200).json({ demande: formatDemande(populatedExisting) });
   }
 
@@ -200,7 +205,7 @@ router.post('/', asyncHandler(async (req, res) => {
     .populate('user', 'name email phone')
     .populate('supplier', 'name companyName email contact phone city region neighborhood status logo')
     .populate('supplierUser', 'name email status')
-    .populate({ path: 'product', select: 'name project', populate: { path: 'project', select: 'name' } });
+    .populate({ path: 'product', select: 'name project images', populate: { path: 'project', select: 'name' } });
 
   res.status(201).json({ demande: formatDemande(populatedDemande) });
 }));
@@ -214,12 +219,11 @@ router.post('/:demandeId/messages', asyncHandler(async (req, res) => {
 
   const supplier = req.user.role === 'supplier'
     ? await Supplier.findOne({
-      $or: [
-        { _id: demande.supplier },
-        { user: req.user._id },
-        { email: String(req.user.email || '').toLowerCase().trim() },
-      ],
-    })
+        $or: [
+          { _id: demande.supplier },
+          { user: req.user._id },
+        ],
+      })
     : null;
   const isOwnerUser = String(demande.user) === String(req.user._id);
   const isOwnerSupplier = Boolean(supplier)
@@ -230,15 +234,15 @@ router.post('/:demandeId/messages', asyncHandler(async (req, res) => {
   }
 
   const senderRole = req.user.role === 'supplier' ? 'supplier' : 'user';
+  const sentAt = new Date();
   demande.messages.push({
     sender: req.user._id,
     senderRole,
     senderName: supplier?.companyName || supplier?.name || req.user.name || req.user.email || '',
     message,
-    readByUserAt: senderRole === 'user' ? new Date() : undefined,
-    readBySupplierAt: senderRole === 'supplier' ? new Date() : undefined,
+    readByUserAt: senderRole === 'user' ? sentAt : undefined,
+    readBySupplierAt: senderRole === 'supplier' ? sentAt : undefined,
   });
-  demande.status = senderRole === 'supplier' ? 'Répondu' : 'Lu';
   demande.lastMessageAt = new Date();
   demande.unreadForUser = senderRole === 'supplier' ? demande.unreadForUser + 1 : 0;
   demande.unreadForSupplier = senderRole === 'user' ? demande.unreadForSupplier + 1 : 0;
@@ -253,7 +257,7 @@ router.post('/:demandeId/messages', asyncHandler(async (req, res) => {
     .populate('user', 'name email phone')
     .populate('supplier', 'name companyName email contact phone city region neighborhood status logo')
     .populate('supplierUser', 'name email status')
-    .populate({ path: 'product', select: 'name project', populate: { path: 'project', select: 'name' } });
+    .populate({ path: 'product', select: 'name project images', populate: { path: 'project', select: 'name' } });
 
   res.status(201).json({ demande: formatDemande(populatedDemande) });
 }));
@@ -286,6 +290,36 @@ router.patch('/:demandeId/read', asyncHandler(async (req, res) => {
   publishCrudEvent('demandes', 'read', { demandeId: String(demande._id) }, {
     userIds: [demande.user, demande.supplierUser].filter(Boolean),
   });
+  return res.json({ success: true });
+}));
+
+router.delete('/:demandeId', asyncHandler(async (req, res) => {
+  const demande = await Demande.findById(req.params.demandeId);
+  if (!demande) return res.status(404).json({ error: 'Demande introuvable' });
+
+  const supplier = req.user.role === 'supplier'
+    ? await Supplier.findOne({ $or: [{ _id: demande.supplier }, { user: req.user._id }] })
+    : null;
+  const isOwnerUser = String(demande.user) === String(req.user._id);
+  const isOwnerSupplier = Boolean(supplier)
+    && (String(demande.supplier) === String(supplier._id) || String(demande.supplierUser || '') === String(req.user._id));
+
+  if (!isOwnerUser && !isOwnerSupplier) {
+    return res.status(403).json({ error: 'Accès refusé à cette demande' });
+  }
+
+  if (isOwnerUser) {
+    demande.hiddenByUser = true;
+  } else {
+    demande.hiddenBySupplier = true;
+  }
+
+  await demande.save();
+
+  publishCrudEvent('demandes', 'hidden', { demandeId: String(demande._id) }, {
+    userIds: [demande.user, demande.supplierUser].filter(Boolean),
+  });
+
   return res.json({ success: true });
 }));
 

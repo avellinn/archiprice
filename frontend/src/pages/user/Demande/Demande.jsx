@@ -5,13 +5,9 @@ import { Alert, Icon, Loader } from '../../../components/ui';
 import useAuth from '../../../context/useAuth';
 import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { useAdminData } from '../../../services/adminData';
-import { fetchMyDemandes, markDemandeRead, notifyDemandesChange, replyToDemande, subscribeDemandesChange } from '../../../services/demandes';
+import { fetchMyDemandes, hideDemande, markDemandeRead, notifyDemandesChange, replyToDemande, subscribeDemandesChange } from '../../../services/demandes';
 import { isNumericOnly } from '../../../utils/formInput';
 import { getStoredUserLanguage, getUserTranslations } from '../../../utils/userLanguage';
-
-const HIDDEN_DEMAND_ITEMS_KEY = 'archiprice:user-demand-hidden-items';
-const USER_DISMISSED_NOTIFICATIONS_KEY = 'archiprice:user-dismissed-notifications';
-const NOTIFICATIONS_READ_EVENT = 'archiprice:notifications-read-change';
 
 function formatDateTime(value) {
   if (!value) return 'Non renseignée';
@@ -23,44 +19,6 @@ function formatDateTime(value) {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(value));
-}
-
-function getHiddenDemandItemsKey(userId) {
-  return `${HIDDEN_DEMAND_ITEMS_KEY}:${userId || 'anonymous'}`;
-}
-
-function readHiddenDemandItems(storageKey) {
-  try {
-    const storedValue = window.localStorage.getItem(storageKey);
-    return storedValue ? JSON.parse(storedValue).map(String) : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeHiddenDemandItems(storageKey, itemIds) {
-  try {
-    window.localStorage.setItem(storageKey, JSON.stringify(itemIds));
-  } catch {
-    // La suppression reste disponible en mémoire si le stockage navigateur est indisponible.
-  }
-}
-
-function readDismissedNotificationKeys() {
-  try {
-    return JSON.parse(window.localStorage.getItem(USER_DISMISSED_NOTIFICATIONS_KEY) || '[]').map(String);
-  } catch {
-    return [];
-  }
-}
-
-function writeDismissedNotificationKeys(keys) {
-  try {
-    window.localStorage.setItem(USER_DISMISSED_NOTIFICATIONS_KEY, JSON.stringify(keys));
-    window.dispatchEvent(new Event(NOTIFICATIONS_READ_EVENT));
-  } catch {
-    // Le statut lu reste disponible en mémoire si le stockage navigateur est indisponible.
-  }
 }
 
 function normalizeDemandMessages(notification, fallbackSenderName) {
@@ -95,17 +53,10 @@ function normalizeDemandMessages(notification, fallbackSenderName) {
 }
 
 function getDemandGroupId(notification) {
-  return [
-    notification.clientId,
-    notification.clientEmail,
-    notification.clientName,
-    notification.supplierId,
-    notification.supplierContact,
-    notification.supplierName,
-    notification.projectId,
-    notification.productId,
-  ].map((value) => String(value || '').trim().toLowerCase()).filter(Boolean).join('|')
-    || String(notification.id || '');
+  const clientKey = String(notification.clientId || notification.clientEmail || '').trim().toLowerCase();
+  const supplierKey = String(notification.supplierId || notification.supplierContact || '').trim().toLowerCase();
+  if (clientKey && supplierKey) return `${clientKey}|${supplierKey}`;
+  return String(notification.id || '');
 }
 
 function groupDemandsByShop(notifications, fallbackSenderName) {
@@ -151,31 +102,6 @@ function getLastMessage(item) {
   return Array.isArray(item.messages) && item.messages.length > 0 ? item.messages.at(-1) : null;
 }
 
-function getDemandReadKeys(item, notifications = [], expectedSenderRole = 'supplier') {
-  const notificationIds = new Set((item.notificationIds || [item.sourceNotificationId]).filter(Boolean).map(String));
-  const keys = notifications
-    .filter((notification) => notification.type === 'Demande')
-    .filter((notification) => notificationIds.has(String(notification.id || '')))
-    .map((notification) => ({
-      notificationId: notification.id,
-      lastMessage: getLastMessage(notification),
-    }))
-    .filter(({ notificationId, lastMessage }) => notificationId && lastMessage?.senderRole === expectedSenderRole)
-    .map(({ notificationId, lastMessage }) => `demand-reply-${notificationId}-${lastMessage.id}`);
-
-  if (keys.length > 0) return keys;
-
-  const lastMessage = getLastMessage(item);
-  return item.sourceNotificationId && lastMessage?.senderRole === expectedSenderRole
-    ? [`demand-reply-${item.sourceNotificationId}-${lastMessage.id}`]
-    : [];
-}
-
-function hasUnreadSupplierReply(item, readKeys, notifications) {
-  if (Number.isFinite(Number(item.unreadForUser))) return Number(item.unreadForUser) > 0;
-  return getDemandReadKeys(item, notifications, 'supplier').some((key) => !readKeys.includes(key));
-}
-
 function replaceOrPrependDemande(demandes, updatedDemande) {
   if (!updatedDemande?.id) return demandes;
   const updatedGroupId = getDemandGroupId(updatedDemande);
@@ -200,14 +126,13 @@ function replaceOrPrependDemande(demandes, updatedDemande) {
 
 export default function Demande() {
   const { user } = useAuth();
-  const [adminData, updateAdminData] = useAdminData();
+  const [adminData] = useAdminData();
   const [replyText, setReplyText] = useState('');
   const [replyError, setReplyError] = useState('');
   const [actionMessage, setActionMessage] = useState('');
   const [selectedDemandId, setSelectedDemandId] = useState('');
   const [apiDemandes, setApiDemandes] = useState([]);
   const [isLoadingDemandes, setIsLoadingDemandes] = useState(true);
-  const [readNotificationKeys, setReadNotificationKeys] = useState(readDismissedNotificationKeys);
   const [language, setLanguage] = useState(getStoredUserLanguage);
   const translations = getUserTranslations(language);
   const demandText = translations.demand;
@@ -218,11 +143,9 @@ export default function Demande() {
     return () => window.removeEventListener('archiprice:user-profile-change', syncLanguage);
   }, []);
 
-  const userEmail = user?.email || '';
   const userId = user?.id || user?._id || '';
+  const userEmail = user?.email || '';
   const userName = user?.name || user?.fullName || userEmail || 'Client ArchiPrice';
-  const hiddenDemandItemsKey = getHiddenDemandItemsKey(userId);
-  const [hiddenDemandIds, setHiddenDemandIds] = useState(() => readHiddenDemandItems(hiddenDemandItemsKey));
 
   function loadDemandes({ silent = false } = {}) {
     let cancelled = false;
@@ -258,40 +181,9 @@ export default function Demande() {
 
   useEffect(() => subscribeDemandesChange(() => loadDemandes({ silent: true })), []);
 
-  useEffect(() => {
-    if (!hiddenDemandItemsKey) return undefined;
-
-    let active = true;
-    Promise.resolve().then(() => {
-      if (active) {
-        setHiddenDemandIds(readHiddenDemandItems(hiddenDemandItemsKey));
-      }
-    });
-
-    return () => {
-      active = false;
-    };
-  }, [hiddenDemandItemsKey]);
-
-  useEffect(() => {
-    function handleReadNotificationChange(event) {
-      if (event.type === 'storage' && event.key !== USER_DISMISSED_NOTIFICATIONS_KEY) return;
-      setReadNotificationKeys(readDismissedNotificationKeys());
-    }
-
-    window.addEventListener('storage', handleReadNotificationChange);
-    window.addEventListener(NOTIFICATIONS_READ_EVENT, handleReadNotificationChange);
-
-    return () => {
-      window.removeEventListener('storage', handleReadNotificationChange);
-      window.removeEventListener(NOTIFICATIONS_READ_EVENT, handleReadNotificationChange);
-    };
-  }, []);
-
   const demands = useMemo(() => (
     groupDemandsByShop((apiDemandes.length > 0 ? apiDemandes : adminData.supplierClientNotifications || [])
       .filter((notification) => notification.type === 'Demande')
-      .filter((notification) => !hiddenDemandIds.includes(getDemandGroupId(notification)))
       .filter((notification) => (
         userId
           ? notification.clientId === userId
@@ -301,17 +193,28 @@ export default function Demande() {
         ...notification,
         createdAtLabel: formatDateTime(notification.createdAt),
       }))
-  ), [adminData.supplierClientNotifications, apiDemandes, hiddenDemandIds, userEmail, userId, userName]);
+  ), [adminData.supplierClientNotifications, apiDemandes, userEmail, userId, userName]);
 
-  function hideDemand(itemId) {
-    const nextHiddenIds = Array.from(new Set([...hiddenDemandIds, String(itemId)]));
-    setHiddenDemandIds(nextHiddenIds);
-    writeHiddenDemandItems(hiddenDemandItemsKey, nextHiddenIds);
+  async function hideDemand(itemId) {
+    const demandeId = demands.find((item) => item.id === itemId)?.sourceNotificationId;
+    if (!demandeId) return;
+
+    const previousDemandes = apiDemandes;
+    setApiDemandes((currentDemandes) => (
+      currentDemandes.filter((demande) => getDemandGroupId(demande) !== itemId)
+    ));
     if (selectedDemandId === itemId) setSelectedDemandId('');
-    setActionMessage(demandText.conversationHidden);
+
+    try {
+      await hideDemande(demandeId);
+      setActionMessage(demandText.conversationHidden);
+    } catch {
+      setApiDemandes(previousDemandes);
+      setActionMessage(demandText.conversationHideError || 'La conversation n’a pas pu être masquée.');
+    }
   }
 
-  function sendReply(event) {
+  async function sendReply(event) {
     event.preventDefault();
     const comment = replyText.trim();
     const targetDemandId = selectedDemand?.sourceNotificationId;
@@ -322,61 +225,28 @@ export default function Demande() {
       return;
     }
 
-    replyToDemande(targetDemandId, comment)
-      .then((updatedDemande) => {
-        setApiDemandes((currentDemandes) => replaceOrPrependDemande(currentDemandes, updatedDemande));
-        setReplyText('');
-        setReplyError('');
-        setActionMessage(demandText.messageSent);
-      })
-      .catch(() => {
-        const now = new Date().toISOString();
-        updateAdminData((currentData) => ({
-          ...currentData,
-          supplierClientNotifications: (currentData.supplierClientNotifications || []).map((notification) => {
-            if (notification.id !== targetDemandId) return notification;
-
-            return {
-              ...notification,
-              status: 'Répondu',
-              messages: normalizeDemandMessages(notification, userName).concat([
-                {
-                  id: `message-${Date.now()}`,
-                  senderRole: 'user',
-                  senderName: userName,
-                  message: comment,
-                  createdAt: now,
-                },
-              ]),
-              updatedAt: now,
-            };
-          }),
-        }));
-        notifyDemandesChange({ action: 'message-created-local', demandeId: targetDemandId });
-        setReplyText('');
-        setReplyError('');
-        setActionMessage(demandText.messageSent);
-      });
+    try {
+      const updatedDemande = await replyToDemande(targetDemandId, comment);
+      const nextGroupId = getDemandGroupId(updatedDemande);
+      setApiDemandes((currentDemandes) => replaceOrPrependDemande(currentDemandes, updatedDemande));
+      setSelectedDemandId(nextGroupId || updatedDemande.id);
+      setReplyText('');
+      setReplyError('');
+      setActionMessage(demandText.messageSent);
+    } catch {
+      setReplyError(demandText.messageSendError || 'L’envoi a échoué. Réessayez.');
+      setActionMessage('');
+    }
   }
 
-  const demandNotifications = apiDemandes.length > 0 ? apiDemandes : adminData.supplierClientNotifications || [];
   const selectedDemand = demands.find((item) => item.id === selectedDemandId);
-  const unreadDemandCount = demands.filter((item) => (
-    hasUnreadSupplierReply(item, readNotificationKeys, demandNotifications)
-  )).length;
+  const unreadDemandCount = demands.filter((item) => Number(item.unreadForUser) > 0).length;
 
   function markDemandAsRead(item) {
-    const keys = getDemandReadKeys(item, demandNotifications, 'supplier');
-    const notificationIds = new Set((item.notificationIds || [item.sourceNotificationId]).filter(Boolean).map(String));
     setApiDemandes((currentDemandes) => currentDemandes.map((demande) => (
-      notificationIds.has(String(demande.id || '')) ? { ...demande, unreadForUser: 0 } : demande
+      getDemandGroupId(demande) === item.id ? { ...demande, unreadForUser: 0 } : demande
     )));
-
-    if (keys.length > 0) {
-      const nextKeys = [...new Set([...readNotificationKeys, ...keys])];
-      setReadNotificationKeys(nextKeys);
-      writeDismissedNotificationKeys(nextKeys);
-    }
+    markDemandeRead(item.sourceNotificationId).catch(() => {});
   }
 
   function openDemand(itemId) {
@@ -412,7 +282,7 @@ export default function Demande() {
         <section className="user-support-card">
           <h2>{demandText.title}</h2>
           {actionMessage && (
-            <Alert variant="success" className="user-demand-action-alert" onClose={() => setActionMessage('')}>
+            <Alert variant="success" className="user-demand-action-alert" autoCloseMs={4000} onClose={() => setActionMessage('')}>
               {actionMessage}
             </Alert>
           )}
@@ -421,7 +291,9 @@ export default function Demande() {
           ) : demands.length ? (
             <div className="user-support-list user-demand-list">
               {demands.map((item) => {
-                const isUnread = hasUnreadSupplierReply(item, readNotificationKeys, demandNotifications);
+                const isUnread = Number(item.unreadForUser) > 0;
+                const lastMessage = getLastMessage(item);
+                const isRead = Boolean(lastMessage?.readByUserAt);
 
                 return (
                 <article
@@ -438,8 +310,8 @@ export default function Demande() {
                     <span>{item.projectName || demandText.noProject} · {item.createdAtLabel}</span>
                     <small>{item.messages.at(-1)?.message || demandText.noMessage}</small>
                   </div>
-                  <span className={`user-demand-list__status${isUnread ? ' is-unread-badge' : ''}`}>
-                    {isUnread ? demandText.newMessage : (item.status || demandText.readLabel)}
+                  <span className={`user-demand-list__status${isUnread ? ' is-unread-badge' : ''}${isRead ? ' is-read-badge' : ''}`}>
+                    {isUnread ? demandText.newMessage : (isRead ? demandText.readLabel : (demandText.sentLabel || 'Envoyé'))}
                   </span>
                   <button
                     type="button"

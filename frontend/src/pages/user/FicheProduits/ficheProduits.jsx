@@ -92,6 +92,17 @@ function buildContactShops(product, suppliers = []) {
 }
 
 function buildCatalogueReturnPath(activeProjectId, from) {
+  // Si on vient d'EspacePro, retourner vers EspacePro avec le projectId
+  if (String(from?.pathname || '').startsWith('/espacepro')) {
+    const params = new URLSearchParams(from.search || '');
+    if (activeProjectId && !params.get('projectId')) {
+      params.set('projectId', activeProjectId);
+    }
+    const query = params.toString();
+    return `/espacepro${query ? `?${query}` : ''}`;
+  }
+
+  // Sinon retourner vers le catalogue
   const fromPathname = from?.pathname === '/catalogue' ? from.pathname : '/catalogue';
   const params = new URLSearchParams(from?.pathname === '/catalogue' ? from.search || '' : '');
   params.delete('recap');
@@ -210,6 +221,7 @@ export default function FicheProduits() {
         state: {
           selectedProductId: product.id || productId,
           skipProjectGate: true,
+          catalogueSnapshot: location.state?.catalogueSnapshot,
         },
       });
       return;
@@ -238,7 +250,11 @@ export default function FicheProduits() {
         catalogueProductId: product.id || productId,
       });
       navigate(buildCatalogueReturnPath(activeProjectId, previousLocation), {
-        state: { addedProductId: product.id || productId },
+        state: {
+          addedProductId: product.id || productId,
+          selectedProductId: product.id || productId,
+          catalogueSnapshot: location.state?.catalogueSnapshot,
+        },
       });
     } catch (apiError) {
       setError(getApiErrorMessage(apiError, "Impossible d'ajouter cet article au projet."));
@@ -297,7 +313,7 @@ export default function FicheProduits() {
   if (error || !product) {
     return (
       <main className="product-sheet-page">
-        <Alert variant="danger">{error || text('Article introuvable.')}</Alert>
+        <Alert variant="danger" autoCloseMs={4000}>{error || text('Article introuvable.')}</Alert>
         <Button type="button" variant="outline" icon={<Icon name="ArrowLeft" size="sm" />} onClick={() => navigate(buildCatalogueReturnPath(activeProjectId, previousLocation), { state: { skipRecap: true, catalogueSnapshot: location.state?.catalogueSnapshot } })}>
           {text('Retour')}
         </Button>

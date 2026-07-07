@@ -1,11 +1,10 @@
-import { Alert, Button, Icon } from './ui';
+import {  Button, Icon } from './ui';
 import './simulBudget.css';
 
 export default function SimulBudget({
   budgetTarget,
   budgetSummary,
   selectedCount,
-  validationError,
   formatCurrency,
   formatBudgetInputValue,
   normalizeBudgetInput,
@@ -14,6 +13,7 @@ export default function SimulBudget({
   onInteract,
   onMinimize,
   isValidating = false,
+  isLocked = false,
 }) {
   return (
     <aside className="catalogue-budget-panel catalogue-budget-panel--expanded" aria-label="Simulation budget live">
@@ -72,22 +72,28 @@ export default function SimulBudget({
             : `${selectedCount} article(s) ajouté(s) au panier budget.`}
         </p>
 
-        {validationError && <Alert variant="danger" layout="inline">{validationError}</Alert>}
 
-        <Button
-          type="button"
-          variant="success"
-          fullWidth
-          icon={<Icon name="Check" size="sm" />}
-          onClick={() => {
-            onInteract?.();
-            onValidate();
-          }}
-          disabled={selectedCount === 0}
-          isLoading={isValidating}
-        >
-          Valider
-        </Button>
+        {isLocked ? (
+          <p className="catalogue-budget-locked-notice" role="status" aria-live="polite">
+            <Icon name="Lock" size="sm" />
+            Projet traité — aucune modification possible
+          </p>
+        ) : (
+          <Button
+            type="button"
+            variant="success"
+            fullWidth
+            icon={<Icon name="ReceiptLong" size="sm" />}
+            onClick={() => {
+              onInteract?.();
+              onValidate();
+            }}
+            disabled={selectedCount === 0}
+            isLoading={isValidating}
+          >
+            Exporter la simulation
+          </Button>
+        )}
       </div>
     </aside>
   );

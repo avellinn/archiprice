@@ -148,12 +148,12 @@ export default function UserSupport() {
         </header>
 
         {message && (
-          <Alert variant="success" onClose={() => setMessage('')}>
+          <Alert variant="success" autoCloseMs={4000} onClose={() => setMessage('')}>
             {message}
           </Alert>
         )}
         {error && (
-          <Alert variant="danger" onClose={() => setError('')}>
+          <Alert variant="danger" autoCloseMs={4000} onClose={() => setError('')}>
             {error}
           </Alert>
         )}

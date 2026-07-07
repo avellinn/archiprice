@@ -57,6 +57,7 @@ function createLocalProject(payload) {
     id: `local-project-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
     name: payload.name,
     description: payload.description || '',
+    budgetTarget: payload.budgetTarget,
     clientName: payload.clientName || '',
     status: payload.status || 'draft',
     createdAt: now,

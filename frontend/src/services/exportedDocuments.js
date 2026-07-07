@@ -90,6 +90,10 @@ export function removeExportedDocument(id) {
   writeDocuments(fetchExportedDocuments().filter((document) => document.id !== id));
 }
 
+export function clearAllDocuments() {
+  writeDocuments([]);
+}
+
 export function subscribeExportedDocumentsChange(callback) {
   if (typeof window === 'undefined') return () => {};
 

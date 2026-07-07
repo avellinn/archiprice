@@ -70,13 +70,13 @@
 
 .invoices-list__item strong {
   color: var(--app-heading-color);
-  font-size: 0.88rem;
+  font-size: 0.78rem;
   white-space: nowrap;
 }
 
 .invoices-list__item small {
   color: var(--app-muted-color);
-  font-weight: 800;
+  font-weight: 500;
   white-space: nowrap;
 }
 
@@ -289,4 +289,484 @@
   .invoices-list__item small {
     grid-column: 2 / -1;
   }
+}
+
+/* ─────────────────────────────────────────────────────────
+   Mockup redesign — en-tête, banners, badge, icône PDF,
+   montant empilé, boutons d'action
+───────────────────────────────────────────────────────── */
+
+/* En-tête */
+.invoices-page__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.invoices-page__subtitle {
+  margin: 0.2rem 0 0;
+  color: var(--app-muted-color);
+  font-size: 0.82rem;
+}
+
+.invoices-page__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
+/* Bannière info (bleue) */
+.invoices-info-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: min(100%, 980px);
+  padding: 0.8rem 1rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 0.82rem;
+}
+
+/* Note bas de page "Bon à savoir" (ambre) */
+.invoices-tip-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: min(100%, 980px);
+  padding: 0.9rem 1.1rem;
+  border-radius: 10px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.82rem;
+}
+
+.invoices-tip-icon {
+  font-style: normal;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.invoices-tip-banner strong {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #78350f;
+}
+
+.invoices-tip-banner span {
+  color: #92400e;
+}
+
+/* Icône PDF rouge */
+.invoices-list__icon--pdf {
+  background: #eaebe674;
+  color: #242020;
+}
+
+/* Badge projet (vert) */
+.invoices-list__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 20px;
+  background: #f0fdf4;
+  color: #16a34a;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.invoices-list__badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  flex-shrink: 0;
+}
+
+/* Montant + articles empilés */
+.invoices-list__amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+  white-space: nowrap;
+}
+
+/* Conteneur des deux boutons d'action */
+.invoices-list__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.invoices-list__action-btn {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid var(--app-border-color);
+  border-radius: 8px;
+  background: var(--app-card-background);
+  color: var(--app-muted-color);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-3px);
+  transition: opacity 0.18s ease, transform 0.18s ease,
+              color 0.18s ease, border-color 0.18s ease;
+}
+
+.invoices-list__item:hover .invoices-list__action-btn,
+.invoices-list__item:focus-within .invoices-list__action-btn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.invoices-list__action-btn--download:hover,
+.invoices-list__action-btn--download:focus-visible {
+  border-color: #2563eb;
+  color: #2563eb;
+  outline: 0;
+}
+
+.invoices-list__action-btn--delete:hover,
+.invoices-list__action-btn--delete:focus-visible {
+  border-color: #dc2626;
+  color: #dc2626;
+  outline: 0;
+}
+
+/* Grille item : icône | infos | badge | montant | actions */
+.invoices-list__item {
+  grid-template-columns: 2.3rem minmax(0, 1fr) auto auto auto;
+}
+
+/* Item simulation : non cliquable globalement */
+.invoices-list__item--sim {
+  cursor: default;
+}
+
+.invoices-list__item--sim:hover,
+.invoices-list__item--sim:focus-visible {
+  background: var(--app-card-background);
+}
+
+@media (max-width: 760px) {
+  .invoices-page__actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .invoices-list__badge,
+  .invoices-list__amount {
+    grid-column: 2 / -1;
+  }
+
+  .invoices-list__actions {
+    grid-column: -1;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
+   SimulationExport — scroll interne liste + item cliquable
+   + fiche de détail modale
+───────────────────────────────────────────────────────── */
+
+/* Wrapper scroll interne — seule la liste défile */
+.invoices-list-scroll-wrapper {
+  width: min(100%, 980px);
+  max-height: calc(100vh - 340px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  border-radius: 12px;
+}
+
+/* Item sim cliquable — reprend le curseur + hover */
+.invoices-list__item--clickable {
+  cursor: pointer;
+}
+
+.invoices-list__item--clickable:hover,
+.invoices-list__item--clickable:focus-visible {
+  background: var(--app-panel-background);
+  border-color: var(--app-border-color);
+  outline: 0;
+}
+
+/* ── Fiche de détail — modal overlay ── */
+.sim-detail-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1950;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(15 23 42 / 0.48);
+  backdrop-filter: blur(3px);
+}
+
+.sim-detail-card {
+  display: flex;
+  flex-direction: column;
+  width: min(680px, calc(100vw - 2rem));
+  max-height: calc(100vh - 3rem);
+  overflow: hidden;
+  border: 1px solid var(--app-border-color);
+  border-radius: 16px;
+  background: var(--app-card-background);
+  box-shadow: 0 32px 90px rgb(15 23 42 / 0.28);
+}
+
+/* ── Header ── */
+.sim-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid var(--app-border-color);
+  flex-shrink: 0;
+}
+
+.sim-detail-eyebrow {
+  display: block;
+  color: var(--app-muted-color);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sim-detail-header h2 {
+  margin: 0.25rem 0 0;
+  color: var(--app-heading-color);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.sim-detail-close {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 8px;
+  background: var(--app-panel-background);
+  color: var(--app-muted-color);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sim-detail-close:hover {
+  background: var(--app-border-color);
+  color: var(--app-heading-color);
+}
+
+/* ── Body ── */
+.sim-detail-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  scrollbar-width: thin;
+}
+
+/* ── Sections ── */
+.sim-detail-section h3 {
+  margin: 0 0 0.85rem;
+  color: var(--app-muted-color);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── DL infos générales ── */
+.sim-detail-dl {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.sim-detail-dl > div {
+  display: grid;
+  grid-template-columns: 10rem minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.sim-detail-dl dt {
+  color: var(--app-muted-color);
+  font-size: 0.82rem;
+}
+
+.sim-detail-dl dd {
+  margin: 0;
+  color: var(--app-heading-color);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+/* ── Badge statut projet ── */
+.sim-detail-status {
+  display: inline-flex;
+  padding: 0.22rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.sim-detail-status--draft { background: #f1f5f9; color: #64748b; }
+.sim-detail-status--active { background: #eff6ff; color: #2563eb; }
+.sim-detail-status--treated { background: #f0fdf4; color: #16a34a; }
+.sim-detail-status--archived { background: #fafafa; color: #6b7280; }
+
+/* ── Résumé financier ── */
+.sim-detail-finance {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.65rem;
+}
+
+.sim-detail-finance__cell {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 10px;
+  background: var(--app-panel-background);
+}
+
+.sim-detail-finance__cell span {
+  display: block;
+  color: var(--app-muted-color);
+  font-size: 0.76rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.sim-detail-finance__cell strong {
+  display: block;
+  color: var(--app-heading-color);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* ── Tableau articles ── */
+.sim-detail-items-scroll {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid var(--app-border-color);
+}
+
+.sim-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.sim-detail-table th {
+  padding: 0.6rem 0.85rem;
+  background: var(--app-panel-background);
+  color: var(--app-muted-color);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--app-border-color);
+  white-space: nowrap;
+}
+
+.sim-detail-table td {
+  padding: 0.65rem 0.85rem;
+  color: var(--app-heading-color);
+  border-bottom: 1px solid var(--app-border-color);
+  vertical-align: middle;
+}
+
+.sim-detail-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.sim-detail-table tbody tr:hover td {
+  background: var(--app-panel-background);
+}
+
+/* ── Footer actions ── */
+.sim-detail-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.9rem 1.25rem;
+  border-top: 1px solid var(--app-border-color);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.sim-detail-footer__left,
+.sim-detail-footer__right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .sim-detail-finance {
+    grid-template-columns: 1fr;
+  }
+
+  .sim-detail-dl > div {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+
+  .sim-detail-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sim-detail-footer__left,
+  .sim-detail-footer__right {
+    justify-content: flex-end;
+  }
+
+  .invoices-list-scroll-wrapper {
+    max-height: calc(100vh - 280px);
+  }
+}
+
+/* ── Empty state robuste dans les deux pages ── */
+
+/* Quand l'empty state est dans le scroll wrapper (SimulationExport) */
+.invoices-list-scroll-wrapper > .workspace-card.invoices-empty {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Assure la visibilité de .workspace-card.invoices-empty dans tous les contextes */
+.invoices-page .workspace-card.invoices-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 180px;
+  padding: 2rem;
+  text-align: center;
+  border: 1px solid var(--app-border-color);
+  border-radius: 12px;
+  background: var(--app-card-background);
+  box-shadow: var(--app-card-shadow);
 }

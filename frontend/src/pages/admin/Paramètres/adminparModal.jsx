@@ -16,11 +16,11 @@ const EMPTY_POLICY = {
   translations: { en: { title: '', summary: '', content: '' } },
 };
 
-export function AdminProfileModal({ adminProfile, onChange, onClose, onSave }) {
+export function AdminProfileModal({ adminProfile, labels, commonLabels, onChange, onClose, onSave }) {
   const [actionMessage, setActionMessage] = useState('');
 
   function saveProfile() {
-    setActionMessage('Profil administrateur sauvegardé.');
+    setActionMessage(labels.profileSaved);
     window.setTimeout(onSave, 350);
   }
 
@@ -30,35 +30,35 @@ export function AdminProfileModal({ adminProfile, onChange, onClose, onSave }) {
         <header className="admin-param-modal__titlebar">
           <Icon name="Workspaces" size="sm" />
           <Icon name="ChevronRight" size="sm" />
-          <h2 id="admin-profile-modal-title">Coordonnées administrateur</h2>
+          <h2 id="admin-profile-modal-title">{labels.profileTitle}</h2>
         </header>
 
         <div className="admin-param-modal-card">
-          <h3>Informations générales</h3>
+          <h3>{labels.generalInfo}</h3>
           <label>
-            <span>Nom complet</span>
+            <span>{labels.fullName}</span>
             <input value={adminProfile.name} onChange={(event) => onChange('name', event.target.value)} />
           </label>
           <label>
-            <span>Adresse e-mail</span>
+            <span>{labels.email}</span>
             <input type="email" value={adminProfile.email} onChange={(event) => onChange('email', event.target.value)} />
           </label>
           <label>
-            <span>Téléphone</span>
+            <span>{labels.phone}</span>
             <input value={adminProfile.phone || ''} onChange={(event) => onChange('phone', event.target.value)} />
           </label>
         </div>
 
         <div className="admin-param-modal-card">
-          <h3>Contexte du compte</h3>
+          <h3>{labels.accountContext}</h3>
           <div className="admin-param-modal__grid">
             <article>
-              <span>Rôle</span>
-              <strong>Super Administrateur</strong>
+              <span>{labels.role}</span>
+              <strong>{labels.superAdmin}</strong>
             </article>
             <article>
-              <span>Portée</span>
-              <strong>Catalogue, utilisateurs, fournisseurs et simulations</strong>
+              <span>{labels.scope}</span>
+              <strong>{labels.scopeDescription}</strong>
             </article>
           </div>
         </div>
@@ -70,8 +70,8 @@ export function AdminProfileModal({ adminProfile, onChange, onClose, onSave }) {
         )}
 
         <footer className="admin-param-modal__footer">
-          <button type="button" onClick={onClose}>Annuler</button>
-          <button type="button" className="is-primary" onClick={saveProfile}>Sauvegarder</button>
+          <button type="button" onClick={onClose}>{commonLabels.cancel}</button>
+          <button type="button" className="is-primary" onClick={saveProfile}>{commonLabels.save}</button>
         </footer>
       </section>
     </div>
@@ -80,6 +80,8 @@ export function AdminProfileModal({ adminProfile, onChange, onClose, onSave }) {
 
 export function AdminLocationModal({
   settings,
+  labels,
+  commonLabels,
   cityOptions,
   neighborhoodOptions,
   onChange,
@@ -90,7 +92,7 @@ export function AdminLocationModal({
   const [actionMessage, setActionMessage] = useState('');
 
   function saveLocation() {
-    setActionMessage('Emplacement admin sauvegardé.');
+    setActionMessage(labels.locationSaved);
     window.setTimeout(onSave, 350);
   }
 
@@ -98,29 +100,29 @@ export function AdminLocationModal({
     <div className="admin-param-modal-backdrop" role="presentation">
       <section className="admin-param-modal admin-param-modal--location" role="dialog" aria-modal="true" aria-labelledby="admin-location-modal-title">
         <header className="admin-param-modal__header">
-          <h2 id="admin-location-modal-title">Emplacements admin</h2>
-          <button type="button" aria-label="Fermer" onClick={onClose}>
+          <h2 id="admin-location-modal-title">{labels.locationTitle}</h2>
+          <button type="button" aria-label={commonLabels.close} onClick={onClose}>
             <Icon name="Close" size="sm" />
           </button>
         </header>
 
         <div className="admin-location-form">
           <label>
-            <span>Nom de l'organisation</span>
+            <span>{labels.organizationName}</span>
             <input value={settings.companyName} onChange={(event) => onChange('companyName', event.target.value)} />
           </label>
           <label>
-            <span>Pays/région</span>
+            <span>{labels.countryRegion}</span>
             <select value={settings.location} onChange={(event) => onChange('location', event.target.value)} disabled>
               <option value="Bénin">Bénin</option>
             </select>
           </label>
           <label>
-            <span>Adresse</span>
-            <input value={settings.address} onChange={(event) => onChange('address', event.target.value)} placeholder="Adresse du bureau admin" />
+            <span>{labels.address}</span>
+            <input value={settings.address} onChange={(event) => onChange('address', event.target.value)} placeholder={labels.addressPlaceholder} />
           </label>
           <label>
-            <span>Quartier</span>
+            <span>{labels.neighborhood}</span>
             <input
               list="admin-neighborhood-options"
               value={settings.neighborhood}
@@ -133,7 +135,7 @@ export function AdminLocationModal({
             </datalist>
           </label>
           <label>
-            <span>Ville</span>
+            <span>{labels.city}</span>
             <select value={settings.city} onChange={(event) => onChange('city', event.target.value)}>
               {cityOptions.map((city) => (
                 <option key={city} value={city}>{city}</option>
@@ -149,9 +151,9 @@ export function AdminLocationModal({
         )}
 
         <footer className="admin-param-modal__footer admin-param-modal__footer--sticky">
-          <button type="button" onClick={onClose}>Annuler</button>
+          <button type="button" onClick={onClose}>{commonLabels.cancel}</button>
           <button type="button" className="is-primary" onClick={saveLocation} disabled={!canSave}>
-            Sauvegarder
+            {commonLabels.save}
           </button>
         </footer>
       </section>
@@ -159,7 +161,7 @@ export function AdminLocationModal({
   );
 }
 
-export function AdminPolicyModal({ policies, onPoliciesChange, onClose, language = 'fr' }) {
+export function AdminPolicyModal({ policies, labels, commonLabels, onPoliciesChange, onClose, language = 'fr' }) {
   const [activePolicyId, setActivePolicyId] = useState(null);
   const [editingPolicy, setEditingPolicy] = useState(null);
   const [actionMessage, setActionMessage] = useState('');
@@ -188,7 +190,7 @@ export function AdminPolicyModal({ policies, onPoliciesChange, onClose, language
   function deletePolicy(policyId, event) {
     event.stopPropagation();
     onPoliciesChange(policies.filter((policy) => policy.id !== policyId));
-    setActionMessage('Politique supprimée.');
+    setActionMessage(labels.policyDeleted);
     if (activePolicyId === policyId) setActivePolicyId(null);
   }
 
@@ -232,7 +234,7 @@ export function AdminPolicyModal({ policies, onPoliciesChange, onClose, language
     onPoliciesChange(exists
       ? policies.map((policy) => (policy.id === nextPolicy.id ? nextPolicy : policy))
       : [nextPolicy, ...policies]);
-    setActionMessage(exists ? 'Politique modifiée.' : 'Politique créée.');
+    setActionMessage(exists ? labels.policyUpdated : labels.policyCreated);
     setEditingPolicy(null);
   }
 
@@ -245,7 +247,7 @@ export function AdminPolicyModal({ policies, onPoliciesChange, onClose, language
               <button
                 type="button"
                 className="admin-policy-back"
-                aria-label="Retour aux politiques"
+                aria-label={labels.backToPolicies}
                 onClick={() => {
                   setActivePolicyId(null);
                   setEditingPolicy(null);
@@ -254,9 +256,9 @@ export function AdminPolicyModal({ policies, onPoliciesChange, onClose, language
                 <Icon name="ChevronLeft" size="sm" />
               </button>
             )}
-            <h2 id="admin-policy-title">{editingPolicy ? 'Modifier une politique' : activePolicy?.title || 'Politiques admin'}</h2>
+            <h2 id="admin-policy-title">{editingPolicy ? labels.editPolicy : activePolicy?.title || labels.policiesTitle}</h2>
           </div>
-          <button type="button" aria-label="Fermer" onClick={onClose}>
+          <button type="button" aria-label={commonLabels.close} onClick={onClose}>
             <Icon name="Close" size="sm" />
           </button>
         </header>
@@ -264,33 +266,33 @@ export function AdminPolicyModal({ policies, onPoliciesChange, onClose, language
         {editingPolicy ? (
           <form className="admin-policy-form" onSubmit={saveEditingPolicy}>
             <label>
-              <span>Titre <b>*</b></span>
+              <span>{labels.requiredTitle} <b>*</b></span>
               <input value={editingPolicy.title} onChange={(event) => updateEditingPolicy('title', event.target.value)} required autoFocus />
             </label>
             <label>
-              <span>Résumé</span>
+              <span>{labels.summary}</span>
               <input value={editingPolicy.summary} onChange={(event) => updateEditingPolicy('summary', event.target.value)} />
             </label>
             <label>
-              <span>Contenu</span>
+              <span>{labels.content}</span>
               <textarea rows={8} value={editingPolicy.content} onChange={(event) => updateEditingPolicy('content', event.target.value)} />
             </label>
-            <h3>Version anglaise</h3>
+            <h3>{labels.englishVersion}</h3>
             <label>
-              <span>Titre anglais</span>
+              <span>{labels.englishTitle}</span>
               <input value={editingPolicy.translations?.en?.title || ''} onChange={(event) => updateEnglishPolicy('title', event.target.value)} />
             </label>
             <label>
-              <span>Résumé anglais</span>
+              <span>{labels.englishSummary}</span>
               <input value={editingPolicy.translations?.en?.summary || ''} onChange={(event) => updateEnglishPolicy('summary', event.target.value)} />
             </label>
             <label>
-              <span>Contenu anglais</span>
+              <span>{labels.englishContent}</span>
               <textarea rows={8} value={editingPolicy.translations?.en?.content || ''} onChange={(event) => updateEnglishPolicy('content', event.target.value)} />
             </label>
             <div className="admin-policy-form__actions">
-              <button type="button" onClick={() => setEditingPolicy(null)}>Annuler</button>
-              <button type="submit">Enregistrer</button>
+              <button type="button" onClick={() => setEditingPolicy(null)}>{commonLabels.cancel}</button>
+              <button type="submit">{labels.save}</button>
             </div>
           </form>
         ) : activePolicy ? (
@@ -298,14 +300,14 @@ export function AdminPolicyModal({ policies, onPoliciesChange, onClose, language
             <p>{activePolicy.summary}</p>
             <article>
               <h3>{activePolicy.title}</h3>
-              <p>{activePolicy.content || 'Aucun contenu renseigné.'}</p>
+              <p>{activePolicy.content || labels.emptyContent}</p>
             </article>
           </div>
         ) : (
           <div className="admin-policy-list">
             <button type="button" className="admin-policy-add" onClick={openCreatePolicy}>
               <Icon name="Add" size="sm" />
-              Ajouter une politique
+              {labels.addPolicy}
             </button>
             {policies.length ? policies.map((policy) => {
               const visiblePolicy = localizePolicy(policy, language);
@@ -314,13 +316,13 @@ export function AdminPolicyModal({ policies, onPoliciesChange, onClose, language
                 <Icon name={visiblePolicy.icon || 'ReceiptLong'} size="sm" />
                 <span>
                   <strong>{visiblePolicy.title}</strong>
-                  <small>{visiblePolicy.summary || 'Aucun résumé renseigné.'}</small>
+                  <small>{visiblePolicy.summary || labels.noSummary}</small>
                 </span>
-                <span className="admin-policy-row__actions" aria-label="Actions">
-                  <span role="button" tabIndex={0} title="Modifier" onClick={(event) => openEditPolicy(policy, event)} onKeyDown={(event) => event.key === 'Enter' && openEditPolicy(policy, event)}>
+                <span className="admin-policy-row__actions" aria-label={labels.actions}>
+                  <span role="button" tabIndex={0} title={labels.edit} onClick={(event) => openEditPolicy(policy, event)} onKeyDown={(event) => event.key === 'Enter' && openEditPolicy(policy, event)}>
                     <Icon name="Edit" size="sm" />
                   </span>
-                  <span role="button" tabIndex={0} title="Supprimer" className="is-danger" onClick={(event) => deletePolicy(policy.id, event)} onKeyDown={(event) => event.key === 'Enter' && deletePolicy(policy.id, event)}>
+                  <span role="button" tabIndex={0} title={labels.delete} className="is-danger" onClick={(event) => deletePolicy(policy.id, event)} onKeyDown={(event) => event.key === 'Enter' && deletePolicy(policy.id, event)}>
                     <Icon name="Delete" size="sm" />
                   </span>
                 </span>
@@ -328,7 +330,7 @@ export function AdminPolicyModal({ policies, onPoliciesChange, onClose, language
               </button>
               );
             }) : (
-              <p className="admin-policy-empty">Aucune politique configurée.</p>
+              <p className="admin-policy-empty">{labels.emptyPolicies}</p>
             )}
           </div>
         )}

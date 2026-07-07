@@ -26,6 +26,9 @@ export const API_ROUTES = {
     productPublication: (id) => `/api/supplier/products/${id}/publication`,
     productImages: (id) => `/api/supplier/products/${id}/images`,
     files: '/api/supplier/files',
+    clients: {
+      details: (clientId) => `/api/supplier/clients/${clientId}`,
+    },
   },
   catalogue: {
     products: '/api/catalogue/products',
@@ -33,12 +36,14 @@ export const API_ROUTES = {
   },
   simulations: {
     create: '/api/simulations',
+    myCount: '/api/simulations/my-count',
   },
   demandes: {
     listMine: '/api/demandes/me',
     create: '/api/demandes',
     messages: (id) => `/api/demandes/${id}/messages`,
     read: (id) => `/api/demandes/${id}/read`,
+    hide: (id) => `/api/demandes/${id}`,
   },
   support: {
     listMine: '/api/support-items/me',

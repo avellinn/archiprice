@@ -4,8 +4,8 @@ import { Alert, Badge, Icon } from '../../../components/ui';
 
 const ROLE_LABELS = {
   admin: 'Admin',
-  supplier: 'Supplier',
-  user: 'User',
+  supplier: 'Boutique',
+  user: 'Utilisateur',
 };
 
 function getUserRole(user) {

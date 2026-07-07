@@ -15,6 +15,7 @@ export default function Recap({
   onClose,
   onModify,
   onConfirm,
+  isLocked = false,
 }) {
   return (
     <section className="catalogue-summary-panel" aria-label="Récapitulatif des articles">
@@ -116,18 +117,26 @@ export default function Recap({
             >
               Modifier
             </Button>
-            <Button
-              type="button"
-              variant="success"
-              icon={<Icon name="Check" size="sm" />}
-              onClick={onConfirm}
-              disabled={!budgetSummary.hasTarget || isValidating}
-              isLoading={isValidating}
-            >
-              Confirmer la Validation
-            </Button>
+            {isLocked ? (
+              <span className="catalogue-summary-treated-badge" role="status" aria-label="Projet traité et verrouillé">
+                <Icon name="Lock" size="sm" />
+                Projet traité
+              </span>
+            ) : (
+              <Button
+                type="button"
+                variant="success"
+                icon={<Icon name="CheckCircle" size="sm" />}
+                onClick={onConfirm}
+                disabled={!budgetSummary.hasTarget || selectedProducts.length === 0 || isValidating}
+                isLoading={isValidating}
+                title="Valider définitivement ce projet — action irréversible"
+              >
+                Valider le projet
+              </Button>
+            )}
           </div>
-          {validationError && <Alert variant="danger" className="catalogue-summary-error">{validationError}</Alert>}
+          {validationError && <Alert variant="danger" layout="inline" className="catalogue-summary-error">{validationError}</Alert>}
         </footer>
       </div>
     </section>

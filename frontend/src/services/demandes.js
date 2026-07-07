@@ -61,3 +61,8 @@ export async function markDemandeRead(demandeId) {
   await api.patch(API_ROUTES.demandes.read(demandeId));
   notifyDemandesChange({ action: 'read', demandeId });
 }
+
+export async function hideDemande(demandeId) {
+  await api.delete(API_ROUTES.demandes.hide(demandeId));
+  notifyDemandesChange({ action: 'hidden', demandeId });
+}

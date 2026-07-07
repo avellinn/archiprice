@@ -189,6 +189,18 @@ Le budget live calcule dynamiquement :
 - estimation max ;
 - dépassement éventuel.
 
+La période de grâce après création d'un projet est gérée dans `src/pages/user/Catalogue/useProjectGate.js`.
+Elle est stockée dans `localStorage` sous une clé user-scoped :
+
+- `archiprice:catalogue_project_created_at:<userId>`
+
+Cette période de grâce :
+
+- empêche l'ouverture de la gate « Créer un projet » pendant 24h ;
+- persiste après déconnexion/reconnexion du même utilisateur ;
+- expire automatiquement après 24h ;
+- n'est jamais partagée entre deux utilisateurs sur le même navigateur.
+
 Les données produits proviennent du store synchronisé `src/services/adminData.js`, alimenté par les actions admin et supplier. Seuls les articles validés (`publicationStatus` absent ou `Validé`) apparaissent dans le catalogue utilisateur.
 
 ### Workspace

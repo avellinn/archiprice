@@ -329,3 +329,41 @@
     flex-wrap: wrap;
   }
 }
+
+/* ── Avatar cliquable ── */
+.user-profile-avatar-btn {
+  position: relative;
+  display: inline-flex;
+  align-self: start;        /* empêche l'étirement dans la grille */
+  width: fit-content;       /* colle exactement à la taille de l'avatar */
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.user-profile-avatar-btn:focus-visible {
+  outline: 2px solid #5877f7;
+  outline-offset: 3px;
+}
+
+.user-profile-avatar-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0);
+  color: transparent;
+  transition: background 0.18s ease, color 0.18s ease;
+  pointer-events: none;
+}
+
+.user-profile-avatar-btn:hover .user-profile-avatar-overlay,
+.user-profile-avatar-btn:focus-visible .user-profile-avatar-overlay {
+  background: rgb(0 0 0 / 0.38);
+  color: #fff;
+}

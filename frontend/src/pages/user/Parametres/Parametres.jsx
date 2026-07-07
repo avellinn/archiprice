@@ -140,16 +140,28 @@ export default function Parametres() {
         <div className="user-profile-row user-profile-row--photo">
           <div className="user-profile-row__content">
             <strong>{profileText.photo}</strong>
-            {profile.photoUrl && !photoRemoved ? (
-              <img className="user-profile-avatar user-profile-avatar--image" src={profile.photoUrl} alt="Profil" />
-            ) : (
-              <span
-                className="user-profile-avatar"
-                style={{ '--user-profile-avatar-color': photoRemoved ? removedAvatarColor : avatarColor }}
-              >
-                {photoRemoved ? removedAvatarInitial : avatarInitials}
+            {/* Avatar cliquable — ouvre le sélecteur de fichier directement */}
+            <button
+              type="button"
+              className="user-profile-avatar-btn"
+              aria-label={profileText.editPhoto}
+              title={profileText.editPhoto}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {profile.photoUrl && !photoRemoved ? (
+                <img className="user-profile-avatar user-profile-avatar--image" src={profile.photoUrl} alt="Profil" />
+              ) : (
+                <span
+                  className="user-profile-avatar"
+                  style={{ '--user-profile-avatar-color': photoRemoved ? removedAvatarColor : avatarColor }}
+                >
+                  {photoRemoved ? removedAvatarInitial : avatarInitials}
+                </span>
+              )}
+              <span className="user-profile-avatar-overlay" aria-hidden="true">
+                
               </span>
-            )}
+            </button>
           </div>
           <div className="user-profile-actions">
             <button
@@ -168,15 +180,7 @@ export default function Parametres() {
               accept="image/*"
               onChange={handlePhotoUpload}
             />
-            <button
-              type="button"
-              className="user-profile-mini-button"
-              aria-label={profileText.editPhoto}
-              title={profileText.editPhoto}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Icon name="Edit" size="sm" />
-            </button>
+
           </div>
         </div>
 
@@ -212,14 +216,6 @@ export default function Parametres() {
           </button>
         </div>
 
-        <label className="user-profile-field">
-          <strong>{profileText.useCase}</strong>
-          <select value={profile.useCase} onChange={(event) => updateProfile('useCase', event.target.value)}>
-            {USE_CASES.map((useCase) => (
-              <option key={useCase} value={useCase}>{useCase}</option>
-            ))}
-          </select>
-        </label>
 
         <label className="user-profile-field">
           <strong>{profileText.language}</strong>
@@ -295,10 +291,12 @@ export default function Parametres() {
 
       {isPasswordModalOpen && (
         <PasswordSettingsModal
+          labels={{ ...getUserTranslations(profile.language).common }}
           onClose={() => setIsPasswordModalOpen(false)}
           onSubmit={async (payload) => {
             await changePassword(payload);
             setProfileAlert({ variant: 'success', message: 'Mot de passe mis à jour.' });
+            setIsPasswordModalOpen(false);
           }}
         />
       )}

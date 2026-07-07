@@ -24,6 +24,7 @@ const ResetPassword = lazy(() => import('./pages/user/ResetPassword/ResetPasswor
 const Dashboard = lazy(() => import('./pages/user/Dashboard/Dashboard'));
 const Catalogue = lazy(() => import('./pages/user/Catalogue/Catalogue'));
 const Archives = lazy(() => import('./pages/user/Archives/Archives'));
+const SimulationExport = lazy(() => import('./pages/user/Archives/SimulationExport'));
 const Demande = lazy(() => import('./pages/user/Demande/Demande'));
 const Logout = lazy(() => import('./pages/user/Logout/Logout'));
 const Workspace = lazy(() => import('./pages/user/Workspace/Workspace'));
@@ -138,6 +139,7 @@ function App() {
           <Route path="/espacepro" element={<EspacePro />} />
           <Route path="/demande" element={<Demande />} />
           <Route path="/archives" element={<Archives />} />
+          <Route path="/simulations-exportees" element={<SimulationExport />} />
           <Route path="/factures" element={<Navigate to="/archives" replace />} />
           <Route path="/support" element={<UserSupport />} />
           <Route path="/parametres" element={<UserParametres />} />

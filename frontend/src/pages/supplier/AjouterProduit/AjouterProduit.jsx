@@ -137,7 +137,9 @@ export default function AjouterProduit() {
   const taxonomyOptions = useMemo(() => ({
     rooms: getTaxonomyNames(adminData.taxonomies?.rooms),
     ranges: getTaxonomyNames(adminData.taxonomies?.ranges),
-    availability: getTaxonomyNames(adminData.taxonomies?.availability),
+    availability: getTaxonomyNames(adminData.taxonomies?.availability).filter((availability) => (
+      String(availability || '').trim().toLowerCase() !== 'non disponible'
+    )),
   }), [adminData.taxonomies]);
   const roomSelectValue = getSelectOptionValue(productForm.type, taxonomyOptions.rooms, customTaxonomyFields.type);
   const rangeSelectValue = getSelectOptionValue(productForm.range, taxonomyOptions.ranges, customTaxonomyFields.range);
@@ -735,7 +737,7 @@ export default function AjouterProduit() {
               )}
             </label>
             <label className="supplier-product-field">
-              <span>{productText.supplier}</span>
+              <span>{'Boutique'}</span>
               <select required value={effectiveSupplierName} onChange={(event) => updateProductForm('supplier', event.target.value)}>
                 <option value="" disabled>Configurer le nom de boutique</option>
                 {shopName && <option value={shopName}>{shopName}</option>}

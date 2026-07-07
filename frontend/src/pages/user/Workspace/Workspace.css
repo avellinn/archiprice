@@ -307,7 +307,7 @@
   outline: 0;
 }
 
-.workspace-feature-card__project-button span:last-child {
+.workspace-feature-card__project-button .workspace-feature-card__project-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -645,4 +645,26 @@
 }
 .workspace-page__loader {
   min-height: calc(100vh - 96px);
+}
+
+.workspace-feature-card__project-name-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.workspace-feature-card__project-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.workspace-project-badge {
+  flex-shrink: 0;
+  transform: scale(0.95);
+  transform-origin: right center;
 }

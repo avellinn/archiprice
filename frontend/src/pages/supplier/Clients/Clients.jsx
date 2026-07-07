@@ -1,16 +1,11 @@
 import './Clients.css';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Badge, Icon, Loader, Table } from '../../../components/ui';
-import useAuth from '../../../context/useAuth';
+import { useNavigate } from 'react-router-dom';
+import { Alert, Icon, Loader, Table } from '../../../components/ui';
 import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
-import { useAdminData } from '../../../services/adminData';
-import { fetchMyDemandes, subscribeDemandesChange } from '../../../services/demandes';
-import { fetchSupplierWorkspace } from '../../../services/supplier';
+import { fetchMyDemandes, hideDemande, subscribeDemandesChange } from '../../../services/demandes';
+import { fetchClientDetails } from '../../../services/supplier';
 import ClientModal from './clientModal';
-
-function normalizeKey(value) {
-  return String(value || '').trim().toLowerCase();
-}
 
 function formatDateTime(value) {
   if (!value) return 'Non renseignée';
@@ -21,94 +16,29 @@ function formatDateTime(value) {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    }).format(new Date(value));
-}
-
-function normalizeArticleImages(notification) {
-  const directImages = Array.isArray(notification.articleImages) ? notification.articleImages : [];
-  const articleImages = Array.isArray(notification.selectedArticles)
-    ? notification.selectedArticles.flatMap((article) => (
-      Array.isArray(article.images)
-        ? article.images.map((image) => ({
-          ...image,
-          name: image.name || article.name,
-        }))
-        : []
-    ))
-    : [];
-
-  return [...directImages, ...articleImages]
-    .map((image) => ({
-      name: image?.name || 'Image article',
-      secure_url: image?.secure_url || image?.url || '',
-      public_id: image?.public_id || '',
-    }))
-    .filter((image, index, images) => (
-      image.secure_url && images.findIndex((item) => item.secure_url === image.secure_url) === index
-    ));
-}
-
-function isNotificationForSupplier(notification, user, supplierProfile) {
-  const supplierIds = [
-    user?.supplierId,
-    user?.supplier?._id,
-    user?.supplier?.id,
-    supplierProfile?._id,
-    supplierProfile?.id,
-    user?.id,
-    user?._id,
-  ].filter(Boolean).map(String);
-
-  const supplierNames = [
-    supplierProfile?.companyName,
-    supplierProfile?.name,
-    supplierProfile?.shopLabel,
-    supplierProfile?.storeLabel,
-    user?.shopName,
-    user?.companyName,
-    user?.storeLabel,
-    user?.name,
-  ].map(normalizeKey).filter(Boolean);
-  const supplierContacts = [
-    supplierProfile?.email,
-    supplierProfile?.contact,
-    user?.email,
-    user?.supplier?.email,
-  ].map(normalizeKey).filter(Boolean);
-  const hasSupplierIdentity = supplierIds.length > 0 || supplierNames.length > 0 || supplierContacts.length > 0;
-
-  const notificationSupplierId = String(notification.supplierId || '');
-  const notificationSupplierName = normalizeKey(notification.supplierName);
-  const notificationSupplierContact = normalizeKey(notification.supplierContact);
-
-  if (!hasSupplierIdentity) return true;
-
-  return (
-    supplierIds.includes(notificationSupplierId)
-    || supplierNames.includes(notificationSupplierName)
-    || supplierContacts.includes(notificationSupplierContact)
-  );
+  }).format(new Date(value));
 }
 
 export default function Clients() {
-  const { user } = useAuth();
-  const [adminData, updateAdminData] = useAdminData();
-  const [supplierProfile, setSupplierProfile] = useState(null);
+  const navigate = useNavigate();
   const [apiDemandes, setApiDemandes] = useState([]);
   const [isLoadingClients, setIsLoadingClients] = useState(true);
   const [selectedClient, setSelectedClient] = useState(null);
+  const [clientDetails, setClientDetails] = useState(null);
+  const [isLoadingClientDetails, setIsLoadingClientDetails] = useState(false);
   const [pendingClientDelete, setPendingClientDelete] = useState(null);
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   function loadClients({ silent = false } = {}) {
     let cancelled = false;
 
     if (!silent) setIsLoadingClients(true);
 
-    Promise.allSettled([fetchSupplierWorkspace(), fetchMyDemandes()])
-      .then(([workspaceResult, demandesResult]) => {
+    fetchMyDemandes()
+      .then((demandes) => {
         if (cancelled) return;
-        if (workspaceResult.status === 'fulfilled') setSupplierProfile(workspaceResult.value?.supplier || null);
-        if (demandesResult.status === 'fulfilled') setApiDemandes(demandesResult.value || []);
+        setApiDemandes(demandes || []);
       })
       .catch(() => {})
       .finally(() => {
@@ -136,44 +66,47 @@ export default function Clients() {
   useEffect(() => subscribeDemandesChange(() => loadClients({ silent: true })), []);
 
   const clients = useMemo(() => {
-    const notifications = [
-      ...apiDemandes,
-      ...(adminData.supplierClientNotifications || []),
-    ];
     const seen = new Set();
 
-    return notifications.filter((notification) => (
-      isNotificationForSupplier(notification, user, supplierProfile)
-    )).filter((notification) => {
-      const key = String(notification.id || notification.sourceNotificationId || '');
+    return apiDemandes.filter((demande) => {
+      const key = String(demande.id || demande.sourceNotificationId || '');
       if (!key) return true;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
-    }).map((notification) => ({
-      ...notification,
-      clientProfession: notification.clientProfession || 'Client',
-      clientPhone: notification.clientPhone || 'Non renseigné',
-      projectName: notification.projectName || notification.project?.name || 'Projet sans nom',
-      simulationTotalLabel: notification.simulationTotalLabel || 'Demande boutique',
-      articleImages: normalizeArticleImages(notification),
-      createdAtLabel: formatDateTime(notification.createdAt),
-    }));
-  }, [adminData.supplierClientNotifications, apiDemandes, supplierProfile, user]);
+    }).filter((demande) => !demande.hiddenBySupplier).map((demande) => {
+      const messages = Array.isArray(demande.messages) ? demande.messages : [];
+      const lastMessage = messages.at(-1);
+      const lastMessageText = lastMessage?.message || 'Aucun message';
+      const lastExchangeAt = lastMessage?.createdAt || demande.updatedAt || demande.createdAt;
 
-  function confirmClientDelete() {
+      return {
+        ...demande,
+        clientProfession: demande.clientProfession || 'Client',
+        clientPhone: demande.clientPhone || 'Non renseigné',
+        projectName: demande.projectName || demande.project?.name || 'Projet sans nom',
+        simulationTotalLabel: demande.simulationTotalLabel || 'Demande boutique',
+        articleImages: demande.articleImages || [],
+        lastMessageLabel: lastMessageText,
+        lastExchangeLabel: formatDateTime(lastExchangeAt),
+        createdAtLabel: formatDateTime(demande.createdAt),
+      };
+    });
+  }, [apiDemandes]);
+
+  async function confirmClientDelete() {
     if (!pendingClientDelete) return;
 
-    updateAdminData((currentData) => ({
-      ...currentData,
-      supplierClientNotifications: (currentData.supplierClientNotifications || []).filter((client) => (
-        client.id !== pendingClientDelete.id
-      )),
-    }));
-    if (selectedClient?.id === pendingClientDelete.id) {
-      setSelectedClient(null);
+    const demandeId = pendingClientDelete.id || pendingClientDelete.sourceNotificationId;
+
+    try {
+      await hideDemande(demandeId);
+      setApiDemandes((current) => current.filter((demande) => String(demande.id) !== String(demandeId)));
+      setSuccessMessage('Client retiré de la liste.');
+      setPendingClientDelete(null);
+    } catch {
+      setError('La suppression du client a échoué.');
     }
-    setPendingClientDelete(null);
   }
 
   const clientColumns = [
@@ -183,14 +116,13 @@ export default function Clients() {
     { key: 'clientPhone', label: 'Numéro' },
     { key: 'projectName', label: 'Projet' },
     { key: 'simulationTotalLabel', label: 'Simulation' },
-    { key: 'createdAtLabel', label: 'Date' },
     {
-      key: 'status',
-      label: 'Statut',
-      render: (status) => (
-        <Badge tone={status === 'Nouveau' ? 'success' : status === 'Archivé' ? 'danger' : 'warning'}>{status}</Badge>
-      ),
+      key: 'lastMessageLabel',
+      label: 'Dernier message',
+      render: (value) => <span className="supplier-clients-last-message">{value}</span>,
     },
+    { key: 'lastExchangeLabel', label: 'Dernier échange' },
+    { key: 'createdAtLabel', label: 'Date' },
     {
       key: 'articleImages',
       label: 'Images articles',
@@ -223,6 +155,17 @@ export default function Clients() {
         <span className="supplier-clients-actions">
           <button
             type="button"
+            title="Ouvrir la conversation"
+            aria-label={`Ouvrir la conversation de ${client.clientName}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              navigate('/supplier/demande');
+            }}
+          >
+            <Icon name="Chat" size="sm" />
+          </button>
+          <button
+            type="button"
             title="Supprimer"
             aria-label={`Supprimer ${client.clientName}`}
             onClick={(event) => {
@@ -246,17 +189,29 @@ export default function Clients() {
         </div>
       </div>
 
+      {error && (
+        <Alert variant="danger" className="supplier-clients-alert" onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
+      {successMessage && (
+        <Alert variant="success" className="supplier-clients-alert" onClose={() => setSuccessMessage('')}>
+          {successMessage}
+        </Alert>
+      )}
+
       {pendingClientDelete && (
         <Alert
           variant="warning"
           title="Suppression client"
           className="supplier-clients-alert"
+          autoCloseMs={0}
           onClose={() => setPendingClientDelete(null)}
         >
-          <span>Supprimer le client "{pendingClientDelete.clientName}" ?</span>
+          <span>Retirer le client "{pendingClientDelete.clientName}" de la liste ?</span>
           <span className="supplier-clients-alert__actions">
             <button type="button" onClick={() => setPendingClientDelete(null)}>Annuler</button>
-            <button type="button" onClick={confirmClientDelete}>Supprimer</button>
+            <button type="button" onClick={confirmClientDelete}>Retirer</button>
           </span>
         </Alert>
       )}
@@ -269,7 +224,19 @@ export default function Clients() {
           columns={clientColumns}
           data={clients}
           getRowId={(client) => client.id}
-          onRowClick={setSelectedClient}
+          onRowClick={async (client) => {
+            setSelectedClient(client);
+            setClientDetails(null);
+            setIsLoadingClientDetails(true);
+            try {
+              const details = await fetchClientDetails(client.clientId);
+              setClientDetails(details);
+            } catch {
+              setClientDetails(null);
+            } finally {
+              setIsLoadingClientDetails(false);
+            }
+          }}
           emptyLabel="Aucun client  pour le moment..."
         />
       )}
@@ -277,10 +244,16 @@ export default function Clients() {
       {selectedClient && (
         <ClientModal
           client={selectedClient}
-          onClose={() => setSelectedClient(null)}
+          clientDetails={clientDetails}
+          isLoadingDetails={isLoadingClientDetails}
+          onClose={() => {
+            setSelectedClient(null);
+            setClientDetails(null);
+          }}
           onDelete={(client) => {
             setPendingClientDelete(client);
             setSelectedClient(null);
+            setClientDetails(null);
           }}
         />
       )}

@@ -11,6 +11,7 @@ import realtimeRouter from './realtime.js';
 import supportItemsRouter from './supportItems.js';
 import demandesRouter from './demandes.js';
 import simulationsRouter from './simulations.js';
+import simulationExportsRouter from './simulationExports.js';
 
 const router = express.Router();
 
@@ -26,5 +27,6 @@ router.use('/supplier', supplierRouter);
 router.use('/support-items', supportItemsRouter);
 router.use('/demandes', demandesRouter);
 router.use('/simulations', simulationsRouter);
+router.use('/simulation-exports', simulationExportsRouter);
 
 export default router;

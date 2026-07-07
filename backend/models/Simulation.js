@@ -14,7 +14,8 @@ const simulationSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     date: { type: String, trim: true },
-    projectId: { type: String, trim: true, default: '' },
+    // Référence ObjectId vers le projet associé (null si simulation sans projet)
+    projectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project', index: true, default: null },
     projectName: { type: String, trim: true, default: '' },
     reference: { type: String, trim: true, default: '' },
     sourceType: { type: String, trim: true, default: 'simulation' },
@@ -30,7 +31,7 @@ const simulationSchema = new mongoose.Schema(
     coefficient: { type: String, trim: true, default: '1,00' },
     avatar: { type: String, trim: true },
     items: {
-      type: [simulationItemSchema],
+      type: [mongoose.Schema.Types.Mixed],
       default: [],
     },
   },

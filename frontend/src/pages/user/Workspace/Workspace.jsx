@@ -3,7 +3,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import ModalBoutique from '../../../components/modalBoutique';
 import Newproject from '../../../components/Newproject';
-import { Alert, Button, Icon, Loader } from '../../../components/ui';
+import { Alert, Badge, Button, Icon, Loader } from '../../../components/ui';
+import { getProjectStatusLabel } from '../../../utils/projectStatus';
 import useAuth from '../../../context/useAuth';
 import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { getApiErrorMessage } from '../../../services/api';
@@ -11,6 +12,7 @@ import { useAdminData } from '../../../services/adminData';
 import { upsertSupplierClientNotification } from '../../../services/clientNotifications';
 import { createDemande } from '../../../services/demandes';
 import { deleteProject, fetchProjects, updateProject } from '../../../services/projects';
+import { setProjectGateGraceEnd } from '../Catalogue/useProjectGate';
 import { isNumericOnly, sanitizeNumericInput } from '../../../utils/formInput';
 
 const WORKSPACE_CARDS = [
@@ -50,6 +52,20 @@ const WORKSPACE_CARDS = [
     intent: 'shop',
   },
 ];
+
+const getProjectStatusTone = (status) => {
+  switch (String(status || '').toLowerCase()) {
+    case 'treated':
+      return 'success';
+    case 'draft':
+    case 'active':
+      return 'warning';
+    case 'archived':
+      return 'neutral';
+    default:
+      return 'warning';
+  }
+};
 
 function parseAmount(value) {
   const amount = Number(String(value || '').replace(/[^\d.-]/g, ''));
@@ -375,7 +391,12 @@ export default function Workspace() {
       setIsModalOpen(false);
       setProjectLaunchNotice('');
       if (project.id) {
-        navigate(`/catalogue?projectId=${project.id}`, { state: { from: location } });
+        // Enregistre la période de grâce de 24h — l'utilisateur peut retourner
+        // au catalogue sans Project Gate pendant les 24h suivant la création.
+        setProjectGateGraceEnd();
+        navigate(`/catalogue?projectId=${project.id}`, {
+          state: { from: location, skipProjectGate: true },
+        });
       }
       return;
     }
@@ -584,7 +605,12 @@ export default function Workspace() {
                 <span className="workspace-feature-card__project-icon" aria-hidden="true">
                   <Icon name="Folder" size="sm" />
                 </span>
-                <span>{project.name}</span>
+                <span className="workspace-feature-card__project-name-wrapper">
+                  <span className="workspace-feature-card__project-name">{project.name}</span>
+                  <Badge tone={getProjectStatusTone(project.status)} className="workspace-project-badge">
+                    {getProjectStatusLabel(project.status)}
+                  </Badge>
+                </span>
               </button>
               <div className="workspace-feature-card__project-actions" aria-label={`Actions pour ${project.name}`}>
                 <button
@@ -650,6 +676,7 @@ export default function Workspace() {
             variant="warning"
             title="Suppression de projet"
             className="workspace-confirm-alert"
+            autoCloseMs={0}
             onClose={() => setPendingProjectDelete(null)}
           >
             <span>Supprimer définitivement le projet "{pendingProjectDelete.name}" ?</span>

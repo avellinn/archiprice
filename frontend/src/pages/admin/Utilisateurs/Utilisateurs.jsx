@@ -6,8 +6,6 @@ import { getApiErrorMessage } from '../../../services/api';
 import useRealtimeRefresh from '../../../hooks/useRealtimeRefresh';
 import { useAdminData } from '../../../services/adminData';
 import {
-  deleteAdminUser,
-  deleteAdminSupplier,
   fetchAdminSuppliers,
   fetchAdminUsers,
   permanentDeleteAdminSupplier,
@@ -168,6 +166,7 @@ export default function Utilisateurs() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [orphanedUsers, setOrphanedUsers] = useState([]);
+  const [successMessage, setSuccessMessage] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
   const [editForm, setEditForm] = useState({
     name: '',
@@ -329,62 +328,7 @@ export default function Utilisateurs() {
   }
 
   async function deleteUser(userId) {
-    const previousUsers = users;
-    const previousRawUsers = rawUsers;
-    const previousSuppliers = suppliers;
-    const currentUser = users.find((user) => user.id === userId);
-    const nextRawUsers = rawUsers.map((user) => (
-      user.id === userId ? { ...user, status: 'Supprimé' } : user
-    ));
-    const nextSuppliers = currentUser?.isSupplierMirror
-      ? suppliers.map((supplier) => (
-        String(supplier.id || supplier._id) === String(currentUser.supplierId)
-          ? { ...supplier, status: 'Supprimé' }
-          : supplier
-      ))
-      : suppliers.map((supplier) => (
-        String(supplier.userId || supplier.user?._id || supplier.user || '') === String(userId)
-          ? { ...supplier, status: 'Supprimé' }
-          : supplier
-      ));
-    const nextUsers = mergeUsersWithSuppliers(nextRawUsers, nextSuppliers);
-    setRawUsers(nextRawUsers);
-    setSuppliers(nextSuppliers);
-    if (selectedUserId === userId) fillUserForm({ ...currentUser, status: 'Supprimé' });
-    updateAdminData((currentData) => ({
-      ...currentData,
-      users: nextUsers.map(normalizeUserForWorkspace),
-      suppliers: nextSuppliers,
-    }));
-
-    try {
-      if (currentUser?.isSupplierMirror && String(currentUser.id || '').startsWith('supplier-') && currentUser?.supplierId) {
-        await deleteAdminSupplier(currentUser.supplierId);
-      } else {
-        await deleteAdminUser(userId);
-      }
-    } catch (apiError) {
-      setRawUsers(previousRawUsers);
-      setSuppliers(previousSuppliers);
-      updateAdminData((currentData) => ({
-        ...currentData,
-        users: previousUsers.map(normalizeUserForWorkspace),
-        suppliers: previousSuppliers,
-      }));
-      setError(getApiErrorMessage(apiError, "La suppression de l'utilisateur a échoué."));
-    }
-  }
-
-  async function restoreUser(user) {
-    await updateUser(user.id, { status: 'Actif' });
-    if (user.supplierId) {
-      updateAdminSupplier(user.supplierId, { status: 'Actif' }).catch(() => {});
-      setSuppliers((currentSuppliers) => currentSuppliers.map((supplier) => (
-        String(supplier.id || supplier._id) === String(user.supplierId)
-          ? { ...supplier, status: 'Actif' }
-          : supplier
-      )));
-    }
+    await permanentDeleteUser(userId);
   }
 
   async function permanentDeleteUser(userId) {
@@ -422,6 +366,7 @@ export default function Utilisateurs() {
         await permanentDeleteAdminUser(userId);
       }
       if (selectedUserId === userId) closeUserDetail();
+      setSuccessMessage("L'utilisateur a été supprimé définitivement.");
     } catch (apiError) {
       setRawUsers(previousRawUsers);
       setSuppliers(previousSuppliers);
@@ -515,7 +460,6 @@ export default function Utilisateurs() {
     const isActive = isActiveStatus(user.status);
     const isInactive = isInactiveStatus(user.status);
     const isBlocked = isBlockedStatus(user.status);
-    const isDeleted = isMissingAccount(user);
 
     return (
       <span className="admin-users-management__actions">
@@ -530,19 +474,17 @@ export default function Utilisateurs() {
         >
           <Icon name="Edit" size="sm" />
         </button>
-        {!isDeleted && (
-          <button
-            type="button"
-            title={isActive ? 'Désactiver' : 'Activer'}
-            aria-label={isActive ? `Désactiver ${userName}` : `Activer ${userName}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              toggleUserStatus(user);
-            }}
-          >
-            <Icon name="Visibility" size="sm" />
-          </button>
-        )}
+        <button
+          type="button"
+          title={isActive ? 'Désactiver' : 'Activer'}
+          aria-label={isActive ? `Désactiver ${userName}` : `Activer ${userName}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            toggleUserStatus(user);
+          }}
+        >
+          <Icon name="Visibility" size="sm" />
+        </button>
         {isInactive && (
           <button
             type="button"
@@ -558,19 +500,17 @@ export default function Utilisateurs() {
             <span className="visually-hidden">Activer</span>
           </button>
         )}
-        {!isDeleted && (
-          <button
-            type="button"
-            title="Bloquer"
-            aria-label={`Bloquer ${userName}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              blockUser(user);
-            }}
-          >
-            <Icon name="VisibilityOff" size="sm" />
-          </button>
-        )}
+        <button
+          type="button"
+          title="Bloquer"
+          aria-label={`Bloquer ${userName}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            blockUser(user);
+          }}
+        >
+          <Icon name="VisibilityOff" size="sm" />
+        </button>
         {isBlocked && (
           <button
             type="button"
@@ -586,50 +526,18 @@ export default function Utilisateurs() {
             <span className="visually-hidden">Débloquer</span>
           </button>
         )}
-        {isDeleted && (
-          <button
-            type="button"
-            className="is-restore"
-            title="Restaurer"
-            aria-label={`Restaurer ${userName}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              restoreUser(user);
-            }}
-          >
-            <Icon name="History" size="sm" />
-            <span className="visually-hidden">Restaurer</span>
-          </button>
-        )}
-        {isDeleted && (
-          <button
-            type="button"
-            className="is-danger"
-            title="Supprimer définitivement"
-            aria-label={`Supprimer définitivement ${userName}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              permanentDeleteUser(user.id);
-            }}
-          >
-            <Icon name="Delete" size="sm" />
-            <span className="visually-hidden">Supprimer définitivement</span>
-          </button>
-        )}
-        {!isDeleted && (
-          <button
-            type="button"
-            className="is-danger"
-            title="Supprimer"
-            aria-label={`Supprimer ${userName}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              deleteUser(user.id);
-            }}
-          >
-            <Icon name="Delete" size="sm" />
-          </button>
-        )}
+        <button
+          type="button"
+          className="is-danger"
+          title="Supprimer"
+          aria-label={`Supprimer ${userName}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            deleteUser(user.id);
+          }}
+        >
+          <Icon name="Delete" size="sm" />
+        </button>
       </span>
     );
   }
@@ -695,11 +603,16 @@ export default function Utilisateurs() {
     },
   ];
 
-  return (
+   return (
     <div className="admin-users-management">
       {error && (
         <Alert variant="danger" className="admin-users-management__alert" onClose={() => setError('')}>
           {error}
+        </Alert>
+      )}
+      {successMessage && (
+        <Alert variant="success" className="admin-users-management__alert" onClose={() => setSuccessMessage('')}>
+          {successMessage}
         </Alert>
       )}
 

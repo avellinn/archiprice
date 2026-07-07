@@ -1,7 +1,4 @@
 import express from 'express';
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { protect, requireAdmin } from '../middleware/auth.js';
 import requireDb from '../middleware/requireDb.js';
 import Demande from '../models/Demande.js';
@@ -13,13 +10,11 @@ import Supplier from '../models/Supplier.js';
 import SupportItem from '../models/SupportItem.js';
 import User from '../models/User.js';
 import { deleteProductImage } from '../services/cloudinaryImageService.js';
+import { cascadeDeleteUser, deleteProductsWithImages, purgeUserFromCatalogueConfig, runDbTransaction } from '../services/userService.js';
 import { publishCrudEvent } from '../services/realtimeService.js';
 import { validateProductClassification } from '../../shared/productTaxonomy.mjs';
 
 const router = express.Router();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const CATALOGUE_CONFIG_FILE = path.join(__dirname, '..', 'data', 'catalogueConfig.json');
 
 const USER_ROLES = ['user', 'admin', 'supplier'];
 const ADMIN_MANAGED_USER_ROLES = USER_ROLES;
@@ -133,49 +128,29 @@ function formatAdminSupplier(supplier, productCount) {
 async function ensureSupplierProfile(user) {
   if (user.role !== 'supplier') return null;
 
-  const email = String(user.email || '').toLowerCase().trim();
-  const supplier = await Supplier.findOne({
-    $or: [
-      { user: user._id },
-      ...(email ? [{ email }] : []),
-    ],
-  });
+  const supplier = await Supplier.findOne({ user: user._id });
 
   if (supplier) {
     if (supplier.status === 'Supprimé') {
       return Supplier.create({
         user: user._id,
-        name: user.name || email,
-        email,
-        contact: email,
+        name: user.name || String(user.email || '').toLowerCase().trim(),
+        email: String(user.email || '').toLowerCase().trim(),
+        contact: String(user.email || '').toLowerCase().trim(),
       });
     }
     supplier.user = supplier.user || user._id;
-    supplier.email = supplier.email || email;
-    supplier.name = supplier.name || user.name || email;
+    supplier.email = supplier.email || String(user.email || '').toLowerCase().trim();
+    supplier.name = supplier.name || user.name || String(user.email || '').toLowerCase().trim();
     return supplier.save();
   }
 
   return Supplier.create({
     user: user._id,
-    name: user.name || email,
-    email,
-    contact: email,
+    name: user.name || String(user.email || '').toLowerCase().trim(),
+    email: String(user.email || '').toLowerCase().trim(),
+    contact: String(user.email || '').toLowerCase().trim(),
   });
-}
-
-async function deleteProductsWithImages(filter) {
-  const products = await Product.find(filter);
-  const productIds = products.map((product) => product._id);
-  const publicIds = products
-    .flatMap((product) => product.images || [])
-    .map((image) => image.public_id)
-    .filter(Boolean);
-
-  await Promise.allSettled(publicIds.map((publicId) => deleteProductImage(publicId)));
-  if (productIds.length > 0) {
-    await Product.deleteMany({ _id: { $in: productIds } });
-  }
 }
 
 function getProductImage(product) {
@@ -221,65 +196,6 @@ function formatAdminProduct(product) {
     createdAt: plain.createdAt,
     updatedAt: plain.updatedAt,
   };
-}
-
-async function purgeUserFromCatalogueConfig(user) {
-  try {
-    const rawConfig = await fs.readFile(CATALOGUE_CONFIG_FILE, 'utf8');
-    const config = JSON.parse(rawConfig);
-    const userId = String(user._id);
-    const userEmail = String(user.email || '').toLowerCase();
-
-    const matchesUser = (item) => {
-      const itemUserId = String(item?.userId || item?.clientId || item?.supplierUserId || '');
-      const itemEmail = String(item?.email || item?.clientEmail || '').toLowerCase();
-      return itemUserId === userId || (userEmail && itemEmail === userEmail);
-    };
-
-    const nextConfig = {
-      ...config,
-      users: (config.users || []).filter((item) => !matchesUser(item)),
-      simulations: (config.simulations || []).filter((item) => !matchesUser(item)),
-      supportItems: (config.supportItems || []).filter((item) => !matchesUser(item)),
-      supplierClientNotifications: (config.supplierClientNotifications || []).filter((item) => !matchesUser(item)),
-      __updatedAt: Date.now(),
-    };
-
-    await fs.writeFile(CATALOGUE_CONFIG_FILE, JSON.stringify(nextConfig, null, 2));
-  } catch (error) {
-    if (error.code !== 'ENOENT') {
-      console.error('[deleteUserCascade] purge catalogueConfig failed:', error.message);
-    }
-  }
-}
-
-async function deleteUserCascade(user) {
-  const userId = user._id;
-  const suppliers = await Supplier.find({ user: userId });
-  const supplierIds = suppliers.map((supplier) => supplier._id);
-  const projects = await Project.find({ user: userId }).select('_id');
-  const projectIds = projects.map((project) => project._id);
-
-  await deleteProductsWithImages({
-    $or: [
-      { supplierUser: userId },
-      ...(supplierIds.length ? [{ supplier: { $in: supplierIds } }] : []),
-      ...(projectIds.length ? [{ project: { $in: projectIds } }] : []),
-    ],
-  });
-  await Project.deleteMany({ user: userId });
-  await Supplier.deleteMany({ _id: { $in: supplierIds } });
-  await SupportItem.deleteMany({ userId });
-  await Simulation.deleteMany({ userId });
-  await Demande.deleteMany({
-    $or: [
-      { user: userId },
-      { supplierUser: userId },
-    ],
-  });
-  await PasswordResetToken.deleteMany({ user: userId });
-  await purgeUserFromCatalogueConfig(user);
-  await User.deleteOne({ _id: userId });
 }
 
 router.use(requireDb);
@@ -418,28 +334,16 @@ router.patch('/users/:id', async (req, res) => {
 
 router.delete('/users/:id', async (req, res) => {
   try {
-    console.log('DELETE REQUEST RECEIVED (soft delete user)');
-    console.log('ID:', req.params.id);
-
     const user = await User.findById(req.params.id);
-    console.log('DOCUMENT BEFORE DELETE:', user ? { _id: user._id, email: user.email, status: user.status } : null);
     if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
 
-    user.status = 'Supprimé';
-    await user.save();
-    const supplierResult = await Supplier.updateMany({ user: user._id }, { status: 'Supprimé' });
-    console.log('DELETE RESULT:', { softDeleted: true, suppliersUpdated: supplierResult.modifiedCount });
-
-    const documentAfter = await User.findById(req.params.id).select('status email');
-    console.log('DOCUMENT AFTER DELETE:', documentAfter ? { _id: documentAfter._id, status: documentAfter.status } : null);
-
-    publishCrudEvent('users', 'deleted', { userId: String(user._id), role: user.role }, {
+    await cascadeDeleteUser(user);
+    publishCrudEvent('users', 'permanent-deleted', { userId: String(user._id), role: user.role }, {
       roles: ['admin'],
-      userIds: [user._id],
     });
-    return res.json({ message: 'Utilisateur supprimé' });
+    return res.json({ message: 'Utilisateur supprimé définitivement' });
   } catch (error) {
-    console.error('DELETE ERROR (soft delete user):', error.message);
+    console.error('[admin] Permanent delete error:', error);
     return res.status(500).json({ error: 'Erreur serveur' });
   }
 });
@@ -510,7 +414,7 @@ router.delete('/users/:id/permanent', async (req, res) => {
   console.log('DOCUMENT BEFORE DELETE:', user ? { _id: user._id, email: user.email, status: user.status } : null);
   if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
 
-  await deleteUserCascade(user);
+  await cascadeDeleteUser(user);
   console.log('DELETE RESULT:', { permanentDeleted: true, userId: String(user._id) });
 
   const documentAfter = await User.findById(req.params.id);
@@ -524,38 +428,35 @@ router.delete('/users/:id/permanent', async (req, res) => {
 });
 
 router.delete('/suppliers/:id/permanent', async (req, res) => {
-  console.log('DELETE REQUEST RECEIVED (permanent delete supplier)');
-  console.log('ID:', req.params.id);
+  try {
+    const supplier = await Supplier.findById(req.params.id);
+    if (!supplier) return res.status(404).json({ error: 'Fournisseur non trouvé' });
 
-  const supplier = await Supplier.findById(req.params.id);
-  console.log('DOCUMENT BEFORE DELETE:', supplier ? { _id: supplier._id, user: supplier.user, email: supplier.email } : null);
-  if (!supplier) return res.status(404).json({ error: 'Fournisseur non trouvé' });
+    if (supplier.user) {
+      const user = await User.findById(supplier.user);
+      if (user) {
+        await cascadeDeleteUser(user);
+      } else {
+        await runDbTransaction(async (session) => {
+          await deleteProductsWithImages({ supplier: supplier._id }, session);
+          await Supplier.deleteOne({ _id: supplier._id }).session(session);
+        });
+      }
+    } else {
+      await runDbTransaction(async (session) => {
+        await deleteProductsWithImages({ supplier: supplier._id }, session);
+        await Supplier.deleteOne({ _id: supplier._id }).session(session);
+      });
+    }
 
-  const userId = supplier.user;
-  await deleteProductsWithImages({ supplier: supplier._id });
-  await Project.deleteMany({ user: userId });
-  await Supplier.deleteOne({ _id: supplier._id });
-  if (userId) {
-    await SupportItem.deleteMany({ userId });
-    await Simulation.deleteMany({ userId });
-    await Demande.deleteMany({
-      $or: [
-        { user: userId },
-        { supplierUser: userId },
-      ],
+    publishCrudEvent('suppliers', 'permanent-deleted', { supplierId: String(supplier._id) }, {
+      roles: ['admin'],
     });
-    await PasswordResetToken.deleteMany({ user: userId });
-    const linkedUser = await User.findById(userId);
-    if (linkedUser) await purgeUserFromCatalogueConfig(linkedUser);
-    await User.findByIdAndDelete(userId);
+    return res.json({ message: 'Fournisseur supprimé définitivement' });
+  } catch (error) {
+    console.error('[admin] Permanent delete supplier error:', error);
+    return res.status(500).json({ error: 'Erreur serveur' });
   }
-  console.log('DELETE RESULT:', { permanentDeleted: true, supplierId: String(supplier._id) });
-
-  publishCrudEvent('suppliers', 'permanent-deleted', { supplierId: String(supplier._id) }, {
-    roles: ['admin'],
-  });
-
-  return res.json({ message: 'Fournisseur supprimé définitivement' });
 });
 
 router.get('/products', async (_req, res) => {
