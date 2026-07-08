@@ -33,7 +33,7 @@ export default function ProduitAjouteSup({
 }) {
   return (
     <section className="workspace-card supplier-dashboard__products supplier-products-list">
-      <h2>Produits ajoutés</h2>
+      <h4>Produits ajoutés</h4>
       {error && <Alert variant="danger">{error}</Alert>}
       {isLoading ? (
         <Loader label="Chargement des produits..." />

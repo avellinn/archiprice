@@ -1,9 +1,13 @@
 /* Page styles migrated from App.css */
 .supplier-shop-page {
-  min-height: calc(100vh - 64px);
-  padding: 2.4rem 1rem 3rem;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 64px);
+  min-height: 0;
+  padding: 2.4rem 1rem 1.5rem;
   background: var(--dashboard-page-background);
   color: var(--app-text-color);
+  overflow: hidden;
 }
 
 .supplier-shop-alert {

@@ -185,7 +185,7 @@ export default function Clients() {
       <div className="workspace-heading">
         <div>
           
-          <h1>Clients</h1>
+          <h3>Clients</h3>
         </div>
       </div>
 
