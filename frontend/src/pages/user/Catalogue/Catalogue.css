@@ -4,7 +4,7 @@
   padding: 1rem 1.25rem 1.5rem;
   background: #F8F6F4;
   color: var(--app-text-color);
-  overflow-y: auto;
+  overflow: visible;
 }
 
 .catalogue-page--products {
@@ -68,6 +68,7 @@
 }
 
 .catalogue-panel-minimize {
+  
   display: inline-grid;
   place-items: center;
   flex-shrink: 0;
@@ -192,10 +193,25 @@
 
 /* ── Barre catégories (Categori inline) ── */
 .catalogue-categories {
-  position: relative;
-  margin-top: -15px;
-  padding: 0.75rem 0;
+  
+  position: fixed;
+  top: 64px;
+  left: var(--app-sidebar-width, 240px);
+  right: 0;
+  z-index: 100;
+  padding: 0.75rem 1.25rem;
   background: #F8F6F4;
+  border-bottom: 1px solid #ede9e4;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.04);
+}
+
+.catalogue-page--products:has(.catalogue-categories) .catalogue-product-main,
+.catalogue-page--products:has(.catalogue-categories) .catalogue-filter-panel {
+  margin-top: 130px;
+}
+
+.dashboard-shell.is-sidebar-collapsed .catalogue-categories {
+  left: 0;
 }
 
 .catalogue-categories__scroll {
@@ -254,8 +270,8 @@
 
 .catalogue-categories__thumb {
   position: relative;
-  width: 76px;
-  height: 76px;
+  width: 90px;
+  height: 90px;
   overflow: hidden;
   border-radius: 50%;
   background: #e9e4dc;
@@ -297,6 +313,7 @@
 
 /* ── Conteneur grille produits ── */
 .catalogue-product-grid-wrapper {
+  margin-top: 60px;
   padding: 1.25rem;
   border-radius: 16px;
 }
@@ -304,7 +321,7 @@
 .catalogue-product-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
-  gap: 1rem;
+  gap: 1.30rem;
   align-content: start;
   width: 100%;
 }
@@ -809,6 +826,11 @@
   .catalogue-discrete-btn--top-right {
     top: calc(58px + 0.75rem);
   }
+
+  .catalogue-categories {
+    top: 64px;
+    left: 0;
+  }
 }
 
 @media (max-width: 620px) {
@@ -829,12 +851,16 @@
   }
 
   .catalogue-categories__thumb {
-    width: 64px;
-    height: 64px;
+    width: 78px;
+    height: 78px;
   }
 
   .catalogue-categories__item {
     flex-basis: 80px;
+  }
+
+  .catalogue-categories {
+    top: 58px;
   }
 
   .catalogue-fullscreen {

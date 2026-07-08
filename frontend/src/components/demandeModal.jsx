@@ -82,7 +82,6 @@ export default function DemandeModal({
             className="demande-modal__header-avatar"
           />
           <div className="demande-modal__identity">
-            <span>{demand.projectName || labels.noProject || 'Projet non renseigné'}</span>
             <h2 id="demande-modal-title">{counterpartName}</h2>
           </div>
           <button type="button" className="demande-modal__close" aria-label={labels.close || 'Fermer'} onClick={onClose}>

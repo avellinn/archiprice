@@ -1,6 +1,6 @@
 {
-  "__version": 1092,
-  "__updatedAt": 1783426539764,
+  "__version": 1094,
+  "__updatedAt": 1783506275465,
   "__staticPurgeVersion": 2,
   "users": [
     {
@@ -67,7 +67,7 @@
       "userId": "6a422b087b344eca2694c428",
       "name": "Test",
       "companyName": "Test",
-      "contact": "01010145212",
+      "contact": "tes@gmail.com",
       "email": "tes@gmail.com",
       "phone": "01010145212",
       "region": "Bénin",
@@ -76,7 +76,9 @@
       "categories": [
         "Fournisseur"
       ],
-      "isRecommended": true
+      "isRecommended": true,
+      "city": "Bénin",
+      "neighborhood": "Cadjehoun"
     }
   ],
   "supplierClientNotifications": [
@@ -899,10 +901,10 @@
       "address": "",
       "neighborhood": "Cadjehoun",
       "city": "Bénin",
-      "timezone": "(GMT +01:00) Afrique centrale et de l’Ouest",
+      "timezone": "(GMT +00:00) Greenwich",
       "language": "Français"
     },
-    "savedAt": "2026-07-03T16:33:17.728Z"
+    "savedAt": "2026-07-08T10:24:34.498Z"
   },
   "adminSettings": {
     "profile": {

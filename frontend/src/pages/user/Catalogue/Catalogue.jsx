@@ -477,16 +477,17 @@ export default function Catalogue() {
         />
       )}
 
+      {hasCatalogueProducts && (
+        <CatalogueCategories
+          products={products}
+          activeCategory={activeCategory === 'Tout' ? '' : activeCategory}
+          onSelect={handleCategorySelect}
+        />
+      )}
+
       <main className="catalogue-product-main">
         {isTreated && (
           <Alert variant="info" layout="inline">Ce projet est traité.</Alert>
-        )}
-        {hasCatalogueProducts && (
-          <CatalogueCategories
-            products={products}
-            activeCategory={activeCategory === 'Tout' ? '' : activeCategory}
-            onSelect={handleCategorySelect}
-          />
         )}
 
         <div className="catalogue-product-grid-wrapper">
